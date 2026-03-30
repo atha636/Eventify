@@ -1,0 +1,520 @@
+import { useEffect, useState } from "react";
+import API from "../services/api";
+import Navbar from "../components/Navbar";
+
+const STATUS_META = {
+  pending:  { label: "Pending",  color: "#c9a84c", bg: "rgba(201,168,76,0.1)",  border: "rgba(201,168,76,0.3)"  },
+  approved: { label: "Approved", color: "#2d6a4f", bg: "rgba(45,106,79,0.1)",   border: "rgba(45,106,79,0.3)"   },
+  rejected: { label: "Rejected", color: "#b85c5c", bg: "rgba(184,92,92,0.1)",   border: "rgba(184,92,92,0.3)"   },
+};
+
+export default function VendorDashboard() {
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(null);
+  const [filter, setFilter] = useState("all");
+
+  const fetchBookings = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await API.get("/bookings/vendor", {
+        headers: { Authorization: token },
+      });
+      setBookings(res.data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchBookings(); }, []);
+
+  const updateStatus = async (id, status) => {
+    const token = localStorage.getItem("token");
+    setUpdating(id + status);
+    try {
+      await API.put(`/bookings/${id}`, { status }, {
+        headers: { Authorization: token },
+      });
+      await fetchBookings();
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const filtered = filter === "all" ? bookings : bookings.filter(b => b.status === filter);
+
+  const counts = {
+    all: bookings.length,
+    pending: bookings.filter(b => b.status === "pending").length,
+    approved: bookings.filter(b => b.status === "approved").length,
+    rejected: bookings.filter(b => b.status === "rejected").length,
+  };
+
+  return (
+    <>
+      <style>{styles}</style>
+      <div className="vd-root">
+        <Navbar />
+
+        <div className="vd-body">
+
+          {/* ── HEADER ── */}
+          <div className="vd-header">
+            <div className="vd-header-left">
+              <p className="vd-eyebrow">✦ Vendor Portal</p>
+              <h1 className="vd-title">Dashboard</h1>
+              <p className="vd-subtitle">Manage your bookings and services</p>
+            </div>
+            <a href="/add-service" className="vd-add-btn">
+              + Add New Service
+            </a>
+          </div>
+
+          {/* ── STATS ── */}
+          <div className="vd-stats">
+            {[
+              { label: "Total Bookings", value: counts.all, icon: "📋" },
+              { label: "Pending",        value: counts.pending,  icon: "⏳" },
+              { label: "Approved",       value: counts.approved, icon: "✓" },
+              { label: "Rejected",       value: counts.rejected, icon: "✕" },
+            ].map((s) => (
+              <div key={s.label} className="vd-stat-card">
+                <span className="vd-stat-icon">{s.icon}</span>
+                <span className="vd-stat-value">{s.value}</span>
+                <span className="vd-stat-label">{s.label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* ── FILTER TABS ── */}
+          <div className="vd-tabs">
+            {["all", "pending", "approved", "rejected"].map((tab) => (
+              <button
+                key={tab}
+                className={`vd-tab ${filter === tab ? "active" : ""}`}
+                onClick={() => setFilter(tab)}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                <span className="vd-tab-count">{counts[tab]}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* ── BOOKINGS ── */}
+          {loading ? (
+            <div className="vd-loading">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="vd-skeleton" style={{ animationDelay: `${i * 0.1}s` }} />
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="vd-empty">
+              <div className="vd-empty-icon">📭</div>
+              <h3>No bookings found</h3>
+              <p>{filter === "all" ? "You haven't received any bookings yet." : `No ${filter} bookings.`}</p>
+            </div>
+          ) : (
+            <div className="vd-bookings">
+              {filtered.map((b, i) => {
+                const meta = STATUS_META[b.status] || STATUS_META.pending;
+                return (
+                  <div
+                    key={b._id}
+                    className="vd-booking-card"
+                    style={{ animationDelay: `${i * 0.06}s` }}
+                  >
+                    {/* LEFT */}
+                    <div className="vd-booking-left">
+                      <div className="vd-avatar">
+                        {b.userId?.name?.charAt(0)?.toUpperCase() || "?"}
+                      </div>
+                      <div className="vd-booking-info">
+                        <h3 className="vd-booking-name">{b.userId?.name || "Unknown Client"}</h3>
+                        <p className="vd-booking-email">{b.userId?.email || ""}</p>
+                        <div className="vd-booking-meta">
+                          <span className="vd-meta-item">
+                            🗓 {new Date(b.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                          </span>
+                          {b.package && (
+                            <span className="vd-meta-item">📦 {b.package}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* RIGHT */}
+                    <div className="vd-booking-right">
+                      <span
+                        className="vd-status-badge"
+                        style={{ color: meta.color, background: meta.bg, border: `1px solid ${meta.border}` }}
+                      >
+                        {meta.label}
+                      </span>
+
+                      {b.status === "pending" && (
+                        <div className="vd-actions">
+                          <button
+                            className={`vd-accept-btn ${updating === b._id + "approved" ? "loading" : ""}`}
+                            onClick={() => updateStatus(b._id, "approved")}
+                            disabled={!!updating}
+                          >
+                            {updating === b._id + "approved"
+                              ? <span className="vd-spinner" />
+                              : "✓ Accept"}
+                          </button>
+                          <button
+                            className={`vd-reject-btn ${updating === b._id + "rejected" ? "loading" : ""}`}
+                            onClick={() => updateStatus(b._id, "rejected")}
+                            disabled={!!updating}
+                          >
+                            {updating === b._id + "rejected"
+                              ? <span className="vd-spinner vd-spinner-dark" />
+                              : "✕ Reject"}
+                          </button>
+                        </div>
+                      )}
+
+                      {b.status === "approved" && (
+                        <button
+                          className="vd-undo-btn"
+                          onClick={() => updateStatus(b._id, "pending")}
+                        >
+                          Undo
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+const styles = `
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,300&family=DM+Sans:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0e0c0a;
+    --cream: #f5f0e8;
+    --gold: #c9a84c;
+    --gold-light: #e8d5a3;
+    --muted: #7a7265;
+    --border: rgba(201,168,76,0.2);
+    --surface: #faf7f2;
+    --white: #ffffff;
+  }
+
+  .vd-root {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    min-height: 100vh;
+    color: var(--ink);
+  }
+
+  .vd-body {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 48px 32px 80px;
+  }
+
+  /* ── HEADER ── */
+  .vd-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+    gap: 20px;
+    animation: fadeUp 0.5s ease both;
+  }
+  .vd-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+  .vd-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    font-weight: 300;
+    color: var(--ink);
+    line-height: 1.1;
+    margin-bottom: 6px;
+  }
+  .vd-subtitle { font-size: 13.5px; color: var(--muted); }
+
+  .vd-add-btn {
+    display: inline-block;
+    padding: 12px 24px;
+    background: var(--ink);
+    color: var(--white);
+    text-decoration: none;
+    border-radius: 7px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    transition: all 0.22s ease;
+    white-space: nowrap;
+  }
+  .vd-add-btn:hover {
+    background: var(--gold);
+    color: var(--ink);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(201,168,76,0.3);
+  }
+
+  /* ── STATS ── */
+  .vd-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 32px;
+    animation: fadeUp 0.5s ease 0.1s both;
+  }
+  @media (max-width: 700px) { .vd-stats { grid-template-columns: repeat(2,1fr); } }
+
+  .vd-stat-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: box-shadow 0.2s;
+  }
+  .vd-stat-card:hover { box-shadow: 0 4px 20px rgba(201,168,76,0.1); }
+  .vd-stat-icon { font-size: 1.3rem; }
+  .vd-stat-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .vd-stat-label { font-size: 11.5px; color: var(--muted); }
+
+  /* ── TABS ── */
+  .vd-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0;
+    animation: fadeUp 0.5s ease 0.15s both;
+    flex-wrap: wrap;
+  }
+  .vd-tab {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 18px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: -1px;
+    text-transform: capitalize;
+  }
+  .vd-tab:hover { color: var(--ink); }
+  .vd-tab.active {
+    color: var(--ink);
+    border-bottom-color: var(--gold);
+    font-weight: 500;
+  }
+  .vd-tab-count {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 1px 8px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .vd-tab.active .vd-tab-count {
+    background: var(--ink);
+    color: var(--white);
+    border-color: var(--ink);
+  }
+
+  /* ── BOOKINGS ── */
+  .vd-bookings { display: flex; flex-direction: column; gap: 12px; }
+
+  .vd-booking-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    animation: fadeUp 0.45s ease both;
+    transition: box-shadow 0.25s, border-color 0.25s;
+  }
+  .vd-booking-card:hover {
+    box-shadow: 0 6px 28px rgba(14,12,10,0.07);
+    border-color: rgba(201,168,76,0.35);
+  }
+
+  .vd-booking-left { display: flex; align-items: center; gap: 16px; }
+  .vd-avatar {
+    width: 46px; height: 46px;
+    background: var(--ink);
+    color: var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem; font-weight: 600;
+    flex-shrink: 0;
+  }
+  .vd-booking-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem; font-weight: 600;
+    color: var(--ink); margin-bottom: 2px;
+  }
+  .vd-booking-email { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .vd-booking-meta { display: flex; gap: 14px; flex-wrap: wrap; }
+  .vd-meta-item {
+    font-size: 12px;
+    color: var(--muted);
+    display: flex; align-items: center; gap: 4px;
+  }
+
+  .vd-booking-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .vd-status-badge {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .vd-actions { display: flex; gap: 8px; }
+  .vd-accept-btn {
+    padding: 9px 18px;
+    background: rgba(45,106,79,0.1);
+    color: #2d6a4f;
+    border: 1px solid rgba(45,106,79,0.3);
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12.5px; font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 6px;
+    min-width: 90px; justify-content: center;
+  }
+  .vd-accept-btn:hover:not(:disabled) {
+    background: #2d6a4f;
+    color: var(--white);
+    border-color: #2d6a4f;
+  }
+  .vd-reject-btn {
+    padding: 9px 18px;
+    background: rgba(184,92,92,0.08);
+    color: #b85c5c;
+    border: 1px solid rgba(184,92,92,0.25);
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12.5px; font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 6px;
+    min-width: 90px; justify-content: center;
+  }
+  .vd-reject-btn:hover:not(:disabled) {
+    background: #b85c5c;
+    color: var(--white);
+    border-color: #b85c5c;
+  }
+  .vd-accept-btn.loading,
+  .vd-reject-btn.loading { opacity: 0.6; pointer-events: none; }
+
+  .vd-undo-btn {
+    padding: 7px 14px;
+    background: none;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .vd-undo-btn:hover { border-color: var(--gold); color: var(--ink); }
+
+  .vd-spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+  }
+  .vd-spinner-dark {
+    border-color: rgba(184,92,92,0.3);
+    border-top-color: #b85c5c;
+  }
+
+  /* SKELETON */
+  .vd-loading { display: flex; flex-direction: column; gap: 12px; }
+  .vd-skeleton {
+    height: 88px;
+    border-radius: 12px;
+    background: linear-gradient(90deg, #ede8e0 25%, #e5dfd4 50%, #ede8e0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease infinite;
+  }
+
+  /* EMPTY */
+  .vd-empty {
+    text-align: center;
+    padding: 72px 20px;
+  }
+  .vd-empty-icon { font-size: 3rem; margin-bottom: 16px; }
+  .vd-empty h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.5rem; font-weight: 600;
+    color: var(--ink); margin-bottom: 8px;
+  }
+  .vd-empty p { font-size: 13.5px; color: var(--muted); }
+
+  @media (max-width: 640px) {
+    .vd-booking-card { flex-direction: column; align-items: flex-start; }
+    .vd-booking-right { width: 100%; justify-content: flex-start; }
+    .vd-body { padding: 32px 20px 60px; }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+`;

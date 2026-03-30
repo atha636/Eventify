@@ -18,6 +18,7 @@ export default function Login() {
     try {
       const res = await API.post("/auth/login", data);
       localStorage.setItem("token", res.data.token);
+localStorage.setItem("user", JSON.stringify(res.data.user));
       setSuccess(true);
       setTimeout(() => {
         window.location.href = "/";

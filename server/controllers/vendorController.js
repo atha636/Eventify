@@ -33,3 +33,29 @@ exports.getByType = async (req, res) => {
     res.status(500).json(err);
   }
 };
+
+exports.addService = async (req, res) => {
+  try {
+    const vendor = await Vendor.create({
+      userId: req.user,
+      serviceType: req.body.serviceType,
+      title: req.body.title,
+      description: req.body.description,
+      images: [req.body.image],
+      packages: [
+        {
+          name: "Basic",
+          price: req.body.price,
+          details: req.body.description
+        }
+      ],
+      location: req.body.location,
+      isApproved: true // for now auto approve
+    });
+
+    res.json(vendor);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json(err);
+  }
+};

@@ -6,6 +6,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -17,7 +18,7 @@ export default function Navbar() {
   useEffect(() => { setMenuOpen(false); }, [location]);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    localStorage.clear();
     window.location.href = "/";
   };
 
@@ -51,7 +52,17 @@ export default function Navbar() {
           <div className="nb-actions">
             {token ? (
               <>
-                <Link to="/dashboard" className="nb-ghost-btn">Dashboard</Link>
+                {user?.role === "vendor" && (
+  <Link to="/vendor-dashboard" className="nb-ghost-btn">
+    Vendor Dashboard
+  </Link>
+)}
+
+{user?.role === "user" && (
+  <Link to="/my-bookings" className="nb-ghost-btn">
+    My Bookings
+  </Link>
+)}
                 <button className="nb-solid-btn" onClick={handleLogout}>Log Out</button>
               </>
             ) : (
@@ -80,7 +91,17 @@ export default function Navbar() {
           <div className="nb-mobile-divider" />
           {token ? (
             <>
-              <Link to="/dashboard" className="nb-mobile-link">Dashboard</Link>
+              {user?.role === "vendor" && (
+  <Link to="/vendor-dashboard" className="nb-ghost-btn">
+    Vendor Dashboard
+  </Link>
+)}
+
+{user?.role === "user" && (
+  <Link to="/my-bookings" className="nb-ghost-btn">
+    My Bookings
+  </Link>
+)}
               <button className="nb-mobile-link nb-mobile-logout" onClick={handleLogout}>Log Out</button>
             </>
           ) : (
