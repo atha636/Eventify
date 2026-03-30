@@ -8,6 +8,7 @@ connectDB();
 
 const app = express();
 
+
 app.use(cors());
 app.use(express.json());
 
@@ -21,6 +22,12 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
+// 👇 Add this BEFORE app.listen
+app.use((err, req, res, next) => {
+  console.error("GLOBAL ERROR:", err.message);
+  console.error("STACK:", err.stack);
+  res.status(500).json({ error: err.message });
+});
 app.listen(PORT, () => {
   console.log(`Server running on ${PORT}`);
 });

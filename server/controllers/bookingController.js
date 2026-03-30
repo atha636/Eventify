@@ -3,7 +3,7 @@ const Vendor = require("../models/Vendor");
 exports.createBooking = async (req, res) => {
   try {
     const booking = await Booking.create({
-      userId: req.user,
+      userId: req.user.id ,
       vendorId: req.body.vendorId,
       date: req.body.date
     });
@@ -16,7 +16,7 @@ exports.createBooking = async (req, res) => {
 
 exports.getBookings = async (req, res) => {
   try {
-    const bookings = await Booking.find({ userId: req.user });
+    const bookings = await Booking.find({ userId: req.user.id });
     res.json(bookings);
   } catch (err) {
     res.status(500).json(err);
@@ -26,7 +26,7 @@ exports.getBookings = async (req, res) => {
 exports.getVendorBookings = async (req, res) => {
   try {
     // find vendor linked to logged-in user
-    const vendor = await Vendor.findOne({ userId: req.user });
+    const vendor = await Vendor.findOne({ userId: req.user.id });
 
     if (!vendor) {
       return res.status(404).json({ msg: "Vendor not found" });

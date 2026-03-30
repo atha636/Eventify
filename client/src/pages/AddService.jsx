@@ -18,7 +18,7 @@ export default function AddService() {
     description: "",
     price: "",
     location: "",
-    image: "",
+    images: [],
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -27,10 +27,7 @@ export default function AddService() {
 
   const set = (key, val) => setForm((f) => ({ ...f, [key]: val }));
 
-  const handleImageChange = (val) => {
-    set("image", val);
-    setImagePreview(val);
-  };
+  
 
   const validate = () => {
     if (!form.title.trim())       return "Please enter a service title.";
@@ -41,23 +38,41 @@ export default function AddService() {
   };
 
   const handleSubmit = async () => {
-    const err = validate();
-    if (err) { setError(err); return; }
-    setError("");
-    setLoading(true);
-    const token = localStorage.getItem("token");
-    try {
-      await API.post("/vendors/add", form, {
-        headers: { Authorization: token },
-      });
-      setSuccess(true);
-    } catch (e) {
-      setError(e?.response?.data?.message || "Failed to add service. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const err = validate();
+  if (err) { setError(err); return; }
 
+  setError("");
+  setLoading(true);
+
+  const token = localStorage.getItem("token");
+
+  const data = new FormData();
+  data.append("serviceType", form.serviceType);
+  data.append("title", form.title);
+  data.append("description", form.description);
+  data.append("price", form.price);
+  data.append("location", form.location);
+
+  form.images.forEach((img) => {
+    data.append("images", img);
+  });
+
+  try {
+    await API.post("/vendors/add", data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        // ❌ DO NOT set Content-Type here — axios sets it automatically with correct boundary
+      }
+    });
+
+    setSuccess(true);
+  } catch (e) {
+    console.error("FRONTEND ERROR:", e.response?.data); // 👈 add this
+    setError("Failed to upload service");
+  } finally {
+    setLoading(false);
+  }
+};
   const selectedType = SERVICE_TYPES.find(t => t.value === form.serviceType);
 
   return (
@@ -76,7 +91,14 @@ export default function AddService() {
                 <a href="/dashboard" className="as-btn-primary">Go to Dashboard →</a>
                 <button
                   className="as-btn-ghost"
-                  onClick={() => { setSuccess(false); setForm({ serviceType: "decor", title: "", description: "", price: "", location: "", image: "" }); setImagePreview(""); }}
+                  onClick={() => { setSuccess(false); setForm({
+  serviceType: "decor",
+  title: "",
+  description: "",
+  price: "",
+  location: "",
+  images: []
+}); setImagePreview(""); }}
                 >
                   Add Another
                 </button>
@@ -167,16 +189,25 @@ export default function AddService() {
 
                 {/* IMAGE */}
                 <div className="as-field">
-                  <label className="as-label">Cover Image URL</label>
-                  <div className="as-input-wrap">
-                    <span className="as-icon">🖼</span>
-                    <input
-                      placeholder="https://example.com/image.jpg"
-                      value={form.image}
-                      onChange={(e) => handleImageChange(e.target.value)}
-                    />
-                  </div>
-                </div>
+  <label className="as-label">Upload Portfolio Images (max 10)</label>
+
+  <input
+    type="file"
+    multiple
+    accept="image/*"
+    onChange={(e) => {
+      const files = Array.from(e.target.files).slice(0, 10);
+
+setForm({ ...form, images: files });
+
+// SAFE CHECK
+if (files.length > 0) {
+  setImagePreview(URL.createObjectURL(files[0]));
+}
+    }}
+    className="as-input-wrap"
+  />
+</div>
 
                 {error && (
                   <div className="as-error">⚠ {error}</div>
