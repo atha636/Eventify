@@ -134,12 +134,12 @@ export default function Category() {
             </>
           ) : (
             <div className="ct-empty">
-              <div className="ct-empty-icon">🔍</div>
-              <h3>No vendors found</h3>
+              <div className="ct-empty-icon">⌛⌛</div>
+              <h3>Coming Soon....</h3>
               <p>
                 {search
                   ? `No results for "${search}". Try a different search.`
-                  : `No ${type} vendors are available right now. Check back soon!`}
+                  : ` ${type} vendors are available very Soon. Check back soon!`}
               </p>
               {search && (
                 <button className="ct-empty-btn" onClick={() => setSearch("")}>

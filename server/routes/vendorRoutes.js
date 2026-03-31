@@ -44,11 +44,11 @@ router.delete("/:id", auth, async (req, res) => {
   try {
     const vendor = await Vendor.findById(req.params.id);
 
-   if (!vendor.userId) {
-  return res.status(400).json({ message: "Invalid vendor data (no userId)" });
+   if (!vendor.vendorId) {
+  return res.status(400).json({ message: "Invalid vendor data (no vendorId)" });
 }
 
-if (vendor.userId.toString() !== req.user.id) {
+if (vendor.vendorId.toString() !== req.user.id) {
   return res.status(403).json({ message: "Not authorized" });
 }
 

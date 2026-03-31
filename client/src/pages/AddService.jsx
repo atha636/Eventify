@@ -5,10 +5,10 @@ import Navbar from "../components/Navbar";
 const SERVICE_TYPES = [
   { value: "decor",       label: "Decor",       emoji: "🎨" },
   { value: "photography", label: "Photography", emoji: "📸" },
-  { value: "catering",    label: "Catering",    emoji: "🍽" },
-  { value: "music",       label: "Music & DJ",  emoji: "🎵" },
-  { value: "florals",     label: "Florals",     emoji: "💐" },
-  { value: "venues",      label: "Venues",      emoji: "🏛" },
+  { value: "catering",    label: "Catering coming soon..   ",    emoji: "🍽⌛" },
+  { value: "music",       label: "Music & DJ coming soon.. ",    emoji: "🎵⌛" },
+  { value: "florals",     label: "Florals coming soon..    ",    emoji: "💐⌛" },
+  { value: "venues",      label: "Venues coming soon..     ",    emoji: "🏛⌛" },
 ];
 
 const TIER_LABELS = ["Basic", "Standard", "Premium", "Ultra Premium"];
