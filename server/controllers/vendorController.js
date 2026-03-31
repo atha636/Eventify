@@ -1,77 +1,100 @@
 const Vendor = require("../models/Vendor");
-const cloudinary = require("../config/cloudinary");
 
-exports.createVendor = async (req, res) => {
+// ─────────────────────────────────────────────
+// GET all vendors
+// ─────────────────────────────────────────────
+exports.getVendors = async (req, res) => {
   try {
-    const vendor = await Vendor.create({
-      ...req.body,
-      userId: req.user.id  // ✅ just the id
-    });
-
-    res.json(vendor);
+    const vendors = await Vendor.find({});
+    res.json(vendors);
   } catch (err) {
-    console.error("ERROR:", err.message);
+    console.error("getVendors ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 };
-exports.getVendors = async (req, res) => {
-  try {
-    const vendors = await Vendor.find({ "isApproved": true });
-    res.json(vendors);
-  } catch (err) {
-  console.error("ERROR:", err); // 👈 THIS LINE IMPORTANT
-  res.status(500).json({ error: err.message });
-}
-};
 
+// ─────────────────────────────────────────────
+// GET vendors by type  e.g. /api/vendors/decor
+// ─────────────────────────────────────────────
 exports.getByType = async (req, res) => {
   try {
+    const type = req.params.type?.toLowerCase().trim();
+
+    // ✅ case-insensitive regex, no isApproved filter
     const vendors = await Vendor.find({
-      serviceType: req.params.type,
-      "isApproved": true
+      serviceType: { $regex: new RegExp(`^${type}$`, "i") },
     });
+
+    console.log(`getByType [${type}] → ${vendors.length} results`);
     res.json(vendors);
   } catch (err) {
-  console.error("ERROR:", err); // 👈 THIS LINE IMPORTANT
-  res.status(500).json({ error: err.message });
-}
+    console.error("getByType ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
 };
 
+// ─────────────────────────────────────────────
+// POST /api/vendors/add
+// ─────────────────────────────────────────────
 exports.addService = async (req, res) => {
   try {
-    console.log("USER:", JSON.stringify(req.user));
-    console.log("BODY:", req.body);
-    console.log("FILES:", req.files);
+    console.log("USER :", JSON.stringify(req.user));
+    console.log("BODY :", req.body);
+    console.log("FILES:", req.files?.length, "file(s)");
 
-    if (!req.user || !req.user.id) {
+    if (!req.user?.id) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    // ✅ Files are already uploaded by CloudinaryStorage
-    // Just extract the URLs from req.files
-    const imageUrls = req.files ? req.files.map(file => file.path) : [];
+    const imageUrls = req.files ? req.files.map((f) => f.path) : [];
+
+    let packages = [];
+    if (req.body.packages) {
+      try {
+        packages = JSON.parse(req.body.packages);
+      } catch {
+        return res.status(400).json({ error: "Invalid packages format" });
+      }
+    }
 
     const vendor = await Vendor.create({
-      userId: req.user.id,
+      vendorId:    req.user.id,
       serviceType: req.body.serviceType,
-      title: req.body.title,
-      description: req.body.description,
-      images: imageUrls,
-      packages: [
-        {
-          name: "Basic",
-          price: req.body.startingPrice || req.body.price,  // ✅ handle both names
-          details: req.body.description
-        }
-      ],
-      location: req.body.location,
-      isApproved: true
+      title:       req.body.title?.trim(),
+      description: req.body.description?.trim(),
+      location:    req.body.location?.trim(),
+      packages,
+      images:      imageUrls,
+      isApproved:  true,   // ✅ always set explicitly
     });
 
-    res.json(vendor);
-
+    console.log("CREATED:", vendor._id, "| type:", vendor.serviceType, "| approved:", vendor.isApproved);
+    res.status(201).json(vendor);
   } catch (err) {
-    console.error("FULL ERROR:", err.message);
+    console.error("addService ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ─────────────────────────────────────────────
+// Legacy
+// ─────────────────────────────────────────────
+exports.createVendor = async (req, res) => {
+  try {
+    const vendor = await Vendor.create({ ...req.body, vendorId: req.user.id });
+    res.json(vendor);
+  } catch (err) {
+    console.error("createVendor ERROR:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+};
+// GET /api/vendors/my-services — vendor sees only their own services
+exports.getMyServices = async (req, res) => {
+  try {
+    const services = await Vendor.find({ vendorId: req.user.id });
+    res.json(services);
+  } catch (err) {
+    console.error("getMyServices ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 };

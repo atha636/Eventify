@@ -27,10 +27,17 @@ export default function VendorDetail() {
     setLoading(true);
     try {
       await API.post(
-        "/bookings",
-        { vendorId: vendor._id, date: selectedDate },
-        { headers: { Authorization: token } }
-      );
+  "/bookings",
+  {
+    vendorId: vendor._id,
+    date: selectedDate,
+    packageName: vendor.packages[selectedPackage].name,
+    packagePrice: vendor.packages[selectedPackage].price
+  },
+  {
+    headers: { Authorization: `Bearer ${token}` }
+  }
+);
       setBooked(true);
       setTimeout(() => setBooked(false), 3000);
       setSelectedDate("");
@@ -99,7 +106,11 @@ export default function VendorDetail() {
                     <span className="vd-pkg-name">{p.name}</span>
                     <span className="vd-pkg-price">₹{p.price?.toLocaleString()}</span>
                   </div>
-                  <p className="vd-pkg-desc">{p.details}</p>
+                  <ul className="vd-pkg-desc">
+  {p.features?.map((f, i) => (
+    <li key={i}>✔ {f}</li>
+  ))}
+</ul>
                   {selectedPackage === i && (
                     <span className="vd-pkg-selected-dot" />
                   )}
@@ -120,7 +131,11 @@ export default function VendorDetail() {
                   </div>
                 </div>
 
-                <p className="vd-panel-desc">{pkg.details}</p>
+                <ul className="vd-panel-desc">
+  {pkg.features?.map((f, i) => (
+    <li key={i}>✔ {f}</li>
+  ))}
+</ul>
 
                 <div className="vd-divider" />
 

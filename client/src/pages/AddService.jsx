@@ -11,15 +11,21 @@ const SERVICE_TYPES = [
   { value: "venues",      label: "Venues",      emoji: "🏛" },
 ];
 
+const TIER_LABELS = ["Basic", "Standard", "Premium", "Ultra Premium"];
+
 export default function AddService() {
   const [form, setForm] = useState({
     serviceType: "decor",
     title: "",
     description: "",
-    price: "",
     location: "",
     images: [],
   });
+
+  const [packages, setPackages] = useState([
+    { name: "Basic", price: "", features: [""] }
+  ]);
+
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
@@ -27,52 +33,92 @@ export default function AddService() {
 
   const set = (key, val) => setForm((f) => ({ ...f, [key]: val }));
 
-  
+  // ── Package helpers ──────────────────────────────────────────
+  const addPackage = () => {
+    if (packages.length >= 4) return;
+    setPackages([
+      ...packages,
+      { name: TIER_LABELS[packages.length] || "", price: "", features: [""] }
+    ]);
+  };
 
+  const removePackage = (index) => {
+    setPackages(packages.filter((_, i) => i !== index));
+  };
+
+  const updatePackage = (index, field, value) => {
+    const updated = [...packages];
+    updated[index][field] = value;
+    setPackages(updated);
+  };
+
+  const addFeature = (pkgIndex) => {
+    const updated = [...packages];
+    updated[pkgIndex].features.push("");
+    setPackages(updated);
+  };
+
+  const removeFeature = (pkgIndex, featureIndex) => {
+    const updated = [...packages];
+    updated[pkgIndex].features.splice(featureIndex, 1);
+    setPackages(updated);
+  };
+
+  const updateFeature = (pkgIndex, featureIndex, value) => {
+    const updated = [...packages];
+    updated[pkgIndex].features[featureIndex] = value;
+    setPackages(updated);
+  };
+
+  // ── Validation ───────────────────────────────────────────────
   const validate = () => {
     if (!form.title.trim())       return "Please enter a service title.";
     if (!form.description.trim()) return "Please add a description.";
-    if (!form.price)              return "Please enter a price.";
     if (!form.location.trim())    return "Please enter a location.";
+    if (packages.length === 0)    return "Add at least one package.";
+    for (let i = 0; i < packages.length; i++) {
+      if (!packages[i].price) return `Please enter a price for the ${TIER_LABELS[i] || `Package ${i + 1}`} package.`;
+    }
     return null;
   };
 
+  // ── Submit ───────────────────────────────────────────────────
   const handleSubmit = async () => {
-  const err = validate();
-  if (err) { setError(err); return; }
+    const err = validate();
+    if (err) { setError(err); return; }
 
-  setError("");
-  setLoading(true);
+    setError("");
+    setLoading(true);
 
-  const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
+    const data = new FormData();
+    data.append("serviceType", form.serviceType);
+    data.append("title", form.title);
+    data.append("description", form.description);
+    data.append("packages", JSON.stringify(packages));
+    data.append("location", form.location);
+    form.images.forEach((img) => data.append("images", img));
 
-  const data = new FormData();
-  data.append("serviceType", form.serviceType);
-  data.append("title", form.title);
-  data.append("description", form.description);
-  data.append("price", form.price);
-  data.append("location", form.location);
+    try {
+      await API.post("/vendors/add", data, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSuccess(true);
+    } catch (e) {
+      console.error("FRONTEND ERROR:", e.response?.data);
+      setError("Failed to upload service. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  form.images.forEach((img) => {
-    data.append("images", img);
-  });
+  const resetForm = () => {
+    setSuccess(false);
+    setForm({ serviceType: "decor", title: "", description: "", location: "", images: [] });
+    setPackages([{ name: "Basic", price: "", features: [""] }]);
+    setImagePreview("");
+  };
 
-  try {
-    await API.post("/vendors/add", data, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        // ❌ DO NOT set Content-Type here — axios sets it automatically with correct boundary
-      }
-    });
-
-    setSuccess(true);
-  } catch (e) {
-    console.error("FRONTEND ERROR:", e.response?.data); // 👈 add this
-    setError("Failed to upload service");
-  } finally {
-    setLoading(false);
-  }
-};
   const selectedType = SERVICE_TYPES.find(t => t.value === form.serviceType);
 
   return (
@@ -83,31 +129,20 @@ export default function AddService() {
 
         <div className="as-body">
           {success ? (
+            /* ── SUCCESS SCREEN ── */
             <div className="as-success-screen">
               <div className="as-success-icon">✓</div>
               <h2>Service Listed!</h2>
               <p>Your service has been successfully added and is now visible to clients.</p>
               <div className="as-success-btns">
                 <a href="/dashboard" className="as-btn-primary">Go to Dashboard →</a>
-                <button
-                  className="as-btn-ghost"
-                  onClick={() => { setSuccess(false); setForm({
-  serviceType: "decor",
-  title: "",
-  description: "",
-  price: "",
-  location: "",
-  images: []
-}); setImagePreview(""); }}
-                >
-                  Add Another
-                </button>
+                <button className="as-btn-ghost" onClick={resetForm}>Add Another</button>
               </div>
             </div>
           ) : (
             <div className="as-layout">
 
-              {/* LEFT — FORM */}
+              {/* ── LEFT — FORM ── */}
               <div className="as-form-col">
                 <div className="as-form-header">
                   <a href="/dashboard" className="as-back">← Back to Dashboard</a>
@@ -160,58 +195,128 @@ export default function AddService() {
                   <span className="as-char-count">{form.description.length} / 500</span>
                 </div>
 
-                {/* PRICE + LOCATION */}
-                <div className="as-row">
-                  <div className="as-field">
-                    <label className="as-label">Starting Price (₹)</label>
-                    <div className="as-input-wrap">
-                      <span className="as-icon">₹</span>
-                      <input
-                        type="number"
-                        placeholder="e.g. 15000"
-                        value={form.price}
-                        onChange={(e) => set("price", e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <div className="as-field">
-                    <label className="as-label">Location</label>
-                    <div className="as-input-wrap">
-                      <span className="as-icon">◉</span>
-                      <input
-                        placeholder="e.g. Delhi, Mumbai…"
-                        value={form.location}
-                        onChange={(e) => set("location", e.target.value)}
-                      />
-                    </div>
+                {/* LOCATION */}
+                <div className="as-field">
+                  <label className="as-label">Location</label>
+                  <div className="as-input-wrap">
+                    <span className="as-icon">◉</span>
+                    <input
+                      placeholder="e.g. Delhi, Mumbai…"
+                      value={form.location}
+                      onChange={(e) => set("location", e.target.value)}
+                    />
                   </div>
                 </div>
 
-                {/* IMAGE */}
+                {/* ── PACKAGES ── */}
                 <div className="as-field">
-  <label className="as-label">Upload Portfolio Images (max 10)</label>
+                  <label className="as-label">Packages</label>
 
-  <input
-    type="file"
-    multiple
-    accept="image/*"
-    onChange={(e) => {
-      const files = Array.from(e.target.files).slice(0, 10);
+                  {packages.map((pkg, index) => (
+                    <div key={index} className="as-pkg-card">
 
-setForm({ ...form, images: files });
+                      {/* Card header — tier badge + remove button */}
+                      <div className="as-pkg-card-header">
+                        <span className="as-pkg-tier">
+                          {TIER_LABELS[index] || `Package ${index + 1}`}
+                        </span>
+                        {index > 0 && (
+                          <button
+                            type="button"
+                            className="as-pkg-remove"
+                            onClick={() => removePackage(index)}
+                            title="Remove package"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
 
-// SAFE CHECK
-if (files.length > 0) {
-  setImagePreview(URL.createObjectURL(files[0]));
-}
-    }}
-    className="as-input-wrap"
-  />
-</div>
+                      {/* Name + Price row */}
+                      <div className="as-pkg-row">
+                        <div className="as-input-wrap">
+                          <input
+                            placeholder="Package name"
+                            value={pkg.name}
+                            onChange={(e) => updatePackage(index, "name", e.target.value)}
+                          />
+                        </div>
+                        <div className="as-input-wrap">
+                          <span className="as-icon" style={{ fontSize: 11 }}>₹</span>
+                          <input
+                            type="number"
+                            placeholder="Price"
+                            value={pkg.price}
+                            onChange={(e) => updatePackage(index, "price", e.target.value)}
+                          />
+                        </div>
+                      </div>
 
-                {error && (
-                  <div className="as-error">⚠ {error}</div>
-                )}
+                      {/* Features */}
+                      <p className="as-pkg-features-label">Features included</p>
+
+                      {pkg.features.map((f, fi) => (
+                        <div key={fi} className="as-pkg-feature-row">
+                          <span className="as-pkg-dot" />
+                          <div className="as-input-wrap" style={{ flex: 1 }}>
+                            <input
+                              placeholder="e.g. 3 hours shoot, HD delivery…"
+                              value={f}
+                              onChange={(e) => updateFeature(index, fi, e.target.value)}
+                            />
+                          </div>
+                          {pkg.features.length > 1 && (
+                            <button
+                              type="button"
+                              className="as-pkg-remove-feat"
+                              onClick={() => removeFeature(index, fi)}
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
+                      ))}
+
+                      <button
+                        type="button"
+                        className="as-add-feat-btn"
+                        onClick={() => addFeature(index)}
+                      >
+                        + Add feature
+                      </button>
+                    </div>
+                  ))}
+
+                  {packages.length < 4 && (
+                    <button
+                      type="button"
+                      onClick={addPackage}
+                      className="as-add-pkg-btn"
+                    >
+                      + Add Package
+                    </button>
+                  )}
+                </div>
+
+                {/* IMAGE UPLOAD */}
+                <div className="as-field">
+                  <label className="as-label">Upload Portfolio Images (max 10)</label>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files).slice(0, 10);
+                      setForm({ ...form, images: files });
+                      if (files.length > 0) {
+                        setImagePreview(URL.createObjectURL(files[0]));
+                      }
+                    }}
+                    className="as-file-input"
+                  />
+                </div>
+
+                {error && <div className="as-error">⚠ {error}</div>}
 
                 <button
                   className={`as-submit ${loading ? "loading" : ""}`}
@@ -230,7 +335,7 @@ if (files.length > 0) {
                 </p>
               </div>
 
-              {/* RIGHT — PREVIEW */}
+              {/* ── RIGHT — PREVIEW ── */}
               <div className="as-preview-col">
                 <div className="as-preview-sticky">
                   <p className="as-preview-label">✦ Live Preview</p>
@@ -241,7 +346,7 @@ if (files.length > 0) {
                       ) : (
                         <div className="as-preview-placeholder">
                           <span>{selectedType?.emoji}</span>
-                          <p>Add an image URL to preview</p>
+                          <p>Upload an image to preview</p>
                         </div>
                       )}
                       <span className="as-preview-badge">{selectedType?.label}</span>
@@ -256,11 +361,30 @@ if (files.length > 0) {
                       <p className="as-preview-desc">
                         {form.description || "Your service description will appear here…"}
                       </p>
+
+                      {/* Package pills preview */}
+                      {packages.length > 0 && (
+                        <div className="as-preview-pkgs">
+                          {packages.map((pkg, i) => (
+                            <div key={i} className="as-preview-pkg-pill">
+                              <span className="as-preview-pkg-name">
+                                {pkg.name || TIER_LABELS[i]}
+                              </span>
+                              <span className="as-preview-pkg-price">
+                                {pkg.price ? `₹${Number(pkg.price).toLocaleString()}` : "₹ —"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
                       <div className="as-preview-footer">
                         <div>
                           <span className="as-preview-from">Starting at</span>
                           <span className="as-preview-price">
-                            {form.price ? `₹${Number(form.price).toLocaleString()}` : "₹ —"}
+                            {packages[0]?.price
+                              ? `₹${Number(packages[0].price).toLocaleString()}`
+                              : "₹ —"}
                           </span>
                         </div>
                         <span className="as-preview-btn">View →</span>
@@ -279,6 +403,7 @@ if (files.length > 0) {
   );
 }
 
+// ── STYLES ────────────────────────────────────────────────────────────────────
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,300&family=DM+Sans:wght@300;400;500&display=swap');
 
@@ -366,7 +491,7 @@ const styles = `
     display: flex; align-items: center; gap: 10px;
     border: 1px solid var(--border);
     border-radius: 7px;
-    padding: 12px 14px;
+    padding: 11px 14px;
     background: var(--white);
     transition: border-color 0.2s, box-shadow 0.2s;
   }
@@ -404,11 +529,7 @@ const styles = `
   .as-textarea-wrap textarea::placeholder { color: #bbb4a8; }
   .as-char-count { font-size: 11px; color: var(--muted); text-align: right; }
 
-  /* ROW */
-  .as-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  @media (max-width: 580px) { .as-row { grid-template-columns: 1fr; } }
-
-  /* SERVICE TYPE GRID */
+  /* ── SERVICE TYPE GRID ── */
   .as-type-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -436,7 +557,139 @@ const styles = `
   }
   .as-type-emoji { font-size: 1.4rem; }
 
-  /* ERROR */
+  /* ── PACKAGES ── */
+  .as-pkg-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    animation: fadeUp 0.3s ease both;
+  }
+  .as-pkg-card:focus-within {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.08);
+  }
+  .as-pkg-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .as-pkg-tier {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    background: rgba(201,168,76,0.08);
+    border: 1px solid var(--border);
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+  .as-pkg-remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #ccc;
+    font-size: 20px;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: color 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .as-pkg-remove:hover { color: #b85c5c; }
+  .as-pkg-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 480px) { .as-pkg-row { grid-template-columns: 1fr; } }
+  .as-pkg-features-label {
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .as-pkg-feature-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 7px;
+  }
+  .as-pkg-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--gold);
+    opacity: 0.55;
+    flex-shrink: 0;
+  }
+  .as-pkg-remove-feat {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #ccc;
+    font-size: 16px;
+    line-height: 1;
+    padding: 0 4px;
+    transition: color 0.2s;
+    flex-shrink: 0;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .as-pkg-remove-feat:hover { color: #b85c5c; }
+  .as-add-feat-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--gold);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12.5px;
+    font-weight: 500;
+    padding: 6px 0 0;
+    letter-spacing: 0.03em;
+    transition: opacity 0.2s;
+    text-align: left;
+  }
+  .as-add-feat-btn:hover { opacity: 0.7; }
+  .as-add-pkg-btn {
+    width: 100%;
+    padding: 14px;
+    background: none;
+    border: 1px dashed rgba(201,168,76,0.4);
+    border-radius: 10px;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.03em;
+    margin-top: 2px;
+  }
+  .as-add-pkg-btn:hover {
+    border-color: var(--gold);
+    color: var(--ink);
+    background: rgba(201,168,76,0.04);
+  }
+
+  /* ── FILE INPUT ── */
+  .as-file-input {
+    border: 1px dashed var(--border);
+    border-radius: 7px;
+    padding: 12px 14px;
+    background: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    width: 100%;
+  }
+
+  /* ── ERROR ── */
   .as-error {
     font-size: 12.5px;
     color: #b85c5c;
@@ -447,7 +700,7 @@ const styles = `
     margin-bottom: 18px;
   }
 
-  /* SUBMIT */
+  /* ── SUBMIT ── */
   .as-submit {
     width: 100%;
     padding: 16px;
@@ -505,9 +758,7 @@ const styles = `
     background: linear-gradient(135deg, #ede8e0, #e0d8cc);
     overflow: hidden;
   }
-  .as-preview-img img {
-    width: 100%; height: 100%; object-fit: cover;
-  }
+  .as-preview-img img { width: 100%; height: 100%; object-fit: cover; }
   .as-preview-placeholder {
     width: 100%; height: 100%;
     display: flex; flex-direction: column;
@@ -536,11 +787,34 @@ const styles = `
   .as-preview-loc { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
   .as-preview-desc {
     font-size: 12.5px; color: var(--muted);
-    line-height: 1.6; margin-bottom: 16px;
+    line-height: 1.6; margin-bottom: 14px;
     display: -webkit-box; -webkit-line-clamp: 3;
     -webkit-box-orient: vertical; overflow: hidden;
     min-height: 3em;
   }
+
+  /* Package pills in preview */
+  .as-preview-pkgs {
+    display: flex; flex-direction: column; gap: 6px;
+    margin-bottom: 14px;
+  }
+  .as-preview-pkg-pill {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 12px;
+  }
+  .as-preview-pkg-name {
+    font-size: 11.5px; font-weight: 500;
+    color: var(--ink); letter-spacing: 0.03em;
+  }
+  .as-preview-pkg-price {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px; font-weight: 600;
+    color: var(--gold);
+  }
+
   .as-preview-footer {
     display: flex; justify-content: space-between; align-items: center;
     border-top: 1px solid var(--border); padding-top: 14px;

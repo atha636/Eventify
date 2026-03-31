@@ -17,7 +17,7 @@ export default function UserDashboard() {
     const token = localStorage.getItem("token");
     try {
       const res = await API.get("/bookings", {
-        headers: { Authorization: token },
+        headers: { Authorization: `Bearer ${token}` },
       });
       setBookings(res.data);
     } catch (err) {

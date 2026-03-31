@@ -25,18 +25,18 @@ exports.getBookings = async (req, res) => {
 
 exports.getVendorBookings = async (req, res) => {
   try {
-    // find vendor linked to logged-in user
-    const vendor = await Vendor.findOne({ userId: req.user.id });
+    // ✅ get all services created by this vendor
+    const vendors = await Vendor.find({ userId: req.user.id });
 
-    if (!vendor) {
-      return res.status(404).json({ msg: "Vendor not found" });
-    }
+    const vendorIds = vendors.map(v => v._id);
 
-    // get bookings for this vendor
-    const bookings = await Booking.find({ vendorId: vendor._id })
-      .populate("userId", "name email");
+    // ✅ get bookings for ALL services
+    const bookings = await Booking.find({
+      vendorId: { $in: vendorIds }
+    }).populate("userId", "name email");
 
     res.json(bookings);
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });

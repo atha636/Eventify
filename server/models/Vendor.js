@@ -1,26 +1,37 @@
 const mongoose = require("mongoose");
 
-const vendorSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User"
-  },
-  serviceType: String,
-  title: String,
-  description: String,
-  images: [String],
-  packages: [
-    {
-      name: String,
-      price: Number,
-      details: String
-    }
-  ],
-  location: String,
-  isApproved: {
-    type: Boolean,
-    default: false
-  }
+const packageSchema = new mongoose.Schema({
+  name:     { type: String },
+  price:    { type: Number },
+  features: [String],
 });
 
-module.exports = mongoose.model("Vendor", vendorSchema);
+const serviceSchema = new mongoose.Schema(
+  {
+    vendorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    serviceType: {
+      type: String,
+      lowercase: true,   // ✅ always stored lowercase — no more case mismatch
+      trim: true,
+    },
+    title:       { type: String, trim: true },
+    description: { type: String, trim: true },
+    location:    { type: String, trim: true },
+    images:      [String],
+    packages:    [packageSchema],
+
+    // ✅ default true — new services always visible without manual approval
+    isApproved: {
+      type: Boolean,
+      default: true,
+    },
+
+    rating: { type: Number },
+  },
+  { timestamps: true }
+);
+
+module.exports = mongoose.model("Vendor", serviceSchema);

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
+import ServiceCard from "../components/ServiceCard";
 
 const STATUS_META = {
   pending:  { label: "Pending",  color: "#c9a84c", bg: "rgba(201,168,76,0.1)",  border: "rgba(201,168,76,0.3)"  },
@@ -9,33 +10,54 @@ const STATUS_META = {
 };
 
 export default function VendorDashboard() {
-  const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(null);
-  const [filter, setFilter] = useState("all");
+  const [bookings, setBookings]   = useState([]);
+  const [services, setServices]   = useState([]);
+  const [loadingB, setLoadingB]   = useState(true);
+  const [loadingS, setLoadingS]   = useState(true);
+  const [updating, setUpdating]   = useState(null);
+  const [filter,   setFilter]     = useState("all");
 
+  // ── Fetch bookings ───────────────────────────────────────────
   const fetchBookings = async () => {
     const token = localStorage.getItem("token");
     try {
       const res = await API.get("/bookings/vendor", {
-        headers: { Authorization: token },
+        headers: { Authorization: `Bearer ${token}` },
       });
       setBookings(res.data);
     } catch (e) {
-      console.error(e);
+      console.error("fetchBookings:", e);
     } finally {
-      setLoading(false);
+      setLoadingB(false);
     }
   };
 
-  useEffect(() => { fetchBookings(); }, []);
+  // ── Fetch vendor's own services ──────────────────────────────
+  const fetchServices = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await API.get("/vendors/my-services", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setServices(res.data);
+    } catch (e) {
+      console.error("fetchServices:", e);
+    } finally {
+      setLoadingS(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBookings();
+    fetchServices();
+  }, []);
 
   const updateStatus = async (id, status) => {
     const token = localStorage.getItem("token");
     setUpdating(id + status);
     try {
       await API.put(`/bookings/${id}`, { status }, {
-        headers: { Authorization: token },
+        headers: { Authorization: `Bearer ${token}` },
       });
       await fetchBookings();
     } finally {
@@ -43,11 +65,16 @@ export default function VendorDashboard() {
     }
   };
 
+  // Called by ServiceCard when a service is deleted
+  const handleServiceDeleted = (deletedId) => {
+    setServices((prev) => prev.filter((s) => s._id !== deletedId));
+  };
+
   const filtered = filter === "all" ? bookings : bookings.filter(b => b.status === filter);
 
   const counts = {
-    all: bookings.length,
-    pending: bookings.filter(b => b.status === "pending").length,
+    all:      bookings.length,
+    pending:  bookings.filter(b => b.status === "pending").length,
     approved: bookings.filter(b => b.status === "approved").length,
     rejected: bookings.filter(b => b.status === "rejected").length,
   };
@@ -67,18 +94,16 @@ export default function VendorDashboard() {
               <h1 className="vd-title">Dashboard</h1>
               <p className="vd-subtitle">Manage your bookings and services</p>
             </div>
-            <a href="/add-service" className="vd-add-btn">
-              + Add New Service
-            </a>
+            <a href="/add-service" className="vd-add-btn">+ Add New Service</a>
           </div>
 
           {/* ── STATS ── */}
           <div className="vd-stats">
             {[
-              { label: "Total Bookings", value: counts.all, icon: "📋" },
-              { label: "Pending",        value: counts.pending,  icon: "⏳" },
-              { label: "Approved",       value: counts.approved, icon: "✓" },
-              { label: "Rejected",       value: counts.rejected, icon: "✕" },
+              { label: "Total Bookings", value: counts.all,      icon: "📋" },
+              { label: "Pending",        value: counts.pending,   icon: "⏳" },
+              { label: "Approved",       value: counts.approved,  icon: "✓"  },
+              { label: "Rejected",       value: counts.rejected,  icon: "✕"  },
             ].map((s) => (
               <div key={s.label} className="vd-stat-card">
                 <span className="vd-stat-icon">{s.icon}</span>
@@ -88,108 +113,153 @@ export default function VendorDashboard() {
             ))}
           </div>
 
-          {/* ── FILTER TABS ── */}
-          <div className="vd-tabs">
-            {["all", "pending", "approved", "rejected"].map((tab) => (
-              <button
-                key={tab}
-                className={`vd-tab ${filter === tab ? "active" : ""}`}
-                onClick={() => setFilter(tab)}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                <span className="vd-tab-count">{counts[tab]}</span>
-              </button>
-            ))}
+          {/* ── MY SERVICES SECTION ── */}
+          <div className="vd-section">
+            <div className="vd-section-header">
+              <div>
+                <h2 className="vd-section-title">My Services</h2>
+                <p className="vd-section-sub">
+                  {loadingS ? "Loading…" : `${services.length} service${services.length !== 1 ? "s" : ""} listed`}
+                </p>
+              </div>
+              <a href="/add-service" className="vd-section-add">+ New Service</a>
+            </div>
+
+            {loadingS ? (
+              <div className="vd-svc-grid">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="vd-skeleton vd-skeleton-card" style={{ animationDelay: `${i * 0.08}s` }} />
+                ))}
+              </div>
+            ) : services.length === 0 ? (
+              <div className="vd-svc-empty">
+                <span className="vd-svc-empty-icon">🏷</span>
+                <p className="vd-svc-empty-title">No services yet</p>
+                <p className="vd-svc-empty-sub">Add your first service to start receiving bookings.</p>
+                <a href="/add-service" className="vd-add-btn" style={{ marginTop: 16, display: "inline-block" }}>
+                  + Add Service
+                </a>
+              </div>
+            ) : (
+              <div className="vd-svc-grid">
+                {services.map((v, i) => (
+                  <div key={v._id} style={{ animationDelay: `${i * 0.06}s` }} className="vd-svc-card-wrapper">
+                    <ServiceCard
+                      vendor={v}
+                      showDelete={true}
+                      onDeleted={handleServiceDeleted}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* ── BOOKINGS ── */}
-          {loading ? (
-            <div className="vd-loading">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="vd-skeleton" style={{ animationDelay: `${i * 0.1}s` }} />
+          {/* ── BOOKINGS SECTION ── */}
+          <div className="vd-section">
+            <div className="vd-section-header">
+              <div>
+                <h2 className="vd-section-title">Bookings</h2>
+                <p className="vd-section-sub">Manage incoming booking requests</p>
+              </div>
+            </div>
+
+            {/* Filter tabs */}
+            <div className="vd-tabs">
+              {["all", "pending", "approved", "rejected"].map((tab) => (
+                <button
+                  key={tab}
+                  className={`vd-tab ${filter === tab ? "active" : ""}`}
+                  onClick={() => setFilter(tab)}
+                >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  <span className="vd-tab-count">{counts[tab]}</span>
+                </button>
               ))}
             </div>
-          ) : filtered.length === 0 ? (
-            <div className="vd-empty">
-              <div className="vd-empty-icon">📭</div>
-              <h3>No bookings found</h3>
-              <p>{filter === "all" ? "You haven't received any bookings yet." : `No ${filter} bookings.`}</p>
-            </div>
-          ) : (
-            <div className="vd-bookings">
-              {filtered.map((b, i) => {
-                const meta = STATUS_META[b.status] || STATUS_META.pending;
-                return (
-                  <div
-                    key={b._id}
-                    className="vd-booking-card"
-                    style={{ animationDelay: `${i * 0.06}s` }}
-                  >
-                    {/* LEFT */}
-                    <div className="vd-booking-left">
-                      <div className="vd-avatar">
-                        {b.userId?.name?.charAt(0)?.toUpperCase() || "?"}
-                      </div>
-                      <div className="vd-booking-info">
-                        <h3 className="vd-booking-name">{b.userId?.name || "Unknown Client"}</h3>
-                        <p className="vd-booking-email">{b.userId?.email || ""}</p>
-                        <div className="vd-booking-meta">
-                          <span className="vd-meta-item">
-                            🗓 {new Date(b.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                          </span>
-                          {b.package && (
-                            <span className="vd-meta-item">📦 {b.package}</span>
-                          )}
+
+            {loadingB ? (
+              <div className="vd-loading">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="vd-skeleton" style={{ animationDelay: `${i * 0.1}s` }} />
+                ))}
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="vd-empty">
+                <div className="vd-empty-icon">📭</div>
+                <h3>No bookings found</h3>
+                <p>{filter === "all" ? "You haven't received any bookings yet." : `No ${filter} bookings.`}</p>
+              </div>
+            ) : (
+              <div className="vd-bookings">
+                {filtered.map((b, i) => {
+                  const meta = STATUS_META[b.status] || STATUS_META.pending;
+                  return (
+                    <div
+                      key={b._id}
+                      className="vd-booking-card"
+                      style={{ animationDelay: `${i * 0.06}s` }}
+                    >
+                      {/* LEFT */}
+                      <div className="vd-booking-left">
+                        <div className="vd-avatar">
+                          {b.userId?.name?.charAt(0)?.toUpperCase() || "?"}
+                        </div>
+                        <div className="vd-booking-info">
+                          <h3 className="vd-booking-name">{b.userId?.name || "Unknown Client"}</h3>
+                          <p className="vd-booking-email">{b.userId?.email || ""}</p>
+                          <div className="vd-booking-meta">
+                            <span className="vd-meta-item">
+                              🗓 {new Date(b.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                            </span>
+                            {b.packageName && (
+                              <span className="vd-meta-item">📦 {b.packageName}</span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* RIGHT */}
-                    <div className="vd-booking-right">
-                      <span
-                        className="vd-status-badge"
-                        style={{ color: meta.color, background: meta.bg, border: `1px solid ${meta.border}` }}
-                      >
-                        {meta.label}
-                      </span>
-
-                      {b.status === "pending" && (
-                        <div className="vd-actions">
-                          <button
-                            className={`vd-accept-btn ${updating === b._id + "approved" ? "loading" : ""}`}
-                            onClick={() => updateStatus(b._id, "approved")}
-                            disabled={!!updating}
-                          >
-                            {updating === b._id + "approved"
-                              ? <span className="vd-spinner" />
-                              : "✓ Accept"}
-                          </button>
-                          <button
-                            className={`vd-reject-btn ${updating === b._id + "rejected" ? "loading" : ""}`}
-                            onClick={() => updateStatus(b._id, "rejected")}
-                            disabled={!!updating}
-                          >
-                            {updating === b._id + "rejected"
-                              ? <span className="vd-spinner vd-spinner-dark" />
-                              : "✕ Reject"}
-                          </button>
-                        </div>
-                      )}
-
-                      {b.status === "approved" && (
-                        <button
-                          className="vd-undo-btn"
-                          onClick={() => updateStatus(b._id, "pending")}
+                      {/* RIGHT */}
+                      <div className="vd-booking-right">
+                        <span
+                          className="vd-status-badge"
+                          style={{ color: meta.color, background: meta.bg, border: `1px solid ${meta.border}` }}
                         >
-                          Undo
-                        </button>
-                      )}
+                          {meta.label}
+                        </span>
+
+                        {b.status === "pending" && (
+                          <div className="vd-actions">
+                            <button
+                              className={`vd-accept-btn ${updating === b._id + "approved" ? "loading" : ""}`}
+                              onClick={() => updateStatus(b._id, "approved")}
+                              disabled={!!updating}
+                            >
+                              {updating === b._id + "approved" ? <span className="vd-spinner" /> : "✓ Accept"}
+                            </button>
+                            <button
+                              className={`vd-reject-btn ${updating === b._id + "rejected" ? "loading" : ""}`}
+                              onClick={() => updateStatus(b._id, "rejected")}
+                              disabled={!!updating}
+                            >
+                              {updating === b._id + "rejected" ? <span className="vd-spinner vd-spinner-dark" /> : "✕ Reject"}
+                            </button>
+                          </div>
+                        )}
+
+                        {b.status === "approved" && (
+                          <button className="vd-undo-btn" onClick={() => updateStatus(b._id, "pending")}>
+                            Undo
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
     </>
@@ -220,7 +290,7 @@ const styles = `
   }
 
   .vd-body {
-    max-width: 1000px;
+    max-width: 1100px;
     margin: 0 auto;
     padding: 48px 32px 80px;
   }
@@ -278,7 +348,7 @@ const styles = `
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 14px;
-    margin-bottom: 32px;
+    margin-bottom: 48px;
     animation: fadeUp 0.5s ease 0.1s both;
   }
   @media (max-width: 700px) { .vd-stats { grid-template-columns: repeat(2,1fr); } }
@@ -304,14 +374,72 @@ const styles = `
   }
   .vd-stat-label { font-size: 11.5px; color: var(--muted); }
 
+  /* ── SECTIONS ── */
+  .vd-section {
+    margin-bottom: 56px;
+    animation: fadeUp 0.5s ease 0.15s both;
+  }
+  .vd-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .vd-section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 3px;
+  }
+  .vd-section-sub { font-size: 12.5px; color: var(--muted); }
+  .vd-section-add {
+    font-size: 12.5px;
+    color: var(--gold);
+    text-decoration: none;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .vd-section-add:hover { background: rgba(201,168,76,0.07); border-color: var(--gold); }
+
+  /* ── SERVICES GRID ── */
+  .vd-svc-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+  @media (max-width: 900px) { .vd-svc-grid { grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 560px)  { .vd-svc-grid { grid-template-columns: 1fr; } }
+
+  .vd-svc-card-wrapper { animation: fadeUp 0.45s ease both; }
+
+  .vd-svc-empty {
+    background: var(--white);
+    border: 1px dashed rgba(201,168,76,0.35);
+    border-radius: 12px;
+    padding: 48px 24px;
+    text-align: center;
+  }
+  .vd-svc-empty-icon { font-size: 2.2rem; display: block; margin-bottom: 12px; }
+  .vd-svc-empty-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.3rem; font-weight: 600;
+    color: var(--ink); margin-bottom: 6px;
+  }
+  .vd-svc-empty-sub { font-size: 13px; color: var(--muted); }
+
   /* ── TABS ── */
   .vd-tabs {
     display: flex;
     gap: 6px;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
     border-bottom: 1px solid var(--border);
-    padding-bottom: 0;
-    animation: fadeUp 0.5s ease 0.15s both;
     flex-wrap: wrap;
   }
   .vd-tab {
@@ -331,11 +459,7 @@ const styles = `
     text-transform: capitalize;
   }
   .vd-tab:hover { color: var(--ink); }
-  .vd-tab.active {
-    color: var(--ink);
-    border-bottom-color: var(--gold);
-    font-weight: 500;
-  }
+  .vd-tab.active { color: var(--ink); border-bottom-color: var(--gold); font-weight: 500; }
   .vd-tab-count {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -388,11 +512,7 @@ const styles = `
   }
   .vd-booking-email { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
   .vd-booking-meta { display: flex; gap: 14px; flex-wrap: wrap; }
-  .vd-meta-item {
-    font-size: 12px;
-    color: var(--muted);
-    display: flex; align-items: center; gap: 4px;
-  }
+  .vd-meta-item { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
 
   .vd-booking-right {
     display: flex;
@@ -402,7 +522,6 @@ const styles = `
     flex-wrap: wrap;
     justify-content: flex-end;
   }
-
   .vd-status-badge {
     font-size: 11px;
     font-weight: 500;
@@ -412,7 +531,6 @@ const styles = `
     border-radius: 20px;
     white-space: nowrap;
   }
-
   .vd-actions { display: flex; gap: 8px; }
   .vd-accept-btn {
     padding: 9px 18px;
@@ -422,16 +540,11 @@ const styles = `
     border-radius: 6px;
     font-family: 'DM Sans', sans-serif;
     font-size: 12.5px; font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
+    cursor: pointer; transition: all 0.2s;
     display: flex; align-items: center; gap: 6px;
     min-width: 90px; justify-content: center;
   }
-  .vd-accept-btn:hover:not(:disabled) {
-    background: #2d6a4f;
-    color: var(--white);
-    border-color: #2d6a4f;
-  }
+  .vd-accept-btn:hover:not(:disabled) { background: #2d6a4f; color: var(--white); border-color: #2d6a4f; }
   .vd-reject-btn {
     padding: 9px 18px;
     background: rgba(184,92,92,0.08);
@@ -440,29 +553,19 @@ const styles = `
     border-radius: 6px;
     font-family: 'DM Sans', sans-serif;
     font-size: 12.5px; font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
+    cursor: pointer; transition: all 0.2s;
     display: flex; align-items: center; gap: 6px;
     min-width: 90px; justify-content: center;
   }
-  .vd-reject-btn:hover:not(:disabled) {
-    background: #b85c5c;
-    color: var(--white);
-    border-color: #b85c5c;
-  }
-  .vd-accept-btn.loading,
-  .vd-reject-btn.loading { opacity: 0.6; pointer-events: none; }
+  .vd-reject-btn:hover:not(:disabled) { background: #b85c5c; color: var(--white); border-color: #b85c5c; }
+  .vd-accept-btn.loading, .vd-reject-btn.loading { opacity: 0.6; pointer-events: none; }
 
   .vd-undo-btn {
     padding: 7px 14px;
-    background: none;
-    color: var(--muted);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.2s;
+    background: none; color: var(--muted);
+    border: 1px solid var(--border); border-radius: 6px;
+    font-family: 'DM Sans', sans-serif; font-size: 12px;
+    cursor: pointer; transition: all 0.2s;
   }
   .vd-undo-btn:hover { border-color: var(--gold); color: var(--ink); }
 
@@ -474,10 +577,7 @@ const styles = `
     animation: spin 0.7s linear infinite;
     display: inline-block;
   }
-  .vd-spinner-dark {
-    border-color: rgba(184,92,92,0.3);
-    border-top-color: #b85c5c;
-  }
+  .vd-spinner-dark { border-color: rgba(184,92,92,0.3); border-top-color: #b85c5c; }
 
   /* SKELETON */
   .vd-loading { display: flex; flex-direction: column; gap: 12px; }
@@ -488,12 +588,10 @@ const styles = `
     background-size: 200% 100%;
     animation: shimmer 1.4s ease infinite;
   }
+  .vd-skeleton-card { height: 280px; }
 
   /* EMPTY */
-  .vd-empty {
-    text-align: center;
-    padding: 72px 20px;
-  }
+  .vd-empty { text-align: center; padding: 72px 20px; }
   .vd-empty-icon { font-size: 3rem; margin-bottom: 16px; }
   .vd-empty h3 {
     font-family: 'Cormorant Garamond', serif;
