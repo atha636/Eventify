@@ -223,8 +223,8 @@ export default function Vendors() {
             </div>
           ) : filtered.length === 0 ? (
             <div className="vn-empty">
-              <div className="vn-empty-icon">🔍</div>
-              <h3>No vendors found</h3>
+              <div className="vn-empty-icon">⌛⌛</div>
+              <h3>coming soon...</h3>
               <p>
                 {search
                   ? `No results for "${search}". Try adjusting your search or filters.`

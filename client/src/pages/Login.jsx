@@ -1,5 +1,6 @@
 import { useState } from "react";
 import API from "../services/api";
+import { GoogleLogin } from "@react-oauth/google";
 
 export default function Login() {
   const [data, setData] = useState({ email: "", password: "" });
@@ -159,16 +160,35 @@ localStorage.setItem("user", JSON.stringify(res.data.user));
                 </div>
 
                 <div className="lg-socials">
-                  {[
-                    { icon: "G", label: "Google" },
-                    { icon: "f", label: "Facebook" },
-                  ].map((s) => (
-                    <button key={s.label} className="lg-social-btn">
-                      <span className="lg-social-icon">{s.icon}</span>
-                      {s.label}
-                    </button>
-                  ))}
-                </div>
+
+  {/* GOOGLE LOGIN */}
+  <GoogleLogin
+    onSuccess={async (credentialResponse) => {
+      try {
+        const res = await API.post("/auth/google", {
+          token: credentialResponse.credential,
+        });
+
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+
+        window.location.href = "/";
+
+      } catch (err) {
+        console.error("Google login error:", err);
+        setError("Google login failed");
+      }
+    }}
+    onError={() => setError("Google login failed")}
+  />
+
+  {/* OPTIONAL: keep Facebook UI */}
+  <button className="lg-social-btn">
+    <span className="lg-social-icon">f</span>
+    Facebook
+  </button>
+
+</div>
 
                 <p className="lg-terms">
                   Protected by reCAPTCHA ·{" "}

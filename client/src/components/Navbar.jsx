@@ -1,16 +1,27 @@
 import { Link, useLocation } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function Navbar() {
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
+  const [hidden, setHidden] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const lastScrollY = useRef(0);
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", onScroll);
+    const onScroll = () => {
+      const currentY = window.scrollY;
+      const goingDown = currentY > lastScrollY.current;
+
+      setScrolled(currentY > 40);
+      setHidden(goingDown && currentY > 80);
+
+      lastScrollY.current = currentY;
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
@@ -32,7 +43,7 @@ export default function Navbar() {
   return (
     <>
       <style>{styles}</style>
-      <nav className={`nb-root ${isTransparent ? "nb-transparent" : "nb-solid"} ${scrolled ? "nb-scrolled" : ""}`}>
+      <nav className={`nb-root ${isTransparent ? "nb-transparent" : "nb-solid"} ${scrolled ? "nb-scrolled" : ""} ${hidden ? "nb-hidden" : ""}`}>
         <div className="nb-inner">
 
           {/* LOGO */}
@@ -53,16 +64,15 @@ export default function Navbar() {
             {token ? (
               <>
                 {user?.role === "vendor" && (
-  <Link to="/vendor-dashboard" className="nb-ghost-btn">
-    Vendor Dashboard
-  </Link>
-)}
-
-{user?.role === "user" && (
-  <Link to="/my-bookings" className="nb-ghost-btn">
-    My Bookings
-  </Link>
-)}
+                  <Link to="/vendor-dashboard" className="nb-ghost-btn">
+                    Vendor Dashboard
+                  </Link>
+                )}
+                {user?.role === "user" && (
+                  <Link to="/my-bookings" className="nb-ghost-btn">
+                    My Bookings
+                  </Link>
+                )}
                 <button className="nb-solid-btn" onClick={handleLogout}>Log Out</button>
               </>
             ) : (
@@ -92,16 +102,15 @@ export default function Navbar() {
           {token ? (
             <>
               {user?.role === "vendor" && (
-  <Link to="/vendor-dashboard" className="nb-ghost-btn">
-    Vendor Dashboard
-  </Link>
-)}
-
-{user?.role === "user" && (
-  <Link to="/my-bookings" className="nb-ghost-btn">
-    My Bookings
-  </Link>
-)}
+                <Link to="/vendor-dashboard" className="nb-ghost-btn">
+                  Vendor Dashboard
+                </Link>
+              )}
+              {user?.role === "user" && (
+                <Link to="/my-bookings" className="nb-ghost-btn">
+                  My Bookings
+                </Link>
+              )}
               <button className="nb-mobile-link nb-mobile-logout" onClick={handleLogout}>Log Out</button>
             </>
           ) : (
@@ -130,12 +139,19 @@ const styles = `
   }
 
   .nb-root {
-  width: 100%;          
-    position: sticky;
+    width: 100%;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 100;
     font-family: 'DM Sans', sans-serif;
-    transition: background 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease;
+    transition: transform 0.35s ease, background 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease;
+  }
+
+  /* Hide navbar by sliding it up */
+  .nb-hidden {
+    transform: translateY(-100%);
   }
 
   /* transparent over dark hero */
@@ -145,19 +161,25 @@ const styles = `
   }
   .nb-transparent .nb-link,
   .nb-transparent .nb-ghost-btn {
-    color: rgba(245,240,232,0.75);
+    color: rgba(245,240,232,0.92);
+    text-shadow: 0 1px 6px rgba(0,0,0,0.4);
   }
   .nb-transparent .nb-link:hover,
   .nb-transparent .nb-ghost-btn:hover {
-    color: var(--gold-light);
+    color: var(--gold);
+    text-shadow: 0 0 8px rgba(201,168,76,0.6);
   }
   .nb-transparent .nb-link-active {
     color: var(--gold) !important;
   }
-  .nb-transparent .nb-logo-text { color: var(--gold-light); }
+  .nb-transparent .nb-logo-text {
+    color: var(--gold-light);
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  }
   .nb-transparent .nb-logo-mark { color: var(--gold); }
   .nb-transparent .nb-solid-btn {
-    background: rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(6px);
     color: var(--white);
     border: 1px solid rgba(255,255,255,0.2);
   }
@@ -192,8 +214,24 @@ const styles = `
   }
   .nb-solid .nb-burger span { background: var(--ink); }
 
-  /* scrolled shadow */
-  .nb-scrolled { box-shadow: 0 4px 24px rgba(14,12,10,0.08); }
+  /* scrolled — dark glass */
+  .nb-scrolled {
+    background: rgba(14, 12, 10, 0.85);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+  }
+  .nb-scrolled .nb-link,
+  .nb-scrolled .nb-ghost-btn {
+    color: rgba(245,240,232,0.95);
+  }
+  .nb-scrolled .nb-logo-text {
+    color: var(--gold-light);
+  }
+  .nb-scrolled .nb-solid-btn {
+    background: var(--gold);
+    color: var(--ink);
+    border: none;
+  }
 
   .nb-inner {
     display: flex;

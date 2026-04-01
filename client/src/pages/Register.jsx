@@ -1,6 +1,6 @@
 import { useState } from "react";
 import API from "../services/api";
-
+import { GoogleLogin } from "@react-oauth/google";
 export default function Register() {
   const [data, setData] = useState({ name: "", email: "", password: "", role: "user" });
   const [loading, setLoading] = useState(false);
@@ -132,7 +132,31 @@ export default function Register() {
                 >
                   {loading ? <span className="rg-spinner" /> : "Create My Account →"}
                 </button>
+<div style={{ marginTop: "16px" }}>
+  <div style={{ textAlign: "center", marginBottom: "10px", fontSize: "12px", color: "#7a7265" }}>
+    or continue with
+  </div>
 
+  <GoogleLogin
+    onSuccess={async (credentialResponse) => {
+      try {
+        const res = await API.post("/auth/google", {
+          token: credentialResponse.credential,
+        });
+
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+
+        window.location.href = "/";
+
+      } catch (err) {
+        console.error(err);
+        setError("Google signup failed");
+      }
+    }}
+    onError={() => setError("Google signup failed")}
+  />
+</div>
                 <p className="rg-terms">
                   By registering, you agree to our <a href="#" className="rg-link">Terms</a> and <a href="#" className="rg-link">Privacy Policy</a>.
                 </p>
