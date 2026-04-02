@@ -25,7 +25,7 @@ localStorage.setItem("user", JSON.stringify(res.data.user));
         window.location.href = "/";
       }, 1200);
     } catch (err) {
-      setError(err?.response?.data?.message || "Invalid credentials. Please try again.");
+      setError(err?.response?.data?.msg || "Invalid credentials. Please try again.");
     } finally {
       setLoading(false);
     }
