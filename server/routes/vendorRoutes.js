@@ -6,10 +6,9 @@ const {
   getVendors,
   getByType,
   addService,
-  getMyServices
+  getMyServices,
+  deleteService 
 } = require("../controllers/vendorController");
-
-const Vendor = require("../models/Vendor");
 
 const auth = require("../middleware/authMiddleware");
 const upload = require("../middleware/upload");
@@ -39,30 +38,10 @@ router.get("/", getVendors);
 // MY SERVICES
 router.get("/my-services", auth, getMyServices);
 
-// 🔥 DELETE SERVICE (ADD THIS HERE)
-router.delete("/:id", auth, async (req, res) => {
-  try {
-    const vendor = await Vendor.findById(req.params.id);
+// DELETE SERVICE ✅
+router.delete("/:id", auth, deleteService);
 
-   if (!vendor.vendorId) {
-  return res.status(400).json({ message: "Invalid vendor data (no vendorId)" });
-}
-
-if (vendor.vendorId.toString() !== req.user.id) {
-  return res.status(403).json({ message: "Not authorized" });
-}
-
-    await Vendor.findByIdAndDelete(req.params.id);
-
-    res.json({ message: "Deleted successfully" });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ⚠️ KEEP THIS LAST
+// KEEP THIS LAST
 router.get("/:type", getByType);
 
 module.exports = router;

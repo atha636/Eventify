@@ -1,15 +1,68 @@
 const Booking = require("../models/Booking");
 const Vendor = require("../models/Vendor");
+const { sendEmail } = require("../utils/sendEmail");
+const User = require("../models/User");
+
 exports.createBooking = async (req, res) => {
   try {
     const booking = await Booking.create({
-      userId: req.user.id ,
+      userId: req.user.id,
       vendorId: req.body.vendorId,
       date: req.body.date
     });
 
+    // ✅ STEP 1: Get service
+    const vendor = await Vendor.findById(req.body.vendorId);
+    if (!vendor) {
+      return res.status(404).json({ error: "Service not found" });
+    }
+
+    // ✅ STEP 2: Vendor email
+    const vendorUser = await User.findById(vendor.vendorId);
+
+    if (vendorUser?.email) {
+      await sendEmail({
+        to: vendorUser.email,
+        subject: "New Booking Received 🎉",
+        text: `
+Hello ${vendorUser.name},
+
+You have received a new booking!
+
+Service: ${vendor.title}
+Date: ${booking.date}
+
+- Eventify Team
+        `
+      });
+    }
+
+    // ✅ STEP 3: USER EMAIL (ADD THIS 🔥)
+    const user = await User.findById(req.user.id);
+
+    if (user?.email) {
+      await sendEmail({
+        to: user.email,
+        subject: "Booking Confirmed 🎉",
+        text: `
+Hello ${user.name},
+
+Your booking has been placed successfully!
+
+Service: ${vendor.title}
+Date: ${booking.date}
+
+The vendor will respond soon.
+
+- Eventify Team
+        `
+      });
+    }
+
     res.json(booking);
+
   } catch (err) {
+    console.error("BOOKING ERROR:", err);
     res.status(500).json(err);
   }
 };
@@ -26,7 +79,7 @@ exports.getBookings = async (req, res) => {
 exports.getVendorBookings = async (req, res) => {
   try {
     // ✅ get all services created by this vendor
-    const vendors = await Vendor.find({ userId: req.user.id });
+    const vendors = await Vendor.find({ vendorId: req.user.id });
 
     const vendorIds = vendors.map(v => v._id);
 
@@ -47,11 +100,66 @@ exports.updateBookingStatus = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
 
+    if (!booking) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
+
+    // ✅ Update status
     booking.status = req.body.status;
     await booking.save();
 
+    // ✅ Get user
+    const user = await User.findById(booking.userId);
+
+    // ✅ Get service
+    const vendor = await Vendor.findById(booking.vendorId);
+
+    if (user?.email) {
+      // 🎉 ACCEPTED
+      if (booking.status === "approved") {
+        await sendEmail({
+          to: user.email,
+          subject: "Booking Approved 🎉",
+          text: `
+Hello ${user.name},
+
+Your booking has been ACCEPTED!
+
+Service: ${vendor.title}
+Date: ${booking.date}
+
+Get ready for your event 🚀
+
+- Eventify Team
+          `
+        });
+      }
+
+      // ❌ REJECTED
+      if (booking.status === "rejected") {
+        await sendEmail({
+          to: user.email,
+          subject: "Booking Rejected ❌",
+          text: `
+Hello ${user.name},
+
+Sorry, your booking has been rejected.
+
+Service: ${vendor.title}
+Date: ${booking.date}
+
+You can explore other vendors on Eventify.
+
+- Eventify Team
+          `
+        });
+      }
+    }
+
     res.json(booking);
+
   } catch (err) {
+    console.error("STATUS UPDATE ERROR:", err);
     res.status(500).json(err);
   }
 };

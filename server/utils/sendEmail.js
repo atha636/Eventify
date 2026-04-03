@@ -8,9 +8,20 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-exports.sendOTP = async (email, otp) => {
+// ✅ GENERIC EMAIL FUNCTION (for booking, service, etc.)
+const sendEmail = async ({ to, subject, text, html }) => {
   await transporter.sendMail({
     from: `"Eventify" <${process.env.EMAIL_USER}>`,
+    to,
+    subject,
+    text,
+    html,
+  });
+};
+
+// ✅ OTP EMAIL (keep this)
+const sendOTP = async (email, otp) => {
+  await sendEmail({
     to: email,
     subject: "Your OTP Code",
     html: `
@@ -20,4 +31,9 @@ exports.sendOTP = async (email, otp) => {
       <p>This code expires in 5 minutes.</p>
     `,
   });
+};
+
+module.exports = {
+  sendEmail,
+  sendOTP,
 };

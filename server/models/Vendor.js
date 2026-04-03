@@ -9,9 +9,15 @@ const packageSchema = new mongoose.Schema({
 const serviceSchema = new mongoose.Schema(
   {
     vendorId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    },
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "User",
+  required: true
+},
+
+vendorName: {
+  type: String,
+  trim: true
+},
     serviceType: {
       type: String,
       lowercase: true,   // ✅ always stored lowercase — no more case mismatch

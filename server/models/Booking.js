@@ -9,14 +9,18 @@ const bookingSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Vendor"
   },
-    packageName: String, 
+
+  packageName: String,
   packagePrice: Number,
+
   date: Date,
+
   status: {
     type: String,
     enum: ["pending", "approved", "rejected"],
     default: "pending"
   }
-});
+
+}, { timestamps: true }); // ✅ ADD THIS
 
 module.exports = mongoose.model("Booking", bookingSchema);

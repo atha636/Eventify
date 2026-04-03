@@ -1,4 +1,6 @@
 const Vendor = require("../models/Vendor");
+const { sendEmail } = require("../utils/sendEmail");
+const User = require("../models/User"); // IMPORTANT
 
 // ─────────────────────────────────────────────
 // GET all vendors
@@ -38,10 +40,6 @@ exports.getByType = async (req, res) => {
 // ─────────────────────────────────────────────
 exports.addService = async (req, res) => {
   try {
-    console.log("USER :", JSON.stringify(req.user));
-    console.log("BODY :", req.body);
-    console.log("FILES:", req.files?.length, "file(s)");
-
     if (!req.user?.id) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -57,24 +55,47 @@ exports.addService = async (req, res) => {
       }
     }
 
+    // ✅ STEP 1: Get user FIRST
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // ✅ STEP 2: Create service
     const vendor = await Vendor.create({
-      vendorId:    req.user.id,
+      vendorId: req.user.id,
+      vendorName: user.name, // ✅ now safe
       serviceType: req.body.serviceType,
-      title:       req.body.title?.trim(),
+      title: req.body.title?.trim(),
       description: req.body.description?.trim(),
-      location:    req.body.location?.trim(),
+      location: req.body.location?.trim(),
       packages,
-      images:      imageUrls,
-      isApproved:  true,   // ✅ always set explicitly
+      images: imageUrls,
+      isApproved: true,
     });
 
-    console.log("CREATED:", vendor._id, "| type:", vendor.serviceType, "| approved:", vendor.isApproved);
+    // ✅ STEP 3: Send email
+    await sendEmail({
+      to: user.email,
+      subject: "Service Added Successfully ✅",
+      text: `
+Hello ${user.name},
+
+Your service "${vendor.title}" has been added successfully.
+
+- Eventify Team
+      `
+    });
+
     res.status(201).json(vendor);
+
   } catch (err) {
     console.error("addService ERROR:", err);
     res.status(500).json({ error: err.message });
   }
-};
+}; 
+
 
 // ─────────────────────────────────────────────
 // Legacy
@@ -95,6 +116,47 @@ exports.getMyServices = async (req, res) => {
     res.json(services);
   } catch (err) {
     console.error("getMyServices ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.deleteService = async (req, res) => {
+  try {
+    const service = await Vendor.findById(req.params.id);
+
+    if (!service) {
+      return res.status(404).json({ error: "Service not found" });
+    }
+
+    // ✅ Security check (VERY IMPORTANT)
+    if (service.vendorId.toString() !== req.user.id) {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    await Vendor.findByIdAndDelete(req.params.id);
+
+    // ✅ Get user email
+    const user = await User.findById(req.user.id);
+
+    // ✅ Send email
+    await sendEmail({
+      to: user.email,
+      subject: "Service Deleted ⚠️",
+      text: `
+Hello ${user.name},
+
+Your service "${service.title}" has been removed from Eventify.
+
+If this was not intended, please contact support.
+
+- Eventify Team
+      `
+    });
+
+    res.json({ message: "Service deleted successfully" });
+
+  } catch (err) {
+    console.error("deleteService ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 };
