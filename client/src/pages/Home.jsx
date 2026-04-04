@@ -16,7 +16,7 @@ export default function Home() {
   const testimonials = [
     { name: "Priya S.", event: "Wedding · Delhi", text: "Found our photographer and decorator within an hour. Absolutely seamless experience.", avatar: "P" },
     { name: "Rohan M.", event: "Corporate · Mumbai", text: "The vendor quality is exceptional. Our product launch was a massive success.", avatar: "R" },
-    { name: "Ananya K.", event: "Birthday · Bangalore", text: "I was overwhelmed planning alone. Eventique made it feel effortless and fun.", avatar: "A" },
+    { name: "Ananya K.", event: "Birthday · Bangalore", text: "I was overwhelmed planning alone. Eventify made it feel effortless and fun.", avatar: "A" },
   ];
 
   return (
@@ -120,7 +120,7 @@ export default function Home() {
           <div className="hm-how-inner">
             <div className="hm-section-header">
               <p className="hm-eyebrow" style={{ color: "var(--gold-light)" }}>✦ Simple process</p>
-              <h2 className="hm-section-title" style={{ color: "var(--cream)" }}>How Eventique works</h2>
+              <h2 className="hm-section-title" style={{ color: "var(--cream)" }}>How Eventify works</h2>
             </div>
             <div className="hm-steps">
               {[
@@ -165,7 +165,7 @@ export default function Home() {
           <div className="hm-cta-orb" />
           <p className="hm-eyebrow" style={{ color: "var(--gold)" }}>✦ Ready to begin?</p>
           <h2 className="hm-cta-title">Your dream event starts here.</h2>
-          <p className="hm-cta-sub">Join over 12,000 clients who planned their perfect day with Eventique.</p>
+          <p className="hm-cta-sub">Join over 12,000 clients who planned their perfect day with Eventify.</p>
           <div className="hm-cta-btns">
             <button className="hm-cta-primary" onClick={() => navigate("/register")}>
               Get Started Free →
@@ -178,8 +178,8 @@ export default function Home() {
 
         {/* ── FOOTER ── */}
         <footer className="hm-footer">
-          <div className="hm-footer-logo">✦ Eventique</div>
-          <p className="hm-footer-copy">© 2025 Eventique. Crafted with care in India.</p>
+          <div className="hm-footer-logo">✦ Eventify </div>
+          <p className="hm-footer-copy">© 2025 Eventify. Crafted with care in India.</p>
           <div className="hm-footer-links">
             {["About", "Vendors", "Privacy", "Terms", "Contact"].map((l) => (
               <a key={l} href="#" className="hm-footer-link">{l}</a>

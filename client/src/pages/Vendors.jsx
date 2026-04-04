@@ -259,7 +259,7 @@ export default function Vendors() {
           <div className="vn-footer-cta">
             <div className="vn-footer-orb" />
             <p className="vn-eyebrow" style={{ color: "var(--gold)" }}>✦ Are you a professional?</p>
-            <h2 className="vn-footer-title">List your services on Eventique</h2>
+            <h2 className="vn-footer-title">List your services on Eventify</h2>
             <p className="vn-footer-sub">Join 850+ vendors and connect with thousands of clients planning their perfect event.</p>
             <a href="/register" className="vn-footer-btn">Become a Vendor →</a>
           </div>

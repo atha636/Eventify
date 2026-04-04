@@ -43,7 +43,7 @@ localStorage.setItem("user", JSON.stringify(res.data.user));
         {/* LEFT PANEL */}
         <div className="lg-left">
           <div className="lg-left-inner">
-            <div className="lg-logo">✦ Eventique</div>
+            <div className="lg-logo">✦ Eventify</div>
 
             <div className="lg-quote-block">
               <span className="lg-quote-mark">"</span>

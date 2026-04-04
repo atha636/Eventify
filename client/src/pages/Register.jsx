@@ -217,7 +217,7 @@ export default function Register() {
         {/* LEFT PANEL */}
         <div className="rg-left">
           <div className="rg-left-inner">
-            <div className="rg-logo">✦ Eventique</div>
+            <div className="rg-logo">✦ Eventify</div>
             <h2 className="rg-tagline">
               Every great event<br />begins with a single step.
             </h2>

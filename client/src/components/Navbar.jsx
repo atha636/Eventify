@@ -49,7 +49,7 @@ export default function Navbar() {
           {/* LOGO */}
           <Link to="/" className="nb-logo">
             <span className="nb-logo-mark">✦</span>
-            <span className="nb-logo-text">Eventique</span>
+            <span className="nb-logo-text">Eventify</span>
           </Link>
 
           {/* DESKTOP LINKS */}
