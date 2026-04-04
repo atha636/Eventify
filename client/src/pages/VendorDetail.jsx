@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
 
@@ -10,6 +10,18 @@ export default function VendorDetail() {
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [booked, setBooked] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [dateWarning, setDateWarning] = useState("");
+  const [showVendorModal, setShowVendorModal] = useState(false);
+  const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem("user"));
+  const isVendor = user?.role === "vendor";
+
+  // Returns tomorrow's date as YYYY-MM-DD (minimum selectable date)
+  const getTomorrow = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split("T")[0];
+  };
 
   useEffect(() => {
     API.get("/vendors").then((res) => {
@@ -22,22 +34,36 @@ export default function VendorDetail() {
   const handleBooking = async () => {
     const token = localStorage.getItem("token");
     if (!token) return alert("Please login first");
-    if (!selectedDate) return alert("Please select a date");
 
+    if (!selectedDate) {
+      setDateWarning("Please select a date to continue.");
+      return;
+    }
+
+    // Double-check: selected date must be strictly after today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const picked = new Date(selectedDate);
+    if (picked <= today) {
+      setDateWarning("Please select a future date.");
+      return;
+    }
+
+    setDateWarning("");
     setLoading(true);
     try {
       await API.post(
-  "/bookings",
-  {
-    vendorId: vendor._id,
-    date: selectedDate,
-    packageName: vendor.packages[selectedPackage].name,
-    packagePrice: vendor.packages[selectedPackage].price
-  },
-  {
-    headers: { Authorization: `Bearer ${token}` }
-  }
-);
+        "/bookings",
+        {
+          vendorId: vendor._id,
+          date: selectedDate,
+          packageName: vendor.packages[selectedPackage].name,
+          packagePrice: vendor.packages[selectedPackage].price,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       setBooked(true);
       setTimeout(() => setBooked(false), 3000);
       setSelectedDate("");
@@ -68,6 +94,37 @@ export default function VendorDetail() {
     <>
       <style>{styles}</style>
       <Navbar />
+
+      {/* VENDOR CONFIRM MODAL */}
+      {showVendorModal && (
+        <div className="vd-modal-backdrop" onClick={() => setShowVendorModal(false)}>
+          <div className="vd-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="vd-modal-icon">⚠</div>
+            <h3 className="vd-modal-title">Switch to Client Account?</h3>
+            <p className="vd-modal-body">
+              You are currently logged in as a <strong>Vendor</strong>. To book services,
+              you need a client account. Would you like to register as a client?
+            </p>
+            <div className="vd-modal-actions">
+              <button
+                className="vd-modal-cancel"
+                onClick={() => setShowVendorModal(false)}
+              >
+                Stay as Vendor
+              </button>
+              <button
+                className="vd-modal-confirm"
+                onClick={() => {
+                  setShowVendorModal(false);
+                  navigate("/register", { state: { role: "user" } });
+                }}
+              >
+                Yes, Register as Client
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="vd-root">
         {/* HERO */}
@@ -107,10 +164,10 @@ export default function VendorDetail() {
                     <span className="vd-pkg-price">₹{p.price?.toLocaleString()}</span>
                   </div>
                   <ul className="vd-pkg-desc">
-  {p.features?.map((f, i) => (
-    <li key={i}>✔ {f}</li>
-  ))}
-</ul>
+                    {p.features?.map((f, i) => (
+                      <li key={i}>✔ {f}</li>
+                    ))}
+                  </ul>
                   {selectedPackage === i && (
                     <span className="vd-pkg-selected-dot" />
                   )}
@@ -132,32 +189,51 @@ export default function VendorDetail() {
                 </div>
 
                 <ul className="vd-panel-desc">
-  {pkg.features?.map((f, i) => (
-    <li key={i}>✔ {f}</li>
-  ))}
-</ul>
+                  {pkg.features?.map((f, i) => (
+                    <li key={i}>✔ {f}</li>
+                  ))}
+                </ul>
 
                 <div className="vd-divider" />
 
+                {/* DATE SECTION */}
                 <div className="vd-date-section">
                   <label className="vd-label">Select Your Date</label>
-                  <div className="vd-date-wrapper">
+                  <div className={`vd-date-wrapper ${dateWarning ? "date-error" : ""}`}>
                     <span className="vd-date-icon">🗓</span>
                     <input
                       type="date"
                       value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
+                      min={getTomorrow()}
+                      onChange={(e) => {
+                        setSelectedDate(e.target.value);
+                        setDateWarning("");
+                      }}
                       className="vd-date-input"
                     />
                   </div>
+                  {dateWarning && (
+                    <p className="vd-date-warning">
+                      <span className="vd-warn-icon">⚠</span>
+                      {dateWarning}
+                    </p>
+                  )}
                 </div>
 
                 <button
                   className={`vd-book-btn ${booked ? "success" : ""} ${loading ? "loading" : ""}`}
-                  onClick={handleBooking}
+                  onClick={() => {
+                    if (isVendor) {
+                      setShowVendorModal(true);
+                    } else {
+                      handleBooking();
+                    }
+                  }}
                   disabled={loading || booked}
                 >
-                  {booked ? (
+                  {isVendor ? (
+                    <>It seems you are a Vendor — Explore as a Client</>
+                  ) : booked ? (
                     <>✓ Booking Confirmed!</>
                   ) : loading ? (
                     <><span className="vd-btn-spinner" /> Processing…</>
@@ -203,12 +279,103 @@ const styles = `
     --surface: #faf7f2;
     --white: #ffffff;
     --success: #2d6a4f;
+    --danger: #a93226;
+    --danger-bg: #fdf0ef;
+    --danger-border: rgba(169,50,38,0.25);
   }
 
   .vd-root {
     font-family: 'DM Sans', sans-serif;
     background: var(--cream);
     min-height: 100vh;
+    color: var(--ink);
+  }
+
+  /* MODAL BACKDROP */
+  .vd-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(14,12,10,0.55);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease both;
+  }
+
+  /* MODAL BOX */
+  .vd-modal {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 40px 36px 32px;
+    max-width: 420px;
+    width: calc(100% - 40px);
+    text-align: center;
+    animation: modalUp 0.25s ease both;
+    border: 1px solid var(--border);
+  }
+  .vd-modal-icon {
+    font-size: 28px;
+    margin-bottom: 14px;
+    display: block;
+    color: var(--gold);
+  }
+  .vd-modal-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.65rem;
+    font-weight: 400;
+    color: var(--ink);
+    margin: 0 0 12px;
+    font-style: italic;
+  }
+  .vd-modal-body {
+    font-size: 13.5px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin: 0 0 28px;
+  }
+  .vd-modal-body strong {
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .vd-modal-actions {
+    display: flex;
+    gap: 12px;
+  }
+  .vd-modal-cancel {
+    flex: 1;
+    padding: 13px 16px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .vd-modal-cancel:hover {
+    border-color: var(--muted);
+    color: var(--ink);
+    background: var(--surface);
+  }
+  .vd-modal-confirm {
+    flex: 1;
+    padding: 13px 16px;
+    background: var(--ink);
+    border: none;
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--white);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .vd-modal-confirm:hover {
+    background: var(--gold);
     color: var(--ink);
   }
 
@@ -282,6 +449,7 @@ const styles = `
   @media (max-width: 900px) {
     .vd-body { grid-template-columns: 1fr; }
     .vd-hero-content { padding: 32px; }
+    .vd-modal-actions { flex-direction: column; }
   }
 
   /* SIDEBAR */
@@ -372,8 +540,16 @@ const styles = `
   .vd-panel-desc { font-size: 13.5px; color: var(--muted); line-height: 1.7; margin: 0; }
   .vd-divider { height: 1px; background: var(--border); margin: 24px 0; }
 
+  /* DATE SECTION */
   .vd-date-section { margin-bottom: 28px; }
-  .vd-label { display: block; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .vd-label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
   .vd-date-wrapper {
     display: flex;
     align-items: center;
@@ -382,9 +558,14 @@ const styles = `
     border-radius: 6px;
     padding: 12px 16px;
     background: var(--surface);
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, background 0.2s;
   }
   .vd-date-wrapper:focus-within { border-color: var(--gold); }
+  .vd-date-wrapper.date-error {
+    border-color: var(--danger-border);
+    background: var(--danger-bg);
+    animation: shake 0.35s ease;
+  }
   .vd-date-icon { font-size: 16px; }
   .vd-date-input {
     border: none;
@@ -397,6 +578,24 @@ const styles = `
     cursor: pointer;
   }
 
+  /* INLINE DATE WARNING */
+  .vd-date-warning {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12.5px;
+    color: var(--danger);
+    margin: 8px 0 0;
+    padding: 9px 13px;
+    background: var(--danger-bg);
+    border: 1px solid var(--danger-border);
+    border-radius: 5px;
+    animation: fadeUp 0.2s ease both;
+    letter-spacing: 0.01em;
+  }
+  .vd-warn-icon { font-size: 13px; flex-shrink: 0; }
+
+  /* BOOK BUTTON */
   .vd-book-btn {
     width: 100%;
     padding: 17px 24px;
@@ -478,5 +677,20 @@ const styles = `
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(20px); }
     to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes modalUp {
+    from { opacity: 0; transform: translateY(24px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%       { transform: translateX(-5px); }
+    40%       { transform: translateX(5px); }
+    60%       { transform: translateX(-4px); }
+    80%       { transform: translateX(4px); }
   }
 `;

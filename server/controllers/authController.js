@@ -72,8 +72,8 @@ exports.verifyOTP = async (req, res) => {
 
     await user.save();
 
-   const token = jwt.sign(
-  { id: user._id },
+  const token = jwt.sign(
+  { id: user._id, role: user.role },
   process.env.JWT_SECRET,
   { expiresIn: "7d" }
 );
@@ -108,11 +108,10 @@ exports.login = async (req, res) => {
     if (!match) return res.status(400).json({ msg: "Invalid credentials" });
 
     const token = jwt.sign(
-  { id: user._id },
+  { id: user._id, role: user.role },
   process.env.JWT_SECRET,
   { expiresIn: "7d" }
 );
-
     res.json({ token, user });
 
   } catch (err) {
@@ -151,10 +150,10 @@ exports.googleLogin = async (req, res) => {
     }
 
     const jwtToken = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+  { id: user._id, role: user.role },
+  process.env.JWT_SECRET,
+  { expiresIn: "7d" }
+);
 
     res.json({ token: jwtToken, user });
 

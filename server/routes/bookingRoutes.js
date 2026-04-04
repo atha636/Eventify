@@ -6,7 +6,8 @@ const {
   createBooking,
   getBookings,
   getVendorBookings,
-  updateBookingStatus
+  updateBookingStatus,
+  cancelBooking
 } = require("../controllers/bookingController");
 
 const auth = require("../middleware/authMiddleware");
@@ -19,5 +20,6 @@ router.get("/", auth, getBookings);
 router.get("/vendor", auth, getVendorBookings);
 
 router.put("/:id", auth, updateBookingStatus);
+router.put("/cancel/:id", auth, cancelBooking);
 
 module.exports = router;

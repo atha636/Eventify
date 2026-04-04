@@ -5,6 +5,14 @@ const User = require("../models/User");
 
 exports.createBooking = async (req, res) => {
   try {
+
+ // 🔐 BLOCK VENDORS
+    if (req.user.role === "vendor") {
+      return res.status(403).json({
+        error: "Vendors cannot book services"
+      });
+    }
+
     const booking = await Booking.create({
       userId: req.user.id,
       vendorId: req.body.vendorId,
@@ -161,5 +169,59 @@ You can explore other vendors on Eventify.
   } catch (err) {
     console.error("STATUS UPDATE ERROR:", err);
     res.status(500).json(err);
+  }
+};
+
+exports.cancelBooking = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
+
+    // ✅ Only user who booked can cancel
+    if (booking.userId.toString() !== req.user.id) {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    // ✅ Update status
+    booking.status = "cancelled";
+    await booking.save();
+
+    // ✅ Get vendor service
+    const vendor = await Vendor.findById(booking.vendorId);
+
+    // ✅ Get vendor user
+    const vendorUser = await User.findById(vendor.vendorId);
+
+    // ✅ Get user
+    const user = await User.findById(booking.userId);
+
+    // ✅ Send email to vendor
+    if (vendorUser?.email) {
+      await sendEmail({
+        to: vendorUser.email,
+        subject: "Booking Cancelled ❌",
+        text: `
+Hello ${vendorUser.name},
+
+A booking has been cancelled by the user.
+
+Service: ${vendor.title}
+Date: ${booking.date}
+
+Cancelled by: ${user?.name}
+
+- Eventify Team
+        `
+      });
+    }
+
+    res.json({ message: "Booking cancelled successfully", booking });
+
+  } catch (err) {
+    console.error("CANCEL BOOKING ERROR:", err);
+    res.status(500).json({ error: err.message });
   }
 };
