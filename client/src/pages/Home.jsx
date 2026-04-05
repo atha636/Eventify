@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import CustomerCarePopup from "../components/CustomerCarePopup";  // ← ADD THIS
+import CustomerCarePopup from "../components/CustomerCarePopup"; 
 
 export default function Home() {
   const navigate = useNavigate();
