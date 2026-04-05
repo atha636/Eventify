@@ -13,10 +13,51 @@ exports.createBooking = async (req, res) => {
       });
     }
 
+const { vendorId, date } = req.body;
+
+// ❌ Check if date exists
+if (!date) {
+  return res.status(400).json({ error: "Date is required" });
+}
+
+// Convert date
+const selectedDate = new Date(date);
+
+// ❌ Invalid date
+if (isNaN(selectedDate.getTime())) {
+  return res.status(400).json({ error: "Invalid date format" });
+}
+
+// ❌ Past date
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+
+if (selectedDate <= today) {
+  return res.status(400).json({ error: "Please select a future date" });
+}
+
+// ❌ Unrealistic year (fix 22222 issue)
+if (selectedDate.getFullYear() > 2100) {
+  return res.status(400).json({ error: "Invalid date selected" });
+}
+
+// ❌ Double booking check
+const existingBooking = await Booking.findOne({
+  vendorId,
+  date: selectedDate,
+});
+
+if (existingBooking) {
+  return res.status(400).json({
+    error: "This date is already booked. Please choose another date.",
+  });
+}
+
+
     const booking = await Booking.create({
       userId: req.user.id,
       vendorId: req.body.vendorId,
-      date: req.body.date
+      date: selectedDate
     });
 
     // ✅ STEP 1: Get service
