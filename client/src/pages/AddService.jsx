@@ -82,16 +82,21 @@ export default function AddService() {
   };
 
   // ── Validation ─────────────────────────────────────────────────
-  const validate = () => {
-    if (!form.title.trim())       return "Please enter a service title.";
-    if (!form.description.trim()) return "Please add a description.";
-    if (!form.location.trim())    return "Please enter a location.";
-    if (packages.length === 0)    return "Add at least one package.";
-    for (let i = 0; i < packages.length; i++) {
-      if (!packages[i].price) return `Please enter a price for the ${TIER_LABELS[i] || `Package ${i + 1}`} package.`;
+ const validate = () => {
+  if (!form.title.trim()) return "Please enter a service title.";
+  if (!form.description.trim()) return "Please add a description.";
+  if (!form.location.trim()) return "Please enter a location.";
+  if (images.length === 0) return "Please upload at least 1 image."; // ✅ ADD HERE
+  if (packages.length === 0) return "Add at least one package.";
+
+  for (let i = 0; i < packages.length; i++) {
+    if (!packages[i].price) {
+      return `Please enter price for ${packages[i].name}`;
     }
-    return null;
-  };
+  }
+
+  return null;
+};
 
   // ── Submit ─────────────────────────────────────────────────────
   const handleSubmit = async () => {
@@ -110,11 +115,11 @@ export default function AddService() {
     images.forEach((img) => data.append("images", img));
 
     try {
-      await API.post("/vendors", data, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setSuccess(true);
-    } catch (e) {
+  await API.post("/vendors/add", data, {  // ✅ changed from "/vendors"
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  setSuccess(true);
+} catch (e) {
       console.error("Add error:", e.response?.data);
       setError(e.response?.data?.error || "Failed to publish service. Please try again.");
     } finally {

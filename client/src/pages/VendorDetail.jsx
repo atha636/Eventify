@@ -26,11 +26,11 @@ export default function VendorDetail() {
   };
 
   useEffect(() => {
-    API.get("/vendors").then((res) => {
-      const found = res.data.find((v) => v._id === id);
-      setVendor(found);
-      if (found?.packages?.length > 0) setSelectedPackage(0);
-    });
+    // ✅ Fix
+API.get(`/vendors/single/${id}`).then((res) => {
+  setVendor(res.data);
+  if (res.data?.packages?.length > 0) setSelectedPackage(0);
+});
   }, [id]);
 
   const handleBooking = async () => {
@@ -167,7 +167,12 @@ if (picked.getFullYear() > 2100) {
       <div className="vd-root">
         {/* HERO */}
         <div className="vd-hero">
-          <img src={vendor.images?.[0]} alt={vendor.title} className="vd-hero-img" />
+          <img
+ // ✅ Fix — Cloudinary URL is already complete
+src={vendor.images?.[0] || "/placeholder.jpg"}
+  alt={vendor.title}
+  className="vd-hero-img"
+/>
           <div className="vd-hero-overlay" />
           <div className="vd-hero-content">
             <span className="vd-tag">📍 {vendor.location}</span>
@@ -281,7 +286,7 @@ if (picked.getFullYear() > 2100) {
               <div className="vd-gallery">
                 <h2 className="vd-section-label">Gallery</h2>
                 <div className="vd-gallery-grid">
-                  {vendor.images.slice(1).map((img, i) => (
+                 {vendor.images.slice(0).map((img, i) => (
                     <div key={i} className="vd-gallery-item">
                       <img src={img} alt={`gallery-${i}`} />
                     </div>

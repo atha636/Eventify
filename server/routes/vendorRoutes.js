@@ -13,8 +13,9 @@ const {
 
 const auth   = require("../middleware/authMiddleware");
 const upload = require("../middleware/upload");
+const Vendor = require("../models/Vendor");
 
-// ── Multer wrapper (reused for add & edit) ──
+// ── Multer wrapper ──
 const uploadMiddleware = (req, res, next) => {
   upload.array("images", 15)(req, res, (err) => {
     if (err) {
@@ -28,7 +29,7 @@ const uploadMiddleware = (req, res, next) => {
 // CREATE (legacy)
 router.post("/", auth, createVendor);
 
-// ADD SERVICE  (max 15 images)
+// ADD SERVICE
 router.post("/add", auth, uploadMiddleware, addService);
 
 // EDIT SERVICE
@@ -40,10 +41,21 @@ router.get("/", getVendors);
 // MY SERVICES
 router.get("/my-services", auth, getMyServices);
 
+// ✅ GET SINGLE VENDOR BY ID — must be before /:type
+router.get("/single/:id", async (req, res) => {
+  try {
+    const vendor = await Vendor.findById(req.params.id);
+    if (!vendor) return res.status(404).json({ error: "Not found" });
+    res.json(vendor);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // DELETE SERVICE
 router.delete("/:id", auth, deleteService);
 
-// BY TYPE — keep LAST so it doesn't swallow other GET routes
+// BY TYPE — keep LAST
 router.get("/:type", getByType);
 
 module.exports = router;

@@ -41,8 +41,17 @@ exports.addService = async (req, res) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const imageUrls = req.files ? req.files.map((f) => f.path) : [];
-
+// ✅ ADD HERE
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: "At least one image is required" });
+    }
+    // ✅ NEW — uses Cloudinary's permanent URL
+const imageUrls = req.files
+  ? req.files.map((f) => f.path)   // multer-storage-cloudinary puts the Cloudinary URL in f.path
+  : [];
+console.log("FILES RECEIVED:", req.files);
+console.log("FILE COUNT:", req.files?.length);
+console.log("IMAGE URLS:", imageUrls);
     let packages = [];
     if (req.body.packages) {
       try {
@@ -118,10 +127,14 @@ exports.editService = async (req, res) => {
     }
 
     // New images uploaded in this request
-    const newImageUrls = req.files ? req.files.map((f) => f.path) : [];
+    // ✅ NEW — uses Cloudinary's permanent URL
+const imageUrls = req.files
+  ? req.files.map((f) => f.path)   // multer-storage-cloudinary puts the Cloudinary URL in f.path
+  : [];
 
     // Merge: kept existing + newly uploaded (max 15)
-    const mergedImages = [...existingImages, ...newImageUrls].slice(0, 15);
+    // ✅ FIXED — matches your variable name imageUrls
+const mergedImages = [...existingImages, ...imageUrls].slice(0, 15);
 
     const updated = await Vendor.findByIdAndUpdate(
       req.params.id,

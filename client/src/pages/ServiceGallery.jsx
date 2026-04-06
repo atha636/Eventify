@@ -21,15 +21,13 @@ export default function ServiceGallery() {
   const autoSlideTimer = useRef(null);
   const pauseTimer     = useRef(null);
 
-  useEffect(() => {
-    API.get("/vendors")
-      .then((res) => {
-        const found = res.data.find((v) => v._id === id);
-        setVendor(found || null);
-      })
-      .catch(() => setVendor(null))
-      .finally(() => setLoading(false));
-  }, [id]);
+  // ✅ Replace the useEffect fetch with this:
+useEffect(() => {
+  API.get(`/vendors/single/${id}`)
+    .then((res) => setVendor(res.data))
+    .catch(() => setVendor(null))
+    .finally(() => setLoading(false));
+}, [id]);
 
   // ── Auto-slide ─────────────────────────────────────────────────
   useEffect(() => {
