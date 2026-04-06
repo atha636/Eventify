@@ -1,36 +1,38 @@
 const express = require("express");
-const router = express.Router();
+const router  = express.Router();
 
 const {
   createVendor,
   getVendors,
   getByType,
   addService,
+  editService,
   getMyServices,
-  deleteService 
+  deleteService,
 } = require("../controllers/vendorController");
 
-const auth = require("../middleware/authMiddleware");
+const auth   = require("../middleware/authMiddleware");
 const upload = require("../middleware/upload");
 
-// CREATE
+// ── Multer wrapper (reused for add & edit) ──
+const uploadMiddleware = (req, res, next) => {
+  upload.array("images", 15)(req, res, (err) => {
+    if (err) {
+      console.error("MULTER ERROR:", err.message);
+      return res.status(500).json({ error: err.message });
+    }
+    next();
+  });
+};
+
+// CREATE (legacy)
 router.post("/", auth, createVendor);
 
-// ADD SERVICE
-router.post(
-  "/add",
-  auth,
-  (req, res, next) => {
-    upload.array("images", 10)(req, res, (err) => {
-      if (err) {
-        console.error("MULTER ERROR:", err.message);
-        return res.status(500).json({ error: err.message });
-      }
-      next();
-    });
-  },
-  addService
-);
+// ADD SERVICE  (max 15 images)
+router.post("/add", auth, uploadMiddleware, addService);
+
+// EDIT SERVICE
+router.put("/:id", auth, uploadMiddleware, editService);
 
 // GET ALL
 router.get("/", getVendors);
@@ -38,10 +40,10 @@ router.get("/", getVendors);
 // MY SERVICES
 router.get("/my-services", auth, getMyServices);
 
-// DELETE SERVICE ✅
+// DELETE SERVICE
 router.delete("/:id", auth, deleteService);
 
-// KEEP THIS LAST
+// BY TYPE — keep LAST so it doesn't swallow other GET routes
 router.get("/:type", getByType);
 
 module.exports = router;

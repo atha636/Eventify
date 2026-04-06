@@ -242,7 +242,7 @@ if (picked.getFullYear() > 2100) {
   showYearDropdown
   scrollableYearDropdown
   yearDropdownItemNumber={10}
-  dropdownMode="select"
+  dropdownMode="scroll"
 
   portalId="root"
 />
