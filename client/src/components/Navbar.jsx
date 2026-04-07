@@ -14,18 +14,14 @@ export default function Navbar() {
     const onScroll = () => {
       const currentY = window.scrollY;
       const goingDown = currentY > lastScrollY.current;
-
       setScrolled(currentY > 40);
       setHidden(goingDown && currentY > 80);
-
       lastScrollY.current = currentY;
     };
-
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Close menu on route change
   useEffect(() => { setMenuOpen(false); }, [location]);
 
   const handleLogout = () => {
@@ -35,7 +31,6 @@ export default function Navbar() {
 
   const isActive = (path) => location.pathname === path;
 
-  // Detect dark hero pages to use transparent style
   const darkPages = ["/", "/login", "/register"];
   const isDark = darkPages.includes(location.pathname) || location.pathname.startsWith("/category");
   const isTransparent = isDark && !scrolled;
@@ -64,14 +59,10 @@ export default function Navbar() {
             {token ? (
               <>
                 {user?.role === "vendor" && (
-                  <Link to="/vendor-dashboard" className="nb-ghost-btn">
-                    Vendor Dashboard
-                  </Link>
+                  <Link to="/vendor-dashboard" className="nb-ghost-btn">Vendor Dashboard</Link>
                 )}
                 {user?.role === "user" && (
-                  <Link to="/my-bookings" className="nb-ghost-btn">
-                    My Bookings
-                  </Link>
+                  <Link to="/my-bookings" className="nb-ghost-btn">My Bookings</Link>
                 )}
                 <button className="nb-solid-btn" onClick={handleLogout}>Log Out</button>
               </>
@@ -94,7 +85,7 @@ export default function Navbar() {
         </div>
 
         {/* MOBILE MENU */}
-        <div className={`nb-mobile-menu ${menuOpen ? "open" : ""}`}>
+        <div className={`nb-mobile-menu ${menuOpen ? "open" : ""} ${isTransparent ? "nb-mobile-dark" : ""}`}>
           <Link to="/" className="nb-mobile-link">Home</Link>
           <Link to="/category/decor" className="nb-mobile-link">Services</Link>
           <Link to="/vendors" className="nb-mobile-link">Vendors</Link>
@@ -102,14 +93,10 @@ export default function Navbar() {
           {token ? (
             <>
               {user?.role === "vendor" && (
-                <Link to="/vendor-dashboard" className="nb-ghost-btn">
-                  Vendor Dashboard
-                </Link>
+                <Link to="/vendor-dashboard" className="nb-mobile-link">Vendor Dashboard</Link>
               )}
               {user?.role === "user" && (
-                <Link to="/my-bookings" className="nb-ghost-btn">
-                  My Bookings
-                </Link>
+                <Link to="/my-bookings" className="nb-mobile-link">My Bookings</Link>
               )}
               <button className="nb-mobile-link nb-mobile-logout" onClick={handleLogout}>Log Out</button>
             </>
@@ -149,7 +136,6 @@ const styles = `
     transition: transform 0.35s ease, background 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease;
   }
 
-  /* Hide navbar by sliding it up */
   .nb-hidden {
     transform: translateY(-100%);
   }
@@ -157,7 +143,7 @@ const styles = `
   /* transparent over dark hero */
   .nb-transparent {
     background: transparent;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-bottom: none;
   }
   .nb-transparent .nb-link,
   .nb-transparent .nb-ghost-btn {
@@ -169,9 +155,7 @@ const styles = `
     color: var(--gold);
     text-shadow: 0 0 8px rgba(201,168,76,0.6);
   }
-  .nb-transparent .nb-link-active {
-    color: var(--gold) !important;
-  }
+  .nb-transparent .nb-link-active { color: var(--gold) !important; }
   .nb-transparent .nb-logo-text {
     color: var(--gold-light);
     text-shadow: 0 2px 10px rgba(0,0,0,0.5);
@@ -221,12 +205,8 @@ const styles = `
     box-shadow: 0 4px 24px rgba(0,0,0,0.25);
   }
   .nb-scrolled .nb-link,
-  .nb-scrolled .nb-ghost-btn {
-    color: rgba(245,240,232,0.95);
-  }
-  .nb-scrolled .nb-logo-text {
-    color: var(--gold-light);
-  }
+  .nb-scrolled .nb-ghost-btn { color: rgba(245,240,232,0.95); }
+  .nb-scrolled .nb-logo-text { color: var(--gold-light); }
   .nb-scrolled .nb-solid-btn {
     background: var(--gold);
     color: var(--ink);
@@ -246,76 +226,51 @@ const styles = `
   /* LOGO */
   .nb-logo {
     display: flex; align-items: center; gap: 7px;
-    text-decoration: none;
-    flex-shrink: 0;
+    text-decoration: none; flex-shrink: 0;
   }
-  .nb-logo-mark {
-    font-size: 1rem;
-    transition: color 0.3s;
-  }
+  .nb-logo-mark { font-size: 1rem; transition: color 0.3s; }
   .nb-logo-text {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 1.3rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    font-size: 1.3rem; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
     transition: color 0.3s;
   }
 
   /* LINKS */
-  .nb-links {
-    display: flex; align-items: center; gap: 32px;
-  }
+  .nb-links { display: flex; align-items: center; gap: 32px; }
   .nb-link {
-    text-decoration: none;
-    font-size: 13px;
-    font-weight: 400;
-    letter-spacing: 0.04em;
-    transition: color 0.2s;
-    position: relative;
-    padding-bottom: 2px;
+    text-decoration: none; font-size: 13px; font-weight: 400;
+    letter-spacing: 0.04em; transition: color 0.2s;
+    position: relative; padding-bottom: 2px;
   }
   .nb-link::after {
-    content: '';
-    position: absolute; bottom: -2px; left: 0;
-    width: 0; height: 1px;
-    background: var(--gold);
+    content: ''; position: absolute; bottom: -2px; left: 0;
+    width: 0; height: 1px; background: var(--gold);
     transition: width 0.25s ease;
   }
-  .nb-link:hover::after,
-  .nb-link-active::after { width: 100%; }
+  .nb-link:hover::after, .nb-link-active::after { width: 100%; }
 
   /* ACTIONS */
   .nb-actions { display: flex; align-items: center; gap: 10px; }
   .nb-ghost-btn {
-    text-decoration: none;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px; font-weight: 400;
-    padding: 8px 16px;
-    border-radius: 6px;
-    border: none; background: none;
-    cursor: pointer;
-    transition: color 0.2s;
+    text-decoration: none; font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 400; padding: 8px 16px;
+    border-radius: 6px; border: none; background: none;
+    cursor: pointer; transition: color 0.2s;
   }
   .nb-solid-btn {
-    text-decoration: none;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px; font-weight: 500;
-    padding: 9px 20px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.22s ease;
-    letter-spacing: 0.02em;
-    display: inline-block;
+    text-decoration: none; font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 500; padding: 9px 20px;
+    border-radius: 6px; cursor: pointer; transition: all 0.22s ease;
+    letter-spacing: 0.02em; display: inline-block;
   }
   .nb-solid-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(201,168,76,0.25); }
 
   /* HAMBURGER */
   .nb-burger {
-    display: none;
-    flex-direction: column; justify-content: center; gap: 5px;
-    width: 36px; height: 36px;
-    background: none; border: none; cursor: pointer; padding: 4px;
+    display: none; flex-direction: column; justify-content: center; gap: 5px;
+    width: 36px; height: 36px; background: none; border: none;
+    cursor: pointer; padding: 4px;
   }
   .nb-burger span {
     display: block; height: 1.5px; border-radius: 2px;
@@ -325,7 +280,7 @@ const styles = `
   .nb-burger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
   .nb-burger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
 
-  /* MOBILE MENU */
+  /* MOBILE MENU — light (default for solid pages) */
   .nb-mobile-menu {
     display: none;
     flex-direction: column;
@@ -334,15 +289,37 @@ const styles = `
     padding: 8px 0 20px;
     overflow: hidden;
     max-height: 0;
-    transition: max-height 0.35s ease;
+    transition: max-height 0.35s ease, background 0.3s ease;
   }
   .nb-mobile-menu.open { max-height: 400px; }
+
+  /* MOBILE MENU — dark (for transparent/hero pages) */
+  .nb-mobile-menu.nb-mobile-dark {
+    background: rgba(14, 12, 10, 0.97);
+    border-top: 1px solid rgba(201,168,76,0.15);
+    backdrop-filter: blur(10px);
+  }
+  .nb-mobile-menu.nb-mobile-dark .nb-mobile-link {
+    color: rgba(245,240,232,0.85);
+  }
+  .nb-mobile-menu.nb-mobile-dark .nb-mobile-link:hover {
+    background: rgba(255,255,255,0.05);
+    color: var(--gold);
+  }
+  .nb-mobile-menu.nb-mobile-dark .nb-mobile-logout {
+    color: #e07070;
+  }
+  .nb-mobile-menu.nb-mobile-dark .nb-mobile-divider {
+    background: rgba(201,168,76,0.2);
+  }
+  .nb-mobile-menu.nb-mobile-dark .nb-mobile-cta {
+    background: var(--gold);
+    color: var(--ink);
+  }
+
   .nb-mobile-link {
-    display: block;
-    padding: 13px 28px;
-    font-size: 14px;
-    color: var(--muted);
-    text-decoration: none;
+    display: block; padding: 13px 28px; font-size: 14px;
+    color: var(--muted); text-decoration: none;
     background: none; border: none; text-align: left;
     cursor: pointer; font-family: 'DM Sans', sans-serif;
     transition: color 0.2s, background 0.2s;
@@ -351,14 +328,11 @@ const styles = `
   .nb-mobile-logout { color: #b85c5c; }
   .nb-mobile-divider { height: 1px; background: var(--border); margin: 8px 28px; }
   .nb-mobile-cta {
-    display: block;
-    margin: 8px 28px 0;
-    padding: 12px 20px;
+    display: block; margin: 8px 28px 0; padding: 12px 20px;
     background: var(--ink); color: var(--white);
     text-decoration: none; text-align: center;
     border-radius: 7px; font-size: 13px; font-weight: 500;
-    font-family: 'DM Sans', sans-serif;
-    transition: background 0.2s;
+    font-family: 'DM Sans', sans-serif; transition: background 0.2s;
   }
   .nb-mobile-cta:hover { background: var(--gold); color: var(--ink); }
 
@@ -367,6 +341,6 @@ const styles = `
     .nb-actions { display: none; }
     .nb-burger { display: flex; }
     .nb-mobile-menu { display: flex; }
-    .nb-inner { padding: 0 20px; }
+    .nb-inner { padding: 0 20px; height: 56px; }
   }
 `;
