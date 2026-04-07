@@ -13,7 +13,7 @@ import ServiceGallery     from "./pages/ServiceGallery";
 import UserDashboard      from "./pages/UserDashboard";
 import Vendors            from "./pages/Vendors";
 import CustomerCareClient from "./pages/CustomerCareClient";
-import CustomerCareVendor from "./pages/CustomerCareVendor";
+import CustomerCareVendor from "./pages/CustomerCarevendor";
 
 export default function App() {
   return (
