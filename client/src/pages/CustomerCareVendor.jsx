@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";  // ✅ ADD THIS
 import Navbar from "../components/Navbar";
 
 const vendorFAQs = [
@@ -112,6 +113,7 @@ const vendorFAQs = [
 
 export default function CustomerCareVendor() {
   const [openItem, setOpenItem] = useState(null);
+  const navigate = useNavigate();  
   const [openCategory, setOpenCategory] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -239,16 +241,45 @@ export default function CustomerCareVendor() {
           </div>
           <div className="vc-res-grid">
             {[
-              { icon: "📖", title: "Vendor Handbook", desc: "Everything you need to know about selling on Eventify." },
-              { icon: "📸", title: "Photo Guidelines", desc: "Tips to make your portfolio stand out to clients." },
-              { icon: "💡", title: "Pricing Strategy", desc: "How to price your packages competitively." },
-              { icon: "📊", title: "Dashboard Guide", desc: "Walk-through of all your vendor dashboard features." },
-            ].map((r, i) => (
-              <div key={i} className="vc-res-card">
+  {
+    icon: "📖",
+    title: "Vendor Handbook",
+    desc: "Everything you need to know about selling on Eventify.",
+    link: "/resources/vendor-handbook",
+  },
+  {
+    icon: "📸",
+    title: "Photo Guidelines",
+    desc: "Tips to make your portfolio stand out to clients.",
+    link: "/resources/photo-guidelines",
+  },
+  {
+    icon: "💡",
+    title: "Pricing Strategy",
+    desc: "How to price your packages competitively.",
+    link: "/resources/pricing-strategy",
+  },
+  {
+    icon: "📊",
+    title: "Dashboard Guide",
+    desc: "Walk-through of all your vendor dashboard features.",
+    link: "/resources/dashboard-guide",
+  },
+].map((r, i) => (
+              <div
+  key={i}
+  className="vc-res-card"
+  onClick={() => navigate(r.link)}   // ✅ ADD THIS
+>
                 <span className="vc-res-icon">{r.icon}</span>
                 <h4 className="vc-res-title">{r.title}</h4>
                 <p className="vc-res-desc">{r.desc}</p>
-                <span className="vc-res-link">Read more →</span>
+                <span
+  className="vc-res-link"
+  onClick={() => navigate(r.link)}   // ✅ ADD THIS
+>
+  Read more →
+</span>
               </div>
             ))}
           </div>

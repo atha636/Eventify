@@ -15,10 +15,21 @@ import Vendors            from "./pages/Vendors";
 import CustomerCareClient from "./pages/CustomerCareClient";
 import CustomerCareVendor from "./pages/CustomerCareVendor";
 
+// ── Resource pages ──────────────────────────────────────────────────
+import VendorHandbook   from "./pages/resources/VendorHandbook";
+import PhotoGuidelines  from "./pages/resources/PhotoGuidelines";
+import PricingStrategy  from "./pages/resources/PricingStrategy";
+import DashboardGuide   from "./pages/resources/DashboardGuide";
+
+// ── Admin pages ─────────────────────────────────────────────────────
+import AdminLogin     from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
+
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* ── Public ── */}
         <Route path="/"                        element={<Home />} />
         <Route path="/category/:type"          element={<Category />} />
         <Route path="/login"                   element={<Login />} />
@@ -26,13 +37,29 @@ export default function App() {
         <Route path="/forgot-password"         element={<ForgotPassword />} />
         <Route path="/vendor/:id"              element={<VendorDetail />} />
         <Route path="/vendor/:id/gallery"      element={<ServiceGallery />} />
+        <Route path="/vendors"                 element={<Vendors />} />
+
+        {/* ── Vendor ── */}
         <Route path="/vendor-dashboard"        element={<VendorDashboard />} />
         <Route path="/add-service"             element={<AddService />} />
         <Route path="/edit-service/:id"        element={<EditService />} />
+
+        {/* ── User ── */}
         <Route path="/my-bookings"             element={<UserDashboard />} />
-        <Route path="/vendors"                 element={<Vendors />} />
+
+        {/* ── Support ── */}
         <Route path="/customer-care"           element={<CustomerCareClient />} />
         <Route path="/customer-care/vendor"    element={<CustomerCareVendor />} />
+
+        {/* ── Vendor Resources ── */}
+        <Route path="/resources/vendor-handbook"   element={<VendorHandbook />} />
+        <Route path="/resources/photo-guidelines"  element={<PhotoGuidelines />} />
+        <Route path="/resources/pricing-strategy"  element={<PricingStrategy />} />
+        <Route path="/resources/dashboard-guide"   element={<DashboardGuide />} />
+
+        {/* ── Admin ── */}
+        <Route path="/admin/login"  element={<AdminLogin />} />
+        <Route path="/admin"        element={<AdminDashboard />} />
       </Routes>
     </BrowserRouter>
   );

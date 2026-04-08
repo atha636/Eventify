@@ -1,8 +1,32 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 
 export default function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();  // 🔥 ADD
+
+// 🔥 triple click logic
+const clickCountRef = useRef(0);
+const clickTimerRef = useRef(null);
+
+const handleLogoClick = () => {
+  clickCountRef.current += 1;
+
+  if (clickCountRef.current === 3) {
+    navigate("/admin/login");
+    clickCountRef.current = 0;
+    return;
+  }
+
+  clearTimeout(clickTimerRef.current);
+  clickTimerRef.current = setTimeout(() => {
+    // if not triple click → normal behavior
+    if (clickCountRef.current === 1) {
+      navigate("/");
+    }
+    clickCountRef.current = 0;
+  }, 600); // time window for triple click
+};
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -42,10 +66,14 @@ export default function Navbar() {
         <div className="nb-inner">
 
           {/* LOGO */}
-          <Link to="/" className="nb-logo">
-            <span className="nb-logo-mark">✦</span>
-            <span className="nb-logo-text">Eventify</span>
-          </Link>
+          <div
+  className="nb-logo"
+  onClick={handleLogoClick}   // 🔥 USE THIS
+  style={{ cursor: "pointer" }}
+>
+  <span className="nb-logo-mark">✦</span>
+  <span className="nb-logo-text">Eventify</span>
+</div>
 
           {/* DESKTOP LINKS */}
           <div className="nb-links">
