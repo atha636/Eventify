@@ -152,9 +152,9 @@ export default function CustomerCareClient() {
         {/* CONTACT CARDS */}
         <div className="cc-contact-strip">
           {[
-            { icon: "✉", title: "Email Support", desc: "support@eventify.in", sub: "Reply within 24 hours" },
+            { icon: "✉", title: "Email Support", desc: "admineventify2005@gmail.com", sub: "Reply within 24 hours" },
             { icon: "💬", title: "Live Chat", desc: "Chat with our team", sub: "Available 9 AM – 9 PM" },
-            { icon: "📞", title: "Call Us", desc: "+91 98765 43210", sub: "Mon – Sat, 10 AM – 7 PM" },
+            { icon: "📞", title: "Call Us", desc: "+91 7023017517", sub: "Mon – Sat, 10 AM – 7 PM" },
           ].map((c, i) => (
             <div key={i} className="cc-contact-card">
               <span className="cc-contact-icon">{c.icon}</span>
@@ -232,7 +232,7 @@ export default function CustomerCareClient() {
           <p className="cc-eyebrow-dark">✦ Still need help?</p>
           <h3 className="cc-cta-title">Can't find your answer?</h3>
           <p className="cc-cta-sub">Our support team is here for you. Send us a message and we'll get back to you within 24 hours.</p>
-          <button className="cc-cta-btn" onClick={() => window.location.href = "mailto:support@eventify.in"}>
+          <button className="cc-cta-btn" onClick={() => window.location.href = "mailto:admineventify2005@gmail.com"}>
             Contact Support →
           </button>
         </div>

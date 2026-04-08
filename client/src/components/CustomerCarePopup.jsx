@@ -114,7 +114,7 @@ export default function CustomerCarePopup() {
               <p className="ccp-footer-note">
                 Or email us at{" "}
                 <a href={`mailto:${isVendor ? "vendors" : "support"}@eventify.in`} className="ccp-email-link">
-                  {isVendor ? "vendors" : "support"}@eventify.in
+                  {isVendor ? "vendors" : "admineventify2005"}@gmail.com
                 </a>
               </p>
             </div>
