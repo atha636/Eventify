@@ -25,7 +25,7 @@ const handleLogoClick = () => {
       navigate("/");
     }
     clickCountRef.current = 0;
-  }, 600); // time window for triple click
+  }, 400); // time window for triple click
 };
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
