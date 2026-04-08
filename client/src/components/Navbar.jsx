@@ -3,30 +3,30 @@ import { useState, useEffect, useRef } from "react";
 
 export default function Navbar() {
   const location = useLocation();
-  const navigate = useNavigate();  // 🔥 ADD
+  const navigate = useNavigate();
 
-// 🔥 triple click logic
-const clickCountRef = useRef(0);
-const clickTimerRef = useRef(null);
+  // triple click logic
+  const clickCountRef = useRef(0);
+  const clickTimerRef = useRef(null);
 
-const handleLogoClick = () => {
-  clickCountRef.current += 1;
+  const handleLogoClick = () => {
+    clickCountRef.current += 1;
 
-  if (clickCountRef.current === 3) {
-    navigate("/admin/login");
-    clickCountRef.current = 0;
-    return;
-  }
-
-  clearTimeout(clickTimerRef.current);
-  clickTimerRef.current = setTimeout(() => {
-    // if not triple click → normal behavior
-    if (clickCountRef.current === 1) {
-      navigate("/");
+    if (clickCountRef.current === 3) {
+      navigate("/admin/login");
+      clickCountRef.current = 0;
+      return;
     }
-    clickCountRef.current = 0;
-  }, 400); // time window for triple click
-};
+
+    clearTimeout(clickTimerRef.current);
+    clickTimerRef.current = setTimeout(() => {
+      if (clickCountRef.current === 1) {
+        navigate("/");
+      }
+      clickCountRef.current = 0;
+    }, 400);
+  };
+
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -66,14 +66,10 @@ const handleLogoClick = () => {
         <div className="nb-inner">
 
           {/* LOGO */}
-          <div
-  className="nb-logo"
-  onClick={handleLogoClick}   // 🔥 USE THIS
-  style={{ cursor: "pointer" }}
->
-  <span className="nb-logo-mark">✦</span>
-  <span className="nb-logo-text">Eventify</span>
-</div>
+          <div className="nb-logo" onClick={handleLogoClick} style={{ cursor: "pointer" }}>
+            <span className="nb-logo-mark">✦</span>
+            <span className="nb-logo-text">Eventify</span>
+          </div>
 
           {/* DESKTOP LINKS */}
           <div className="nb-links">
@@ -87,7 +83,7 @@ const handleLogoClick = () => {
             {token ? (
               <>
                 {user?.role === "vendor" && (
-                  <Link to="/vendor-dashboard" className="nb-ghost-btn">Vendor Dashboard</Link>
+                  <Link to="/vendor-dashboard" className="nb-ghost-btn">Dashboard</Link>
                 )}
                 {user?.role === "user" && (
                   <Link to="/my-bookings" className="nb-ghost-btn">My Bookings</Link>
@@ -114,26 +110,30 @@ const handleLogoClick = () => {
 
         {/* MOBILE MENU */}
         <div className={`nb-mobile-menu ${menuOpen ? "open" : ""} ${isTransparent ? "nb-mobile-dark" : ""}`}>
-          <Link to="/" className="nb-mobile-link">Home</Link>
-          <Link to="/category/decor" className="nb-mobile-link">Services</Link>
-          <Link to="/vendors" className="nb-mobile-link">Vendors</Link>
+          <div className="nb-mobile-links">
+            <Link to="/" className="nb-mobile-link">Home</Link>
+            <Link to="/category/decor" className="nb-mobile-link">Services</Link>
+            <Link to="/vendors" className="nb-mobile-link">Vendors</Link>
+          </div>
           <div className="nb-mobile-divider" />
-          {token ? (
-            <>
-              {user?.role === "vendor" && (
-                <Link to="/vendor-dashboard" className="nb-mobile-link">Vendor Dashboard</Link>
-              )}
-              {user?.role === "user" && (
-                <Link to="/my-bookings" className="nb-mobile-link">My Bookings</Link>
-              )}
-              <button className="nb-mobile-link nb-mobile-logout" onClick={handleLogout}>Log Out</button>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="nb-mobile-link">Sign In</Link>
-              <Link to="/register" className="nb-mobile-cta">Get Started →</Link>
-            </>
-          )}
+          <div className="nb-mobile-actions">
+            {token ? (
+              <>
+                {user?.role === "vendor" && (
+                  <Link to="/vendor-dashboard" className="nb-mobile-link">Vendor Dashboard</Link>
+                )}
+                {user?.role === "user" && (
+                  <Link to="/my-bookings" className="nb-mobile-link">My Bookings</Link>
+                )}
+                <button className="nb-mobile-link nb-mobile-logout" onClick={handleLogout}>Log Out</button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="nb-mobile-link">Sign In</Link>
+                <Link to="/register" className="nb-mobile-cta">Get Started →</Link>
+              </>
+            )}
+          </div>
         </div>
       </nav>
     </>
@@ -141,75 +141,73 @@ const handleLogoClick = () => {
 }
 
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=DM+Sans:wght@300;400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
 
   :root {
     --ink: #0e0c0a;
     --cream: #f5f0e8;
     --gold: #c9a84c;
     --gold-light: #e8d5a3;
+    --gold-glow: rgba(201,168,76,0.18);
     --muted: #7a7265;
-    --border: rgba(201,168,76,0.2);
+    --border: rgba(201,168,76,0.18);
     --white: #ffffff;
+    --surface: #faf8f4;
+    --nb-height: 66px;
+    --nb-height-mobile: 58px;
   }
 
+  /* ─── ROOT ─── */
   .nb-root {
     width: 100%;
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
+    top: 0; left: 0; right: 0;
     z-index: 100;
     font-family: 'DM Sans', sans-serif;
-    transition: transform 0.35s ease, background 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease;
+    transition:
+      transform 0.38s cubic-bezier(0.4,0,0.2,1),
+      background 0.3s ease,
+      box-shadow 0.3s ease,
+      border-color 0.3s ease;
   }
 
-  .nb-hidden {
-    transform: translateY(-100%);
-  }
+  .nb-hidden { transform: translateY(-100%); }
 
-  /* transparent over dark hero */
+  /* ─── TRANSPARENT (hero) ─── */
   .nb-transparent {
     background: transparent;
-    border-bottom: none;
+    border-bottom: 1px solid transparent;
   }
   .nb-transparent .nb-link,
   .nb-transparent .nb-ghost-btn {
-    color: rgba(245,240,232,0.92);
-    text-shadow: 0 1px 6px rgba(0,0,0,0.4);
+    color: rgba(245,240,232,0.88);
   }
   .nb-transparent .nb-link:hover,
-  .nb-transparent .nb-ghost-btn:hover {
-    color: var(--gold);
-    text-shadow: 0 0 8px rgba(201,168,76,0.6);
-  }
+  .nb-transparent .nb-ghost-btn:hover { color: var(--gold); }
   .nb-transparent .nb-link-active { color: var(--gold) !important; }
-  .nb-transparent .nb-logo-text {
-    color: var(--gold-light);
-    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
-  }
+  .nb-transparent .nb-logo-text { color: var(--gold-light); }
   .nb-transparent .nb-logo-mark { color: var(--gold); }
   .nb-transparent .nb-solid-btn {
-    background: rgba(255,255,255,0.15);
-    backdrop-filter: blur(6px);
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(8px);
     color: var(--white);
-    border: 1px solid rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.22);
   }
   .nb-transparent .nb-solid-btn:hover {
     background: var(--gold);
     color: var(--ink);
     border-color: var(--gold);
   }
-  .nb-transparent .nb-burger span { background: var(--cream); }
+  .nb-transparent .nb-burger span { background: rgba(245,240,232,0.9); }
 
-  /* solid white */
+  /* ─── SOLID (white) ─── */
   .nb-solid {
     background: var(--white);
     border-bottom: 1px solid var(--border);
   }
   .nb-solid .nb-link { color: var(--muted); }
   .nb-solid .nb-link:hover { color: var(--ink); }
-  .nb-solid .nb-link-active { color: var(--ink) !important; }
+  .nb-solid .nb-link-active { color: var(--ink) !important; font-weight: 500; }
   .nb-solid .nb-logo-text { color: var(--ink); }
   .nb-solid .nb-logo-mark { color: var(--gold); }
   .nb-solid .nb-ghost-btn { color: var(--muted); }
@@ -226,149 +224,261 @@ const styles = `
   }
   .nb-solid .nb-burger span { background: var(--ink); }
 
-  /* scrolled — dark glass */
+  /* ─── SCROLLED (dark glass) ─── */
   .nb-scrolled {
-    background: rgba(14, 12, 10, 0.85);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+    background: rgba(12, 10, 8, 0.82) !important;
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    border-bottom: 1px solid rgba(201,168,76,0.12) !important;
+    box-shadow: 0 1px 0 rgba(201,168,76,0.08), 0 8px 32px rgba(0,0,0,0.2);
   }
   .nb-scrolled .nb-link,
-  .nb-scrolled .nb-ghost-btn { color: rgba(245,240,232,0.95); }
+  .nb-scrolled .nb-ghost-btn { color: rgba(245,240,232,0.82); }
+  .nb-scrolled .nb-link:hover,
+  .nb-scrolled .nb-ghost-btn:hover { color: var(--gold) !important; }
+  .nb-scrolled .nb-link-active { color: var(--gold) !important; }
   .nb-scrolled .nb-logo-text { color: var(--gold-light); }
+  .nb-scrolled .nb-logo-mark { color: var(--gold); }
   .nb-scrolled .nb-solid-btn {
     background: var(--gold);
     color: var(--ink);
     border: none;
   }
+  .nb-scrolled .nb-solid-btn:hover {
+    background: var(--gold-light);
+    color: var(--ink);
+  }
+  .nb-scrolled .nb-burger span { background: rgba(245,240,232,0.9); }
 
+  /* ─── INNER ─── */
   .nb-inner {
     display: flex;
     align-items: center;
     justify-content: space-between;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 32px;
-    height: 64px;
+    padding: 0 36px;
+    height: var(--nb-height);
   }
 
-  /* LOGO */
+  /* ─── LOGO ─── */
   .nb-logo {
-    display: flex; align-items: center; gap: 7px;
-    text-decoration: none; flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    text-decoration: none;
+    user-select: none;
   }
-  .nb-logo-mark { font-size: 1rem; transition: color 0.3s; }
+  .nb-logo-mark {
+    font-size: 0.95rem;
+    transition: color 0.3s, transform 0.4s ease;
+    display: inline-block;
+  }
+  .nb-logo:hover .nb-logo-mark {
+    transform: rotate(45deg) scale(1.1);
+    color: var(--gold) !important;
+  }
   .nb-logo-text {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 1.3rem; font-weight: 600;
-    letter-spacing: 0.08em; text-transform: uppercase;
+    font-size: 1.35rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
     transition: color 0.3s;
   }
 
-  /* LINKS */
-  .nb-links { display: flex; align-items: center; gap: 32px; }
+  /* ─── NAV LINKS ─── */
+  .nb-links {
+    display: flex;
+    align-items: center;
+    gap: 36px;
+  }
   .nb-link {
-    text-decoration: none; font-size: 13px; font-weight: 400;
-    letter-spacing: 0.04em; transition: color 0.2s;
-    position: relative; padding-bottom: 2px;
+    text-decoration: none;
+    font-size: 12.5px;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+    position: relative;
+    padding-bottom: 3px;
   }
   .nb-link::after {
-    content: ''; position: absolute; bottom: -2px; left: 0;
-    width: 0; height: 1px; background: var(--gold);
-    transition: width 0.25s ease;
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 0;
+    width: 0; height: 1px;
+    background: var(--gold);
+    transition: width 0.28s cubic-bezier(0.4,0,0.2,1);
   }
-  .nb-link:hover::after, .nb-link-active::after { width: 100%; }
+  .nb-link:hover::after,
+  .nb-link-active::after { width: 100%; }
 
-  /* ACTIONS */
-  .nb-actions { display: flex; align-items: center; gap: 10px; }
+  /* ─── ACTIONS ─── */
+  .nb-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
   .nb-ghost-btn {
-    text-decoration: none; font-family: 'DM Sans', sans-serif;
-    font-size: 13px; font-weight: 400; padding: 8px 16px;
-    border-radius: 6px; border: none; background: none;
-    cursor: pointer; transition: color 0.2s;
+    text-decoration: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12.5px;
+    font-weight: 400;
+    letter-spacing: 0.03em;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    transition: color 0.2s, background 0.2s;
+  }
+  .nb-ghost-btn:hover {
+    background: var(--gold-glow);
   }
   .nb-solid-btn {
-    text-decoration: none; font-family: 'DM Sans', sans-serif;
-    font-size: 13px; font-weight: 500; padding: 9px 20px;
-    border-radius: 6px; cursor: pointer; transition: all 0.22s ease;
-    letter-spacing: 0.02em; display: inline-block;
+    text-decoration: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12.5px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    padding: 9px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.22s ease, color 0.22s ease, border-color 0.22s ease, transform 0.18s ease, box-shadow 0.22s ease;
+    display: inline-block;
   }
-  .nb-solid-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(201,168,76,0.25); }
+  .nb-solid-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 18px rgba(201,168,76,0.22);
+  }
 
-  /* HAMBURGER */
+  /* ─── HAMBURGER ─── */
   .nb-burger {
-    display: none; flex-direction: column; justify-content: center; gap: 5px;
-    width: 36px; height: 36px; background: none; border: none;
-    cursor: pointer; padding: 4px;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 5px;
+    width: 36px;
+    height: 36px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 2px;
   }
   .nb-burger span {
-    display: block; height: 1.5px; border-radius: 2px;
-    transition: all 0.3s ease;
+    display: block;
+    height: 1.5px;
+    border-radius: 2px;
+    transition: all 0.32s cubic-bezier(0.4,0,0.2,1);
   }
-  .nb-burger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
-  .nb-burger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
-  .nb-burger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+  /* Staggered widths for style */
+  .nb-burger span:nth-child(1) { width: 22px; }
+  .nb-burger span:nth-child(2) { width: 16px; }
+  .nb-burger span:nth-child(3) { width: 22px; }
 
-  /* MOBILE MENU — light (default for solid pages) */
+  .nb-burger.open span:nth-child(1) { width: 22px; transform: translateY(6.5px) rotate(45deg); }
+  .nb-burger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+  .nb-burger.open span:nth-child(3) { width: 22px; transform: translateY(-6.5px) rotate(-45deg); }
+
+  /* ─── MOBILE MENU ─── */
   .nb-mobile-menu {
     display: none;
     flex-direction: column;
-    background: var(--white);
-    border-top: 1px solid var(--border);
-    padding: 8px 0 20px;
     overflow: hidden;
     max-height: 0;
-    transition: max-height 0.35s ease, background 0.3s ease;
+    transition: max-height 0.38s cubic-bezier(0.4,0,0.2,1);
+    background: var(--white);
+    border-top: 1px solid var(--border);
   }
-  .nb-mobile-menu.open { max-height: 400px; }
+  .nb-mobile-menu.open { max-height: 420px; }
 
-  /* MOBILE MENU — dark (for transparent/hero pages) */
+  /* dark variant */
   .nb-mobile-menu.nb-mobile-dark {
-    background: rgba(14, 12, 10, 0.97);
-    border-top: 1px solid rgba(201,168,76,0.15);
-    backdrop-filter: blur(10px);
+    background: rgba(11, 9, 7, 0.97);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(201,168,76,0.12);
   }
   .nb-mobile-menu.nb-mobile-dark .nb-mobile-link {
-    color: rgba(245,240,232,0.85);
+    color: rgba(245,240,232,0.75);
   }
   .nb-mobile-menu.nb-mobile-dark .nb-mobile-link:hover {
-    background: rgba(255,255,255,0.05);
     color: var(--gold);
+    background: rgba(201,168,76,0.06);
   }
-  .nb-mobile-menu.nb-mobile-dark .nb-mobile-logout {
-    color: #e07070;
-  }
-  .nb-mobile-menu.nb-mobile-dark .nb-mobile-divider {
-    background: rgba(201,168,76,0.2);
-  }
+  .nb-mobile-menu.nb-mobile-dark .nb-mobile-logout { color: #e07878; }
+  .nb-mobile-menu.nb-mobile-dark .nb-mobile-divider { background: rgba(201,168,76,0.15); }
   .nb-mobile-menu.nb-mobile-dark .nb-mobile-cta {
     background: var(--gold);
     color: var(--ink);
   }
+  .nb-mobile-menu.nb-mobile-dark .nb-mobile-cta:hover {
+    background: var(--gold-light);
+  }
 
+  .nb-mobile-links,
+  .nb-mobile-actions {
+    display: flex;
+    flex-direction: column;
+    padding: 6px 0;
+  }
   .nb-mobile-link {
-    display: block; padding: 13px 28px; font-size: 14px;
-    color: var(--muted); text-decoration: none;
-    background: none; border: none; text-align: left;
-    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    display: block;
+    padding: 13px 28px;
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0.03em;
+    color: var(--muted);
+    text-decoration: none;
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
     transition: color 0.2s, background 0.2s;
   }
-  .nb-mobile-link:hover { color: var(--ink); background: var(--surface, #faf7f2); }
-  .nb-mobile-logout { color: #b85c5c; }
-  .nb-mobile-divider { height: 1px; background: var(--border); margin: 8px 28px; }
-  .nb-mobile-cta {
-    display: block; margin: 8px 28px 0; padding: 12px 20px;
-    background: var(--ink); color: var(--white);
-    text-decoration: none; text-align: center;
-    border-radius: 7px; font-size: 13px; font-weight: 500;
-    font-family: 'DM Sans', sans-serif; transition: background 0.2s;
+  .nb-mobile-link:hover {
+    color: var(--ink);
+    background: var(--surface);
   }
-  .nb-mobile-cta:hover { background: var(--gold); color: var(--ink); }
+  .nb-mobile-logout { color: #b85c5c; }
+  .nb-mobile-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 24px;
+  }
+  .nb-mobile-cta {
+    display: block;
+    margin: 8px 24px 16px;
+    padding: 13px 20px;
+    background: var(--ink);
+    color: var(--white);
+    text-decoration: none;
+    text-align: center;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    font-family: 'DM Sans', sans-serif;
+    transition: background 0.2s, color 0.2s;
+  }
+  .nb-mobile-cta:hover {
+    background: var(--gold);
+    color: var(--ink);
+  }
 
+  /* ─── RESPONSIVE ─── */
   @media (max-width: 768px) {
-    .nb-links { display: none; }
+    .nb-links  { display: none; }
     .nb-actions { display: none; }
     .nb-burger { display: flex; }
     .nb-mobile-menu { display: flex; }
-    .nb-inner { padding: 0 20px; height: 56px; }
+    .nb-inner {
+      padding: 0 22px;
+      height: var(--nb-height-mobile);
+    }
   }
 `;
