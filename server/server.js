@@ -23,15 +23,26 @@ app.use(cors({
   },
   credentials: true
 }));
+
 app.use(express.json());
 
 const path = require("path");
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-app.use("/api/auth",    require("./routes/authRoutes"));
+
+// ✅ ADD THIS IMPORT HERE (with other requires)
+const favoriteRoutes = require("./routes/favoriteRoutes");
+
+
+// ✅ ROUTES SECTION
+app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/vendors", require("./routes/vendorRoutes"));
-app.use("/api/bookings",require("./routes/bookingRoutes"));
-app.use("/api/admin",   require("./routes/adminRoutes"));   // ← NEW
+app.use("/api/bookings", require("./routes/bookingRoutes"));
+app.use("/api/admin", require("./routes/adminRoutes"));
+
+// ✅ ADD THIS LINE HERE (with other app.use routes)
+app.use("/api/favorites", favoriteRoutes);
+
 
 app.get("/", (req, res) => res.send("API running..."));
 

@@ -3,26 +3,45 @@ import API from "../services/api";
 import Navbar from "../components/Navbar";
 
 const STATUS_META = {
-  pending:  { label: "Pending",   color: "#c9a84c", bg: "rgba(201,168,76,0.1)",  border: "rgba(201,168,76,0.3)",  icon: "⏳" },
-  approved: { label: "Confirmed", color: "#2d6a4f", bg: "rgba(45,106,79,0.1)",   border: "rgba(45,106,79,0.3)",   icon: "✓" },
-  rejected: { label: "Declined",  color: "#b85c5c", bg: "rgba(184,92,92,0.1)",   border: "rgba(184,92,92,0.3)",   icon: "✕" },
-  cancelled:{ label: "Cancelled", color: "#7a7265", bg: "rgba(122,114,101,0.1)", border: "rgba(122,114,101,0.3)", icon: "✕" },
+  pending:   { label: "Pending",   color: "#c9a84c", bg: "rgba(201,168,76,0.08)",  border: "rgba(201,168,76,0.25)",  icon: "◷", glow: "rgba(201,168,76,0.15)" },
+  approved:  { label: "Confirmed", color: "#3a8a62", bg: "rgba(58,138,98,0.08)",   border: "rgba(58,138,98,0.25)",   icon: "✓", glow: "rgba(58,138,98,0.12)"  },
+  rejected:  { label: "Declined",  color: "#b85c5c", bg: "rgba(184,92,92,0.08)",   border: "rgba(184,92,92,0.25)",   icon: "✕", glow: "rgba(184,92,92,0.12)"  },
+  cancelled: { label: "Cancelled", color: "#7a7265", bg: "rgba(122,114,101,0.08)", border: "rgba(122,114,101,0.22)", icon: "✕", glow: "rgba(122,114,101,0.1)" },
 };
 
+const DCR_META = {
+  pending:  { label: "Change Requested", color: "#c9a84c", bg: "rgba(201,168,76,0.08)", border: "rgba(201,168,76,0.3)" },
+  approved: { label: "Date Updated",     color: "#3a8a62", bg: "rgba(58,138,98,0.08)",  border: "rgba(58,138,98,0.3)"  },
+  rejected: { label: "Request Declined", color: "#b85c5c", bg: "rgba(184,92,92,0.08)",  border: "rgba(184,92,92,0.3)"  },
+};
+
+function fmt(date) {
+  return new Date(date).toLocaleDateString("en-IN", {
+    weekday: "short", day: "numeric", month: "short", year: "numeric",
+  });
+}
+
 export default function UserDashboard() {
-  const [bookings, setBookings]           = useState([]);
-  const [loading, setLoading]             = useState(true);
-  const [filter, setFilter]               = useState("all");
-  const [cancelTarget, setCancelTarget]   = useState(null);   // booking object to cancel
-  const [cancelling, setCancelling]       = useState(false);  // loading state for cancel API
-  const [cancelError, setCancelError]     = useState("");     // inline error inside modal
+  const [bookings, setBookings]         = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [filter, setFilter]             = useState("all");
+
+  // Cancel modal
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const [cancelling, setCancelling]     = useState(false);
+  const [cancelError, setCancelError]   = useState("");
+
+  // Date change modal
+  const [dcrTarget, setDcrTarget]       = useState(null);   // booking object
+  const [dcrDate, setDcrDate]           = useState("");
+  const [dcrReason, setDcrReason]       = useState("");
+  const [dcrLoading, setDcrLoading]     = useState(false);
+  const [dcrError, setDcrError]         = useState("");
+  const [dcrSuccess, setDcrSuccess]     = useState("");
 
   const fetchBookings = async () => {
-    const token = localStorage.getItem("token");
     try {
-      const res = await API.get("/bookings", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await API.get("/bookings");
       setBookings(res.data);
     } catch (err) {
       console.error(err);
@@ -33,37 +52,63 @@ export default function UserDashboard() {
 
   useEffect(() => { fetchBookings(); }, []);
 
-  // ── CANCEL HANDLER ──────────────────────────────────────────────
+  // ── CANCEL ──────────────────────────────────────────────────────
   const handleCancel = async () => {
     if (!cancelTarget) return;
-    const token = localStorage.getItem("token");
     setCancelling(true);
     setCancelError("");
     try {
-      await API.put(`/bookings/cancel/${cancelTarget._id}`, {}, {
-  headers: { Authorization: `Bearer ${token}` },
-});
-      // Instantly remove from UI
-      setBookings((prev) => prev.filter((b) => b._id !== cancelTarget._id));
+      await API.put(`/bookings/cancel/${cancelTarget._id}`, {});
+      setBookings(prev => prev.filter(b => b._id !== cancelTarget._id));
       setCancelTarget(null);
     } catch (err) {
-      console.error(err);
-      setCancelError("Failed to cancel booking. Please try again.");
+      setCancelError("Failed to cancel. Please try again.");
     } finally {
       setCancelling(false);
     }
   };
 
-  const closeModal = () => {
-    if (cancelling) return; // prevent close while request is in flight
-    setCancelTarget(null);
-    setCancelError("");
+  // ── DATE CHANGE REQUEST ─────────────────────────────────────────
+  const openDcr = (booking) => {
+    setDcrTarget(booking);
+    setDcrDate("");
+    setDcrReason("");
+    setDcrError("");
+    setDcrSuccess("");
+  };
+
+  const closeDcr = () => {
+    if (dcrLoading) return;
+    setDcrTarget(null);
+    setDcrError("");
+    setDcrSuccess("");
+  };
+
+  const handleDcrSubmit = async () => {
+    if (!dcrDate) { setDcrError("Please select a new date."); return; }
+    setDcrLoading(true);
+    setDcrError("");
+    try {
+      const res = await API.post(`/bookings/${dcrTarget._id}/date-change`, {
+        requestedDate: dcrDate,
+        reason: dcrReason,
+      });
+      // Update booking in local state
+      setBookings(prev =>
+        prev.map(b => b._id === dcrTarget._id ? res.data.booking : b)
+      );
+      setDcrSuccess("Request sent! The vendor will respond soon.");
+    } catch (err) {
+      setDcrError(err.response?.data?.error || "Failed to submit request.");
+    } finally {
+      setDcrLoading(false);
+    }
   };
   // ────────────────────────────────────────────────────────────────
 
   const filtered = filter === "all"
     ? bookings
-    : bookings.filter((b) => b.status === filter);
+    : bookings.filter(b => b.status === filter);
 
   const counts = {
     all:      bookings.length,
@@ -72,9 +117,12 @@ export default function UserDashboard() {
     rejected: bookings.filter(b => b.status === "rejected").length,
   };
 
-  const getInitial   = (b) => b.vendorId?.title?.charAt(0)?.toUpperCase() || b.vendorId?.toString()?.charAt(0)?.toUpperCase() || "V";
+  const getInitial    = (b) => b.vendorId?.title?.charAt(0)?.toUpperCase() || "V";
   const getVendorName = (b) => b.vendorId?.title || `Vendor #${b.vendorId?.toString()?.slice(-5) || "—"}`;
-  const getServiceType = (b) => b.vendorId?.serviceType || b.serviceType || "Service";
+  const getServiceType = (b) => b.vendorId?.serviceType || "Service";
+
+  // Today string for min date on date picker
+  const todayStr = new Date().toISOString().split("T")[0];
 
   return (
     <>
@@ -82,189 +130,291 @@ export default function UserDashboard() {
       <div className="ud-root">
         <Navbar />
 
-        {/* ── CANCEL CONFIRMATION MODAL ── */}
+        {/* ── CANCEL MODAL ── */}
         {cancelTarget && (
-          <div className="ud-modal-backdrop" onClick={closeModal}>
-            <div className="ud-modal" onClick={(e) => e.stopPropagation()}>
-              <div className="ud-modal-icon">🗑</div>
-              <h3 className="ud-modal-title">Cancel this Booking?</h3>
+          <div className="ud-overlay" onClick={() => { if (!cancelling) { setCancelTarget(null); setCancelError(""); } }}>
+            <div className="ud-modal" onClick={e => e.stopPropagation()}>
+              <div className="ud-modal-icon-wrap ud-modal-danger">
+                <span>🗑</span>
+              </div>
+              <h3 className="ud-modal-title">Cancel Booking?</h3>
               <p className="ud-modal-body">
-                You are about to cancel your booking with{" "}
-                <strong>{getVendorName(cancelTarget)}</strong> on{" "}
-                <strong>
-                  {new Date(cancelTarget.date).toLocaleDateString("en-IN", {
-                    weekday: "short", day: "numeric",
-                    month: "short", year: "numeric",
-                  })}
-                </strong>
-                . This action cannot be undone.
+                You are about to cancel your booking with <strong>{getVendorName(cancelTarget)}</strong> on <strong>{fmt(cancelTarget.date)}</strong>. This action cannot be undone.
               </p>
-
-              {cancelError && (
-                <p className="ud-modal-error">⚠ {cancelError}</p>
-              )}
-
-              <div className="ud-modal-actions">
-                <button
-                  className="ud-modal-keep"
-                  onClick={closeModal}
-                  disabled={cancelling}
-                >
-                  Keep Booking
-                </button>
-                <button
-                  className={`ud-modal-confirm ${cancelling ? "loading" : ""}`}
-                  onClick={handleCancel}
-                  disabled={cancelling}
-                >
-                  {cancelling ? <><span className="ud-btn-spinner" /> Cancelling…</> : "Yes, Cancel"}
+              {cancelError && <p className="ud-modal-err">⚠ {cancelError}</p>}
+              <div className="ud-modal-btns">
+                <button className="ud-mbtn ud-mbtn-ghost" onClick={() => { setCancelTarget(null); setCancelError(""); }} disabled={cancelling}>Keep Booking</button>
+                <button className="ud-mbtn ud-mbtn-danger" onClick={handleCancel} disabled={cancelling}>
+                  {cancelling ? <><span className="ud-spinner" /> Cancelling…</> : "Yes, Cancel"}
                 </button>
               </div>
             </div>
           </div>
         )}
 
+        {/* ── DATE CHANGE MODAL ── */}
+        {dcrTarget && (
+          <div className="ud-overlay" onClick={closeDcr}>
+            <div className="ud-modal ud-modal-wide" onClick={e => e.stopPropagation()}>
+              <div className="ud-modal-icon-wrap ud-modal-gold">
+                <span>📅</span>
+              </div>
+              <h3 className="ud-modal-title">Request Date Change</h3>
+              <p className="ud-modal-body">
+                Current date: <strong>{fmt(dcrTarget.date)}</strong>
+                <br />Service: <strong>{getVendorName(dcrTarget)}</strong>
+              </p>
+
+              {dcrSuccess ? (
+                <div className="ud-dcr-success">
+                  <span className="ud-dcr-success-icon">✓</span>
+                  <p>{dcrSuccess}</p>
+                  <button className="ud-mbtn ud-mbtn-gold" onClick={closeDcr} style={{ marginTop: "16px", width: "100%" }}>Done</button>
+                </div>
+              ) : (
+                <>
+                  <div className="ud-field">
+                    <label className="ud-label">New Preferred Date <span className="ud-req">*</span></label>
+                    <input
+                      type="date"
+                      className="ud-input"
+                      min={todayStr}
+                      value={dcrDate}
+                      onChange={e => { setDcrDate(e.target.value); setDcrError(""); }}
+                    />
+                  </div>
+
+                  <div className="ud-field">
+                    <label className="ud-label">Reason <span className="ud-optional">(optional)</span></label>
+                    <textarea
+                      className="ud-textarea"
+                      rows={3}
+                      placeholder="e.g. Family emergency, schedule conflict…"
+                      value={dcrReason}
+                      onChange={e => setDcrReason(e.target.value)}
+                    />
+                  </div>
+
+                  {dcrError && <p className="ud-modal-err">⚠ {dcrError}</p>}
+
+                  <div className="ud-modal-btns">
+                    <button className="ud-mbtn ud-mbtn-ghost" onClick={closeDcr} disabled={dcrLoading}>Cancel</button>
+                    <button className="ud-mbtn ud-mbtn-gold" onClick={handleDcrSubmit} disabled={dcrLoading}>
+                      {dcrLoading ? <><span className="ud-spinner" /> Sending…</> : "Send Request →"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── HERO HEADER ── */}
+        <div className="ud-hero">
+          <div className="ud-hero-orb ud-orb1" />
+          <div className="ud-hero-orb ud-orb2" />
+          <div className="ud-hero-inner">
+            <span className="ud-eyebrow">✦ Client Portal</span>
+            <h1 className="ud-hero-title">My Bookings</h1>
+            <p className="ud-hero-sub">Track and manage all your event reservations</p>
+            <a href="/vendors" className="ud-hero-btn">Browse Services →</a>
+          </div>
+          {/* Floating stat pills */}
+          <div className="ud-hero-pills">
+            <div className="ud-pill">
+              <span className="ud-pill-val">{counts.all}</span>
+              <span className="ud-pill-label">Total</span>
+            </div>
+            <div className="ud-pill ud-pill-gold">
+              <span className="ud-pill-val">{counts.pending}</span>
+              <span className="ud-pill-label">Pending</span>
+            </div>
+            <div className="ud-pill ud-pill-green">
+              <span className="ud-pill-val">{counts.approved}</span>
+              <span className="ud-pill-label">Confirmed</span>
+            </div>
+          </div>
+        </div>
+
         <div className="ud-body">
 
-          {/* ── HEADER ── */}
-          <div className="ud-header">
-            <div>
-              <p className="ud-eyebrow">✦ Client Portal</p>
-              <h1 className="ud-title">My Bookings</h1>
-              <p className="ud-subtitle">Track and manage all your event reservations</p>
-            </div>
-            <a href="/" className="ud-browse-btn">Browse Services →</a>
-          </div>
-
-          {/* ── STATS ── */}
+          {/* ── STATS GRID ── */}
           <div className="ud-stats">
             {[
-              { label: "Total Bookings", value: counts.all,      icon: "📋", color: "var(--ink)" },
-              { label: "Pending",        value: counts.pending,  icon: "⏳", color: "#c9a84c"    },
-              { label: "Confirmed",      value: counts.approved, icon: "✓",  color: "#2d6a4f"    },
-              { label: "Declined",       value: counts.rejected, icon: "✕",  color: "#b85c5c"    },
-            ].map((s) => (
-              <div key={s.label} className="ud-stat-card">
-                <span className="ud-stat-icon">{s.icon}</span>
-                <span className="ud-stat-value" style={{ color: s.color }}>{s.value}</span>
-                <span className="ud-stat-label">{s.label}</span>
+              { label: "Total Bookings", value: counts.all,      icon: "◈", color: "var(--ink)",  accent: "rgba(14,12,10,0.06)"     },
+              { label: "Pending",        value: counts.pending,  icon: "◷", color: "#c9a84c",     accent: "rgba(201,168,76,0.08)"   },
+              { label: "Confirmed",      value: counts.approved, icon: "◎", color: "#3a8a62",     accent: "rgba(58,138,98,0.08)"    },
+              { label: "Declined",       value: counts.rejected, icon: "◌", color: "#b85c5c",     accent: "rgba(184,92,92,0.08)"    },
+            ].map((s, i) => (
+              <div key={s.label} className="ud-stat" style={{ animationDelay: `${i * 0.07}s` }}>
+                <div className="ud-stat-icon-wrap" style={{ background: s.accent }}>
+                  <span className="ud-stat-icon" style={{ color: s.color }}>{s.icon}</span>
+                </div>
+                <div>
+                  <div className="ud-stat-val" style={{ color: s.color }}>{s.value}</div>
+                  <div className="ud-stat-label">{s.label}</div>
+                </div>
               </div>
             ))}
           </div>
 
           {/* ── FILTER TABS ── */}
-          <div className="ud-tabs">
-            {["all", "pending", "approved", "rejected"].map((tab) => (
-              <button
-                key={tab}
-                className={`ud-tab ${filter === tab ? "active" : ""}`}
-                onClick={() => setFilter(tab)}
-              >
-                {tab === "all" ? "All" : tab === "approved" ? "Confirmed" : tab.charAt(0).toUpperCase() + tab.slice(1)}
-                <span className="ud-tab-count">{counts[tab]}</span>
-              </button>
-            ))}
+          <div className="ud-tabs-wrap">
+            <div className="ud-tabs">
+              {[
+                { key: "all",      label: "All Bookings" },
+                { key: "pending",  label: "Pending"      },
+                { key: "approved", label: "Confirmed"    },
+                { key: "rejected", label: "Declined"     },
+              ].map(t => (
+                <button
+                  key={t.key}
+                  className={`ud-tab ${filter === t.key ? "active" : ""}`}
+                  onClick={() => setFilter(t.key)}
+                >
+                  {t.label}
+                  <span className="ud-tab-pill">{counts[t.key]}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* ── BOOKINGS ── */}
+          {/* ── BOOKING LIST ── */}
           {loading ? (
-            <div className="ud-loading">
+            <div className="ud-skeletons">
               {[...Array(3)].map((_, i) => (
                 <div key={i} className="ud-skeleton" style={{ animationDelay: `${i * 0.1}s` }} />
               ))}
             </div>
           ) : filtered.length === 0 ? (
             <div className="ud-empty">
-              <div className="ud-empty-icon">
-                {filter === "all" ? "🗓" : filter === "pending" ? "⏳" : filter === "approved" ? "✓" : "✕"}
-              </div>
+              <div className="ud-empty-orb" />
+              <span className="ud-empty-icon">
+                {filter === "all" ? "🗓" : filter === "pending" ? "◷" : filter === "approved" ? "✓" : "✕"}
+              </span>
               <h3>{filter === "all" ? "No bookings yet" : `No ${filter === "approved" ? "confirmed" : filter} bookings`}</h3>
-              <p>
-                {filter === "all"
-                  ? "You haven't made any bookings yet. Explore our vendors and plan your perfect event!"
-                  : `You don't have any ${filter === "approved" ? "confirmed" : filter} bookings right now.`}
-              </p>
-              {filter === "all" && (
-                <a href="/" className="ud-empty-cta">Explore Vendors →</a>
-              )}
+              <p>{filter === "all" ? "Start exploring vendors and book your perfect event experience." : `You don't have any ${filter === "approved" ? "confirmed" : filter} bookings right now.`}</p>
+              {filter === "all" && <a href="/vendors" className="ud-empty-cta">Explore Vendors →</a>}
             </div>
           ) : (
-            <div className="ud-bookings">
+            <div className="ud-list">
               {filtered.map((b, i) => {
                 const meta = STATUS_META[b.status] || STATUS_META.pending;
                 const isPending = b.status === "pending";
+                const isApproved = b.status === "approved";
+                const canRequestDateChange = (isPending || isApproved) && b.dateChangeRequest?.status !== "pending";
+                const dcr = b.dateChangeRequest;
+                const hasDcr = dcr && dcr.status !== "none" && dcr.requestedDate;
+
                 return (
                   <div
                     key={b._id}
                     className="ud-card"
                     style={{ animationDelay: `${i * 0.06}s` }}
                   >
-                    {/* STATUS STRIPE */}
-                    <div className="ud-card-stripe" style={{ background: meta.color }} />
+                    {/* Left accent bar */}
+                    <div className="ud-card-bar" style={{ background: meta.color }} />
 
-                    {/* VENDOR AVATAR */}
-                    <div className="ud-vendor-avatar">
+                    {/* Vendor avatar */}
+                    <div className="ud-avatar">
                       {b.vendorId?.images?.[0] ? (
-                        <img src={b.vendorId.images[0]} alt="vendor" />
+                        <img src={b.vendorId.images[0]} alt="" />
                       ) : (
                         <span>{getInitial(b)}</span>
                       )}
                     </div>
 
-                    {/* MAIN INFO */}
-                    <div className="ud-card-info">
-                      <h3 className="ud-vendor-name">{getVendorName(b)}</h3>
-                      <p className="ud-service-type">
-                        <span className="ud-service-dot">◈</span>
-                        {getServiceType(b)}
-                      </p>
-                      <div className="ud-card-meta">
-                        <span className="ud-meta-chip">
-                          🗓 {new Date(b.date).toLocaleDateString("en-IN", {
-                            weekday: "short", day: "numeric",
-                            month: "short", year: "numeric",
-                          })}
+                    {/* Main content */}
+                    <div className="ud-card-content">
+                      <div className="ud-card-top">
+                        <div>
+                          <h3 className="ud-vname">{getVendorName(b)}</h3>
+                          <p className="ud-stype">
+                            <span className="ud-stype-dot">◈</span>
+                            {getServiceType(b)}
+                            {b.vendorId?.location && (
+                              <span className="ud-loc"> · {b.vendorId.location}</span>
+                            )}
+                          </p>
+                        </div>
+                        {/* Status badge — desktop right */}
+                        <span
+                          className="ud-badge ud-badge-desk"
+                          style={{ color: meta.color, background: meta.bg, border: `1px solid ${meta.border}` }}
+                        >
+                          <span>{meta.icon}</span> {meta.label}
                         </span>
-                        {b.package && (
-                          <span className="ud-meta-chip">📦 {b.package}</span>
-                        )}
-                        {b.vendorId?.location && (
-                          <span className="ud-meta-chip">◉ {b.vendorId.location}</span>
+                      </div>
+
+                      {/* Date row */}
+                      <div className="ud-date-row">
+                        <div className="ud-date-chip">
+                          <span className="ud-date-icon">🗓</span>
+                          <span>{fmt(b.date)}</span>
+                        </div>
+                        {b.packageName && (
+                          <div className="ud-date-chip">
+                            <span className="ud-date-icon">📦</span>
+                            <span>{b.packageName}</span>
+                          </div>
                         )}
                       </div>
-                    </div>
 
-                    {/* STATUS + ACTIONS */}
-                    <div className="ud-card-right">
-                      <span
-                        className="ud-status-badge"
-                        style={{ color: meta.color, background: meta.bg, border: `1px solid ${meta.border}` }}
-                      >
-                        {meta.icon} {meta.label}
-                      </span>
+                      {/* Date change request status banner */}
+                      {hasDcr && (
+                        <div
+                          className="ud-dcr-banner"
+                          style={{
+                            color: DCR_META[dcr.status]?.color || "#c9a84c",
+                            background: DCR_META[dcr.status]?.bg || "rgba(201,168,76,0.08)",
+                            border: `1px solid ${DCR_META[dcr.status]?.border || "rgba(201,168,76,0.3)"}`,
+                          }}
+                        >
+                          <span className="ud-dcr-label">
+                            {dcr.status === "pending" && "⏳ "}
+                            {dcr.status === "approved" && "✓ "}
+                            {dcr.status === "rejected" && "✕ "}
+                            {DCR_META[dcr.status]?.label}
+                          </span>
+                          {dcr.requestedDate && (
+                            <span className="ud-dcr-date">→ {fmt(dcr.requestedDate)}</span>
+                          )}
+                        </div>
+                      )}
 
-                      <div className="ud-card-actions">
-                        {b.vendorId?._id && (
-                          <a
-                            href={`/vendor/${b.vendorId._id}`}
-                            className="ud-view-btn"
-                          >
-                            View →
-                          </a>
-                        )}
+                      {/* Actions row */}
+                      <div className="ud-actions">
+                        {/* Status badge — mobile */}
+                        <span
+                          className="ud-badge ud-badge-mob"
+                          style={{ color: meta.color, background: meta.bg, border: `1px solid ${meta.border}` }}
+                        >
+                          <span>{meta.icon}</span> {meta.label}
+                        </span>
 
-                        {/* CANCEL — only for pending bookings */}
-                        {isPending && (
-                          <button
-                            className="ud-cancel-btn"
-                            onClick={() => {
-                              setCancelError("");
-                              setCancelTarget(b);
-                            }}
-                          >
-                            Cancel
-                          </button>
-                        )}
+                        <div className="ud-action-btns">
+                          {b.vendorId?._id && (
+                            <a href={`/vendor/${b.vendorId._id}`} className="ud-btn ud-btn-ghost">
+                              View →
+                            </a>
+                          )}
+                          {canRequestDateChange && (
+                            <button
+                              className="ud-btn ud-btn-date"
+                              onClick={() => openDcr(b)}
+                            >
+                              📅 Change Date
+                            </button>
+                          )}
+                          {isPending && (
+                            <button
+                              className="ud-btn ud-btn-cancel"
+                              onClick={() => { setCancelError(""); setCancelTarget(b); }}
+                            >
+                              Cancel
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -279,7 +429,7 @@ export default function UserDashboard() {
 }
 
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,300&family=DM+Sans:wght@300;400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -288,13 +438,14 @@ const styles = `
     --cream: #f5f0e8;
     --gold: #c9a84c;
     --gold-light: #e8d5a3;
+    --gold-glow: rgba(201,168,76,0.15);
     --muted: #7a7265;
-    --border: rgba(201,168,76,0.2);
+    --border: rgba(201,168,76,0.18);
     --surface: #faf7f2;
     --white: #ffffff;
     --danger: #a93226;
-    --danger-bg: #fdf0ef;
-    --danger-border: rgba(169,50,38,0.25);
+    --danger-bg: rgba(169,50,38,0.06);
+    --danger-border: rgba(169,50,38,0.22);
   }
 
   .ud-root {
@@ -304,380 +455,422 @@ const styles = `
     color: var(--ink);
   }
 
-  .ud-body {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 48px 32px 80px;
-  }
-
-  /* ── CANCEL MODAL ── */
-  .ud-modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(14,12,10,0.55);
-    backdrop-filter: blur(3px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  /* ── OVERLAY / MODAL ── */
+  .ud-overlay {
+    position: fixed; inset: 0;
+    background: rgba(10,8,6,0.6);
+    backdrop-filter: blur(5px);
+    display: flex; align-items: center; justify-content: center;
     z-index: 1000;
     animation: fadeIn 0.2s ease both;
+    padding: 20px;
   }
   .ud-modal {
     background: var(--white);
-    border-radius: 14px;
-    padding: 40px 36px 32px;
-    max-width: 420px;
-    width: calc(100% - 40px);
-    text-align: center;
-    animation: modalUp 0.25s ease both;
     border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 36px 32px 30px;
+    width: 100%; max-width: 420px;
+    text-align: center;
+    animation: modalUp 0.28s cubic-bezier(0.34,1.2,0.64,1) both;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.18), 0 0 0 1px rgba(255,255,255,0.5) inset;
   }
-  .ud-modal-icon {
-    font-size: 26px;
-    margin-bottom: 14px;
-    display: block;
+  .ud-modal-wide { max-width: 480px; }
+  .ud-modal-icon-wrap {
+    width: 58px; height: 58px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; margin: 0 auto 18px;
   }
+  .ud-modal-danger { background: rgba(169,50,38,0.08); border: 1px solid rgba(169,50,38,0.18); }
+  .ud-modal-gold   { background: rgba(201,168,76,0.1);  border: 1px solid rgba(201,168,76,0.25); }
   .ud-modal-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 1.65rem;
-    font-weight: 400;
-    color: var(--ink);
-    margin: 0 0 12px;
-    font-style: italic;
+    font-size: 1.7rem; font-weight: 400; font-style: italic;
+    color: var(--ink); margin-bottom: 10px;
   }
   .ud-modal-body {
-    font-size: 13.5px;
-    color: var(--muted);
-    line-height: 1.7;
-    margin: 0 0 8px;
+    font-size: 13.5px; color: var(--muted); line-height: 1.7;
+    margin-bottom: 20px;
   }
   .ud-modal-body strong { color: var(--ink); font-weight: 500; }
-  .ud-modal-error {
-    font-size: 12.5px;
-    color: var(--danger);
-    background: var(--danger-bg);
-    border: 1px solid var(--danger-border);
-    border-radius: 6px;
-    padding: 8px 12px;
-    margin: 10px 0 0;
-    text-align: left;
+  .ud-modal-err {
+    font-size: 12.5px; color: var(--danger);
+    background: var(--danger-bg); border: 1px solid var(--danger-border);
+    border-radius: 8px; padding: 9px 13px; text-align: left;
+    margin-bottom: 14px;
   }
-  .ud-modal-actions {
-    display: flex;
-    gap: 12px;
-    margin-top: 24px;
+  .ud-modal-btns { display: flex; gap: 10px; }
+  .ud-mbtn {
+    flex: 1; padding: 13px 16px;
+    border-radius: 8px; font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: all 0.22s ease;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
   }
-  .ud-modal-keep {
-    flex: 1;
-    padding: 13px 16px;
+  .ud-mbtn:disabled { opacity: 0.55; cursor: not-allowed; }
+  .ud-mbtn-ghost {
     background: transparent;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px; font-weight: 500;
-    color: var(--muted);
-    cursor: pointer;
-    transition: all 0.2s ease;
+    border: 1px solid var(--border); color: var(--muted);
   }
-  .ud-modal-keep:hover:not(:disabled) {
-    border-color: var(--muted);
-    color: var(--ink);
-    background: var(--surface);
+  .ud-mbtn-ghost:hover:not(:disabled) {
+    border-color: var(--muted); color: var(--ink); background: var(--surface);
   }
-  .ud-modal-keep:disabled { opacity: 0.5; cursor: not-allowed; }
-  .ud-modal-confirm {
-    flex: 1;
-    padding: 13px 16px;
-    background: var(--danger);
-    border: none;
-    border-radius: 6px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px; font-weight: 500;
-    color: var(--white);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+  .ud-mbtn-danger {
+    background: var(--danger); border: none; color: white;
   }
-  .ud-modal-confirm:hover:not(:disabled) {
-    background: #8e1f14;
+  .ud-mbtn-danger:hover:not(:disabled) {
+    background: #8e1f14; transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(169,50,38,0.3);
   }
-  .ud-modal-confirm.loading { opacity: 0.75; cursor: not-allowed; }
-  .ud-btn-spinner {
-    width: 13px; height: 13px;
-    border: 2px solid rgba(255,255,255,0.3);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    display: inline-block;
-    flex-shrink: 0;
+  .ud-mbtn-gold {
+    background: var(--gold); border: none; color: var(--ink);
+  }
+  .ud-mbtn-gold:hover:not(:disabled) {
+    background: #b8942f; transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(201,168,76,0.35);
+  }
+  .ud-spinner {
+    width: 13px; height: 13px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.3); border-top-color: white;
+    animation: spin 0.7s linear infinite; display: inline-block; flex-shrink: 0;
   }
 
-  /* ── HEADER ── */
-  .ud-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    flex-wrap: wrap;
-    gap: 20px;
-    margin-bottom: 40px;
-    animation: fadeUp 0.5s ease both;
+  /* Form fields inside modal */
+  .ud-field { text-align: left; margin-bottom: 14px; }
+  .ud-label {
+    display: block; font-size: 11.5px; font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 7px;
+  }
+  .ud-req { color: var(--danger); }
+  .ud-optional { color: var(--muted); font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 11px; }
+  .ud-input, .ud-textarea {
+    width: 100%; padding: 11px 14px;
+    border: 1px solid var(--border); border-radius: 8px;
+    font-family: 'DM Sans', sans-serif; font-size: 13.5px; color: var(--ink);
+    background: var(--surface); outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .ud-input:focus, .ud-textarea:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
+  }
+  .ud-textarea { resize: vertical; min-height: 80px; }
+
+  /* DCR success state */
+  .ud-dcr-success {
+    background: rgba(58,138,98,0.06); border: 1px solid rgba(58,138,98,0.2);
+    border-radius: 10px; padding: 20px; text-align: center;
+  }
+  .ud-dcr-success-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(58,138,98,0.12); color: #3a8a62;
+    font-size: 1.1rem; margin-bottom: 10px;
+  }
+  .ud-dcr-success p { font-size: 13.5px; color: #3a8a62; line-height: 1.6; }
+
+  /* ── HERO ── */
+  .ud-hero {
+    position: relative; overflow: hidden;
+    background: var(--ink);
+    padding: 96px 32px 56px;
+    text-align: center;
+  }
+  .ud-hero-orb {
+    position: absolute; border-radius: 50%;
+    filter: blur(100px); opacity: 0.12; pointer-events: none;
+  }
+  .ud-orb1 { width: 500px; height: 500px; background: var(--gold); top: -200px; left: -80px; }
+  .ud-orb2 { width: 300px; height: 300px; background: #7b5ea7; bottom: -80px; right: -60px; }
+  .ud-hero-inner {
+    position: relative; z-index: 2;
+    animation: fadeUp 0.55s ease both;
   }
   .ud-eyebrow {
-    font-size: 11px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--gold);
-    margin-bottom: 8px;
+    display: block; font-size: 10.5px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--gold);
+    margin-bottom: 14px; font-weight: 400;
   }
-  .ud-title {
+  .ud-hero-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(2rem, 4vw, 2.8rem);
-    font-weight: 300;
-    color: var(--ink);
-    line-height: 1.1;
-    margin-bottom: 6px;
+    font-size: clamp(2.4rem, 5vw, 3.4rem); font-weight: 300;
+    color: var(--white); margin-bottom: 10px;
+    letter-spacing: 0.02em; line-height: 1.1;
   }
-  .ud-subtitle { font-size: 13.5px; color: var(--muted); }
-  .ud-browse-btn {
+  .ud-hero-sub {
+    font-size: 13.5px; color: rgba(245,240,232,0.45);
+    margin-bottom: 28px; font-weight: 300;
+  }
+  .ud-hero-btn {
     display: inline-block;
-    padding: 12px 24px;
-    background: var(--ink);
-    color: var(--white);
-    text-decoration: none;
-    border-radius: 7px;
-    font-size: 13px; font-weight: 500;
-    letter-spacing: 0.03em;
+    padding: 12px 28px; background: var(--gold); color: var(--ink);
+    text-decoration: none; border-radius: 7px;
+    font-size: 13px; font-weight: 500; letter-spacing: 0.04em;
     transition: all 0.22s ease;
-    white-space: nowrap;
   }
-  .ud-browse-btn:hover {
-    background: var(--gold);
-    color: var(--ink);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(201,168,76,0.3);
+  .ud-hero-btn:hover {
+    background: var(--gold-light); transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(201,168,76,0.3);
+  }
+  .ud-hero-pills {
+    position: relative; z-index: 2;
+    display: flex; justify-content: center; gap: 10px;
+    margin-top: 32px; flex-wrap: wrap;
+  }
+  .ud-pill {
+    display: flex; align-items: center; gap: 9px;
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 40px; padding: 8px 18px;
+    backdrop-filter: blur(8px);
+    animation: fadeUp 0.5s ease 0.2s both;
+  }
+  .ud-pill-val {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem; font-weight: 600; color: var(--white);
+    line-height: 1;
+  }
+  .ud-pill-label { font-size: 11px; color: rgba(245,240,232,0.5); letter-spacing: 0.08em; }
+  .ud-pill-gold { border-color: rgba(201,168,76,0.3); background: rgba(201,168,76,0.08); }
+  .ud-pill-gold .ud-pill-val { color: var(--gold); }
+  .ud-pill-green { border-color: rgba(58,138,98,0.3); background: rgba(58,138,98,0.08); }
+  .ud-pill-green .ud-pill-val { color: #5fb889; }
+
+  /* ── BODY ── */
+  .ud-body {
+    max-width: 900px; margin: 0 auto;
+    padding: 44px 28px 88px;
   }
 
   /* ── STATS ── */
   .ud-stats {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
-    margin-bottom: 32px;
-    animation: fadeUp 0.5s ease 0.1s both;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 14px; margin-bottom: 32px;
   }
-  @media (max-width: 700px) { .ud-stats { grid-template-columns: repeat(2,1fr); } }
-  .ud-stat-card {
-    background: var(--white);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 20px 18px;
-    display: flex; flex-direction: column; gap: 5px;
-    transition: box-shadow 0.2s, transform 0.2s;
+  @media (max-width: 680px) { .ud-stats { grid-template-columns: repeat(2,1fr); } }
+  .ud-stat {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px 16px;
+    display: flex; align-items: center; gap: 14px;
+    animation: fadeUp 0.5s ease both;
+    transition: transform 0.22s, box-shadow 0.22s;
   }
-  .ud-stat-card:hover {
-    box-shadow: 0 4px 20px rgba(201,168,76,0.1);
-    transform: translateY(-2px);
+  .ud-stat:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.07);
   }
-  .ud-stat-icon { font-size: 1.3rem; }
-  .ud-stat-value {
+  .ud-stat-icon-wrap {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .ud-stat-icon { font-size: 1.15rem; }
+  .ud-stat-val {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 2.2rem; font-weight: 600; line-height: 1;
+    font-size: 2rem; font-weight: 600; line-height: 1;
+    margin-bottom: 2px;
   }
-  .ud-stat-label { font-size: 11.5px; color: var(--muted); }
+  .ud-stat-label { font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
 
   /* ── TABS ── */
-  .ud-tabs {
-    display: flex; gap: 4px; flex-wrap: wrap;
+  .ud-tabs-wrap {
+    margin-bottom: 24px;
     border-bottom: 1px solid var(--border);
-    margin-bottom: 28px;
-    animation: fadeUp 0.5s ease 0.15s both;
   }
+  .ud-tabs { display: flex; gap: 2px; flex-wrap: wrap; }
   .ud-tab {
-    display: flex; align-items: center; gap: 7px;
-    padding: 10px 18px;
-    background: none; border: none;
-    border-bottom: 2px solid transparent;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px; color: var(--muted);
-    cursor: pointer; transition: all 0.2s;
-    margin-bottom: -1px;
+    display: flex; align-items: center; gap: 8px;
+    padding: 11px 18px; background: none; border: none;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px;
+    color: var(--muted); cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+    white-space: nowrap;
   }
   .ud-tab:hover { color: var(--ink); }
   .ud-tab.active { color: var(--ink); border-bottom-color: var(--gold); font-weight: 500; }
-  .ud-tab-count {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 1px 8px; font-size: 11px; color: var(--muted);
+  .ud-tab-pill {
+    font-size: 10.5px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 1px 7px; color: var(--muted);
   }
-  .ud-tab.active .ud-tab-count {
-    background: var(--ink); color: var(--white); border-color: var(--ink);
-  }
+  .ud-tab.active .ud-tab-pill { background: var(--ink); color: var(--white); border-color: var(--ink); }
 
-  /* ── BOOKING CARDS ── */
-  .ud-bookings { display: flex; flex-direction: column; gap: 12px; }
+  /* ── BOOKINGS LIST ── */
+  .ud-list { display: flex; flex-direction: column; gap: 14px; }
+
   .ud-card {
-    position: relative;
-    background: var(--white);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 22px 24px 22px 32px;
-    display: flex;
-    align-items: center;
-    gap: 18px;
+    position: relative; overflow: hidden;
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 24px 20px 36px;
+    display: flex; align-items: flex-start; gap: 16px;
     animation: fadeUp 0.45s ease both;
     transition: box-shadow 0.25s, border-color 0.25s, transform 0.25s;
-    overflow: hidden;
   }
   .ud-card:hover {
-    box-shadow: 0 8px 32px rgba(14,12,10,0.08);
-    border-color: rgba(201,168,76,0.35);
+    box-shadow: 0 12px 40px rgba(14,12,10,0.08);
+    border-color: rgba(201,168,76,0.32);
     transform: translateY(-2px);
   }
-  .ud-card-stripe {
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 4px;
-    border-radius: 12px 0 0 12px;
-    opacity: 0.7;
-  }
-  .ud-vendor-avatar {
-    width: 52px; height: 52px;
-    border-radius: 10px;
-    overflow: hidden;
-    background: var(--ink);
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-    border: 1px solid var(--border);
-  }
-  .ud-vendor-avatar img { width: 100%; height: 100%; object-fit: cover; }
-  .ud-vendor-avatar span {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.3rem; font-weight: 600;
-    color: var(--gold);
-  }
-  .ud-card-info { flex: 1; min-width: 0; }
-  .ud-vendor-name {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.15rem; font-weight: 600;
-    color: var(--ink); margin-bottom: 3px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .ud-service-type {
-    font-size: 12px; color: var(--muted);
-    display: flex; align-items: center; gap: 5px;
-    margin-bottom: 10px; text-transform: capitalize;
-  }
-  .ud-service-dot { color: var(--gold); font-size: 10px; }
-  .ud-card-meta { display: flex; gap: 10px; flex-wrap: wrap; }
-  .ud-meta-chip {
-    font-size: 11.5px; color: var(--muted);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 3px 10px;
-    white-space: nowrap;
+  .ud-card-bar {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    border-radius: 14px 0 0 14px; opacity: 0.7;
   }
 
-  /* RIGHT SIDE — status + action buttons */
-  .ud-card-right {
-    display: flex; flex-direction: column;
-    align-items: flex-end; gap: 10px;
+  .ud-avatar {
+    width: 54px; height: 54px; border-radius: 12px;
+    background: var(--ink); border: 1px solid var(--border);
+    overflow: hidden; display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
   }
-  .ud-status-badge {
-    font-size: 11px; font-weight: 500;
-    letter-spacing: 0.08em;
-    padding: 5px 12px;
-    border-radius: 20px;
-    white-space: nowrap;
-    display: flex; align-items: center; gap: 5px;
+  .ud-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .ud-avatar span {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem; font-weight: 600; color: var(--gold);
   }
-  .ud-card-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .ud-view-btn {
-    font-size: 12px; color: var(--muted);
-    text-decoration: none;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 6px 14px;
-    transition: all 0.2s;
-    white-space: nowrap;
-  }
-  .ud-view-btn:hover { border-color: var(--gold); color: var(--gold); }
 
-  /* CANCEL BUTTON — only shows on pending */
-  .ud-cancel-btn {
-    font-size: 12px;
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 500;
-    color: var(--danger);
+  .ud-card-content { flex: 1; min-width: 0; }
+  .ud-card-top {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 12px; margin-bottom: 10px;
+  }
+  .ud-vname {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem; font-weight: 600; color: var(--ink);
+    margin-bottom: 4px; line-height: 1.2;
+  }
+  .ud-stype {
+    font-size: 12px; color: var(--muted);
+    display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+    text-transform: capitalize;
+  }
+  .ud-stype-dot { color: var(--gold); font-size: 9px; }
+  .ud-loc { color: #9e9690; }
+
+  .ud-date-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .ud-date-chip {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--muted);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 4px 11px;
+    white-space: nowrap;
+  }
+  .ud-date-icon { font-size: 11px; }
+
+  /* Date change banner */
+  .ud-dcr-banner {
+    display: flex; align-items: center; gap: 10px;
+    border-radius: 8px; padding: 7px 12px; margin-bottom: 10px;
+    font-size: 12px; font-weight: 500;
+  }
+  .ud-dcr-label { flex: 1; }
+  .ud-dcr-date { font-weight: 400; opacity: 0.85; }
+
+  /* Action row */
+  .ud-actions {
+    display: flex; align-items: center;
+    justify-content: space-between; gap: 10px;
+    flex-wrap: wrap;
+  }
+  .ud-action-btns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  .ud-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 500; letter-spacing: 0.06em;
+    padding: 5px 12px; border-radius: 20px; white-space: nowrap;
+  }
+  .ud-badge-desk { display: inline-flex; }
+  .ud-badge-mob  { display: none; }
+
+  .ud-btn {
+    font-size: 12px; font-family: 'DM Sans', sans-serif; font-weight: 500;
+    padding: 7px 15px; border-radius: 7px; cursor: pointer;
+    transition: all 0.2s ease; white-space: nowrap;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
+  }
+  .ud-btn-ghost {
+    background: transparent; color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .ud-btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+
+  .ud-btn-date {
+    background: rgba(201,168,76,0.08);
+    color: #a07b28;
+    border: 1px solid rgba(201,168,76,0.3);
+  }
+  .ud-btn-date:hover {
+    background: rgba(201,168,76,0.15);
+    border-color: var(--gold); color: var(--ink);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(201,168,76,0.2);
+  }
+  .ud-btn-cancel {
     background: transparent;
+    color: var(--danger);
     border: 1px solid var(--danger-border);
-    border-radius: 6px;
-    padding: 6px 14px;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
   }
-  .ud-cancel-btn:hover {
+  .ud-btn-cancel:hover {
     background: var(--danger-bg);
     border-color: var(--danger);
   }
 
-  /* SKELETON */
-  .ud-loading { display: flex; flex-direction: column; gap: 12px; }
+  /* ── SKELETON ── */
+  .ud-skeletons { display: flex; flex-direction: column; gap: 14px; }
   .ud-skeleton {
-    height: 96px; border-radius: 12px;
+    height: 110px; border-radius: 14px;
     background: linear-gradient(90deg, #ede8e0 25%, #e5dfd4 50%, #ede8e0 75%);
     background-size: 200% 100%;
     animation: shimmer 1.4s ease infinite;
   }
 
-  /* EMPTY */
+  /* ── EMPTY ── */
   .ud-empty {
-    text-align: center; padding: 80px 20px;
+    position: relative; text-align: center;
+    padding: 88px 20px;
     animation: fadeUp 0.5s ease both;
+    overflow: hidden;
+  }
+  .ud-empty-orb {
+    position: absolute; width: 400px; height: 400px;
+    background: var(--gold); border-radius: 50%; filter: blur(120px);
+    opacity: 0.04; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    pointer-events: none;
   }
   .ud-empty-icon {
-    font-size: 3rem; margin-bottom: 16px;
-    width: 72px; height: 72px;
-    background: var(--white);
-    border: 1px solid var(--border);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    margin: 0 auto 20px;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 72px; height: 72px; border-radius: 50%;
+    background: var(--white); border: 1px solid var(--border);
+    font-size: 1.8rem; margin-bottom: 20px;
   }
   .ud-empty h3 {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 1.6rem; font-weight: 600;
-    color: var(--ink); margin-bottom: 8px;
+    font-size: 1.7rem; font-weight: 400; color: var(--ink); margin-bottom: 10px;
   }
   .ud-empty p {
-    font-size: 13.5px; color: var(--muted); line-height: 1.6;
-    margin-bottom: 24px; max-width: 400px; margin-left: auto; margin-right: auto;
+    font-size: 13.5px; color: var(--muted); line-height: 1.65;
+    max-width: 360px; margin: 0 auto 24px;
   }
   .ud-empty-cta {
-    display: inline-block;
-    padding: 13px 28px;
+    display: inline-block; padding: 13px 30px;
     background: var(--ink); color: var(--white);
-    text-decoration: none; border-radius: 7px;
+    text-decoration: none; border-radius: 8px;
     font-size: 13px; font-weight: 500;
-    transition: all 0.2s;
+    transition: all 0.22s;
   }
   .ud-empty-cta:hover { background: var(--gold); color: var(--ink); }
 
-  @media (max-width: 640px) {
-    .ud-card { flex-wrap: wrap; padding-left: 28px; }
-    .ud-card-right { flex-direction: row; width: 100%; justify-content: space-between; align-items: center; }
-    .ud-body { padding: 32px 20px 60px; }
-    .ud-modal-actions { flex-direction: column; }
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    .ud-hero { padding: 88px 20px 44px; }
+    .ud-body { padding: 28px 16px 64px; }
+    .ud-card { padding-left: 28px; }
+    .ud-badge-desk { display: none; }
+    .ud-badge-mob  { display: inline-flex; }
+    .ud-card-top { flex-wrap: wrap; }
+    .ud-modal { padding: 28px 20px 24px; }
+    .ud-modal-btns { flex-direction: column; }
   }
 
   @keyframes fadeUp {
@@ -685,11 +878,10 @@ const styles = `
     to   { opacity: 1; transform: translateY(0); }
   }
   @keyframes fadeIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
+    from { opacity: 0; } to { opacity: 1; }
   }
   @keyframes modalUp {
-    from { opacity: 0; transform: translateY(24px) scale(0.97); }
+    from { opacity: 0; transform: translateY(28px) scale(0.96); }
     to   { opacity: 1; transform: translateY(0) scale(1); }
   }
   @keyframes shimmer {

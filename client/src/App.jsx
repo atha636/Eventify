@@ -12,6 +12,7 @@ import EditService        from "./pages/EditService";
 import ServiceGallery     from "./pages/ServiceGallery";
 import UserDashboard      from "./pages/UserDashboard";
 import Vendors            from "./pages/Vendors";
+import Favorites          from "./pages/Favorites";
 import CustomerCareClient from "./pages/CustomerCareClient";
 import CustomerCareVendor from "./pages/CustomerCareVendor";
 
@@ -46,6 +47,7 @@ export default function App() {
 
         {/* ── User ── */}
         <Route path="/my-bookings"             element={<UserDashboard />} />
+        <Route path="/favourites"              element={<Favorites />} />
 
         {/* ── Support ── */}
         <Route path="/customer-care"           element={<CustomerCareClient />} />

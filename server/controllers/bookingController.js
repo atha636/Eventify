@@ -97,7 +97,8 @@ exports.createBooking = async (req, res) => {
 
 exports.getBookings = async (req, res) => {
   try {
-    const bookings = await Booking.find({ userId: req.user.id });
+    const bookings = await Booking.find({ userId: req.user.id })
+      .populate("vendorId", "title serviceType location images packages rating");
     res.json(bookings);
   } catch (err) {
     res.status(500).json(err);
@@ -210,6 +211,138 @@ exports.cancelBooking = async (req, res) => {
 
   } catch (err) {
     console.error("CANCEL BOOKING ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ── DATE CHANGE REQUEST (user sends) ─────────────────────────────
+exports.requestDateChange = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ error: "Booking not found" });
+
+    // Only the owner can request
+    if (booking.userId.toString() !== req.user.id) {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    // Only pending or approved bookings can request a date change
+    if (!["pending", "approved"].includes(booking.status)) {
+      return res.status(400).json({ error: "Cannot request date change for this booking" });
+    }
+
+    // Block if a date change request is already pending
+    if (booking.dateChangeRequest?.status === "pending") {
+      return res.status(400).json({ error: "A date change request is already pending" });
+    }
+
+    const { requestedDate, reason } = req.body;
+
+    if (!requestedDate) {
+      return res.status(400).json({ error: "New date is required" });
+    }
+
+    const newDate = new Date(requestedDate);
+    if (isNaN(newDate.getTime())) {
+      return res.status(400).json({ error: "Invalid date format" });
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (newDate <= today) {
+      return res.status(400).json({ error: "Requested date must be in the future" });
+    }
+
+    booking.dateChangeRequest = {
+      requestedDate: newDate,
+      reason: reason || "",
+      status: "pending",
+      requestedAt: new Date(),
+      respondedAt: null,
+    };
+
+    await booking.save();
+    res.json({ message: "Date change request submitted", booking });
+
+    // Send email to vendor in background
+    setImmediate(async () => {
+      try {
+        const vendor = await Vendor.findById(booking.vendorId);
+        const vendorUser = vendor ? await User.findById(vendor.vendorId) : null;
+        const user = await User.findById(booking.userId);
+
+        if (vendorUser?.email) {
+          await sendEmail({
+            to: vendorUser.email,
+            subject: "Date Change Request 📅",
+            text: `Hello ${vendorUser.name},\n\nA customer has requested a date change for their booking.\n\nService: ${vendor?.title}\nOriginal Date: ${booking.date}\nRequested Date: ${newDate}\nReason: ${reason || "No reason provided"}\nCustomer: ${user?.name}\n\nPlease log in to approve or reject this request.\n\n- Eventify Team`
+          });
+        }
+      } catch (emailErr) {
+        console.error("EMAIL ERROR (non-critical):", emailErr);
+      }
+    });
+
+  } catch (err) {
+    console.error("DATE CHANGE REQUEST ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ── HANDLE DATE CHANGE REQUEST (vendor approves/rejects) ─────────
+exports.handleDateChangeRequest = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id).populate("vendorId");
+    if (!booking) return res.status(404).json({ error: "Booking not found" });
+
+    // Verify the vendor owns this booking
+    const vendor = await Vendor.findById(booking.vendorId);
+    if (!vendor || vendor.vendorId.toString() !== req.user.id) {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    if (booking.dateChangeRequest?.status !== "pending") {
+      return res.status(400).json({ error: "No pending date change request" });
+    }
+
+    const { action } = req.body; // "approve" | "reject"
+    if (!["approve", "reject"].includes(action)) {
+      return res.status(400).json({ error: "Action must be approve or reject" });
+    }
+
+    booking.dateChangeRequest.status = action === "approve" ? "approved" : "rejected";
+    booking.dateChangeRequest.respondedAt = new Date();
+
+    // If approved, update the actual booking date
+    if (action === "approve") {
+      booking.date = booking.dateChangeRequest.requestedDate;
+    }
+
+    await booking.save();
+    res.json({ message: `Date change ${booking.dateChangeRequest.status}`, booking });
+
+    // Notify user via email in background
+    setImmediate(async () => {
+      try {
+        const user = await User.findById(booking.userId);
+        if (user?.email) {
+          await sendEmail({
+            to: user.email,
+            subject: action === "approve"
+              ? "Date Change Approved ✅"
+              : "Date Change Rejected ❌",
+            text: action === "approve"
+              ? `Hello ${user.name},\n\nGreat news! Your date change request has been approved.\n\nService: ${vendor?.title}\nNew Date: ${booking.date}\n\n- Eventify Team`
+              : `Hello ${user.name},\n\nUnfortunately, your date change request has been rejected.\n\nService: ${vendor?.title}\nOriginal Date: ${booking.date}\n\nPlease contact the vendor for alternatives.\n\n- Eventify Team`
+          });
+        }
+      } catch (emailErr) {
+        console.error("EMAIL ERROR (non-critical):", emailErr);
+      }
+    });
+
+  } catch (err) {
+    console.error("HANDLE DATE CHANGE ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 };

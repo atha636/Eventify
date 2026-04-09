@@ -1,6 +1,6 @@
 import API from "../services/api";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // ── Delete Confirmation Modal ────────────────────────────────────
 function DeleteModal({ serviceName, onConfirm, onCancel, deleting }) {
@@ -39,17 +39,54 @@ function DeleteModal({ serviceName, onConfirm, onCancel, deleting }) {
 export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
   const navigate = useNavigate();
   const [imgError,  setImgError]  = useState(false);
-  const [wishlist,  setWishlist]  = useState(false);
+  const [favorited, setFavorited] = useState(false);
+  const [favLoading, setFavLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [deleting,  setDeleting]  = useState(false);
+
+  const token = localStorage.getItem("token");
+  const user  = JSON.parse(localStorage.getItem("user") || "{}");
+  const isUser = user?.role === "user";
 
   const startingPrice = vendor.packages?.[0]?.price;
   const packageCount  = Array.isArray(vendor.packages) ? vendor.packages.length : 0;
   const hasGallery    = vendor.images?.length > 0;
 
+  // ── Load initial favorite state from localStorage cache ──
+  useEffect(() => {
+    if (!isUser || !token) return;
+    try {
+      const cached = JSON.parse(localStorage.getItem("favoriteIds") || "[]");
+      setFavorited(cached.includes(vendor._id));
+    } catch {}
+  }, [vendor._id]);
+
+  // ── Toggle favorite ──────────────────────────────────────
+  const handleFavorite = async (e) => {
+    e.stopPropagation();
+    if (!token || !isUser) {
+      navigate("/login");
+      return;
+    }
+    setFavLoading(true);
+    const prev = favorited;
+    setFavorited(!prev); // optimistic
+    try {
+      const res = await API.post(`/favorites/${vendor._id}`);
+      // Update localStorage cache with latest IDs
+      const ids = res.data.favorites || [];
+      localStorage.setItem("favoriteIds", JSON.stringify(ids));
+      setFavorited(res.data.favorited);
+    } catch (err) {
+      setFavorited(prev); // revert on error
+      console.error(err);
+    } finally {
+      setFavLoading(false);
+    }
+  };
+
   const handleDeleteConfirm = async () => {
     setDeleting(true);
-    const token = localStorage.getItem("token");
     try {
       await API.delete(`/vendors/${vendor._id}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -63,8 +100,6 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
     }
   };
 
-  // Clicking the image → gallery page
-  // Clicking the card body / View button → vendor detail page
   const goToGallery = (e) => {
     e.stopPropagation();
     if (hasGallery) navigate(`/vendor/${vendor._id}/gallery`);
@@ -88,10 +123,9 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
         />
       )}
 
-      {/* Clicking the CARD (non-image area) → detail page */}
       <div className="sc-card" onClick={goToDetail}>
 
-        {/* IMAGE — clicking goes to GALLERY */}
+        {/* IMAGE */}
         <div
           className={`sc-img-wrap ${hasGallery ? "sc-img-clickable" : ""}`}
           onClick={goToGallery}
@@ -110,7 +144,6 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
 
           <div className="sc-img-overlay" />
 
-          {/* Gallery hint shown on hover if multiple images */}
           {vendor.images?.length > 1 && (
             <div className="sc-gallery-hint">
               <span className="sc-gallery-hint-icon">⊞</span>
@@ -118,14 +151,18 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
             </div>
           )}
 
-          {/* Wishlist — hidden in delete/vendor mode */}
+          {/* Favorite heart — shown for users only, hidden in vendor mode */}
           {!showDelete && (
             <button
-              className={`sc-wishlist ${wishlist ? "active" : ""}`}
-              onClick={(e) => { e.stopPropagation(); setWishlist(!wishlist); }}
-              aria-label="Save to wishlist"
+              className={`sc-wishlist ${favorited ? "active" : ""} ${favLoading ? "loading" : ""}`}
+              onClick={handleFavorite}
+              aria-label={favorited ? "Remove from favourites" : "Save to favourites"}
+              title={favorited ? "Remove from favourites" : "Save to favourites"}
             >
-              {wishlist ? "♥" : "♡"}
+              {favLoading
+                ? <span className="sc-fav-spinner" />
+                : favorited ? "♥" : "♡"
+              }
             </button>
           )}
 
@@ -151,7 +188,6 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
             </div>
           )}
 
-          {/* Package badge */}
           {packageCount > 0 && (
             <span className="sc-badge">
               {packageCount === 1 ? "1 Package" : `${packageCount} Packages`}
@@ -303,7 +339,6 @@ const cardStyles = `
     background: linear-gradient(135deg, #ede8e0, #e0d8cc); font-size: 2.5rem; color: var(--muted);
   }
 
-  /* Gallery hint overlay */
   .sc-gallery-hint {
     position: absolute; inset: 0;
     display: flex; align-items: center; justify-content: center;
@@ -315,18 +350,24 @@ const cardStyles = `
   .sc-img-wrap:hover .sc-gallery-hint { background: rgba(14,12,10,0.4); opacity: 1; }
   .sc-gallery-hint-icon { font-size: 1.1rem; }
 
-  /* Wishlist */
+  /* Wishlist / Heart */
   .sc-wishlist {
     position: absolute; top: 12px; right: 12px;
     width: 34px; height: 34px;
-    background: rgba(255,255,255,0.9); backdrop-filter: blur(8px);
+    background: rgba(255,255,255,0.92); backdrop-filter: blur(8px);
     border: none; border-radius: 50%; font-size: 16px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    color: var(--muted); transition: all 0.2s;
+    color: var(--muted); transition: all 0.22s;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 2;
   }
-  .sc-wishlist:hover { transform: scale(1.1); }
-  .sc-wishlist.active { color: #c0445a; background: rgba(255,255,255,0.95); }
+  .sc-wishlist:hover { transform: scale(1.12); background: white; }
+  .sc-wishlist.active { color: #c0445a; background: rgba(255,255,255,0.97); }
+  .sc-wishlist.loading { pointer-events: none; opacity: 0.7; }
+  .sc-fav-spinner {
+    width: 13px; height: 13px; border-radius: 50%;
+    border: 2px solid rgba(122,114,101,0.3); border-top-color: #c0445a;
+    animation: scSpin 0.7s linear infinite; display: inline-block;
+  }
 
   /* Vendor dashboard action buttons */
   .sc-vendor-actions {
@@ -399,4 +440,6 @@ const cardStyles = `
     background: var(--gold); color: var(--ink);
     box-shadow: 0 4px 16px rgba(201,168,76,0.3); transform: translateX(2px);
   }
+
+  @keyframes scSpin { to { transform: rotate(360deg); } }
 `;

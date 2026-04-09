@@ -17,10 +17,24 @@ const bookingSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ["pending", "approved", "rejected", "cancelled" ],
+    enum: ["pending", "approved", "rejected", "cancelled"],
     default: "pending"
-  }
+  },
 
-}, { timestamps: true }); // ✅ ADD THIS
+  // ── Date Change Request ──────────────────────────────────────────
+  dateChangeRequest: {
+    requestedDate: { type: Date, default: null },
+    reason:        { type: String, default: "" },
+    status: {
+      type: String,
+      enum: ["none", "pending", "approved", "rejected"],
+      default: "none"
+    },
+    requestedAt: { type: Date, default: null },
+    respondedAt: { type: Date, default: null },
+  },
+  // ────────────────────────────────────────────────────────────────
+
+}, { timestamps: true });
 
 module.exports = mongoose.model("Booking", bookingSchema);
