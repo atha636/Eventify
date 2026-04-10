@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 
@@ -113,48 +113,114 @@ const vendorFAQs = [
 
 const CONTACT_CHANNELS = [
   {
-    icon: "✉",
+    svg: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="22" height="22">
+        <rect x="2" y="4" width="20" height="16" rx="3" />
+        <polyline points="2,4 12,13 22,4" />
+      </svg>
+    ),
     label: "Email Support",
     value: "admineventify2005@gmail.com",
     sub: "We reply within 24 hours",
-    action: () => window.location.href = "mailto:admineventify2005@gmail.com",
+    action: () => (window.location.href = "mailto:admineventify2005@gmail.com"),
     cta: "Send Email",
     accent: "#c9a84c",
   },
   {
-    icon: "📞",
+    svg: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="22" height="22">
+        <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.61 19a19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 3.09 4.18 2 2 0 0 1 5.09 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L9.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+      </svg>
+    ),
     label: "Phone Support",
     value: "+91 70230 17517",
     sub: "Mon – Sat · 10 AM – 7 PM IST",
-    action: () => window.location.href = "tel:+917023017517",
+    action: () => (window.location.href = "tel:+917023017517"),
     cta: "Call Now",
     accent: "#5eb89a",
   },
   {
-    icon: "💬",
+    svg: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="22" height="22">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      </svg>
+    ),
     label: "WhatsApp",
     value: "+91 70230 17517",
     sub: "Quick replies on WhatsApp",
-    action: () => window.open("https://wa.me/917023017517?text=Hello%20Eventify%20Vendor%20Support", "_blank"),
+    action: () =>
+      window.open(
+        "https://wa.me/917023017517?text=Hello%20Eventify%20Vendor%20Support",
+        "_blank"
+      ),
     cta: "Chat on WhatsApp",
     accent: "#25d366",
   },
   {
-    icon: "🎫",
+    svg: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="22" height="22">
+        <rect x="2" y="3" width="20" height="14" rx="2" />
+        <path d="M8 21h8M12 17v4" />
+      </svg>
+    ),
     label: "Support Ticket",
     value: "Dashboard → Contact Support",
     sub: "Priority for Premium vendors",
-    action: () => window.location.href = "/vendor-dashboard",
+    action: () => (window.location.href = "/vendor-dashboard"),
     cta: "Open Dashboard",
     accent: "#7b86c9",
   },
 ];
+
+/* ── Scroll-reveal hook ── */
+function useReveal(threshold = 0.15) {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [threshold]);
+  return [ref, visible];
+}
+
+/* ── Animated counter ── */
+function Counter({ target, suffix = "" }) {
+  const [val, setVal] = useState(0);
+  const [ref, visible] = useReveal(0.3);
+  const numTarget = parseFloat(target.replace(/[^0-9.]/g, ""));
+  useEffect(() => {
+    if (!visible) return;
+    let start = 0;
+    const step = numTarget / 50;
+    const id = setInterval(() => {
+      start = Math.min(start + step, numTarget);
+      setVal(start);
+      if (start >= numTarget) clearInterval(id);
+    }, 22);
+    return () => clearInterval(id);
+  }, [visible, numTarget]);
+  const display = Number.isInteger(numTarget) ? Math.round(val) : val.toFixed(1);
+  return <span ref={ref}>{target.startsWith("₹") ? "₹" : ""}{display}{suffix}</span>;
+}
 
 export default function CustomerCareVendor() {
   const [openItem, setOpenItem] = useState(null);
   const navigate = useNavigate();
   const [openCategory, setOpenCategory] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [copiedIndex, setCopiedIndex] = useState(null);
+
+  const [statsRef, statsVisible] = useReveal(0.2);
+  const [contactRef, contactVisible] = useReveal(0.1);
+  const [faqRef, faqVisible] = useReveal(0.1);
+  const [resRef, resVisible] = useReveal(0.1);
+  const [tlRef, tlVisible] = useReveal(0.1);
 
   const toggle = (key) => setOpenItem(openItem === key ? null : key);
 
@@ -171,6 +237,13 @@ export default function CustomerCareVendor() {
         .filter((cat) => cat.questions.length > 0)
     : vendorFAQs;
 
+  const handleCopy = (text, idx) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedIndex(idx);
+      setTimeout(() => setCopiedIndex(null), 1800);
+    });
+  };
+
   return (
     <>
       <style>{styles}</style>
@@ -184,6 +257,7 @@ export default function CustomerCareVendor() {
           <div className="vc-hero-orb vc-orb2" />
           <div className="vc-hero-orb vc-orb3" />
           <div className="vc-grid-lines" />
+          <div className="vc-noise" />
           <div className="vc-hero-inner">
             <span className="vc-hero-eyebrow">
               <span className="vc-eyebrow-dot" />
@@ -198,20 +272,32 @@ export default function CustomerCareVendor() {
               We're here every step of the way.
             </p>
 
-            <div className="vc-search-wrap">
-              <span className="vc-search-icon">⌕</span>
+            <div className="vc-search-wrap" role="search">
+              <span className="vc-search-icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" width="17" height="17">
+                  <circle cx="8.5" cy="8.5" r="5.5" />
+                  <line x1="12.5" y1="12.5" x2="17" y2="17" />
+                </svg>
+              </span>
               <input
                 className="vc-search-input"
                 placeholder="Search vendor questions…"
                 value={searchQuery}
+                aria-label="Search FAQ"
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
                   setOpenItem(null);
                 }}
               />
               {searchQuery && (
-                <button className="vc-search-clear" onClick={() => setSearchQuery("")}>
-                  ✕
+                <button
+                  className="vc-search-clear"
+                  onClick={() => setSearchQuery("")}
+                  aria-label="Clear search"
+                >
+                  <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" width="12" height="12">
+                    <line x1="1" y1="1" x2="13" y2="13" /><line x1="13" y1="1" x2="1" y2="13" />
+                  </svg>
                 </button>
               )}
             </div>
@@ -221,6 +307,9 @@ export default function CustomerCareVendor() {
                 <span
                   key={l}
                   className="vc-quick-pill"
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === "Enter" && e.currentTarget.click()}
                   onClick={() => {
                     const idx = vendorFAQs.findIndex((c) =>
                       c.category.toLowerCase().includes(l.toLowerCase())
@@ -240,22 +329,27 @@ export default function CustomerCareVendor() {
         </div>
 
         {/* ── STATS STRIP ── */}
-        <div className="vc-stats-strip">
+        <div className={`vc-stats-strip ${statsVisible ? "revealed" : ""}`} ref={statsRef}>
           {[
-            { num: "850+", label: "Active Vendors" },
-            { num: "₹2.4Cr+", label: "Paid to Vendors" },
-            { num: "24h", label: "Avg. Support Reply" },
-            { num: "4.8★", label: "Vendor Satisfaction" },
+            { num: "850", suffix: "+", label: "Active Vendors", prefix: "" },
+            { num: "2.4", suffix: "Cr+", label: "Paid to Vendors", prefix: "₹" },
+            { num: "24", suffix: "h", label: "Avg. Support Reply", prefix: "" },
+            { num: "4.8", suffix: "★", label: "Vendor Satisfaction", prefix: "" },
           ].map((s, i) => (
-            <div key={i} className="vc-stat">
-              <span className="vc-stat-num">{s.num}</span>
+            <div key={i} className="vc-stat" style={{ "--delay": `${i * 80}ms` }}>
+              <span className="vc-stat-num">
+                {s.prefix}<Counter target={`${s.num}`} suffix={s.suffix} />
+              </span>
               <span className="vc-stat-label">{s.label}</span>
             </div>
           ))}
         </div>
 
         {/* ── CONTACT CHANNELS ── */}
-        <div className="vc-contact-section">
+        <div
+          className={`vc-contact-section ${contactVisible ? "revealed" : ""}`}
+          ref={contactRef}
+        >
           <div className="vc-contact-header">
             <p className="vc-eyebrow-dark">✦ Reach Us Directly</p>
             <h2 className="vc-section-title">Get in Touch</h2>
@@ -266,19 +360,56 @@ export default function CustomerCareVendor() {
               <div
                 key={i}
                 className="vc-contact-card"
-                style={{ "--ch-accent": ch.accent }}
+                style={{ "--ch-accent": ch.accent, "--delay": `${i * 90}ms` }}
                 onClick={ch.action}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === "Enter" && ch.action()}
+                aria-label={ch.label}
               >
+                <div className="vc-contact-card-shine" />
                 <div className="vc-contact-card-glow" />
-                <div className="vc-contact-icon-wrap">
-                  <span className="vc-contact-icon">{ch.icon}</span>
+                <div className="vc-contact-icon-wrap" style={{ color: ch.accent }}>
+                  {ch.svg}
                 </div>
                 <div className="vc-contact-info">
                   <span className="vc-contact-label">{ch.label}</span>
                   <span className="vc-contact-value">{ch.value}</span>
                   <span className="vc-contact-sub">{ch.sub}</span>
                 </div>
-                <span className="vc-contact-cta">{ch.cta} →</span>
+                <div className="vc-contact-footer">
+                  <span className="vc-contact-cta">{ch.cta}</span>
+                  <span className="vc-contact-arrow">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" width="13" height="13">
+                      <line x1="2" y1="8" x2="13" y2="8" />
+                      <polyline points="9,4 13,8 9,12" />
+                    </svg>
+                  </span>
+                </div>
+
+                {/* Copy-to-clipboard for phone/email */}
+                {(i === 0 || i === 1 || i === 2) && (
+                  <button
+                    className={`vc-copy-btn ${copiedIndex === i ? "copied" : ""}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCopy(i === 0 ? "admineventify2005@gmail.com" : "+917023017517", i);
+                    }}
+                    aria-label="Copy to clipboard"
+                    title={copiedIndex === i ? "Copied!" : "Copy"}
+                  >
+                    {copiedIndex === i ? (
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" width="12" height="12">
+                        <polyline points="2,8 6,12 14,4" />
+                      </svg>
+                    ) : (
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" width="12" height="12">
+                        <rect x="5" y="5" width="8" height="9" rx="1.5" />
+                        <path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v7A1.5 1.5 0 0 0 3.5 12H5" />
+                      </svg>
+                    )}
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -302,7 +433,11 @@ export default function CustomerCareVendor() {
         </div>
 
         {/* ── FAQ SECTION ── */}
-        <div className="vc-faq-section" id="vc-faq">
+        <div
+          className={`vc-faq-section ${faqVisible ? "revealed" : ""}`}
+          id="vc-faq"
+          ref={faqRef}
+        >
           <div className="vc-faq-header">
             <p className="vc-eyebrow-dark">✦ Vendor FAQ</p>
             <h2 className="vc-section-title">Partner Questions</h2>
@@ -338,14 +473,15 @@ export default function CustomerCareVendor() {
                     </button>
                   ))}
 
-                  {/* Direct contact nudge inside sidebar */}
                   <div className="vc-sidebar-contact">
                     <p className="vc-sidebar-contact-title">Need direct help?</p>
                     <a href="mailto:admineventify2005@gmail.com" className="vc-sidebar-link">
-                      ✉ admineventify2005@gmail.com
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="11" height="11"><rect x="1" y="3" width="14" height="10" rx="1.5" /><polyline points="1,3 8,9 15,3" /></svg>
+                      admineventify2005@gmail.com
                     </a>
                     <a href="tel:+917023017517" className="vc-sidebar-link">
-                      📞 +91 70230 17517
+                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="11" height="11"><path d="M15 11.3v2A1.33 1.33 0 0 1 13.67 14.6 13.19 13.19 0 0 1 7.74 12.6a13 13 0 0 1-4-4 13.19 13.19 0 0 1-2-5.93A1.33 1.33 0 0 1 3.07 1.33h2A1.33 1.33 0 0 1 6.4 2.49c.085.64.24 1.27.47 1.87a1.33 1.33 0 0 1-.3 1.4l-.85.85A10.67 10.67 0 0 0 9.72 10.6l.85-.85a1.33 1.33 0 0 1 1.4-.3c.6.23 1.23.387 1.87.47A1.33 1.33 0 0 1 15 11.3z" /></svg>
+                      +91 70230 17517
                     </a>
                   </div>
                 </div>
@@ -367,11 +503,23 @@ export default function CustomerCareVendor() {
                       const isOpen = openItem === key;
                       return (
                         <div key={qI} className={`vc-faq-item ${isOpen ? "open" : ""}`}>
-                          <button className="vc-faq-q" onClick={() => toggle(key)}>
+                          <button
+                            className="vc-faq-q"
+                            onClick={() => toggle(key)}
+                            aria-expanded={isOpen}
+                          >
                             <span>{item.q}</span>
-                            <span className={`vc-faq-arrow ${isOpen ? "up" : ""}`}>›</span>
+                            <span className={`vc-faq-arrow ${isOpen ? "up" : ""}`} aria-hidden="true">
+                              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2" width="14" height="14">
+                                <polyline points="4,6 8,10 12,6" />
+                              </svg>
+                            </span>
                           </button>
-                          <div className={`vc-faq-a-wrap ${isOpen ? "open" : ""}`}>
+                          <div
+                            className={`vc-faq-a-wrap ${isOpen ? "open" : ""}`}
+                            role="region"
+                            aria-hidden={!isOpen}
+                          >
                             <p className="vc-faq-a">{item.a}</p>
                           </div>
                         </div>
@@ -385,7 +533,7 @@ export default function CustomerCareVendor() {
         </div>
 
         {/* ── RESOURCES ── */}
-        <div className="vc-resources">
+        <div className={`vc-resources ${resVisible ? "revealed" : ""}`} ref={resRef}>
           <div className="vc-res-header">
             <p className="vc-eyebrow-dark">✦ Vendor Resources</p>
             <h2 className="vc-section-title">Helpful Guides</h2>
@@ -393,36 +541,20 @@ export default function CustomerCareVendor() {
           </div>
           <div className="vc-res-grid">
             {[
-              {
-                icon: "📖",
-                title: "Vendor Handbook",
-                desc: "Everything you need to know about selling on Eventify.",
-                link: "/resources/vendor-handbook",
-                tag: "Essential",
-              },
-              {
-                icon: "📸",
-                title: "Photo Guidelines",
-                desc: "Tips to make your portfolio stand out to clients.",
-                link: "/resources/photo-guidelines",
-                tag: "Popular",
-              },
-              {
-                icon: "💡",
-                title: "Pricing Strategy",
-                desc: "How to price your packages competitively.",
-                link: "/resources/pricing-strategy",
-                tag: "Growth",
-              },
-              {
-                icon: "📊",
-                title: "Dashboard Guide",
-                desc: "Walk-through of all your vendor dashboard features.",
-                link: "/resources/dashboard-guide",
-                tag: "New",
-              },
+              { icon: "📖", title: "Vendor Handbook", desc: "Everything you need to know about selling on Eventify.", link: "/resources/vendor-handbook", tag: "Essential" },
+              { icon: "📸", title: "Photo Guidelines", desc: "Tips to make your portfolio stand out to clients.", link: "/resources/photo-guidelines", tag: "Popular" },
+              { icon: "💡", title: "Pricing Strategy", desc: "How to price your packages competitively.", link: "/resources/pricing-strategy", tag: "Growth" },
+              { icon: "📊", title: "Dashboard Guide", desc: "Walk-through of all your vendor dashboard features.", link: "/resources/dashboard-guide", tag: "New" },
             ].map((r, i) => (
-              <div key={i} className="vc-res-card" onClick={() => navigate(r.link)}>
+              <div
+                key={i}
+                className="vc-res-card"
+                style={{ "--delay": `${i * 80}ms` }}
+                onClick={() => navigate(r.link)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === "Enter" && navigate(r.link)}
+              >
                 <span className="vc-res-tag">{r.tag}</span>
                 <span className="vc-res-icon">{r.icon}</span>
                 <h4 className="vc-res-title">{r.title}</h4>
@@ -434,7 +566,7 @@ export default function CustomerCareVendor() {
         </div>
 
         {/* ── ESCALATION TIMELINE ── */}
-        <div className="vc-timeline-section">
+        <div className={`vc-timeline-section ${tlVisible ? "revealed" : ""}`} ref={tlRef}>
           <div className="vc-timeline-header">
             <p className="vc-eyebrow-gold">✦ Our Support Promise</p>
             <h2 className="vc-section-title" style={{ color: "var(--cream)" }}>
@@ -448,7 +580,7 @@ export default function CustomerCareVendor() {
               { time: "Within 24h", icon: "💬", title: "Full Response", desc: "You receive a detailed resolution or escalation to the appropriate team." },
               { time: "Within 72h", icon: "✓", title: "Resolution", desc: "Complex disputes and payment queries are fully resolved within 72 hours." },
             ].map((t, i) => (
-              <div key={i} className="vc-timeline-item">
+              <div key={i} className="vc-timeline-item" style={{ "--delay": `${i * 120}ms` }}>
                 <div className="vc-timeline-left">
                   <span className="vc-timeline-time">{t.time}</span>
                 </div>
@@ -469,6 +601,7 @@ export default function CustomerCareVendor() {
         <div className="vc-cta">
           <div className="vc-cta-orb vc-cta-orb1" />
           <div className="vc-cta-orb vc-cta-orb2" />
+          <div className="vc-noise" style={{ opacity: 0.03 }} />
           <div className="vc-cta-inner">
             <p className="vc-eyebrow-gold">✦ We're Here For You</p>
             <h3 className="vc-cta-title">Still have questions?</h3>
@@ -477,15 +610,12 @@ export default function CustomerCareVendor() {
               Reach us by email, phone, or WhatsApp — we always respond.
             </p>
 
-            {/* Inline contact pills */}
             <div className="vc-cta-contact-row">
               <a href="mailto:admineventify2005@gmail.com" className="vc-cta-contact-pill">
-                <span>✉</span>
-                admineventify2005@gmail.com
+                <span>✉</span>admineventify2005@gmail.com
               </a>
               <a href="tel:+917023017517" className="vc-cta-contact-pill">
-                <span>📞</span>
-                +91 70230 17517
+                <span>📞</span>+91 70230 17517
               </a>
               <a
                 href="https://wa.me/917023017517?text=Hello%20Eventify%20Vendor%20Support"
@@ -493,8 +623,7 @@ export default function CustomerCareVendor() {
                 rel="noreferrer"
                 className="vc-cta-contact-pill vc-cta-wa-pill"
               >
-                <span>💬</span>
-                WhatsApp Us
+                <span>💬</span>WhatsApp Us
               </a>
             </div>
 
@@ -517,13 +646,9 @@ export default function CustomerCareVendor() {
           <div className="vc-footer-logo">✦ Eventify</div>
           <p className="vc-footer-copy">© 2025 Eventify. Crafted with care in India.</p>
           <div className="vc-footer-contact">
-            <a href="mailto:admineventify2005@gmail.com" className="vc-footer-link">
-              admineventify2005@gmail.com
-            </a>
+            <a href="mailto:admineventify2005@gmail.com" className="vc-footer-link">admineventify2005@gmail.com</a>
             <span className="vc-footer-sep">·</span>
-            <a href="tel:+917023017517" className="vc-footer-link">
-              +91 70230 17517
-            </a>
+            <a href="tel:+917023017517" className="vc-footer-link">+91 70230 17517</a>
           </div>
         </footer>
       </div>
@@ -556,6 +681,21 @@ const styles = `
     overflow-x: hidden;
   }
 
+  /* ── FOCUS VISIBLE (accessibility) ── */
+  :focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  /* ── NOISE TEXTURE ── */
+  .vc-noise {
+    position: absolute; inset: 0; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.055;
+    mix-blend-mode: overlay;
+  }
+
   /* ── HERO ── */
   .vc-hero {
     position: relative; overflow: hidden;
@@ -566,6 +706,7 @@ const styles = `
   .vc-hero-orb {
     position: absolute; border-radius: 50%;
     filter: blur(100px); opacity: 0.14; pointer-events: none;
+    will-change: transform;
     animation: orbFloat 9s ease-in-out infinite alternate;
   }
   .vc-orb1 { width: 420px; height: 420px; background: var(--gold); top: -80px; right: -60px; }
@@ -629,11 +770,14 @@ const styles = `
     border-radius: 12px; padding: 6px 6px 6px 16px; gap: 10px;
     max-width: 500px; margin: 0 auto 22px;
     box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(201,168,76,0.08);
-    transition: box-shadow 0.3s;
+    transition: box-shadow 0.3s, transform 0.2s;
     animation: fadeUp 0.7s 0.25s cubic-bezier(.22,1,.36,1) both;
   }
-  .vc-search-wrap:focus-within { box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 0 2px var(--gold); }
-  .vc-search-icon { font-size: 18px; color: var(--muted); flex-shrink: 0; }
+  .vc-search-wrap:focus-within {
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 0 2px var(--gold);
+    transform: translateY(-1px);
+  }
+  .vc-search-icon { color: var(--muted); flex-shrink: 0; display: flex; align-items: center; }
   .vc-search-input {
     flex: 1; border: none; outline: none;
     font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink);
@@ -641,12 +785,12 @@ const styles = `
   }
   .vc-search-input::placeholder { color: #bbb4a8; }
   .vc-search-clear {
-    background: none; border: none; font-size: 13px; color: var(--muted);
-    cursor: pointer; padding: 8px; border-radius: 50%; transition: all 0.2s;
+    background: none; border: none; display: flex; align-items: center; justify-content: center;
+    color: var(--muted); cursor: pointer; padding: 8px;
+    border-radius: 50%; transition: all 0.2s; flex-shrink: 0;
   }
   .vc-search-clear:hover { background: var(--surface); color: var(--ink); }
 
-  /* Quick pills */
   .vc-hero-quick-links {
     display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
     animation: fadeUp 0.7s 0.32s cubic-bezier(.22,1,.36,1) both;
@@ -654,8 +798,8 @@ const styles = `
   .vc-quick-pill {
     font-size: 11.5px; color: var(--gold-light);
     border: 1px solid rgba(201,168,76,0.22); border-radius: 24px;
-    padding: 5px 14px; cursor: pointer; transition: all 0.2s;
-    background: rgba(201,168,76,0.06);
+    padding: 5px 14px; cursor: pointer; transition: all 0.22s;
+    background: rgba(201,168,76,0.06); user-select: none;
   }
   .vc-quick-pill:hover {
     background: rgba(201,168,76,0.15); border-color: var(--gold);
@@ -668,15 +812,22 @@ const styles = `
     background: var(--surface); border-bottom: 1px solid var(--border);
   }
   @media (max-width: 700px) { .vc-stats-strip { grid-template-columns: repeat(2,1fr); } }
+
   .vc-stat {
     display: flex; flex-direction: column; gap: 4px;
     padding: 24px 20px; text-align: center;
     border-right: 1px solid var(--border);
+    opacity: 0; transform: translateY(14px);
+    transition: opacity 0.5s var(--delay, 0ms), transform 0.5s var(--delay, 0ms);
+  }
+  .vc-stats-strip.revealed .vc-stat {
+    opacity: 1; transform: none;
   }
   .vc-stat:last-child { border-right: none; }
   .vc-stat-num {
     font-family: 'Cormorant Garamond', serif;
     font-size: 1.85rem; font-weight: 600; color: var(--gold);
+    font-variant-numeric: tabular-nums;
   }
   .vc-stat-label { font-size: 11px; color: var(--muted); letter-spacing: 0.07em; }
 
@@ -705,61 +856,113 @@ const styles = `
   @media (max-width: 900px) { .vc-contact-grid { grid-template-columns: repeat(2,1fr); } }
   @media (max-width: 500px) { .vc-contact-grid { grid-template-columns: 1fr; } }
 
+  /* ── CONTACT CARD — fixed layout ── */
   .vc-contact-card {
     position: relative; overflow: hidden;
     background: var(--white); border: 1px solid var(--border);
-    border-radius: 14px; padding: 26px 22px 22px;
+    border-radius: 14px; padding: 24px 20px 18px;
     cursor: pointer;
     transition: transform 0.3s cubic-bezier(.22,1,.36,1), border-color 0.3s, box-shadow 0.3s;
-    display: flex; flex-direction: column; gap: 6px;
+    display: flex; flex-direction: column; gap: 0;
+
+    /* Scroll-reveal */
+    opacity: 0; transform: translateY(18px);
+    transition:
+      opacity 0.5s var(--delay, 0ms),
+      transform 0.5s var(--delay, 0ms),
+      border-color 0.3s,
+      box-shadow 0.3s;
   }
+  .vc-contact-section.revealed .vc-contact-card {
+    opacity: 1; transform: translateY(0);
+  }
+  .vc-contact-card:hover {
+    border-color: var(--ch-accent, var(--gold));
+    transform: translateY(-5px) !important;
+    box-shadow: 0 16px 44px rgba(0,0,0,0.09);
+  }
+
+  /* Shine sweep on hover */
+  .vc-contact-card-shine {
+    position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.25) 50%, transparent 65%);
+    transform: translateX(-100%);
+    transition: transform 0.55s ease;
+  }
+  .vc-contact-card:hover .vc-contact-card-shine { transform: translateX(120%); }
+
   .vc-contact-card-glow {
     position: absolute; top: -40px; right: -40px;
     width: 120px; height: 120px; border-radius: 50%;
     background: var(--ch-accent, var(--gold));
     opacity: 0; filter: blur(36px);
-    transition: opacity 0.4s;
-    pointer-events: none;
+    transition: opacity 0.4s; pointer-events: none;
   }
-  .vc-contact-card:hover .vc-contact-card-glow { opacity: 0.2; }
-  .vc-contact-card:hover {
-    border-color: var(--ch-accent, var(--gold));
-    transform: translateY(-5px);
-    box-shadow: 0 16px 44px rgba(0,0,0,0.08);
-  }
+  .vc-contact-card:hover .vc-contact-card-glow { opacity: 0.18; }
+
   .vc-contact-icon-wrap {
     width: 46px; height: 46px; border-radius: 12px;
-    background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.18);
+    background: rgba(201,168,76,0.07); border: 1px solid rgba(201,168,76,0.15);
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.35rem; margin-bottom: 10px;
-    transition: background 0.3s, transform 0.3s;
+    margin-bottom: 16px; flex-shrink: 0;
+    transition: background 0.3s, transform 0.3s, border-color 0.3s;
   }
   .vc-contact-card:hover .vc-contact-icon-wrap {
-    background: rgba(201,168,76,0.14);
+    background: rgba(201,168,76,0.13);
+    border-color: var(--ch-accent, var(--gold));
     transform: scale(1.08);
   }
-  .vc-contact-icon { font-size: 1.2rem; }
+
+  .vc-contact-info {
+    display: flex; flex-direction: column; gap: 3px;
+    flex: 1; margin-bottom: 14px;
+  }
   .vc-contact-label {
-    font-size: 10px; font-weight: 500; letter-spacing: 0.15em;
-    text-transform: uppercase; color: var(--gold); margin-bottom: 2px;
+    font-size: 9.5px; font-weight: 500; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--gold);
   }
   .vc-contact-value {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 1rem; font-weight: 600; color: var(--ink); line-height: 1.3;
+    font-size: 1rem; font-weight: 600; color: var(--ink); line-height: 1.35;
+    word-break: break-word;
   }
-  .vc-contact-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .vc-contact-sub { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+
+  .vc-contact-footer {
+    display: flex; align-items: center; gap: 6px;
+    padding-top: 12px; border-top: 1px solid var(--border);
+  }
   .vc-contact-cta {
-    margin-top: 14px; font-size: 12px; font-weight: 500; color: var(--gold);
-    letter-spacing: 0.04em; transition: letter-spacing 0.2s;
+    font-size: 12px; font-weight: 500; color: var(--gold);
+    letter-spacing: 0.04em; flex: 1;
+    transition: letter-spacing 0.2s;
   }
   .vc-contact-card:hover .vc-contact-cta { letter-spacing: 0.08em; }
+  .vc-contact-arrow {
+    display: flex; align-items: center; color: var(--gold); opacity: 0.7;
+    transform: translateX(0); transition: transform 0.25s;
+  }
+  .vc-contact-card:hover .vc-contact-arrow { transform: translateX(4px); opacity: 1; }
+
+  /* Copy button */
+  .vc-copy-btn {
+    position: absolute; top: 12px; right: 12px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 5px 7px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted); transition: all 0.2s; opacity: 0;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .vc-contact-card:hover .vc-copy-btn { opacity: 1; pointer-events: auto; }
+  .vc-copy-btn:hover { background: var(--ink); color: var(--white); border-color: var(--ink); }
+  .vc-copy-btn.copied { background: #2d6a4f; color: #fff; border-color: #2d6a4f; opacity: 1; pointer-events: none; }
 
   /* Hours banner */
   .vc-hours-banner {
     display: flex; align-items: center; gap: 16px;
     background: var(--white); border: 1px solid var(--border);
     border-radius: 12px; padding: 18px 24px;
-    animation: fadeUp 0.5s ease both;
   }
   @media (max-width: 640px) { .vc-hours-banner { flex-direction: column; align-items: flex-start; } }
   .vc-hours-dot {
@@ -787,14 +990,17 @@ const styles = `
     animation: pulseLive 1.8s ease-in-out infinite;
   }
   @keyframes pulseLive {
-    0%,100% { opacity: 1; }
-    50%      { opacity: 0.4; }
+    0%,100% { opacity: 1; } 50% { opacity: 0.35; }
   }
 
   /* ── FAQ ── */
-  .vc-faq-section { max-width: 1000px; margin: 0 auto; padding: 56px 32px 72px; }
+  .vc-faq-section {
+    max-width: 1000px; margin: 0 auto; padding: 56px 32px 72px;
+    opacity: 0; transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .vc-faq-section.revealed { opacity: 1; transform: none; }
   .vc-faq-header { text-align: center; margin-bottom: 48px; }
-
   .vc-faq-layout { display: grid; grid-template-columns: 240px 1fr; gap: 40px; }
   @media (max-width: 720px) { .vc-faq-layout { grid-template-columns: 1fr; } }
 
@@ -819,7 +1025,6 @@ const styles = `
     padding: 1px 7px; border-radius: 10px;
   }
 
-  /* Sidebar contact nudge */
   .vc-sidebar-contact {
     margin-top: 20px; padding: 18px 16px;
     background: var(--ink); border-radius: 10px;
@@ -832,7 +1037,7 @@ const styles = `
   .vc-sidebar-link {
     font-size: 11.5px; color: rgba(245,240,232,0.55);
     text-decoration: none; transition: color 0.2s;
-    word-break: break-all;
+    word-break: break-all; display: flex; align-items: center; gap: 6px;
   }
   .vc-sidebar-link:hover { color: var(--gold); }
 
@@ -844,7 +1049,8 @@ const styles = `
 
   .vc-faq-item {
     background: var(--white); border: 1px solid var(--border);
-    border-radius: 11px; overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s;
+    border-radius: 11px; overflow: hidden;
+    transition: border-color 0.25s, box-shadow 0.25s;
   }
   .vc-faq-item.open {
     border-color: var(--gold); box-shadow: 0 4px 22px rgba(201,168,76,0.1);
@@ -857,16 +1063,27 @@ const styles = `
   }
   .vc-faq-q:hover { background: var(--surface); }
   .vc-faq-arrow {
-    font-size: 20px; color: var(--gold); flex-shrink: 0;
-    transition: transform 0.28s ease; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; color: var(--gold);
+    transition: transform 0.32s cubic-bezier(.34,1.56,.64,1);
+    will-change: transform;
   }
-  .vc-faq-arrow.up { transform: rotate(90deg); }
-  .vc-faq-a-wrap { max-height: 0; overflow: hidden; transition: max-height 0.36s ease; }
-  .vc-faq-a-wrap.open { max-height: 320px; }
-  .vc-faq-a {
+  .vc-faq-arrow.up { transform: rotate(180deg); }
+  .vc-faq-a-wrap {
+    display: grid; grid-template-rows: 0fr;
+    transition: grid-template-rows 0.35s cubic-bezier(.22,1,.36,1);
+  }
+  .vc-faq-a-wrap.open { grid-template-rows: 1fr; }
+  .vc-faq-a-wrap > p {
+    overflow: hidden;
     font-size: 13.5px; color: var(--muted); line-height: 1.8;
-    padding: 0 22px 20px; border-top: 1px solid var(--border);
-    padding-top: 14px;
+    padding: 0 22px;
+    border-top: 1px solid transparent;
+    transition: padding 0.35s, border-color 0.2s;
+  }
+  .vc-faq-a-wrap.open > p {
+    padding: 14px 22px 20px;
+    border-top-color: var(--border);
   }
 
   .vc-no-results { text-align: center; padding: 60px 20px; }
@@ -881,7 +1098,12 @@ const styles = `
   .vc-clear-btn:hover { background: var(--gold); color: var(--ink); }
 
   /* ── RESOURCES ── */
-  .vc-resources { max-width: 1060px; margin: 0 auto; padding: 0 32px 72px; }
+  .vc-resources {
+    max-width: 1060px; margin: 0 auto; padding: 0 32px 72px;
+    opacity: 0; transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .vc-resources.revealed { opacity: 1; transform: none; }
   .vc-res-header { text-align: center; margin-bottom: 36px; }
   .vc-res-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; }
   @media (max-width: 800px) { .vc-res-grid { grid-template-columns: repeat(2,1fr); } }
@@ -891,11 +1113,27 @@ const styles = `
     position: relative;
     background: var(--white); border: 1px solid var(--border);
     border-radius: 12px; padding: 26px 20px 22px;
-    cursor: pointer; transition: all 0.28s cubic-bezier(.22,1,.36,1);
+    cursor: pointer;
     overflow: hidden;
+    opacity: 0; transform: translateY(14px);
+    transition:
+      opacity 0.5s var(--delay, 0ms),
+      transform 0.5s var(--delay, 0ms),
+      border-color 0.28s,
+      box-shadow 0.28s;
   }
+  .vc-resources.revealed .vc-res-card {
+    opacity: 1; transform: none;
+  }
+  .vc-res-card::after {
+    content: '';
+    position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(201,168,76,0.06), transparent);
+    transition: left 0.5s ease;
+  }
+  .vc-res-card:hover::after { left: 140%; }
   .vc-res-card:hover {
-    border-color: var(--gold); transform: translateY(-4px);
+    border-color: var(--gold); transform: translateY(-4px) !important;
     box-shadow: 0 12px 32px rgba(201,168,76,0.13);
   }
   .vc-res-tag {
@@ -917,7 +1155,10 @@ const styles = `
   .vc-timeline-section {
     background: var(--ink); padding: 72px 32px;
     position: relative; overflow: hidden;
+    opacity: 0; transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
   }
+  .vc-timeline-section.revealed { opacity: 1; transform: none; }
   .vc-timeline-section::before {
     content: ''; position: absolute; inset: 0;
     background: radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.07) 0%, transparent 55%);
@@ -933,17 +1174,17 @@ const styles = `
   .vc-timeline-item {
     display: grid; grid-template-columns: 100px 56px 1fr; gap: 0;
     align-items: flex-start;
+    opacity: 0; transform: translateX(-14px);
+    transition: opacity 0.5s var(--delay, 0ms), transform 0.5s var(--delay, 0ms);
   }
-  @media (max-width: 600px) {
-    .vc-timeline-item { grid-template-columns: 80px 44px 1fr; }
-  }
+  .vc-timeline-section.revealed .vc-timeline-item { opacity: 1; transform: none; }
+  @media (max-width: 600px) { .vc-timeline-item { grid-template-columns: 80px 44px 1fr; } }
 
   .vc-timeline-left { padding-top: 14px; text-align: right; padding-right: 16px; }
   .vc-timeline-time {
     font-size: 10.5px; font-weight: 500; letter-spacing: 0.1em;
     color: var(--gold); text-transform: uppercase;
   }
-
   .vc-timeline-line-wrap {
     display: flex; flex-direction: column; align-items: center; position: relative;
   }
@@ -952,14 +1193,13 @@ const styles = `
     background: rgba(201,168,76,0.12); border: 1px solid rgba(201,168,76,0.3);
     display: flex; align-items: center; justify-content: center;
     font-size: 1.1rem; flex-shrink: 0; z-index: 1;
-    transition: background 0.3s;
+    transition: background 0.3s, transform 0.3s;
   }
-  .vc-timeline-item:hover .vc-timeline-dot { background: rgba(201,168,76,0.22); }
+  .vc-timeline-item:hover .vc-timeline-dot { background: rgba(201,168,76,0.24); transform: scale(1.08); }
   .vc-timeline-connector {
     width: 1px; flex: 1; min-height: 32px;
     background: rgba(201,168,76,0.18); margin: 4px 0;
   }
-
   .vc-timeline-right { padding: 10px 0 32px 20px; }
   .vc-timeline-title {
     font-family: 'Cormorant Garamond', serif;
@@ -973,7 +1213,7 @@ const styles = `
     text-align: center; padding: 88px 32px;
     background: var(--ink);
   }
-  .vc-cta-orb { position: absolute; border-radius: 50%; filter: blur(100px); pointer-events: none; }
+  .vc-cta-orb { position: absolute; border-radius: 50%; filter: blur(100px); pointer-events: none; will-change: transform; }
   .vc-cta-orb1 {
     width: 440px; height: 440px; background: var(--gold); opacity: 0.08;
     top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -984,7 +1224,6 @@ const styles = `
     top: 10%; right: 8%; animation: orbFloat 10s ease-in-out infinite alternate-reverse;
   }
   .vc-cta-inner { position: relative; z-index: 1; max-width: 600px; margin: 0 auto; }
-
   .vc-cta-title {
     font-family: 'Cormorant Garamond', serif;
     font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 300; color: var(--white);
@@ -994,11 +1233,8 @@ const styles = `
     font-size: 13.5px; color: rgba(245,240,232,0.5); margin-bottom: 28px;
     max-width: 480px; margin-left: auto; margin-right: auto; line-height: 1.75;
   }
-
-  /* CTA contact pills */
   .vc-cta-contact-row {
-    display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
-    margin-bottom: 30px;
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 30px;
   }
   .vc-cta-contact-pill {
     display: inline-flex; align-items: center; gap: 7px;
@@ -1019,9 +1255,15 @@ const styles = `
   .vc-cta-primary {
     padding: 14px 32px; background: var(--gold); color: var(--ink);
     border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif;
-    font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.25s;
+    font-size: 14px; font-weight: 500; cursor: pointer;
+    transition: all 0.25s; position: relative; overflow: hidden;
+  }
+  .vc-cta-primary::after {
+    content: ''; position: absolute; inset: 0;
+    background: rgba(255,255,255,0); transition: background 0.2s;
   }
   .vc-cta-primary:hover { background: var(--cream); transform: translateY(-2px); box-shadow: 0 10px 30px rgba(201,168,76,0.35); }
+  .vc-cta-primary:active { transform: translateY(0); box-shadow: none; }
   .vc-cta-secondary {
     padding: 14px 32px; background: transparent; color: var(--cream);
     border: 1px solid rgba(245,240,232,0.22); border-radius: 8px;
@@ -1051,6 +1293,13 @@ const styles = `
     to   { opacity: 1; transform: translateY(0); }
   }
 
+  /* ── CONTACT SECTION REVEAL ── */
+  .vc-contact-section {
+    opacity: 0; transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .vc-contact-section.revealed { opacity: 1; transform: none; }
+
   @media (max-width: 480px) {
     .vc-hero { padding: 90px 20px 60px; }
     .vc-contact-section, .vc-faq-section, .vc-resources { padding-left: 20px; padding-right: 20px; }
@@ -1061,6 +1310,13 @@ const styles = `
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .vc-hero-orb, .vc-eyebrow-dot, .vc-hours-dot, .vc-hours-live { animation: none; }
+    .vc-hero-orb, .vc-eyebrow-dot, .vc-hours-dot, .vc-hours-live,
+    .vc-cta-orb { animation: none !important; }
+    .vc-contact-card, .vc-stat, .vc-res-card, .vc-timeline-item,
+    .vc-faq-section, .vc-resources, .vc-timeline-section,
+    .vc-contact-section {
+      opacity: 1 !important; transform: none !important; transition: border-color 0.2s, box-shadow 0.2s !important;
+    }
+    .vc-stats-strip.revealed .vc-stat { opacity: 1; transform: none; }
   }
 `;
