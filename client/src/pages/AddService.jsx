@@ -4,12 +4,12 @@ import API from "../services/api";
 import Navbar from "../components/Navbar";
 
 const SERVICE_TYPES = [
-  { value: "decor",       label: "Decor",                    emoji: "🎨" },
-  { value: "photography", label: "Photography",              emoji: "📸" },
-  { value: "catering",    label: "Catering coming soon..",   emoji: "🍽⌛" },
-  { value: "music",       label: "Music & DJ coming soon..", emoji: "🎵⌛" },
-  { value: "florals",     label: "Florals coming soon..",    emoji: "💐⌛" },
-  { value: "venues",      label: "Venues coming soon..",     emoji: "🏛⌛" },
+  { value: "decor",       label: "Decor",       emoji: "🎨", available: true  },
+  { value: "photography", label: "Photography", emoji: "📸", available: true  },
+  { value: "catering",    label: "Catering",    emoji: "🍽️", available: false },
+  { value: "music",       label: "Music & DJ",  emoji: "🎵", available: false },
+  { value: "florals",     label: "Florals",     emoji: "💐", available: false },
+  { value: "venues",      label: "Venues",      emoji: "🏛️", available: false },
 ];
 
 const TIER_LABELS = ["Basic", "Standard", "Premium", "Ultra Premium"];
@@ -25,8 +25,8 @@ export default function AddService() {
   });
 
   const [packages, setPackages] = useState([{ name: "Basic", price: "", features: [""] }]);
-  const [images,   setImages]   = useState([]);        // File objects
-  const [previews, setPreviews] = useState([]);        // Object URLs for display
+  const [images,   setImages]   = useState([]);
+  const [previews, setPreviews] = useState([]);
   const [activePreview, setActivePreview] = useState(null);
   const [dragging,  setDragging]  = useState(false);
 
@@ -35,6 +35,8 @@ export default function AddService() {
   const [error,   setError]   = useState("");
 
   const set = (key, val) => setForm((f) => ({ ...f, [key]: val }));
+
+  const isComingSoon = !SERVICE_TYPES.find(t => t.value === form.serviceType)?.available;
 
   // ── Package helpers ────────────────────────────────────────────
   const addPackage = () => {
@@ -82,21 +84,17 @@ export default function AddService() {
   };
 
   // ── Validation ─────────────────────────────────────────────────
- const validate = () => {
-  if (!form.title.trim()) return "Please enter a service title.";
-  if (!form.description.trim()) return "Please add a description.";
-  if (!form.location.trim()) return "Please enter a location.";
-  if (images.length === 0) return "Please upload at least 1 image."; // ✅ ADD HERE
-  if (packages.length === 0) return "Add at least one package.";
-
-  for (let i = 0; i < packages.length; i++) {
-    if (!packages[i].price) {
-      return `Please enter price for ${packages[i].name}`;
+  const validate = () => {
+    if (!form.title.trim()) return "Please enter a service title.";
+    if (!form.description.trim()) return "Please add a description.";
+    if (!form.location.trim()) return "Please enter a location.";
+    if (images.length === 0) return "Please upload at least 1 image.";
+    if (packages.length === 0) return "Add at least one package.";
+    for (let i = 0; i < packages.length; i++) {
+      if (!packages[i].price) return `Please enter price for ${packages[i].name}`;
     }
-  }
-
-  return null;
-};
+    return null;
+  };
 
   // ── Submit ─────────────────────────────────────────────────────
   const handleSubmit = async () => {
@@ -115,11 +113,11 @@ export default function AddService() {
     images.forEach((img) => data.append("images", img));
 
     try {
-  await API.post("/vendors/add", data, {  // ✅ changed from "/vendors"
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  setSuccess(true);
-} catch (e) {
+      await API.post("/vendors/add", data, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSuccess(true);
+    } catch (e) {
       console.error("Add error:", e.response?.data);
       setError(e.response?.data?.error || "Failed to publish service. Please try again.");
     } finally {
@@ -144,16 +142,23 @@ export default function AddService() {
               <p>Your listing is now live and visible to clients browsing the platform.</p>
               <div className="as-success-btns">
                 <a href="/dashboard" className="as-btn-primary">Go to Dashboard →</a>
-                <button className="as-btn-ghost" onClick={() => { setSuccess(false); setForm({ serviceType:"decor", title:"", description:"", location:"" }); setPackages([{name:"Basic",price:"",features:[""]}]); setImages([]); setPreviews([]); setActivePreview(null); }}>
+                <button className="as-btn-ghost" onClick={() => {
+                  setSuccess(false);
+                  setForm({ serviceType:"decor", title:"", description:"", location:"" });
+                  setPackages([{name:"Basic",price:"",features:[""]}]);
+                  setImages([]); setPreviews([]); setActivePreview(null);
+                }}>
                   Add Another
                 </button>
               </div>
             </div>
           ) : (
-            <div className="as-layout">
+            <div className={`as-layout ${isComingSoon ? "as-layout-full" : ""}`}>
 
-              {/* ── LEFT COLUMN — FORM ── */}
-              <div className="as-form-col">
+              {/* ── ALWAYS VISIBLE: SERVICE TYPE SELECTOR + BACK ── */}
+              <div className={isComingSoon ? "as-coming-soon-layout" : "as-form-col"}>
+
+                {/* Header — always shown */}
                 <div className="as-form-header">
                   <a href="/dashboard" className="as-back">← Back to Dashboard</a>
                   <p className="as-eyebrow">✦ Vendor Portal</p>
@@ -161,315 +166,362 @@ export default function AddService() {
                   <p className="as-subtitle">Fill in your listing details. Your service goes live immediately after publishing.</p>
                 </div>
 
-                {/* SERVICE TYPE */}
+                {/* SERVICE TYPE — always shown */}
                 <div className="as-field">
                   <label className="as-label">Service Category</label>
                   <div className="as-type-grid">
                     {SERVICE_TYPES.map((t) => (
                       <button
                         key={t.value}
-                        className={`as-type-btn ${form.serviceType === t.value ? "active" : ""}`}
+                        className={`as-type-btn ${form.serviceType === t.value ? "active" : ""} ${!t.available ? "as-type-btn-soon" : ""}`}
                         onClick={() => set("serviceType", t.value)}
                       >
                         <span className="as-type-emoji">{t.emoji}</span>
-                        <span>{t.label}</span>
+                        <span className="as-type-label">{t.label}</span>
+                        {!t.available && <span className="as-type-soon-tag">Soon</span>}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                {/* TITLE */}
-                <div className="as-field">
-                  <label className="as-label">Service Title</label>
-                  <div className="as-input-wrap">
-                    <span className="as-icon">◈</span>
-                    <input
-                      placeholder={`e.g. Premium ${selectedType?.label} for Weddings`}
-                      value={form.title}
-                      onChange={(e) => set("title", e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                {/* DESCRIPTION */}
-                <div className="as-field">
-                  <label className="as-label">Description</label>
-                  <div className="as-textarea-wrap">
-                    <textarea
-                      placeholder="Describe what makes your service special…"
-                      value={form.description}
-                      rows={4}
-                      onChange={(e) => set("description", e.target.value)}
-                    />
-                  </div>
-                  <span className="as-char-count">{form.description.length} / 500</span>
-                </div>
-
-                {/* LOCATION */}
-                <div className="as-field">
-                  <label className="as-label">Location</label>
-                  <div className="as-input-wrap">
-                    <span className="as-icon">◉</span>
-                    <input
-                      placeholder="e.g. Delhi, Mumbai…"
-                      value={form.location}
-                      onChange={(e) => set("location", e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                {/* ── PACKAGES ── */}
-                <div className="as-field">
-                  <label className="as-label">Packages</label>
-                  {packages.map((pkg, index) => (
-                    <div key={index} className="as-pkg-card">
-                      <div className="as-pkg-card-header">
-                        <span className="as-pkg-tier">{TIER_LABELS[index] || `Package ${index + 1}`}</span>
-                        {index > 0 && (
-                          <button type="button" className="as-pkg-remove" onClick={() => removePackage(index)}>×</button>
-                        )}
+                {/* ── COMING SOON PANEL ── */}
+                {isComingSoon && (
+                  <div className="as-cs-panel">
+                    <div className="as-cs-orb" />
+                    <div className="as-cs-orb as-cs-orb-2" />
+                    <div className="as-cs-content">
+                      <div className="as-cs-icon-wrap">
+                        <span className="as-cs-emoji">{selectedType?.emoji}</span>
                       </div>
-                      <div className="as-pkg-row">
-                        <div className="as-input-wrap">
-                          <input
-                            placeholder="Package name"
-                            value={pkg.name}
-                            onChange={(e) => updatePackage(index, "name", e.target.value)}
-                          />
+                      <div className="as-cs-tag">Under Development</div>
+                      <h2 className="as-cs-heading">{selectedType?.label}</h2>
+                      <p className="as-cs-text">
+                        We're crafting a premium listing experience for{" "}
+                        <strong>{selectedType?.label}</strong> vendors. This category
+                        will be available soon — check back shortly.
+                      </p>
+                      <div className="as-cs-divider">
+                        <span />
+                        <span className="as-cs-divider-dot">✦</span>
+                        <span />
+                      </div>
+                      <div className="as-cs-steps">
+                        <div className="as-cs-step as-cs-step-done">
+                          <span className="as-cs-step-icon">✓</span>
+                          <span>Decor listings live</span>
                         </div>
-                        <div className="as-input-wrap">
-                          <span className="as-icon" style={{ fontSize: 11 }}>₹</span>
-                          <input
-                            type="number"
-                            placeholder="Price"
-                            value={pkg.price}
-                            onChange={(e) => updatePackage(index, "price", e.target.value)}
-                          />
+                        <div className="as-cs-step as-cs-step-done">
+                          <span className="as-cs-step-icon">✓</span>
+                          <span>Photography listings live</span>
+                        </div>
+                        <div className="as-cs-step as-cs-step-next">
+                          <span className="as-cs-step-icon as-cs-pulse">◎</span>
+                          <span>{selectedType?.label} — coming next</span>
                         </div>
                       </div>
-                      <p className="as-pkg-features-label">Features included</p>
-                      {pkg.features.map((f, fi) => (
-                        <div key={fi} className="as-pkg-feature-row">
-                          <span className="as-pkg-dot" />
-                          <div className="as-input-wrap" style={{ flex: 1 }}>
-                            <input
-                              placeholder="e.g. 3 hours shoot, HD delivery…"
-                              value={f}
-                              onChange={(e) => updateFeature(index, fi, e.target.value)}
-                            />
-                          </div>
-                          {pkg.features.length > 1 && (
-                            <button type="button" className="as-pkg-remove-feat" onClick={() => removeFeature(index, fi)}>×</button>
-                          )}
-                        </div>
-                      ))}
-                      <button type="button" className="as-add-feat-btn" onClick={() => addFeature(index)}>
-                        + Add feature
+                      <button
+                        className="as-cs-back-btn"
+                        onClick={() => set("serviceType", "decor")}
+                      >
+                        ← Switch to an available category
                       </button>
                     </div>
-                  ))}
-                  {packages.length < 4 && (
-                    <button type="button" onClick={addPackage} className="as-add-pkg-btn">
-                      + Add Package
-                    </button>
-                  )}
-                </div>
+                  </div>
+                )}
 
-                {/* ── PORTFOLIO IMAGES ── */}
-                <div className="as-field">
-                  <label className="as-label">
-                    Portfolio Images
-                    <span className="as-label-sub"> (up to 15 photos)</span>
-                  </label>
-
-                  {/* Image preview grid — shown when images are selected */}
-                  {previews.length > 0 && (
-                    <div className="as-img-grid">
-                      {previews.map((url, i) => (
-                        <div
-                          key={i}
-                          className={`as-img-thumb ${activePreview === url ? "as-img-thumb-active" : ""}`}
-                          onClick={() => setActivePreview(url)}
-                        >
-                          <img src={url} alt={`preview-${i}`} />
-                          <button
-                            className="as-img-remove"
-                            onClick={(e) => { e.stopPropagation(); removeImage(i); }}
-                            title="Remove image"
-                          >×</button>
-                          {i === 0 && <span className="as-img-cover-badge">Cover</span>}
-                        </div>
-                      ))}
-
-                      {/* Add more inline tile */}
-                      {previews.length < 15 && (
-                        <label className="as-img-add-tile">
-                          <span className="as-img-add-icon">+</span>
-                          <span className="as-img-add-text">Add more</span>
-                          <input
-                            type="file" multiple accept="image/*"
-                            style={{ display: "none" }}
-                            onChange={(e) => addImages(e.target.files)}
-                          />
-                        </label>
-                      )}
-                    </div>
-                  )}
-
-                  {previews.length > 0 && (
-                    <p className="as-img-hint">
-                      First image is used as the cover photo on your listing card.
-                      <span className="as-img-count"> {previews.length}/15 uploaded</span>
-                    </p>
-                  )}
-
-                  {/* Upload zone — always visible if under limit */}
-                  {previews.length === 0 && (
-                    <div
-                      className={`as-upload-zone ${dragging ? "dragging" : ""}`}
-                      onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-                      onDragLeave={() => setDragging(false)}
-                      onDrop={handleDrop}
-                    >
-                      <div className="as-upload-icon-wrap">
-                        <span className="as-upload-icon">⊕</span>
+                {/* ── NORMAL FORM (only when NOT coming soon) ── */}
+                {!isComingSoon && (
+                  <>
+                    {/* TITLE */}
+                    <div className="as-field">
+                      <label className="as-label">Service Title</label>
+                      <div className="as-input-wrap">
+                        <span className="as-icon">◈</span>
+                        <input
+                          placeholder={`e.g. Premium ${selectedType?.label} for Weddings`}
+                          value={form.title}
+                          onChange={(e) => set("title", e.target.value)}
+                        />
                       </div>
-                      <p className="as-upload-title">Drag & drop your portfolio images</p>
-                      <p className="as-upload-sub">JPG, PNG, WEBP — up to 15 photos</p>
-                      <label className="as-upload-label">
-                        Browse Files
-                        <input
-                          type="file" multiple accept="image/*"
-                          style={{ display: "none" }}
-                          onChange={(e) => addImages(e.target.files)}
+                    </div>
+
+                    {/* DESCRIPTION */}
+                    <div className="as-field">
+                      <label className="as-label">Description</label>
+                      <div className="as-textarea-wrap">
+                        <textarea
+                          placeholder="Describe what makes your service special…"
+                          value={form.description}
+                          rows={4}
+                          onChange={(e) => set("description", e.target.value)}
                         />
-                      </label>
+                      </div>
+                      <span className="as-char-count">{form.description.length} / 500</span>
                     </div>
-                  )}
 
-                  {/* Compact add-more zone when some images already chosen */}
-                  {previews.length > 0 && previews.length < 15 && (
-                    <div
-                      className={`as-upload-zone as-upload-zone-compact ${dragging ? "dragging" : ""}`}
-                      onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-                      onDragLeave={() => setDragging(false)}
-                      onDrop={handleDrop}
-                    >
-                      <span className="as-upload-icon" style={{ fontSize: "1.3rem" }}>⊕</span>
-                      <p className="as-upload-sub">Drop more images or</p>
-                      <label className="as-upload-label as-upload-label-sm">
-                        Browse Files
+                    {/* LOCATION */}
+                    <div className="as-field">
+                      <label className="as-label">Location</label>
+                      <div className="as-input-wrap">
+                        <span className="as-icon">◉</span>
                         <input
-                          type="file" multiple accept="image/*"
-                          style={{ display: "none" }}
-                          onChange={(e) => addImages(e.target.files)}
+                          placeholder="e.g. Delhi, Mumbai…"
+                          value={form.location}
+                          onChange={(e) => set("location", e.target.value)}
                         />
-                      </label>
+                      </div>
                     </div>
-                  )}
-                </div>
 
-                {error && <div className="as-error">⚠ {error}</div>}
-
-                {/* ACTIONS */}
-                <div className="as-actions">
-                  <button className="as-btn-ghost-full" onClick={() => navigate("/dashboard")} disabled={saving}>
-                    Cancel
-                  </button>
-                  <button
-                    className={`as-submit ${saving ? "loading" : ""}`}
-                    onClick={handleSubmit}
-                    disabled={saving}
-                  >
-                    {saving
-                      ? <><span className="as-spinner" /> Publishing…</>
-                      : "Publish Service →"}
-                  </button>
-                </div>
-
-                <p className="as-terms">
-                  By publishing you agree to our{" "}
-                  <a href="#" className="as-link">Vendor Terms</a> and{" "}
-                  <a href="#" className="as-link">Content Policy</a>.
-                </p>
-              </div>
-
-              {/* ── RIGHT COLUMN — LIVE PREVIEW ── */}
-              <div className="as-preview-col">
-                <div className="as-preview-sticky">
-                  <p className="as-preview-label">✦ Live Preview</p>
-                  <div className="as-preview-card">
-                    <div className="as-preview-img">
-                      {activePreview ? (
-                        <img src={activePreview} alt="preview" />
-                      ) : (
-                        <div className="as-preview-placeholder">
-                          <span>{selectedType?.emoji}</span>
-                          <p>No image selected</p>
-                        </div>
-                      )}
-                      <span className="as-preview-badge">{selectedType?.label}</span>
-                      {previews.length > 1 && (
-                        <span className="as-preview-count">{previews.length} photos</span>
-                      )}
-                    </div>
-                    <div className="as-preview-body">
-                      <h3 className="as-preview-title">
-                        {form.title || "Your Service Title"}
-                      </h3>
-                      <p className="as-preview-loc">
-                        {form.location ? `◉ ${form.location}` : "◉ Location"}
-                      </p>
-                      <p className="as-preview-desc">
-                        {form.description || "Your service description will appear here…"}
-                      </p>
-                      {packages.length > 0 && (
-                        <div className="as-preview-pkgs">
-                          {packages.map((pkg, i) => (
-                            <div key={i} className="as-preview-pkg-pill">
-                              <span className="as-preview-pkg-name">{pkg.name || TIER_LABELS[i]}</span>
-                              <span className="as-preview-pkg-price">
-                                {pkg.price ? `₹${Number(pkg.price).toLocaleString()}` : "₹ —"}
-                              </span>
+                    {/* ── PACKAGES ── */}
+                    <div className="as-field">
+                      <label className="as-label">Packages</label>
+                      {packages.map((pkg, index) => (
+                        <div key={index} className="as-pkg-card">
+                          <div className="as-pkg-card-header">
+                            <span className="as-pkg-tier">{TIER_LABELS[index] || `Package ${index + 1}`}</span>
+                            {index > 0 && (
+                              <button type="button" className="as-pkg-remove" onClick={() => removePackage(index)}>×</button>
+                            )}
+                          </div>
+                          <div className="as-pkg-row">
+                            <div className="as-input-wrap">
+                              <input
+                                placeholder="Package name"
+                                value={pkg.name}
+                                onChange={(e) => updatePackage(index, "name", e.target.value)}
+                              />
+                            </div>
+                            <div className="as-input-wrap">
+                              <span className="as-icon" style={{ fontSize: 11 }}>₹</span>
+                              <input
+                                type="number"
+                                placeholder="Price"
+                                value={pkg.price}
+                                onChange={(e) => updatePackage(index, "price", e.target.value)}
+                              />
+                            </div>
+                          </div>
+                          <p className="as-pkg-features-label">Features included</p>
+                          {pkg.features.map((f, fi) => (
+                            <div key={fi} className="as-pkg-feature-row">
+                              <span className="as-pkg-dot" />
+                              <div className="as-input-wrap" style={{ flex: 1 }}>
+                                <input
+                                  placeholder="e.g. 3 hours shoot, HD delivery…"
+                                  value={f}
+                                  onChange={(e) => updateFeature(index, fi, e.target.value)}
+                                />
+                              </div>
+                              {pkg.features.length > 1 && (
+                                <button type="button" className="as-pkg-remove-feat" onClick={() => removeFeature(index, fi)}>×</button>
+                              )}
                             </div>
                           ))}
-                        </div>
-                      )}
-                      <div className="as-preview-footer">
-                        <div>
-                          <span className="as-preview-from">Starting at</span>
-                          <span className="as-preview-price">
-                            {packages[0]?.price
-                              ? `₹${Number(packages[0].price).toLocaleString()}`
-                              : "₹ —"}
-                          </span>
-                        </div>
-                        <span className="as-preview-btn">View →</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Image strip */}
-                  {previews.length > 1 && (
-                    <div className="as-preview-strip">
-                      {previews.slice(0, 5).map((url, i) => (
-                        <div
-                          key={i}
-                          className={`as-strip-thumb ${activePreview === url ? "active" : ""}`}
-                          onClick={() => setActivePreview(url)}
-                        >
-                          <img src={url} alt="" />
+                          <button type="button" className="as-add-feat-btn" onClick={() => addFeature(index)}>
+                            + Add feature
+                          </button>
                         </div>
                       ))}
-                      {previews.length > 5 && (
-                        <div className="as-strip-more">+{previews.length - 5}</div>
+                      {packages.length < 4 && (
+                        <button type="button" onClick={addPackage} className="as-add-pkg-btn">
+                          + Add Package
+                        </button>
                       )}
                     </div>
-                  )}
 
-                  <p className="as-preview-note">This is how clients will see your listing.</p>
-                </div>
+                    {/* ── PORTFOLIO IMAGES ── */}
+                    <div className="as-field">
+                      <label className="as-label">
+                        Portfolio Images
+                        <span className="as-label-sub"> (up to 15 photos)</span>
+                      </label>
+
+                      {previews.length > 0 && (
+                        <div className="as-img-grid">
+                          {previews.map((url, i) => (
+                            <div
+                              key={i}
+                              className={`as-img-thumb ${activePreview === url ? "as-img-thumb-active" : ""}`}
+                              onClick={() => setActivePreview(url)}
+                            >
+                              <img src={url} alt={`preview-${i}`} />
+                              <button
+                                className="as-img-remove"
+                                onClick={(e) => { e.stopPropagation(); removeImage(i); }}
+                                title="Remove image"
+                              >×</button>
+                              {i === 0 && <span className="as-img-cover-badge">Cover</span>}
+                            </div>
+                          ))}
+                          {previews.length < 15 && (
+                            <label className="as-img-add-tile">
+                              <span className="as-img-add-icon">+</span>
+                              <span className="as-img-add-text">Add more</span>
+                              <input
+                                type="file" multiple accept="image/*"
+                                style={{ display: "none" }}
+                                onChange={(e) => addImages(e.target.files)}
+                              />
+                            </label>
+                          )}
+                        </div>
+                      )}
+
+                      {previews.length > 0 && (
+                        <p className="as-img-hint">
+                          First image is used as the cover photo on your listing card.
+                          <span className="as-img-count"> {previews.length}/15 uploaded</span>
+                        </p>
+                      )}
+
+                      {previews.length === 0 && (
+                        <div
+                          className={`as-upload-zone ${dragging ? "dragging" : ""}`}
+                          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                          onDragLeave={() => setDragging(false)}
+                          onDrop={handleDrop}
+                        >
+                          <div className="as-upload-icon-wrap">
+                            <span className="as-upload-icon">⊕</span>
+                          </div>
+                          <p className="as-upload-title">Drag & drop your portfolio images</p>
+                          <p className="as-upload-sub">JPG, PNG, WEBP — up to 15 photos</p>
+                          <label className="as-upload-label">
+                            Browse Files
+                            <input
+                              type="file" multiple accept="image/*"
+                              style={{ display: "none" }}
+                              onChange={(e) => addImages(e.target.files)}
+                            />
+                          </label>
+                        </div>
+                      )}
+
+                      {previews.length > 0 && previews.length < 15 && (
+                        <div
+                          className={`as-upload-zone as-upload-zone-compact ${dragging ? "dragging" : ""}`}
+                          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                          onDragLeave={() => setDragging(false)}
+                          onDrop={handleDrop}
+                        >
+                          <span className="as-upload-icon" style={{ fontSize: "1.3rem" }}>⊕</span>
+                          <p className="as-upload-sub">Drop more images or</p>
+                          <label className="as-upload-label as-upload-label-sm">
+                            Browse Files
+                            <input
+                              type="file" multiple accept="image/*"
+                              style={{ display: "none" }}
+                              onChange={(e) => addImages(e.target.files)}
+                            />
+                          </label>
+                        </div>
+                      )}
+                    </div>
+
+                    {error && <div className="as-error">⚠ {error}</div>}
+
+                    {/* ACTIONS */}
+                    <div className="as-actions">
+                      <button className="as-btn-ghost-full" onClick={() => navigate("/dashboard")} disabled={saving}>
+                        Cancel
+                      </button>
+                      <button
+                        className={`as-submit ${saving ? "loading" : ""}`}
+                        onClick={handleSubmit}
+                        disabled={saving}
+                      >
+                        {saving
+                          ? <><span className="as-spinner" /> Publishing…</>
+                          : "Publish Service →"}
+                      </button>
+                    </div>
+
+                    <p className="as-terms">
+                      By publishing you agree to our{" "}
+                      <a href="#" className="as-link">Vendor Terms</a> and{" "}
+                      <a href="#" className="as-link">Content Policy</a>.
+                    </p>
+                  </>
+                )}
               </div>
+
+              {/* ── RIGHT COLUMN — LIVE PREVIEW (only when form is active) ── */}
+              {!isComingSoon && (
+                <div className="as-preview-col">
+                  <div className="as-preview-sticky">
+                    <p className="as-preview-label">✦ Live Preview</p>
+                    <div className="as-preview-card">
+                      <div className="as-preview-img">
+                        {activePreview ? (
+                          <img src={activePreview} alt="preview" />
+                        ) : (
+                          <div className="as-preview-placeholder">
+                            <span>{selectedType?.emoji}</span>
+                            <p>No image selected</p>
+                          </div>
+                        )}
+                        <span className="as-preview-badge">{selectedType?.label}</span>
+                        {previews.length > 1 && (
+                          <span className="as-preview-count">{previews.length} photos</span>
+                        )}
+                      </div>
+                      <div className="as-preview-body">
+                        <h3 className="as-preview-title">
+                          {form.title || "Your Service Title"}
+                        </h3>
+                        <p className="as-preview-loc">
+                          {form.location ? `◉ ${form.location}` : "◉ Location"}
+                        </p>
+                        <p className="as-preview-desc">
+                          {form.description || "Your service description will appear here…"}
+                        </p>
+                        {packages.length > 0 && (
+                          <div className="as-preview-pkgs">
+                            {packages.map((pkg, i) => (
+                              <div key={i} className="as-preview-pkg-pill">
+                                <span className="as-preview-pkg-name">{pkg.name || TIER_LABELS[i]}</span>
+                                <span className="as-preview-pkg-price">
+                                  {pkg.price ? `₹${Number(pkg.price).toLocaleString()}` : "₹ —"}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <div className="as-preview-footer">
+                          <div>
+                            <span className="as-preview-from">Starting at</span>
+                            <span className="as-preview-price">
+                              {packages[0]?.price
+                                ? `₹${Number(packages[0].price).toLocaleString()}`
+                                : "₹ —"}
+                            </span>
+                          </div>
+                          <span className="as-preview-btn">View →</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {previews.length > 1 && (
+                      <div className="as-preview-strip">
+                        {previews.slice(0, 5).map((url, i) => (
+                          <div
+                            key={i}
+                            className={`as-strip-thumb ${activePreview === url ? "active" : ""}`}
+                            onClick={() => setActivePreview(url)}
+                          >
+                            <img src={url} alt="" />
+                          </div>
+                        ))}
+                        {previews.length > 5 && (
+                          <div className="as-strip-more">+{previews.length - 5}</div>
+                        )}
+                      </div>
+                    )}
+
+                    <p className="as-preview-note">This is how clients will see your listing.</p>
+                  </div>
+                </div>
+              )}
 
             </div>
           )}
@@ -515,6 +567,9 @@ const styles = `
     grid-template-columns: 1fr 380px;
     gap: 48px;
     align-items: start;
+  }
+  .as-layout-full {
+    grid-template-columns: 1fr;
   }
   @media (max-width: 960px) {
     .as-layout { grid-template-columns: 1fr; }
@@ -590,7 +645,9 @@ const styles = `
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
   }
   @media (max-width: 580px) { .as-type-grid { grid-template-columns: repeat(2,1fr); } }
+
   .as-type-btn {
+    position: relative;
     display: flex; flex-direction: column; align-items: center; gap: 6px;
     padding: 14px 10px; border: 1px solid var(--border); border-radius: 8px;
     background: var(--white); cursor: pointer;
@@ -604,7 +661,189 @@ const styles = `
     color: var(--ink); font-weight: 500;
     box-shadow: 0 2px 12px rgba(201,168,76,0.15);
   }
+  /* Coming-soon button — slightly dimmed, dashed border */
+  .as-type-btn-soon {
+    border-style: dashed;
+    opacity: 0.72;
+  }
+  .as-type-btn-soon:hover {
+    opacity: 1;
+    border-color: rgba(201,168,76,0.5);
+  }
+  .as-type-btn-soon.active {
+    border-style: dashed;
+    opacity: 1;
+    border-color: var(--gold);
+    background: linear-gradient(135deg, #faf7f0, #fffbf0);
+  }
   .as-type-emoji { font-size: 1.4rem; }
+  .as-type-label { font-size: 11.5px; }
+  /* Small "Soon" badge inside the button */
+  .as-type-soon-tag {
+    position: absolute; top: 6px; right: 6px;
+    font-size: 8.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+    background: rgba(201,168,76,0.12); color: var(--gold);
+    border: 1px solid rgba(201,168,76,0.3);
+    padding: 1.5px 6px; border-radius: 20px;
+  }
+
+  /* ── COMING SOON LAYOUT ── */
+  .as-coming-soon-layout {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── COMING SOON PANEL ── */
+  .as-cs-panel {
+    position: relative;
+    overflow: hidden;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 64px 48px;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 420px;
+    box-shadow: 0 16px 60px rgba(201,168,76,0.08), 0 4px 16px rgba(14,12,10,0.04);
+    animation: fadeUp 0.5s ease both;
+  }
+
+  /* Decorative orbs */
+  .as-cs-orb {
+    position: absolute;
+    width: 380px; height: 380px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%);
+    top: -120px; right: -100px;
+    pointer-events: none;
+  }
+  .as-cs-orb-2 {
+    width: 260px; height: 260px;
+    bottom: -80px; left: -60px;
+    top: auto; right: auto;
+    background: radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 70%);
+  }
+
+  .as-cs-content {
+    position: relative;
+    text-align: center;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  .as-cs-icon-wrap {
+    width: 80px; height: 80px;
+    background: linear-gradient(135deg, rgba(201,168,76,0.1), rgba(201,168,76,0.04));
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px rgba(201,168,76,0.12);
+    animation: popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275) both;
+    animation-delay: 0.1s;
+  }
+  .as-cs-emoji { font-size: 2rem; filter: drop-shadow(0 2px 6px rgba(201,168,76,0.3)); }
+
+  .as-cs-tag {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--gold);
+    background: rgba(201,168,76,0.08);
+    border: 1px solid rgba(201,168,76,0.2);
+    padding: 4px 14px; border-radius: 20px;
+    margin-bottom: 16px;
+    animation: fadeUp 0.5s ease both; animation-delay: 0.15s;
+  }
+
+  .as-cs-heading {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    font-weight: 300;
+    color: var(--ink);
+    line-height: 1.1;
+    margin-bottom: 14px;
+    animation: fadeUp 0.5s ease both; animation-delay: 0.2s;
+  }
+
+  .as-cs-text {
+    font-size: 14px; color: var(--muted); line-height: 1.7;
+    margin-bottom: 28px;
+    animation: fadeUp 0.5s ease both; animation-delay: 0.25s;
+  }
+  .as-cs-text strong { color: var(--ink); font-weight: 500; }
+
+  .as-cs-divider {
+    display: flex; align-items: center; gap: 12px;
+    width: 100%; margin-bottom: 28px;
+    animation: fadeUp 0.5s ease both; animation-delay: 0.3s;
+  }
+  .as-cs-divider span:first-child,
+  .as-cs-divider span:last-child {
+    flex: 1; height: 1px; background: var(--border);
+  }
+  .as-cs-divider-dot { font-size: 10px; color: var(--gold); opacity: 0.6; }
+
+  /* Progress steps */
+  .as-cs-steps {
+    display: flex; flex-direction: column; gap: 10px;
+    width: 100%; margin-bottom: 32px;
+    animation: fadeUp 0.5s ease both; animation-delay: 0.35s;
+  }
+  .as-cs-step {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 13px; color: var(--muted);
+    text-align: left;
+  }
+  .as-cs-step-done {
+    color: var(--ink);
+    background: linear-gradient(135deg, rgba(45,106,79,0.04), rgba(45,106,79,0.02));
+    border-color: rgba(45,106,79,0.18);
+  }
+  .as-cs-step-next {
+    border-color: rgba(201,168,76,0.3);
+    background: linear-gradient(135deg, rgba(201,168,76,0.06), rgba(201,168,76,0.02));
+    color: var(--ink); font-weight: 500;
+  }
+  .as-cs-step-icon {
+    font-size: 14px; flex-shrink: 0;
+    color: #2d6a4f;
+  }
+  .as-cs-step-done .as-cs-step-icon { color: #2d6a4f; }
+  .as-cs-step-next .as-cs-step-icon { color: var(--gold); }
+
+  /* Pulsing dot for "next up" */
+  .as-cs-pulse {
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(0.85); }
+  }
+
+  .as-cs-back-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 11px 22px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; color: var(--muted);
+    cursor: pointer; transition: all 0.2s;
+    letter-spacing: 0.02em;
+    animation: fadeUp 0.5s ease both; animation-delay: 0.4s;
+  }
+  .as-cs-back-btn:hover {
+    border-color: var(--gold); color: var(--ink);
+    background: rgba(201,168,76,0.04);
+  }
 
   /* ── PACKAGES ── */
   .as-pkg-card {
@@ -670,8 +909,7 @@ const styles = `
   .as-img-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-    gap: 10px;
-    margin-bottom: 10px;
+    gap: 10px; margin-bottom: 10px;
     animation: fadeUp 0.3s ease both;
   }
   .as-img-thumb {
@@ -701,14 +939,10 @@ const styles = `
     position: absolute; bottom: 4px; left: 4px;
     font-size: 9px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
     background: rgba(14,12,10,0.72); color: var(--gold-light);
-    padding: 2px 7px; border-radius: 20px;
-    backdrop-filter: blur(4px);
+    padding: 2px 7px; border-radius: 20px; backdrop-filter: blur(4px);
   }
-
-  /* Add-more tile inside grid */
   .as-img-add-tile {
-    aspect-ratio: 1;
-    border-radius: 8px;
+    aspect-ratio: 1; border-radius: 8px;
     border: 1.5px dashed rgba(201,168,76,0.35);
     background: var(--white);
     display: flex; flex-direction: column;
@@ -719,13 +953,8 @@ const styles = `
   .as-img-add-tile:hover { border-color: var(--gold); background: rgba(201,168,76,0.03); }
   .as-img-add-icon { font-size: 1.4rem; color: var(--gold); opacity: 0.7; line-height: 1; }
   .as-img-add-text { font-size: 10px; color: var(--muted); letter-spacing: 0.05em; }
-
-  .as-img-hint {
-    font-size: 11.5px; color: var(--muted); line-height: 1.5;
-  }
-  .as-img-count {
-    color: var(--gold); font-weight: 500;
-  }
+  .as-img-hint { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+  .as-img-count { color: var(--gold); font-weight: 500; }
 
   /* ── UPLOAD ZONE ── */
   .as-upload-zone {
@@ -742,16 +971,11 @@ const styles = `
     transform: scale(1.01);
     box-shadow: 0 0 0 4px rgba(201,168,76,0.1);
   }
-  /* Compact version when images exist */
   .as-upload-zone-compact {
-    padding: 18px 20px;
-    margin-top: 8px;
-    flex-direction: row;
-    justify-content: center;
-    gap: 12px;
-    background: var(--surface);
+    padding: 18px 20px; margin-top: 8px;
+    flex-direction: row; justify-content: center;
+    gap: 12px; background: var(--surface);
   }
-
   .as-upload-icon-wrap {
     width: 52px; height: 52px;
     background: rgba(201,168,76,0.08);
@@ -944,5 +1168,7 @@ const styles = `
   @media (max-width: 640px) {
     .as-body { padding: 32px 20px 60px; }
     .as-actions { grid-template-columns: 1fr 1.5fr; }
+    .as-cs-panel { padding: 40px 24px; min-height: 340px; }
+    .as-cs-heading { font-size: 1.8rem; }
   }
 `;
