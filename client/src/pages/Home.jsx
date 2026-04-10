@@ -364,6 +364,26 @@ export default function Home() {
               <a key={l} href="#" className="hm-footer-link">{l}</a>
             ))}
           </div>
+          {/* ── CONTACT DETAILS ── */}
+          <div className="hm-footer-contact">
+            <a href="mailto:admineventify2005@gmail.com" className="hm-footer-contact-link">
+              ✉ admineventify2005@gmail.com
+            </a>
+            <span className="hm-footer-contact-sep">·</span>
+            <a href="tel:+917023017517" className="hm-footer-contact-link">
+              📞 +91 70230 17517
+            </a>
+            <span className="hm-footer-contact-sep">·</span>
+            <a
+              href="https://wa.me/917023017517?text=Hello%20Eventify%20Support"
+              target="_blank"
+              rel="noreferrer"
+              className="hm-footer-contact-link"
+            >
+              💬 WhatsApp
+            </a>
+          </div>
+          <p className="hm-footer-hours">Mon – Sat · 10:00 AM – 7:00 PM IST</p>
         </footer>
 
         {user && <CustomerCarePopup />}
@@ -841,6 +861,22 @@ const styles = `
   }
   .hm-footer-link:hover { color: var(--gold); }
 
+  /* ── FOOTER CONTACT (new) ── */
+  .hm-footer-contact {
+    display: flex; align-items: center; gap: 10px;
+    flex-wrap: wrap; justify-content: center;
+    border-top: 1px solid rgba(201,168,76,0.08);
+    padding-top: 12px; width: 100%;
+  }
+  .hm-footer-contact-link {
+    font-size: 12px; color: var(--muted); text-decoration: none;
+    transition: color 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .hm-footer-contact-link:hover { color: var(--gold); }
+  .hm-footer-contact-sep { color: rgba(201,168,76,0.25); font-size: 12px; }
+  .hm-footer-hours { font-size: 11px; color: rgba(122,114,101,0.4); letter-spacing: 0.04em; }
+
   /* ── MOBILE-SPECIFIC OVERRIDES ── */
   @media (max-width: 480px) {
     .hm-hero { padding: 76px 16px 0; }
@@ -855,10 +891,13 @@ const styles = `
     .hm-services-grid { gap: 9px; }
     .hm-service-card { padding: 18px 14px 14px; }
     .hm-service-emoji { font-size: 1.6rem; }
-    .hm-service-body p { display: none; } /* hide desc on very small screens for density */
+    .hm-service-body p { display: none; }
     .hm-cta-btns { flex-direction: column; align-items: center; }
     .hm-cta-primary, .hm-cta-secondary { width: 100%; max-width: 300px; justify-content: center; }
     .hm-footer-links { gap: 16px; }
+    .hm-footer-contact { gap: 8px; }
+    .hm-footer-contact-sep { display: none; }
+    .hm-footer-contact-link { font-size: 11.5px; }
   }
 
   /* ── Reduced motion ── */
