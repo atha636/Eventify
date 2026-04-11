@@ -30,12 +30,27 @@ const userSchema = new mongoose.Schema({
     default: "user"
   },
 
-  // ── Favorites ───────────────────────────────────────────────────
+  // ── Vendor profile verification by admin ─────────────────────────
+  // "pending"  = vendor registered, waiting for admin review
+  // "approved" = admin has verified this vendor — can take bookings
+  // "rejected" = admin rejected this vendor profile
+  isProfileVerified: {
+    type: String,
+    enum: ["pending", "approved", "rejected"],
+    default: "pending",
+  },
+  profileRejectionReason: {
+    type: String,
+    default: "",
+  },
+  // ──────────────────────────────────────────────────────────────────
+
+  // ── Favorites ─────────────────────────────────────────────────────
   favorites: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: "Vendor"
   }]
-  // ────────────────────────────────────────────────────────────────
-});
+  // ──────────────────────────────────────────────────────────────────
+}, { timestamps: true });
 
 module.exports = mongoose.model("User", userSchema);

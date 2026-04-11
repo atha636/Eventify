@@ -1,13 +1,19 @@
 const Vendor = require("../models/Vendor");
-const { sendEmail } = require("../utils/sendEmail");
-const User = require("../models/User");
+const User   = require("../models/User");
+const {
+  sendEmail,
+  sendVendorVerificationRequest,
+} = require("../utils/sendEmail");
 
 // ─────────────────────────────────────────────
-// GET all vendors
+// GET all vendors (only approved profiles)
 // ─────────────────────────────────────────────
 exports.getVendors = async (req, res) => {
   try {
-    const vendors = await Vendor.find({});
+    // Only show services from verified vendors
+    const approvedVendorIds = await User.find({ role: "vendor", isProfileVerified: "approved" }).select("_id");
+    const ids = approvedVendorIds.map((v) => v._id);
+    const vendors = await Vendor.find({ isApproved: true, vendorId: { $in: ids } });
     res.json(vendors);
   } catch (err) {
     console.error("getVendors ERROR:", err);
@@ -16,15 +22,18 @@ exports.getVendors = async (req, res) => {
 };
 
 // ─────────────────────────────────────────────
-// GET vendors by type  e.g. /api/vendors/decor
+// GET vendors by type
 // ─────────────────────────────────────────────
 exports.getByType = async (req, res) => {
   try {
     const type = req.params.type?.toLowerCase().trim();
+    const approvedVendorIds = await User.find({ role: "vendor", isProfileVerified: "approved" }).select("_id");
+    const ids = approvedVendorIds.map((v) => v._id);
     const vendors = await Vendor.find({
       serviceType: { $regex: new RegExp(`^${type}$`, "i") },
+      isApproved:  true,
+      vendorId:    { $in: ids },
     });
-    console.log(`getByType [${type}] → ${vendors.length} results`);
     res.json(vendors);
   } catch (err) {
     console.error("getByType ERROR:", err);
@@ -37,32 +46,35 @@ exports.getByType = async (req, res) => {
 // ─────────────────────────────────────────────
 exports.addService = async (req, res) => {
   try {
-    if (!req.user?.id) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    if (!req.user?.id) return res.status(401).json({ error: "Unauthorized" });
 
-// ✅ ADD HERE
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: "At least one image is required" });
-    }
-    // ✅ NEW — uses Cloudinary's permanent URL
-const imageUrls = req.files
-  ? req.files.map((f) => f.path)   // multer-storage-cloudinary puts the Cloudinary URL in f.path
-  : [];
-console.log("FILES RECEIVED:", req.files);
-console.log("FILE COUNT:", req.files?.length);
-console.log("IMAGE URLS:", imageUrls);
-    let packages = [];
-    if (req.body.packages) {
-      try {
-        packages = JSON.parse(req.body.packages);
-      } catch {
-        return res.status(400).json({ error: "Invalid packages format" });
-      }
     }
 
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ error: "User not found" });
+
+    // ── UPGRADE 3: Block unverified vendors ──────────────────────
+    if (user.role === "vendor" && user.isProfileVerified !== "approved") {
+      const statusMsg = {
+        pending:  "Your vendor profile is still under review. You can add services once approved by the admin.",
+        rejected: "Your vendor profile has been rejected. Please contact support.",
+      };
+      return res.status(403).json({
+        error: statusMsg[user.isProfileVerified] || "Profile not verified",
+        verificationStatus: user.isProfileVerified,
+      });
+    }
+    // ─────────────────────────────────────────────────────────────
+
+    const imageUrls = req.files.map((f) => f.path);
+
+    let packages = [];
+    if (req.body.packages) {
+      try { packages = JSON.parse(req.body.packages); }
+      catch { return res.status(400).json({ error: "Invalid packages format" }); }
+    }
 
     const vendor = await Vendor.create({
       vendorId:    req.user.id,
@@ -79,7 +91,7 @@ console.log("IMAGE URLS:", imageUrls);
     await sendEmail({
       to:      user.email,
       subject: "Service Added Successfully ✅",
-      text: `Hello ${user.name},\n\nYour service "${vendor.title}" has been added successfully.\n\n- Eventify Team`,
+      text:    `Hello ${user.name},\n\nYour service "${vendor.title}" has been added successfully.\n\n- Eventify Team`,
     });
 
     res.status(201).json(vendor);
@@ -90,51 +102,30 @@ console.log("IMAGE URLS:", imageUrls);
 };
 
 // ─────────────────────────────────────────────
-// PUT /api/vendors/:id  — Edit existing service
+// PUT /api/vendors/:id — Edit existing service
 // ─────────────────────────────────────────────
 exports.editService = async (req, res) => {
   try {
-    if (!req.user?.id) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    if (!req.user?.id) return res.status(401).json({ error: "Unauthorized" });
 
     const service = await Vendor.findById(req.params.id);
     if (!service) return res.status(404).json({ error: "Service not found" });
+    if (service.vendorId.toString() !== req.user.id) return res.status(403).json({ error: "Forbidden" });
 
-    // Security: only the owner can edit
-    if (service.vendorId.toString() !== req.user.id) {
-      return res.status(403).json({ error: "Forbidden" });
-    }
-
-    // Parse packages
     let packages = service.packages;
     if (req.body.packages) {
-      try {
-        packages = JSON.parse(req.body.packages);
-      } catch {
-        return res.status(400).json({ error: "Invalid packages format" });
-      }
+      try { packages = JSON.parse(req.body.packages); }
+      catch { return res.status(400).json({ error: "Invalid packages format" }); }
     }
 
-    // Existing images the client wants to keep
     let existingImages = service.images;
     if (req.body.existingImages) {
-      try {
-        existingImages = JSON.parse(req.body.existingImages);
-      } catch {
-        existingImages = service.images;
-      }
+      try { existingImages = JSON.parse(req.body.existingImages); }
+      catch { existingImages = service.images; }
     }
 
-    // New images uploaded in this request
-    // ✅ NEW — uses Cloudinary's permanent URL
-const imageUrls = req.files
-  ? req.files.map((f) => f.path)   // multer-storage-cloudinary puts the Cloudinary URL in f.path
-  : [];
-
-    // Merge: kept existing + newly uploaded (max 15)
-    // ✅ FIXED — matches your variable name imageUrls
-const mergedImages = [...existingImages, ...imageUrls].slice(0, 15);
+    const imageUrls    = req.files ? req.files.map((f) => f.path) : [];
+    const mergedImages = [...existingImages, ...imageUrls].slice(0, 15);
 
     const updated = await Vendor.findByIdAndUpdate(
       req.params.id,
@@ -149,13 +140,12 @@ const mergedImages = [...existingImages, ...imageUrls].slice(0, 15);
       { new: true }
     );
 
-    // Notify vendor by email
     const user = await User.findById(req.user.id);
     if (user) {
       await sendEmail({
         to:      user.email,
         subject: "Service Updated ✏️",
-        text: `Hello ${user.name},\n\nYour service "${updated.title}" has been updated successfully.\n\n- Eventify Team`,
+        text:    `Hello ${user.name},\n\nYour service "${updated.title}" has been updated successfully.\n\n- Eventify Team`,
       }).catch((e) => console.error("Email send error (non-fatal):", e.message));
     }
 
@@ -166,15 +156,12 @@ const mergedImages = [...existingImages, ...imageUrls].slice(0, 15);
   }
 };
 
-// ─────────────────────────────────────────────
 // Legacy
-// ─────────────────────────────────────────────
 exports.createVendor = async (req, res) => {
   try {
     const vendor = await Vendor.create({ ...req.body, vendorId: req.user.id });
     res.json(vendor);
   } catch (err) {
-    console.error("createVendor ERROR:", err.message);
     res.status(500).json({ error: err.message });
   }
 };
@@ -185,7 +172,6 @@ exports.getMyServices = async (req, res) => {
     const services = await Vendor.find({ vendorId: req.user.id });
     res.json(services);
   } catch (err) {
-    console.error("getMyServices ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -195,9 +181,7 @@ exports.deleteService = async (req, res) => {
   try {
     const service = await Vendor.findById(req.params.id);
     if (!service) return res.status(404).json({ error: "Service not found" });
-    if (service.vendorId.toString() !== req.user.id) {
-      return res.status(403).json({ error: "Unauthorized" });
-    }
+    if (service.vendorId.toString() !== req.user.id) return res.status(403).json({ error: "Unauthorized" });
 
     await Vendor.findByIdAndDelete(req.params.id);
 
@@ -206,13 +190,12 @@ exports.deleteService = async (req, res) => {
       await sendEmail({
         to:      user.email,
         subject: "Service Deleted ⚠️",
-        text: `Hello ${user.name},\n\nYour service "${service.title}" has been removed from Eventify.\n\nIf this was not intended, please contact support.\n\n- Eventify Team`,
+        text:    `Hello ${user.name},\n\nYour service "${service.title}" has been removed from Eventify.\n\n- Eventify Team`,
       }).catch((e) => console.error("Email send error (non-fatal):", e.message));
     }
 
     res.json({ message: "Service deleted successfully" });
   } catch (err) {
-    console.error("deleteService ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 };

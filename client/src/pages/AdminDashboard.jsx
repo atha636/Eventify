@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 
-// ── Secure admin guard ───────────────────────────────────────────────
 function useAdminGuard() {
   const navigate = useNavigate();
   useEffect(() => {
@@ -25,35 +24,28 @@ function useAdminGuard() {
   }, [navigate]);
 }
 
-// ── Spinner ──────────────────────────────────────────────────────────
 function Spinner() {
-  return (
-    <div className="ad-spinner-overlay">
-      <div className="ad-spinner" />
-    </div>
-  );
+  return <div className="ad-spinner-overlay"><div className="ad-spinner" /></div>;
 }
 
-// ── Stat card ────────────────────────────────────────────────────────
-function StatCard({ icon, label, value }) {
+function StatCard({ icon, label, value, badge }) {
   return (
     <div className="ad-stat">
       <div className="ad-stat-icon">{icon}</div>
       <div>
-        <div className="ad-stat-value">{value ?? "—"}</div>
+        <div className="ad-stat-value">{value ?? "—"}{badge > 0 && <span className="ad-stat-badge">{badge}</span>}</div>
         <div className="ad-stat-label">{label}</div>
       </div>
     </div>
   );
 }
 
-// ── Status badge ─────────────────────────────────────────────────────
 function StatusBadge({ status }) {
   const colors = {
     pending:   { bg: "rgba(201,168,76,0.12)",  color: "#b8902a" },
     approved:  { bg: "rgba(60,160,80,0.12)",   color: "#2d7a3a" },
     rejected:  { bg: "rgba(184,92,92,0.12)",   color: "#b85c5c" },
-    cancelled: { bg: "rgba(130,130,130,0.12)", color: "#888" },
+    cancelled: { bg: "rgba(130,130,130,0.12)", color: "#888"    },
     true:      { bg: "rgba(60,160,80,0.12)",   color: "#2d7a3a" },
     false:     { bg: "rgba(184,92,92,0.12)",   color: "#b85c5c" },
   };
@@ -67,29 +59,21 @@ function StatusBadge({ status }) {
   );
 }
 
-// ── Confirm dialog ───────────────────────────────────────────────────
 function ConfirmDialog({ message, onConfirm, onCancel, loading }) {
   return (
     <div className="ad-overlay">
       <div className="ad-dialog">
         <p className="ad-dialog-msg">{message}</p>
         <div className="ad-dialog-btns">
-          <button className="ad-btn ad-btn-danger" onClick={onConfirm} disabled={loading}>
-            {loading ? "Deleting…" : "Confirm Delete"}
-          </button>
-          <button className="ad-btn ad-btn-ghost" onClick={onCancel} disabled={loading}>
-            Cancel
-          </button>
+          <button className="ad-btn ad-btn-danger" onClick={onConfirm} disabled={loading}>{loading ? "Working…" : "Confirm"}</button>
+          <button className="ad-btn ad-btn-ghost" onClick={onCancel} disabled={loading}>Cancel</button>
         </div>
       </div>
     </div>
   );
 }
 
-// ── Mobile card helpers ──────────────────────────────────────────────
-function MobileCard({ children }) {
-  return <div className="ad-mobile-card">{children}</div>;
-}
+function MobileCard({ children }) { return <div className="ad-mobile-card">{children}</div>; }
 function MobileRow({ label, children }) {
   return (
     <div className="ad-mobile-row">
@@ -99,17 +83,48 @@ function MobileRow({ label, children }) {
   );
 }
 
-// ════════════════════════════════════════════════════════════════════
+// ── Reject reason modal ──────────────────────────────────────────
+function RejectModal({ vendor, onConfirm, onCancel, loading }) {
+  const [reason, setReason] = useState("");
+  return (
+    <div className="ad-overlay">
+      <div className="ad-dialog" style={{ maxWidth: 440 }}>
+        <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.3rem", marginBottom: 10 }}>
+          Reject Vendor Profile
+        </h3>
+        <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16, lineHeight: 1.6 }}>
+          Rejecting <strong>{vendor?.name}</strong>. Optionally provide a reason — it will be emailed to the vendor.
+        </p>
+        <textarea
+          style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--border)", fontFamily: "inherit", fontSize: 13, resize: "vertical", minHeight: 80, outline: "none", background: "var(--surface)", color: "var(--ink)" }}
+          placeholder="e.g. Incomplete profile, missing portfolio images…"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+        />
+        <div className="ad-dialog-btns" style={{ marginTop: 16 }}>
+          <button className="ad-btn ad-btn-danger" onClick={() => onConfirm(reason)} disabled={loading}>
+            {loading ? "Rejecting…" : "Reject & Notify"}
+          </button>
+          <button className="ad-btn ad-btn-ghost" onClick={onCancel} disabled={loading}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   useAdminGuard();
   const navigate = useNavigate();
 
-  const [tab, setTab]           = useState("overview");
-  const [stats, setStats]       = useState(null);
-  const [users, setUsers]       = useState([]);
-  const [services, setServices] = useState([]);
-  const [bookings, setBookings] = useState([]);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [tab, setTab]             = useState("overview");
+  const [stats, setStats]         = useState(null);
+  const [users, setUsers]         = useState([]);
+  const [services, setServices]   = useState([]);
+  const [bookings, setBookings]   = useState([]);
+  const [pendingVendors, setPendingVendors]     = useState([]);   // ← NEW
+  const [vendorFilter, setVendorFilter]         = useState("pending"); // ← NEW
+  const [sidebarOpen, setSidebarOpen]           = useState(false);
+  const [rejectTarget, setRejectTarget]         = useState(null);      // ← NEW
 
   const [loadingTab,    setLoadingTab]    = useState(false);
   const [loadingStats,  setLoadingStats]  = useState(false);
@@ -126,7 +141,6 @@ export default function AdminDashboard() {
     setTimeout(() => setToast({ msg: "", type: "info" }), 3500);
   }, []);
 
-  // ── Fetchers ─────────────────────────────────────────────────────
   const fetchStats = useCallback(async () => {
     setLoadingStats(true);
     try { const r = await API.get("/admin/stats"); setStats(r.data); }
@@ -137,38 +151,49 @@ export default function AdminDashboard() {
   const fetchUsers = useCallback(async () => {
     setLoadingTab(true);
     try { const r = await API.get("/admin/users"); setUsers(r.data); }
-    catch (err) { showToast(err?.response?.data?.msg || "Failed to load users.", "error"); }
+    catch (err) { showToast(err?.response?.data?.msg || "Failed.", "error"); }
     finally { setLoadingTab(false); }
   }, [showToast]);
 
   const fetchServices = useCallback(async () => {
     setLoadingTab(true);
     try { const r = await API.get("/admin/services"); setServices(r.data); }
-    catch (err) { showToast(err?.response?.data?.msg || "Failed to load services.", "error"); }
+    catch (err) { showToast(err?.response?.data?.msg || "Failed.", "error"); }
     finally { setLoadingTab(false); }
   }, [showToast]);
 
   const fetchBookings = useCallback(async () => {
     setLoadingTab(true);
     try { const r = await API.get("/admin/bookings"); setBookings(r.data); }
-    catch (err) { showToast(err?.response?.data?.msg || "Failed to load bookings.", "error"); }
+    catch (err) { showToast(err?.response?.data?.msg || "Failed.", "error"); }
+    finally { setLoadingTab(false); }
+  }, [showToast]);
+
+  // ── NEW: Fetch vendor verifications ─────────────────────────────
+  const fetchVendorVerifications = useCallback(async (status = "pending") => {
+    setLoadingTab(true);
+    try {
+      const r = await API.get(`/admin/vendor-verifications?status=${status}`);
+      setPendingVendors(r.data);
+    } catch (err) { showToast(err?.response?.data?.msg || "Failed.", "error"); }
     finally { setLoadingTab(false); }
   }, [showToast]);
 
   useEffect(() => { fetchStats(); }, [fetchStats]);
   useEffect(() => {
-    if (tab === "users")    fetchUsers();
-    if (tab === "services") fetchServices();
-    if (tab === "bookings") fetchBookings();
-  }, [tab, fetchUsers, fetchServices, fetchBookings]);
+    if (tab === "users")     fetchUsers();
+    if (tab === "services")  fetchServices();
+    if (tab === "bookings")  fetchBookings();
+    if (tab === "vendors")   fetchVendorVerifications(vendorFilter);
+  }, [tab, fetchUsers, fetchServices, fetchBookings, fetchVendorVerifications, vendorFilter]);
 
-  // ── Actions ───────────────────────────────────────────────────────
+  // ── Actions ──────────────────────────────────────────────────────
   const deleteUser = (id, name) => setConfirm({
     msg: `Delete user "${name}"? This also removes their services and bookings.`,
     onConfirm: async () => {
       setLoadingAction(true);
       try { await API.delete(`/admin/users/${id}`); setUsers(u => u.filter(x => x._id !== id)); showToast("User deleted.", "success"); }
-      catch (err) { showToast(err?.response?.data?.msg || "Failed to delete user.", "error"); }
+      catch (err) { showToast(err?.response?.data?.msg || "Failed.", "error"); }
       finally { setLoadingAction(false); setConfirm(null); }
     },
   });
@@ -176,31 +201,31 @@ export default function AdminDashboard() {
   const changeRole = async (id, role) => {
     setActionTarget(id + "role");
     try { await API.put(`/admin/users/${id}/role`, { role }); setUsers(u => u.map(x => x._id === id ? { ...x, role } : x)); showToast("Role updated.", "success"); }
-    catch (err) { showToast(err?.response?.data?.msg || "Failed to update role.", "error"); }
+    catch (err) { showToast(err?.response?.data?.msg || "Failed.", "error"); }
     finally { setActionTarget(null); }
   };
 
   const deleteService = (id, title) => setConfirm({
-    msg: `Delete service "${title}"? All related bookings will also be removed.`,
+    msg: `Delete service "${title}"?`,
     onConfirm: async () => {
       setLoadingAction(true);
       try { await API.delete(`/admin/services/${id}`); setServices(s => s.filter(x => x._id !== id)); showToast("Service deleted.", "success"); }
-      catch (err) { showToast(err?.response?.data?.msg || "Failed to delete service.", "error"); }
+      catch (err) { showToast(err?.response?.data?.msg || "Failed.", "error"); }
       finally { setLoadingAction(false); setConfirm(null); }
     },
   });
 
   const toggleApproval = async (id) => {
     setActionTarget(id + "toggle");
-    try { const r = await API.put(`/admin/services/${id}/toggle`); setServices(s => s.map(x => x._id === id ? { ...x, isApproved: r.data.service.isApproved } : x)); showToast(r.data.msg || "Status updated.", "success"); }
-    catch (err) { showToast(err?.response?.data?.msg || "Failed to toggle.", "error"); }
+    try { const r = await API.put(`/admin/services/${id}/toggle`); setServices(s => s.map(x => x._id === id ? { ...x, isApproved: r.data.service.isApproved } : x)); showToast(r.data.msg || "Updated.", "success"); }
+    catch (err) { showToast(err?.response?.data?.msg || "Failed.", "error"); }
     finally { setActionTarget(null); }
   };
 
   const updateBookingStatus = async (id, status) => {
     setActionTarget(id + "status");
     try { await API.put(`/admin/bookings/${id}`, { status }); setBookings(b => b.map(x => x._id === id ? { ...x, status } : x)); showToast("Booking updated.", "success"); }
-    catch (err) { showToast(err?.response?.data?.msg || "Failed to update booking.", "error"); }
+    catch (err) { showToast(err?.response?.data?.msg || "Failed.", "error"); }
     finally { setActionTarget(null); }
   };
 
@@ -209,32 +234,52 @@ export default function AdminDashboard() {
     onConfirm: async () => {
       setLoadingAction(true);
       try { await API.delete(`/admin/bookings/${id}`); setBookings(b => b.filter(x => x._id !== id)); showToast("Booking deleted.", "success"); }
-      catch (err) { showToast(err?.response?.data?.msg || "Failed to delete booking.", "error"); }
+      catch (err) { showToast(err?.response?.data?.msg || "Failed.", "error"); }
       finally { setLoadingAction(false); setConfirm(null); }
     },
   });
 
+  // ── NEW: Approve/Reject vendor ──────────────────────────────────
+  const approveVendor = async (id) => {
+    setActionTarget(id + "approve");
+    try {
+      await API.put(`/admin/vendor-verifications/${id}`, { action: "approve" });
+      setPendingVendors(v => v.filter(x => x._id !== id));
+      showToast("Vendor approved! Email sent.", "success");
+      fetchStats();
+    } catch (err) { showToast(err?.response?.data?.msg || "Failed.", "error"); }
+    finally { setActionTarget(null); }
+  };
+
+  const rejectVendor = async (id, reason) => {
+    setLoadingAction(true);
+    try {
+      await API.put(`/admin/vendor-verifications/${id}`, { action: "reject", reason });
+      setPendingVendors(v => v.filter(x => x._id !== id));
+      setRejectTarget(null);
+      showToast("Vendor rejected. Email sent.", "success");
+    } catch (err) { showToast(err?.response?.data?.msg || "Failed.", "error"); }
+    finally { setLoadingAction(false); }
+  };
+
   const logout = () => { localStorage.removeItem("token"); localStorage.removeItem("user"); navigate("/admin/login"); };
 
   const NAV_ITEMS = [
-    { key: "overview", icon: "◈", label: "Overview" },
-    { key: "users",    icon: "👥", label: "Users" },
-    { key: "services", icon: "🏷️", label: "Services" },
-    { key: "bookings", icon: "📋", label: "Bookings" },
+    { key: "overview", icon: "◈",  label: "Overview" },
+    { key: "vendors",  icon: "✓",  label: "Vendors",  badge: stats?.pendingVendors },  // ← NEW
+    { key: "users",    icon: "👥", label: "Users"     },
+    { key: "services", icon: "🏷️", label: "Services"  },
+    { key: "bookings", icon: "📋", label: "Bookings"  },
   ];
 
   const switchTab = (key) => { setTab(key); setSidebarOpen(false); };
 
-  // ════════════════════════════════════════════════════════════════
   return (
     <>
       <style>{styles}</style>
       <div className="ad-root">
-
-        {/* Mobile backdrop */}
         {sidebarOpen && <div className="ad-backdrop" onClick={() => setSidebarOpen(false)} />}
 
-        {/* ── Sidebar ── */}
         <aside className={`ad-sidebar ${sidebarOpen ? "ad-sidebar-open" : ""}`}>
           <div className="ad-sidebar-top">
             <div className="ad-logo">✦ Eventify</div>
@@ -244,27 +289,25 @@ export default function AdminDashboard() {
           <nav className="ad-nav">
             {NAV_ITEMS.map(item => (
               <button key={item.key} className={`ad-nav-item ${tab === item.key ? "active" : ""}`} onClick={() => switchTab(item.key)}>
-                <span className="ad-nav-icon">{item.icon}</span>{item.label}
+                <span className="ad-nav-icon">{item.icon}</span>
+                {item.label}
+                {item.badge > 0 && <span className="ad-nav-badge">{item.badge}</span>}
               </button>
             ))}
           </nav>
           <div className="ad-sidebar-bottom">
-            <button className="ad-nav-item ad-logout" onClick={logout}>
-              <span className="ad-nav-icon">↩</span>Log Out
-            </button>
+            <button className="ad-nav-item ad-logout" onClick={logout}><span className="ad-nav-icon">↩</span>Log Out</button>
           </div>
         </aside>
 
-        {/* ── Main ── */}
         <main className="ad-main">
-
-          {/* Topbar */}
           <div className="ad-topbar">
             <button className="ad-hamburger" onClick={() => setSidebarOpen(o => !o)} aria-label="Menu">
               <span /><span /><span />
             </button>
             <h1 className="ad-page-title">
               {tab === "overview" && "Dashboard"}
+              {tab === "vendors"  && "Vendor Verifications"}
               {tab === "users"    && "Users"}
               {tab === "services" && "Services"}
               {tab === "bookings" && "Bookings"}
@@ -278,18 +321,25 @@ export default function AdminDashboard() {
               {loadingStats ? <Spinner /> : (
                 <>
                   <div className="ad-stats-grid">
-                    <StatCard icon="👥" label="Total Users"    value={stats?.totalUsers} />
-                    <StatCard icon="🏷️" label="Total Services" value={stats?.totalVendors} />
-                    <StatCard icon="📋" label="Bookings"       value={stats?.totalBookings} />
-                    <StatCard icon="⏳" label="Pending"        value={stats?.pendingBookings} />
-                    <StatCard icon="💰" label="Revenue"        value={stats ? `₹${stats.totalRevenue.toLocaleString("en-IN")}` : null} />
+                    <StatCard icon="👥"  label="Total Users"         value={stats?.totalUsers} />
+                    <StatCard icon="🏷️" label="Total Services"       value={stats?.totalVendors} />
+                    <StatCard icon="📋"  label="Bookings"             value={stats?.totalBookings} />
+                    <StatCard icon="⏳"  label="Pending Bookings"     value={stats?.pendingBookings} />
+                    <StatCard icon="✓"   label="Vendors to Review"    value={stats?.pendingVendors} badge={stats?.pendingVendors} />
+                    <StatCard icon="💰"  label="Revenue"              value={stats ? `₹${stats.totalRevenue.toLocaleString("en-IN")}` : null} />
                   </div>
+
+                  {stats?.pendingVendors > 0 && (
+                    <div className="ad-alert-banner" onClick={() => switchTab("vendors")}>
+                      <span>⚠</span>
+                      <span><strong>{stats.pendingVendors}</strong> vendor{stats.pendingVendors !== 1 ? "s" : ""} awaiting profile verification</span>
+                      <span className="ad-alert-link">Review now →</span>
+                    </div>
+                  )}
 
                   {stats?.recentBookings?.length > 0 && (
                     <div className="ad-section">
                       <h2 className="ad-section-title">Recent Bookings</h2>
-
-                      {/* Desktop table */}
                       <div className="ad-table-wrap ad-desktop-only">
                         <table className="ad-table">
                           <thead><tr><th>Client</th><th>Service</th><th>Package</th><th>Amount</th><th>Status</th></tr></thead>
@@ -306,14 +356,11 @@ export default function AdminDashboard() {
                           </tbody>
                         </table>
                       </div>
-
-                      {/* Mobile cards */}
                       <div className="ad-mobile-only">
                         {stats.recentBookings.map(b => (
                           <MobileCard key={b._id}>
                             <MobileRow label="Client">{b.userId?.name || "—"}</MobileRow>
                             <MobileRow label="Service">{b.vendorId?.title || "—"}</MobileRow>
-                            <MobileRow label="Package">{b.packageName}</MobileRow>
                             <MobileRow label="Amount">₹{b.packagePrice?.toLocaleString("en-IN")}</MobileRow>
                             <MobileRow label="Status"><StatusBadge status={b.status} /></MobileRow>
                           </MobileCard>
@@ -326,14 +373,109 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {/* ══ VENDOR VERIFICATIONS (NEW) ══ */}
+          {tab === "vendors" && (
+            <div className="ad-content">
+              {/* Filter tabs */}
+              <div className="ad-filter-tabs">
+                {["pending", "approved", "rejected", "all"].map((f) => (
+                  <button
+                    key={f}
+                    className={`ad-filter-tab ${vendorFilter === f ? "active" : ""}`}
+                    onClick={() => setVendorFilter(f)}
+                  >
+                    {f.charAt(0).toUpperCase() + f.slice(1)}
+                  </button>
+                ))}
+              </div>
+
+              {loadingTab ? <Spinner /> : pendingVendors.length === 0 ? (
+                <div className="ad-empty-state">
+                  <div className="ad-empty-icon">✓</div>
+                  <p>No {vendorFilter !== "all" ? vendorFilter : ""} vendors found.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="ad-section-meta">{pendingVendors.length} vendor{pendingVendors.length !== 1 ? "s" : ""}</div>
+
+                  {/* Desktop */}
+                  <div className="ad-table-wrap ad-desktop-only">
+                    <table className="ad-table">
+                      <thead><tr><th>Vendor</th><th>Email</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
+                      <tbody>
+                        {pendingVendors.map(v => (
+                          <tr key={v._id}>
+                            <td><div className="ad-cell-name">{v.name}</div></td>
+                            <td className="ad-cell-muted">{v.email}</td>
+                            <td className="ad-cell-muted">{new Date(v.createdAt).toLocaleDateString("en-IN")}</td>
+                            <td>
+                              <StatusBadge status={v.isProfileVerified} />
+                              {v.profileRejectionReason && (
+                                <div style={{ fontSize: 11, color: "#b85c5c", marginTop: 3 }}>
+                                  {v.profileRejectionReason.slice(0, 40)}{v.profileRejectionReason.length > 40 ? "…" : ""}
+                                </div>
+                              )}
+                            </td>
+                            <td>
+                              {v.isProfileVerified === "pending" && (
+                                <div className="ad-actions-cell">
+                                  <button
+                                    className="ad-action-btn ad-action-ok"
+                                    onClick={() => approveVendor(v._id)}
+                                    disabled={actionTarget === v._id + "approve"}
+                                  >
+                                    {actionTarget === v._id + "approve" ? "…" : "✓ Approve"}
+                                  </button>
+                                  <button
+                                    className="ad-action-btn ad-action-danger"
+                                    onClick={() => setRejectTarget(v)}
+                                  >
+                                    ✕ Reject
+                                  </button>
+                                </div>
+                              )}
+                              {v.isProfileVerified !== "pending" && (
+                                <span style={{ fontSize: 12, color: "var(--muted)" }}>—</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile */}
+                  <div className="ad-mobile-only">
+                    {pendingVendors.map(v => (
+                      <MobileCard key={v._id}>
+                        <MobileRow label="Name"><span className="ad-cell-name">{v.name}</span></MobileRow>
+                        <MobileRow label="Email"><span style={{ fontSize: 11, color: "var(--muted)" }}>{v.email}</span></MobileRow>
+                        <MobileRow label="Joined">{new Date(v.createdAt).toLocaleDateString("en-IN")}</MobileRow>
+                        <MobileRow label="Status"><StatusBadge status={v.isProfileVerified} /></MobileRow>
+                        {v.isProfileVerified === "pending" && (
+                          <div className="ad-mobile-actions">
+                            <button className="ad-action-btn ad-action-ok" style={{ flex: 1 }} onClick={() => approveVendor(v._id)} disabled={actionTarget === v._id + "approve"}>
+                              {actionTarget === v._id + "approve" ? "…" : "✓ Approve"}
+                            </button>
+                            <button className="ad-action-btn ad-action-danger" style={{ flex: 1 }} onClick={() => setRejectTarget(v)}>
+                              ✕ Reject
+                            </button>
+                          </div>
+                        )}
+                      </MobileCard>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
           {/* ══ USERS ══ */}
           {tab === "users" && (
             <div className="ad-content">
               {loadingTab ? <Spinner /> : (
                 <>
                   <div className="ad-section-meta">{users.length} users found</div>
-
-                  {/* Desktop */}
                   <div className="ad-table-wrap ad-desktop-only">
                     <table className="ad-table">
                       <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Verified</th><th>Joined</th><th>Actions</th></tr></thead>
@@ -356,23 +498,19 @@ export default function AdminDashboard() {
                       </tbody>
                     </table>
                   </div>
-
-                  {/* Mobile */}
                   <div className="ad-mobile-only">
                     {users.map(u => (
                       <MobileCard key={u._id}>
                         <MobileRow label="Name"><span className="ad-cell-name">{u.name}</span></MobileRow>
-                        <MobileRow label="Email"><span style={{fontSize:"11px",color:"var(--muted)"}}>{u.email}</span></MobileRow>
+                        <MobileRow label="Email"><span style={{ fontSize: 11, color: "var(--muted)" }}>{u.email}</span></MobileRow>
                         <MobileRow label="Role">
                           <select className="ad-role-select" value={u.role} onChange={e => changeRole(u._id, e.target.value)} disabled={actionTarget === u._id + "role"}>
-                            <option value="user">User</option>
-                            <option value="vendor">Vendor</option>
+                            <option value="user">User</option><option value="vendor">Vendor</option>
                           </select>
                         </MobileRow>
                         <MobileRow label="Verified"><StatusBadge status={u.isVerified} /></MobileRow>
-                        <MobileRow label="Joined">{new Date(u.createdAt || Date.now()).toLocaleDateString("en-IN")}</MobileRow>
-                        <div style={{marginTop:"10px"}}>
-                          <button className="ad-action-btn ad-action-danger" style={{width:"100%"}} onClick={() => deleteUser(u._id, u.name)}>Delete User</button>
+                        <div style={{ marginTop: 10 }}>
+                          <button className="ad-action-btn ad-action-danger" style={{ width: "100%" }} onClick={() => deleteUser(u._id, u.name)}>Delete User</button>
                         </div>
                       </MobileCard>
                     ))}
@@ -388,8 +526,6 @@ export default function AdminDashboard() {
               {loadingTab ? <Spinner /> : (
                 <>
                   <div className="ad-section-meta">{services.length} services found</div>
-
-                  {/* Desktop */}
                   <div className="ad-table-wrap ad-desktop-only">
                     <table className="ad-table">
                       <thead><tr><th>Title</th><th>Type</th><th>Vendor</th><th>Location</th><th>Status</th><th>Actions</th></tr></thead>
@@ -412,21 +548,18 @@ export default function AdminDashboard() {
                       </tbody>
                     </table>
                   </div>
-
-                  {/* Mobile */}
                   <div className="ad-mobile-only">
                     {services.map(s => (
                       <MobileCard key={s._id}>
                         <MobileRow label="Title"><span className="ad-cell-name">{s.title}</span></MobileRow>
                         <MobileRow label="Type"><span className="ad-cell-type">{s.serviceType}</span></MobileRow>
                         <MobileRow label="Vendor">{s.vendorId?.name || s.vendorName || "—"}</MobileRow>
-                        <MobileRow label="Location"><span style={{color:"var(--muted)",fontSize:"12px"}}>{s.location}</span></MobileRow>
                         <MobileRow label="Status"><StatusBadge status={s.isApproved} /></MobileRow>
                         <div className="ad-mobile-actions">
-                          <button className={`ad-action-btn ${s.isApproved ? "ad-action-warn" : "ad-action-ok"}`} onClick={() => toggleApproval(s._id)} disabled={actionTarget === s._id + "toggle"} style={{flex:1}}>
-                            {actionTarget === s._id + "toggle" ? "…" : s.isApproved ? "Suspend" : "Approve"}
+                          <button className={`ad-action-btn ${s.isApproved ? "ad-action-warn" : "ad-action-ok"}`} onClick={() => toggleApproval(s._id)} style={{ flex: 1 }}>
+                            {s.isApproved ? "Suspend" : "Approve"}
                           </button>
-                          <button className="ad-action-btn ad-action-danger" onClick={() => deleteService(s._id, s.title)} style={{flex:1}}>Delete</button>
+                          <button className="ad-action-btn ad-action-danger" onClick={() => deleteService(s._id, s.title)} style={{ flex: 1 }}>Delete</button>
                         </div>
                       </MobileCard>
                     ))}
@@ -442,8 +575,6 @@ export default function AdminDashboard() {
               {loadingTab ? <Spinner /> : (
                 <>
                   <div className="ad-section-meta">{bookings.length} bookings found</div>
-
-                  {/* Desktop */}
                   <div className="ad-table-wrap ad-desktop-only">
                     <table className="ad-table">
                       <thead><tr><th>Client</th><th>Service</th><th>Package</th><th>Date</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
@@ -466,24 +597,20 @@ export default function AdminDashboard() {
                       </tbody>
                     </table>
                   </div>
-
-                  {/* Mobile */}
                   <div className="ad-mobile-only">
                     {bookings.map(b => (
                       <MobileCard key={b._id}>
                         <MobileRow label="Client"><span className="ad-cell-name">{b.userId?.name || "—"}</span></MobileRow>
-                        <MobileRow label="Email"><span style={{fontSize:"11px",color:"var(--muted)"}}>{b.userId?.email}</span></MobileRow>
                         <MobileRow label="Service">{b.vendorId?.title || "—"}</MobileRow>
-                        <MobileRow label="Package">{b.packageName}</MobileRow>
                         <MobileRow label="Date">{b.date ? new Date(b.date).toLocaleDateString("en-IN") : "—"}</MobileRow>
                         <MobileRow label="Amount">₹{b.packagePrice?.toLocaleString("en-IN")}</MobileRow>
                         <MobileRow label="Status">
-                          <select className="ad-status-select" value={b.status} onChange={e => updateBookingStatus(b._id, e.target.value)} disabled={actionTarget === b._id + "status"}>
+                          <select className="ad-status-select" value={b.status} onChange={e => updateBookingStatus(b._id, e.target.value)}>
                             {["pending","approved","rejected","cancelled"].map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>)}
                           </select>
                         </MobileRow>
-                        <div style={{marginTop:"10px"}}>
-                          <button className="ad-action-btn ad-action-danger" style={{width:"100%"}} onClick={() => deleteBooking(b._id)}>Delete Booking</button>
+                        <div style={{ marginTop: 10 }}>
+                          <button className="ad-action-btn ad-action-danger" style={{ width: "100%" }} onClick={() => deleteBooking(b._id)}>Delete</button>
                         </div>
                       </MobileCard>
                     ))}
@@ -493,11 +620,13 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* ── Mobile bottom tab bar ── */}
           <nav className="ad-bottom-nav">
             {NAV_ITEMS.map(item => (
               <button key={item.key} className={`ad-bottom-tab ${tab === item.key ? "active" : ""}`} onClick={() => switchTab(item.key)}>
-                <span className="ad-bottom-icon">{item.icon}</span>
+                <span className="ad-bottom-icon" style={{ position: "relative" }}>
+                  {item.icon}
+                  {item.badge > 0 && <span className="ad-bottom-badge">{item.badge}</span>}
+                </span>
                 <span className="ad-bottom-label">{item.label}</span>
               </button>
             ))}
@@ -505,13 +634,20 @@ export default function AdminDashboard() {
         </main>
       </div>
 
-      {confirm && (
-        <ConfirmDialog message={confirm.msg} onConfirm={confirm.onConfirm} onCancel={() => !loadingAction && setConfirm(null)} loading={loadingAction} />
+      {confirm && <ConfirmDialog message={confirm.msg} onConfirm={confirm.onConfirm} onCancel={() => !loadingAction && setConfirm(null)} loading={loadingAction} />}
+
+      {rejectTarget && (
+        <RejectModal
+          vendor={rejectTarget}
+          onConfirm={(reason) => rejectVendor(rejectTarget._id, reason)}
+          onCancel={() => !loadingAction && setRejectTarget(null)}
+          loading={loadingAction}
+        />
       )}
 
       {toast.msg && (
         <div className={`ad-toast ${toast.type === "error" ? "ad-toast-error" : toast.type === "success" ? "ad-toast-success" : ""}`}>
-          {toast.type === "error"   && <span className="ad-toast-icon">✕</span>}
+          {toast.type === "error" && <span className="ad-toast-icon">✕</span>}
           {toast.type === "success" && <span className="ad-toast-icon">✓</span>}
           {toast.msg}
         </div>
@@ -528,16 +664,9 @@ const styles = `
     --muted: #7a7265; --border: rgba(201,168,76,0.18); --surface: #faf7f2; --white: #ffffff;
     --sidebar-w: 240px; --topbar-h: 60px; --bottomnav-h: 64px;
   }
-
   .ad-root { display: flex; min-height: 100vh; font-family: 'DM Sans', sans-serif; background: var(--surface); }
 
-  /* ══ SIDEBAR ══ */
-  .ad-sidebar {
-    width: var(--sidebar-w); background: var(--ink);
-    display: flex; flex-direction: column;
-    position: fixed; top: 0; left: 0; height: 100vh; z-index: 200;
-    transition: transform 0.28s cubic-bezier(.4,0,.2,1);
-  }
+  .ad-sidebar { width: var(--sidebar-w); background: var(--ink); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 200; transition: transform 0.28s cubic-bezier(.4,0,.2,1); }
   .ad-sidebar-top { padding: 32px 24px 24px; border-bottom: 1px solid rgba(201,168,76,0.1); }
   .ad-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600; color: var(--gold); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 16px; }
   .ad-admin-tag { display: inline-block; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; background: rgba(201,168,76,0.12); color: var(--gold); border: 1px solid rgba(201,168,76,0.25); padding: 3px 10px; border-radius: 20px; margin-bottom: 8px; }
@@ -547,38 +676,50 @@ const styles = `
   .ad-nav-item:hover  { background: rgba(201,168,76,0.07); color: var(--gold-light); }
   .ad-nav-item.active { background: rgba(201,168,76,0.12); color: var(--gold); font-weight: 500; }
   .ad-nav-icon { font-size: 16px; flex-shrink: 0; }
+  .ad-nav-badge { margin-left: auto; background: #c9a84c; color: #0e0c0a; font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 20px; }
   .ad-sidebar-bottom { padding: 12px; border-top: 1px solid rgba(201,168,76,0.1); }
   .ad-logout { color: #b85c5c !important; }
   .ad-logout:hover { background: rgba(184,92,92,0.1) !important; }
 
-  /* ══ MAIN ══ */
   .ad-main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
-
-  /* ══ TOPBAR ══ */
   .ad-topbar { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 24px; height: var(--topbar-h); display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 50; }
   .ad-page-title { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 600; color: var(--ink); flex: 1; }
   .ad-hamburger { display: none; flex-direction: column; justify-content: center; gap: 5px; background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; flex-shrink: 0; }
   .ad-hamburger span { display: block; width: 20px; height: 2px; background: var(--ink); border-radius: 2px; }
-  .ad-hamburger:hover { background: rgba(201,168,76,0.08); }
   .ad-mobile-logout { display: none; background: none; border: none; font-size: 18px; cursor: pointer; color: #b85c5c; padding: 6px 10px; border-radius: 6px; }
-
   .ad-content { padding: 28px 32px 32px; }
   .ad-section-meta { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
 
-  /* ══ SPINNER ══ */
+  /* Alert banner */
+  .ad-alert-banner { display: flex; align-items: center; gap: 10px; background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.25); border-radius: 10px; padding: 12px 16px; margin-bottom: 24px; cursor: pointer; transition: background 0.2s; font-size: 13.5px; color: var(--ink); }
+  .ad-alert-banner:hover { background: rgba(201,168,76,0.14); }
+  .ad-alert-link { margin-left: auto; color: var(--gold); font-weight: 500; font-size: 13px; }
+
+  /* Filter tabs */
+  .ad-filter-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+  .ad-filter-tab { padding: 10px 18px; background: none; border: none; border-bottom: 2px solid transparent; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--muted); cursor: pointer; transition: all 0.2s; margin-bottom: -1px; text-transform: capitalize; }
+  .ad-filter-tab:hover { color: var(--ink); }
+  .ad-filter-tab.active { color: var(--ink); border-bottom-color: var(--gold); font-weight: 500; }
+
+  /* Empty state */
+  .ad-empty-state { text-align: center; padding: 60px 20px; }
+  .ad-empty-icon { font-size: 2.5rem; color: var(--gold); margin-bottom: 12px; }
+  .ad-empty-state p { font-size: 14px; color: var(--muted); }
+
+  /* Stat badge */
+  .ad-stat-badge { display: inline-block; background: #c9a84c; color: #0e0c0a; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 20px; margin-left: 6px; vertical-align: middle; }
+
   .ad-spinner-overlay { display: flex; align-items: center; justify-content: center; min-height: 240px; }
   .ad-spinner { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--border); border-top-color: var(--gold); animation: spin 0.7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ══ STATS ══ */
-  .ad-stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; margin-bottom: 36px; }
+  .ad-stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; margin-bottom: 24px; }
   .ad-stat { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 20px 18px; display: flex; gap: 14px; align-items: center; }
   .ad-stat-icon { font-size: 1.7rem; flex-shrink: 0; }
   .ad-stat-value { font-family: 'Cormorant Garamond', serif; font-size: 1.75rem; font-weight: 600; color: var(--ink); line-height: 1; }
   .ad-stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
   .ad-section-title { font-family: 'Cormorant Garamond', serif; font-size: 1.25rem; font-weight: 600; color: var(--ink); margin-bottom: 14px; }
 
-  /* ══ TABLE ══ */
   .ad-table-wrap { background: var(--white); border: 1px solid var(--border); border-radius: 12px; overflow: auto; }
   .ad-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .ad-table thead tr { border-bottom: 1px solid var(--border); }
@@ -591,11 +732,9 @@ const styles = `
   .ad-cell-muted { color: var(--muted); }
   .ad-cell-type { text-transform: capitalize; color: var(--gold); font-size: 12px; }
   .ad-badge { font-size: 10px; padding: 3px 10px; border-radius: 20px; font-weight: 500; letter-spacing: 0.05em; white-space: nowrap; }
-
   .ad-role-select, .ad-status-select { font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; cursor: pointer; outline: none; }
   .ad-role-select:focus, .ad-status-select:focus { border-color: var(--gold); }
   .ad-role-select:disabled, .ad-status-select:disabled { opacity: 0.5; cursor: not-allowed; }
-
   .ad-actions-cell { display: flex; gap: 6px; }
   .ad-action-btn { font-family: 'DM Sans', sans-serif; font-size: 11.5px; padding: 5px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: 500; transition: all 0.2s; white-space: nowrap; }
   .ad-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -606,7 +745,6 @@ const styles = `
   .ad-action-ok { background: rgba(60,160,80,0.1); color: #2d7a3a; }
   .ad-action-ok:hover:not(:disabled) { background: #2d7a3a; color: white; }
 
-  /* ══ MOBILE CARDS ══ */
   .ad-mobile-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 10px; }
   .ad-mobile-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid rgba(201,168,76,0.06); }
   .ad-mobile-row:last-of-type { border-bottom: none; }
@@ -614,18 +752,14 @@ const styles = `
   .ad-mobile-value { font-size: 13px; color: var(--ink); text-align: right; }
   .ad-mobile-actions { display: flex; gap: 8px; margin-top: 12px; }
 
-  /* ══ BOTTOM TAB BAR ══ */
   .ad-bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; height: var(--bottomnav-h); background: var(--ink); border-top: 1px solid rgba(201,168,76,0.15); z-index: 200; }
   .ad-bottom-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: none; border: none; cursor: pointer; padding: 8px 4px; transition: all 0.2s; }
-  .ad-bottom-tab.active .ad-bottom-icon,
-  .ad-bottom-tab.active .ad-bottom-label { color: var(--gold); }
+  .ad-bottom-tab.active .ad-bottom-icon, .ad-bottom-tab.active .ad-bottom-label { color: var(--gold); }
   .ad-bottom-icon { font-size: 18px; color: var(--muted); transition: color 0.2s; }
   .ad-bottom-label { font-family: 'DM Sans', sans-serif; font-size: 10px; color: var(--muted); transition: color 0.2s; }
+  .ad-bottom-badge { position: absolute; top: -4px; right: -6px; background: #c9a84c; color: #0e0c0a; font-size: 9px; font-weight: 700; padding: 1px 4px; border-radius: 20px; }
 
-  /* ══ BACKDROP ══ */
   .ad-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 199; backdrop-filter: blur(2px); }
-
-  /* ══ DIALOG ══ */
   .ad-overlay { position: fixed; inset: 0; background: rgba(14,12,10,0.6); display: flex; align-items: center; justify-content: center; z-index: 999; backdrop-filter: blur(4px); padding: 16px; }
   .ad-dialog { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 32px 28px; max-width: 400px; width: 100%; }
   .ad-dialog-msg { font-size: 14.5px; color: var(--ink); line-height: 1.65; margin-bottom: 24px; }
@@ -637,54 +771,34 @@ const styles = `
   .ad-btn-ghost { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
   .ad-btn-ghost:hover:not(:disabled) { color: var(--ink); border-color: var(--ink); }
 
-  /* ══ TOAST ══ */
   .ad-toast { position: fixed; bottom: 28px; right: 28px; background: var(--ink); color: var(--gold-light); font-size: 13px; padding: 12px 18px; border-radius: 8px; border: 1px solid rgba(201,168,76,0.2); box-shadow: 0 8px 24px rgba(0,0,0,0.3); z-index: 9999; animation: slideUp 0.3s ease; display: flex; align-items: center; gap: 8px; }
   .ad-toast-error   { background: #3d1a1a; color: #e88; border-color: rgba(184,92,92,0.3); }
   .ad-toast-success { background: #0f2a14; color: #7ec88a; border-color: rgba(60,160,80,0.3); }
   .ad-toast-icon { font-size: 12px; font-weight: 700; flex-shrink: 0; }
   @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
-  /* ══ VISIBILITY HELPERS ══ */
   .ad-desktop-only { display: block; }
   .ad-mobile-only  { display: none; }
 
-  /* ══ DESKTOP (>768px) ══ */
   @media (min-width: 769px) {
-    .ad-bottom-nav    { display: none !important; }
-    .ad-hamburger     { display: none !important; }
+    .ad-bottom-nav { display: none !important; }
+    .ad-hamburger { display: none !important; }
     .ad-mobile-logout { display: none !important; }
     .ad-toast { bottom: 28px; right: 28px; left: auto; max-width: 360px; }
   }
-
-  /* ══ MOBILE (≤768px) ══ */
   @media (max-width: 768px) {
-    /* Sidebar → slide-in drawer */
     .ad-sidebar { transform: translateX(-100%); }
     .ad-sidebar.ad-sidebar-open { transform: translateX(0); box-shadow: 8px 0 32px rgba(0,0,0,0.4); }
-
-    /* Main takes full width, pad for bottom nav */
     .ad-main { margin-left: 0; padding-bottom: var(--bottomnav-h); }
-
-    /* Show hamburger + mobile logout */
-    .ad-hamburger     { display: flex; }
+    .ad-hamburger { display: flex; }
     .ad-mobile-logout { display: block; }
-
-    /* Show bottom nav */
     .ad-bottom-nav { display: flex; }
-
-    /* Cards instead of tables */
     .ad-desktop-only { display: none !important; }
     .ad-mobile-only  { display: block; }
-
-    /* Stats: 2-col grid */
     .ad-stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
     .ad-stat { padding: 14px 12px; gap: 10px; border-radius: 10px; }
     .ad-stat-value { font-size: 1.4rem; }
-    .ad-stat-label { font-size: 10px; }
-
     .ad-content { padding: 14px 14px 20px; }
-
-    /* Toast above bottom nav */
     .ad-toast { bottom: calc(var(--bottomnav-h) + 10px); right: 12px; left: 12px; max-width: none; font-size: 12px; }
   }
 `;

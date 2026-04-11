@@ -4,22 +4,23 @@ const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-const { sendOTP, sendResetOTP } = require("../utils/sendEmail");
+const {
+  sendOTP,
+  sendResetOTP,
+  sendVendorVerificationRequest,
+} = require("../utils/sendEmail");
 
 // ─────────────────────────────────────────
 // REGISTER
 // ─────────────────────────────────────────
 exports.register = async (req, res) => {
   const { name, email, password, role } = req.body;
-
   try {
     const existingUser = await User.findOne({ email });
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     if (existingUser) {
-      if (existingUser.isVerified) {
-        return res.status(400).json({ msg: "User already exists" });
-      }
+      if (existingUser.isVerified) return res.status(400).json({ msg: "User already exists" });
       existingUser.otp = otp;
       existingUser.otpExpires = Date.now() + 5 * 60 * 1000;
       await existingUser.save();
@@ -35,11 +36,12 @@ exports.register = async (req, res) => {
       otp,
       otpExpires: Date.now() + 5 * 60 * 1000,
       isVerified: false,
+      // Vendors start as pending verification
+      isProfileVerified: role === "vendor" ? "pending" : "approved",
     });
 
     await sendOTP(email, otp);
     res.json({ msg: "OTP sent to email" });
-
   } catch (err) {
     console.error("REGISTER ERROR:", err);
     res.status(500).json({ msg: "Server error" });
@@ -51,11 +53,9 @@ exports.register = async (req, res) => {
 // ─────────────────────────────────────────
 exports.verifyOTP = async (req, res) => {
   const { email, otp } = req.body;
-
   try {
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ msg: "User not found" });
-
     if (user.otp !== otp || user.otpExpires < Date.now()) {
       return res.status(400).json({ msg: "Invalid or expired OTP" });
     }
@@ -65,14 +65,23 @@ exports.verifyOTP = async (req, res) => {
     user.otpExpires = null;
     await user.save();
 
+    // ── UPGRADE 3: Notify admin when a vendor verifies email ─────
+    if (user.role === "vendor") {
+      const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
+      sendVendorVerificationRequest({
+        vendorName:  user.name,
+        vendorEmail: user.email,
+        adminEmail,
+      }).catch((e) => console.error("Admin notify error (non-fatal):", e.message));
+    }
+    // ─────────────────────────────────────────────────────────────
+
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
-
     res.json({ msg: "Account verified", token, user });
-
   } catch (err) {
     res.status(500).json(err);
   }
@@ -83,30 +92,17 @@ exports.verifyOTP = async (req, res) => {
 // ─────────────────────────────────────────
 exports.login = async (req, res) => {
   const { email, password } = req.body;
-
   try {
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ msg: "Invalid credentials" });
-
-    if (!user.isVerified) {
-      return res.status(400).json({ msg: "Please verify your email first" });
-    }
-
-    if (!user.password) {
-      return res.status(400).json({ msg: "Use Google login" });
-    }
+    if (!user.isVerified) return res.status(400).json({ msg: "Please verify your email first" });
+    if (!user.password) return res.status(400).json({ msg: "Use Google login" });
 
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ msg: "Invalid credentials" });
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
     res.json({ token, user });
-
   } catch (err) {
     res.status(500).json(err);
   }
@@ -120,32 +116,19 @@ exports.googleLogin = async (req, res) => {
     const { token } = req.body;
     if (!token) return res.status(400).json({ msg: "No token provided" });
 
-    const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-
+    const ticket = await client.verifyIdToken({ idToken: token, audience: process.env.GOOGLE_CLIENT_ID });
     const { name, email, picture } = ticket.getPayload();
     let user = await User.findOne({ email });
 
     if (!user) {
       user = await User.create({
-        name, email,
-        password: null,
-        avatar: picture,
-        role: "user",
-        isVerified: true,
+        name, email, password: null, avatar: picture,
+        role: "user", isVerified: true, isProfileVerified: "approved",
       });
     }
 
-    const jwtToken = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
+    const jwtToken = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
     res.json({ token: jwtToken, user });
-
   } catch (err) {
     console.error("Google Login Error:", err);
     res.status(500).json({ msg: "Google login failed" });
@@ -157,28 +140,17 @@ exports.googleLogin = async (req, res) => {
 // ─────────────────────────────────────────
 exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
-
   try {
     const user = await User.findOne({ email });
-
-    // Always respond with success to prevent email enumeration
-    if (!user || !user.isVerified) {
-      return res.json({ msg: "If this email exists, an OTP has been sent." });
-    }
-
-    if (!user.password) {
-      return res.status(400).json({ msg: "This account uses Google login. No password to reset." });
-    }
+    if (!user || !user.isVerified) return res.json({ msg: "If this email exists, an OTP has been sent." });
+    if (!user.password) return res.status(400).json({ msg: "This account uses Google login. No password to reset." });
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     user.resetOtp = otp;
-    user.resetOtpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+    user.resetOtpExpires = Date.now() + 10 * 60 * 1000;
     await user.save();
-
     await sendResetOTP(email, otp);
-
     res.json({ msg: "OTP sent to your email" });
-
   } catch (err) {
     console.error("FORGOT PASSWORD ERROR:", err);
     res.status(500).json({ msg: "Server error" });
@@ -190,24 +162,14 @@ exports.forgotPassword = async (req, res) => {
 // ─────────────────────────────────────────
 exports.verifyResetOTP = async (req, res) => {
   const { email, otp } = req.body;
-
   try {
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ msg: "User not found" });
-
     if (user.resetOtp !== otp || user.resetOtpExpires < Date.now()) {
       return res.status(400).json({ msg: "Invalid or expired OTP" });
     }
-
-    // OTP is valid — issue a short-lived reset token
-    const resetToken = jwt.sign(
-      { id: user._id, purpose: "reset" },
-      process.env.JWT_SECRET,
-      { expiresIn: "15m" }
-    );
-
+    const resetToken = jwt.sign({ id: user._id, purpose: "reset" }, process.env.JWT_SECRET, { expiresIn: "15m" });
     res.json({ msg: "OTP verified", resetToken });
-
   } catch (err) {
     console.error("VERIFY RESET OTP ERROR:", err);
     res.status(500).json({ msg: "Server error" });
@@ -215,36 +177,87 @@ exports.verifyResetOTP = async (req, res) => {
 };
 
 // ─────────────────────────────────────────
-// RESET PASSWORD — set new password
+// RESET PASSWORD
 // ─────────────────────────────────────────
 exports.resetPassword = async (req, res) => {
   const { resetToken, newPassword } = req.body;
-
   try {
     let decoded;
-    try {
-      decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
-    } catch {
-      return res.status(400).json({ msg: "Reset session expired. Please start again." });
-    }
+    try { decoded = jwt.verify(resetToken, process.env.JWT_SECRET); }
+    catch { return res.status(400).json({ msg: "Reset session expired. Please start again." }); }
 
-    if (decoded.purpose !== "reset") {
-      return res.status(400).json({ msg: "Invalid reset token" });
-    }
+    if (decoded.purpose !== "reset") return res.status(400).json({ msg: "Invalid reset token" });
 
     const user = await User.findById(decoded.id);
     if (!user) return res.status(400).json({ msg: "User not found" });
 
-    const hashed = await bcrypt.hash(newPassword, 10);
-    user.password = hashed;
+    user.password = await bcrypt.hash(newPassword, 10);
     user.resetOtp = null;
     user.resetOtpExpires = null;
     await user.save();
-
     res.json({ msg: "Password reset successfully" });
-
   } catch (err) {
     console.error("RESET PASSWORD ERROR:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
+
+// ═══════════════════════════════════════════
+// UPGRADE 2 — PROFILE MANAGEMENT
+// ═══════════════════════════════════════════
+
+// ─────────────────────────────────────────
+// UPDATE PROFILE (name + email)
+// PUT /api/auth/update-profile
+// ─────────────────────────────────────────
+exports.updateProfile = async (req, res) => {
+  const { name, email } = req.body;
+  if (!name?.trim() || !email?.trim()) {
+    return res.status(400).json({ msg: "Name and email are required" });
+  }
+  try {
+    const existing = await User.findOne({ email: email.toLowerCase().trim() });
+    if (existing && existing._id.toString() !== req.user.id) {
+      return res.status(400).json({ msg: "Email already in use by another account" });
+    }
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { name: name.trim(), email: email.toLowerCase().trim() },
+      { new: true, select: "-password -otp -otpExpires -resetOtp -resetOtpExpires" }
+    );
+    if (!user) return res.status(404).json({ msg: "User not found" });
+    res.json({ msg: "Profile updated", user });
+  } catch (err) {
+    console.error("UPDATE PROFILE ERROR:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
+
+// ─────────────────────────────────────────
+// CHANGE PASSWORD
+// PUT /api/auth/change-password
+// ─────────────────────────────────────────
+exports.changePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ msg: "Both current and new passwords are required" });
+  }
+  if (newPassword.length < 6) {
+    return res.status(400).json({ msg: "New password must be at least 6 characters" });
+  }
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ msg: "User not found" });
+    if (!user.password) return res.status(400).json({ msg: "This account uses Google login — no password to change" });
+
+    const match = await bcrypt.compare(currentPassword, user.password);
+    if (!match) return res.status(400).json({ msg: "Current password is incorrect" });
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+    res.json({ msg: "Password changed successfully" });
+  } catch (err) {
+    console.error("CHANGE PASSWORD ERROR:", err);
     res.status(500).json({ msg: "Server error" });
   }
 };

@@ -193,23 +193,39 @@ export default function Home() {
                 placeholder="Search vendors, services…"
                 value={searchVal}
                 onChange={(e) => setSearchVal(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && navigate(`/search?q=${searchVal}`)}
+                onKeyDown={(e) => {
+  if (e.key === "Enter") {
+    const q = searchVal.trim();
+    navigate(q ? `/vendors?q=${encodeURIComponent(q)}` : "/vendors");
+  }
+}}
               />
-              <button className="hm-search-btn" onClick={() => navigate("/vendors")}>
+              <button
+  className="hm-search-btn"
+  onClick={() => {
+    const q = searchVal.trim();
+    navigate(q ? `/vendors?q=${encodeURIComponent(q)}` : "/vendors");
+  }}
+>
                 Explore →
               </button>
             </div>
 
             <div className="hm-hero-pills">
-              {["Weddings", "Birthdays", "Corporate", "Anniversaries"].map((t) => (
-                <span
-                  key={t}
-                  className="hm-pill"
-                  onClick={() => navigate(`/category/${t.toLowerCase()}`)}
-                >
-                  {t}
-                </span>
-              ))}
+              {[
+  { label: "Weddings",      cat: "decor" },
+  { label: "Birthdays",     cat: "catering" },
+  { label: "Corporate",     cat: "venues" },
+  { label: "Anniversaries", cat: "photography" },
+].map((t) => (
+  <span
+    key={t.label}
+    className="hm-pill"
+    onClick={() => navigate(`/vendors?cat=${t.cat}`)}
+  >
+    {t.label}
+  </span>
+))}
             </div>
           </div>
 
@@ -262,7 +278,7 @@ export default function Home() {
               <div
                 key={s.type}
                 className={`hm-service-card hm-reveal ${servicesVisible ? "hm-revealed" : ""}`}
-                onClick={() => navigate(`/category/${s.type}`)}
+                onClick={() => navigate(`/vendors?cat=${s.type}`)}
                 style={{ transitionDelay: `${i * 0.07}s`, "--card-accent": s.color }}
               >
                 <div className="hm-service-glow" style={{ background: s.color }} />
