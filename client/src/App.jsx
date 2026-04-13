@@ -20,7 +20,7 @@ import PaymentSuccess     from "./pages/PaymentSuccess";
 // ── Resource pages ──────────────────────────────────────────────────
 import VendorHandbook   from "./pages/resources/VendorHandbook";
 import PhotoGuidelines  from "./pages/resources/PhotoGuidelines";
-import PricingStrategy  from "./pages/resources/Pricingstrategy"; 
+import PricingStrategy  from "./pages/resources/PricingStrategy"; 
 import DashboardGuide   from "./pages/resources/DashboardGuide";
 
 // ── Admin pages ─────────────────────────────────────────────────────
