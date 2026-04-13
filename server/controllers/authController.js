@@ -223,7 +223,7 @@ exports.updateProfile = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       req.user.id,
       { name: name.trim(), email: email.toLowerCase().trim() },
-      { new: true, select: "-password -otp -otpExpires -resetOtp -resetOtpExpires" }
+      {returnDocument: 'after', select: "-password -otp -otpExpires -resetOtp -resetOtpExpires" }
     );
     if (!user) return res.status(404).json({ msg: "User not found" });
     res.json({ msg: "Profile updated", user });

@@ -124,7 +124,7 @@ exports.verifyPayment = async (req, res) => {
         paymentStatus: "paid",
         paidAt: new Date()
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     // ✅ Respond immediately

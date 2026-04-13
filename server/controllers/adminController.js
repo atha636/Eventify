@@ -112,7 +112,7 @@ exports.updateUserRole = async (req, res) => {
   const { role } = req.body;
   if (!["user", "vendor"].includes(role)) return res.status(400).json({ msg: "Invalid role. Use 'user' or 'vendor'" });
   try {
-    const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true, select: "-password" });
+    const user = await User.findByIdAndUpdate(req.params.id, { role }, { returnDocument: 'after', select: "-password" });
     if (!user) return res.status(404).json({ msg: "User not found" });
     res.json({ msg: "Role updated", user });
   } catch (err) {
@@ -184,8 +184,14 @@ exports.updateBookingStatus = async (req, res) => {
   const allowed = ["pending", "approved", "rejected", "cancelled"];
   if (!allowed.includes(status)) return res.status(400).json({ msg: "Invalid status" });
   try {
-    const booking = await Booking.findByIdAndUpdate(req.params.id, { status }, { new: true })
-      .populate("userId", "name email").populate("vendorId", "title");
+    const booking = await Booking.findByIdAndUpdate(
+  req.params.id,
+  { status },
+  { returnDocument: 'after' }
+)
+.populate("userId", "name email")
+.populate("vendorId", "title");
+
     if (!booking) return res.status(404).json({ msg: "Booking not found" });
     res.json({ msg: "Status updated", booking });
   } catch (err) {

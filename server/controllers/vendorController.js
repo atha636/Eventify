@@ -137,7 +137,7 @@ exports.editService = async (req, res) => {
         packages,
         images:      mergedImages,
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     const user = await User.findById(req.user.id);
