@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
 import DatePicker from "react-datepicker";
+import PaymentModal from "../components/PaymentModal";
 import "react-datepicker/dist/react-datepicker.css";
 
 export default function VendorDetail() {
@@ -14,7 +15,9 @@ export default function VendorDetail() {
   const [loading, setLoading] = useState(false);
   const [dateWarning, setDateWarning] = useState("");
   const [showVendorModal, setShowVendorModal] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false); // ← NEW
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false); // ← NEW
+  const [paymentBooking, setPaymentBooking] = useState(null); // ← NEW
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
   const isVendor = user?.role === "vendor";
@@ -26,17 +29,16 @@ export default function VendorDetail() {
   };
 
   useEffect(() => {
-    // ✅ Fix
-API.get(`/vendors/single/${id}`).then((res) => {
-  setVendor(res.data);
-  if (res.data?.packages?.length > 0) setSelectedPackage(0);
-});
+    API.get(`/vendors/single/${id}`).then((res) => {
+      setVendor(res.data);
+      if (res.data?.packages?.length > 0) setSelectedPackage(0);
+    });
   }, [id]);
 
+  // ── STEP 1: Create booking, then open payment modal ──────────────
   const handleBooking = async () => {
     const token = localStorage.getItem("token");
 
-    // ← REPLACED ugly alert with beautiful modal
     if (!token) {
       setShowLoginModal(true);
       return;
@@ -51,22 +53,22 @@ API.get(`/vendors/single/${id}`).then((res) => {
     today.setHours(0, 0, 0, 0);
     const picked = new Date(selectedDate);
 
-// ❌ invalid date check
-if (isNaN(picked.getTime())) {
-  setDateWarning("Please select a valid date.");
-  return;
-}
+    if (isNaN(picked.getTime())) {
+      setDateWarning("Please select a valid date.");
+      return;
+    }
 
-// ❌ too far future 
-if (picked.getFullYear() > 2100) {
-  setDateWarning("Please select a realistic date.");
-  return;
-}
+    if (picked.getFullYear() > 2100) {
+      setDateWarning("Please select a realistic date.");
+      return;
+    }
 
     setDateWarning("");
     setLoading(true);
+
     try {
-      await API.post(
+      // Create booking first
+      const bookingRes = await API.post(
         "/bookings",
         {
           vendorId: vendor._id,
@@ -76,14 +78,28 @@ if (picked.getFullYear() > 2100) {
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setBooked(true);
-      setTimeout(() => setBooked(false), 3000);
-      setSelectedDate("");
+
+      // Set booking for payment modal
+      setPaymentBooking(bookingRes.data);
+      setShowPaymentModal(true); // ← Open payment modal
+
     } catch (err) {
       console.error(err);
+      setDateWarning(err.response?.data?.error || "Failed to create booking");
     } finally {
       setLoading(false);
     }
+  };
+
+  // ── STEP 2: Payment successful callback ──────────────────────────
+  const handlePaymentSuccess = (paymentData) => {
+    setShowPaymentModal(false);
+    setBooked(true);
+    setTimeout(() => {
+      setBooked(false);
+      // Redirect to success page
+      navigate(`/payment-success/${paymentBooking._id}`);
+    }, 2000);
   };
 
   if (!vendor) {
@@ -105,6 +121,16 @@ if (picked.getFullYear() > 2100) {
     <>
       <style>{styles}</style>
       <Navbar />
+
+      {/* ── PAYMENT MODAL ── */}
+      {showPaymentModal && paymentBooking && (
+        <PaymentModal
+          booking={paymentBooking}
+          vendor={vendor}
+          onSuccess={handlePaymentSuccess}
+          onClose={() => setShowPaymentModal(false)}
+        />
+      )}
 
       {/* ── LOGIN REQUIRED MODAL ── */}
       {showLoginModal && (
@@ -168,11 +194,10 @@ if (picked.getFullYear() > 2100) {
         {/* HERO */}
         <div className="vd-hero">
           <img
- // ✅ Fix — Cloudinary URL is already complete
-src={vendor.images?.[0] || "/placeholder.jpg"}
-  alt={vendor.title}
-  className="vd-hero-img"
-/>
+            src={vendor.images?.[0] || "/placeholder.jpg"}
+            alt={vendor.title}
+            className="vd-hero-img"
+          />
           <div className="vd-hero-overlay" />
           <div className="vd-hero-content">
             <span className="vd-tag">📍 {vendor.location}</span>
@@ -233,24 +258,22 @@ src={vendor.images?.[0] || "/placeholder.jpg"}
                   <div className={`vd-date-wrapper ${dateWarning ? "date-error" : ""}`}>
                     <span className="vd-date-icon">🗓</span>
                     <DatePicker
-  selected={selectedDate ? new Date(selectedDate) : null}
-  onChange={(date) => {
-    setSelectedDate(date.toISOString().split("T")[0]);
-    setDateWarning("");
-  }}
-  minDate={new Date(Date.now() + 86400000)}
-  placeholderText="Select your event date"
-  className="vd-date-input"
-  dateFormat="dd MMMM yyyy"
-
-  showMonthDropdown
-  showYearDropdown
-  scrollableYearDropdown
-  yearDropdownItemNumber={10}
-  dropdownMode="scroll"
-
-  portalId="root"
-/>
+                      selected={selectedDate ? new Date(selectedDate) : null}
+                      onChange={(date) => {
+                        setSelectedDate(date.toISOString().split("T")[0]);
+                        setDateWarning("");
+                      }}
+                      minDate={new Date(Date.now() + 86400000)}
+                      placeholderText="Select your event date"
+                      className="vd-date-input"
+                      dateFormat="dd MMMM yyyy"
+                      showMonthDropdown
+                      showYearDropdown
+                      scrollableYearDropdown
+                      yearDropdownItemNumber={10}
+                      dropdownMode="scroll"
+                      portalId="root"
+                    />
                   </div>
                   {dateWarning && (
                     <p className="vd-date-warning">
@@ -278,7 +301,7 @@ src={vendor.images?.[0] || "/placeholder.jpg"}
                   )}
                 </button>
 
-                <p className="vd-note">✦ No cancellation fee within 48 hours &nbsp;·&nbsp; Secure payment</p>
+                <p className="vd-note">✦ Secure payment via Razorpay &nbsp;·&nbsp; Instant confirmation</p>
               </div>
             )}
 
@@ -286,7 +309,7 @@ src={vendor.images?.[0] || "/placeholder.jpg"}
               <div className="vd-gallery">
                 <h2 className="vd-section-label">Gallery</h2>
                 <div className="vd-gallery-grid">
-                 {vendor.images.slice(0).map((img, i) => (
+                  {vendor.images.slice(0).map((img, i) => (
                     <div key={i} className="vd-gallery-item">
                       <img src={img} alt={`gallery-${i}`} />
                     </div>
@@ -327,7 +350,7 @@ const styles = `
     background:rgba(14,12,10,0.6);
     backdrop-filter:blur(4px);
     display:flex; align-items:center; justify-content:center;
-    z-index:1000;
+    z-index:999;
     animation:fadeIn 0.2s ease both;
     padding: 20px;
   }
@@ -481,168 +504,131 @@ const styles = `
   @keyframes popIn { from { transform:scale(0.5); opacity:0; } to { transform:scale(1); opacity:1; } }
   @keyframes shake { 0%,100% { transform:translateX(0); } 20% { transform:translateX(-5px); } 40% { transform:translateX(5px); } 60% { transform:translateX(-4px); } 80% { transform:translateX(4px); } }
 
-
   /* ── DATEPICKER CUSTOM STYLE ── */
-
-.react-datepicker-wrapper { width: 100%; }
-.react-datepicker__input-container { width: 100%; }
-
-.react-datepicker {
-  font-family: 'DM Sans', sans-serif;
-  border: 1px solid rgba(201,168,76,0.25);
-  border-radius: 14px;
-  overflow: hidden;
-  box-shadow: 0 12px 48px rgba(14,12,10,0.12);
-  background: #ffffff;
-}
-
-/* ── HEADER (month/year bar) ── */
-.react-datepicker__header {
-  background: #0e0c0a;
-  border-bottom: 1px solid rgba(201,168,76,0.15);
-  padding: 18px 0 0;
-  border-radius: 0;
-}
-
-.react-datepicker__current-month {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.15rem;
-  font-weight: 400;
-  font-style: italic;
-  color: #ffffff;
-  letter-spacing: 0.03em;
-  margin-bottom: 4px;
-}
-
-/* month/year dropdowns */
-.react-datepicker__month-read-view--selected-month,
-.react-datepicker__year-read-view--selected-year {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.1rem;
-  font-style: italic;
-  color: #ffffff;
-}
-.react-datepicker__month-read-view--down-arrow,
-.react-datepicker__year-read-view--down-arrow {
-  border-top-color: #c9a84c;
-  top: 4px;
-}
-
-/* day-of-week labels */
-.react-datepicker__day-names {
-  background: #0e0c0a;
-  padding: 8px 8px 10px;
-  margin: 0;
-}
-.react-datepicker__day-name {
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: #c9a84c;
-  width: 2rem;
-  line-height: 2rem;
-}
-
-/* nav arrows */
-.react-datepicker__navigation {
-  top: 18px;
-}
-.react-datepicker__navigation-icon::before {
-  border-color: #c9a84c;
-  border-width: 1.5px 1.5px 0 0;
-}
-.react-datepicker__navigation:hover .react-datepicker__navigation-icon::before {
-  border-color: #ffffff;
-}
-
-/* ── MONTH BODY ── */
-.react-datepicker__month {
-  padding: 10px 8px 14px;
-  margin: 0;
-}
-
-.react-datepicker__day {
-  font-size: 13px;
-  color: #0e0c0a;
-  width: 2rem;
-  line-height: 2rem;
-  border-radius: 50%;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.react-datepicker__day:hover:not(.react-datepicker__day--disabled) {
-  background: #f5f0e8;
-  color: #0e0c0a;
-  border-radius: 50%;
-}
-
-.react-datepicker__day--selected,
-.react-datepicker__day--keyboard-selected {
-  background: #c9a84c !important;
-  color: #0e0c0a !important;
-  font-weight: 500;
-  border-radius: 50%;
-}
-
-.react-datepicker__day--today:not(.react-datepicker__day--selected) {
-  font-weight: 500;
-  color: #c9a84c;
-  background: transparent;
-}
-
-.react-datepicker__day--disabled {
-  color: rgba(14,12,10,0.2) !important;
-  cursor: not-allowed;
-}
-
-.react-datepicker__day--outside-month {
-  color: rgba(14,12,10,0.18);
-}
-
-/* ── DROPDOWNS ── */
-.react-datepicker__month-dropdown,
-.react-datepicker__year-dropdown {
-  background: #ffffff;
-  border: 1px solid rgba(201,168,76,0.25);
-  border-radius: 10px;
-  box-shadow: 0 10px 36px rgba(14,12,10,0.14);
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.react-datepicker__month-option,
-.react-datepicker__year-option {
-  font-size: 13px;
-  color: #0e0c0a;
-  padding: 6px 16px;
-  transition: background 0.15s;
-}
-
-.react-datepicker__month-option:hover,
-.react-datepicker__year-option:hover {
-  background: #f5f0e8;
-  color: #c9a84c;
-}
-
-.react-datepicker__month-option--selected_month,
-.react-datepicker__year-option--selected_year {
-  background: rgba(201,168,76,0.12);
-  color: #c9a84c;
-  font-weight: 500;
-}
-
-.react-datepicker__month-dropdown::-webkit-scrollbar,
-.react-datepicker__year-dropdown::-webkit-scrollbar { width: 5px; }
-.react-datepicker__month-dropdown::-webkit-scrollbar-thumb,
-.react-datepicker__year-dropdown::-webkit-scrollbar-thumb {
-  background: rgba(201,168,76,0.4);
-  border-radius: 10px;
-}
-
-/* ── POPPER ── */
-.react-datepicker-popper { z-index: 9999 !important; }
-.react-datepicker__triangle { display: none; }
-
-
+  .react-datepicker-wrapper { width: 100%; }
+  .react-datepicker__input-container { width: 100%; }
+  .react-datepicker {
+    font-family: 'DM Sans', sans-serif;
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 12px 48px rgba(14,12,10,0.12);
+    background: #ffffff;
+  }
+  .react-datepicker__header {
+    background: #0e0c0a;
+    border-bottom: 1px solid rgba(201,168,76,0.15);
+    padding: 18px 0 0;
+    border-radius: 0;
+  }
+  .react-datepicker__current-month {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.15rem;
+    font-weight: 400;
+    font-style: italic;
+    color: #ffffff;
+    letter-spacing: 0.03em;
+    margin-bottom: 4px;
+  }
+  .react-datepicker__month-read-view--selected-month,
+  .react-datepicker__year-read-view--selected-year {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    font-style: italic;
+    color: #ffffff;
+  }
+  .react-datepicker__month-read-view--down-arrow,
+  .react-datepicker__year-read-view--down-arrow {
+    border-top-color: #c9a84c;
+    top: 4px;
+  }
+  .react-datepicker__day-names {
+    background: #0e0c0a;
+    padding: 8px 8px 10px;
+    margin: 0;
+  }
+  .react-datepicker__day-name {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #c9a84c;
+    width: 2rem;
+    line-height: 2rem;
+  }
+  .react-datepicker__navigation {
+    top: 18px;
+  }
+  .react-datepicker__navigation-icon::before {
+    border-color: #c9a84c;
+    border-width: 1.5px 1.5px 0 0;
+  }
+  .react-datepicker__navigation:hover .react-datepicker__navigation-icon::before {
+    border-color: #ffffff;
+  }
+  .react-datepicker__month {
+    padding: 10px 8px 14px;
+    margin: 0;
+  }
+  .react-datepicker__day {
+    font-size: 13px;
+    color: #0e0c0a;
+    width: 2rem;
+    line-height: 2rem;
+    border-radius: 50%;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .react-datepicker__day:hover:not(.react-datepicker__day--disabled) {
+    background: #f5f0e8;
+    color: #0e0c0a;
+    border-radius: 50%;
+  }
+  .react-datepicker__day--selected,
+  .react-datepicker__day--keyboard-selected {
+    background: #c9a84c !important;
+    color: #0e0c0a !important;
+    font-weight: 500;
+    border-radius: 50%;
+  }
+  .react-datepicker__day--today:not(.react-datepicker__day--selected) {
+    font-weight: 500;
+    color: #c9a84c;
+    background: transparent;
+  }
+  .react-datepicker__day--disabled {
+    color: rgba(14,12,10,0.2) !important;
+    cursor: not-allowed;
+  }
+  .react-datepicker__day--outside-month {
+    color: rgba(14,12,10,0.18);
+  }
+  .react-datepicker__month-dropdown,
+  .react-datepicker__year-dropdown {
+    background: #ffffff;
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 10px;
+    box-shadow: 0 10px 36px rgba(14,12,10,0.14);
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .react-datepicker__month-option,
+  .react-datepicker__year-option {
+    font-size: 13px;
+    color: #0e0c0a;
+    padding: 6px 16px;
+    transition: background 0.15s;
+  }
+  .react-datepicker__month-option:hover,
+  .react-datepicker__year-option:hover {
+    background: #f5f0e8;
+    color: #c9a84c;
+  }
+  .react-datepicker__month-option--selected_month,
+  .react-datepicker__year-option--selected_year {
+    background: rgba(201,168,76,0.12);
+    color: #c9a84c;
+    font-weight: 500;
+  }
+  .react-datepicker-popper { z-index: 9999 !important; }
+  .react-datepicker__triangle { display: none; }
 `;

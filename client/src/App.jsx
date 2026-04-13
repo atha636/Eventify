@@ -15,11 +15,12 @@ import Vendors            from "./pages/Vendors";
 import Favorites          from "./pages/Favorites";
 import CustomerCareClient from "./pages/CustomerCareClient";
 import CustomerCareVendor from "./pages/CustomerCareVendor";
+import PaymentSuccess     from "./pages/PaymentSuccess";
 
 // ── Resource pages ──────────────────────────────────────────────────
 import VendorHandbook   from "./pages/resources/VendorHandbook";
 import PhotoGuidelines  from "./pages/resources/PhotoGuidelines";
-import PricingStrategy  from "./pages/resources/PricingStrategy";
+import PricingStrategy  from "./pages/resources/Pricingstrategy"; 
 import DashboardGuide   from "./pages/resources/DashboardGuide";
 
 // ── Admin pages ─────────────────────────────────────────────────────
@@ -58,6 +59,7 @@ export default function App() {
         <Route path="/resources/photo-guidelines"  element={<PhotoGuidelines />} />
         <Route path="/resources/pricing-strategy"  element={<PricingStrategy />} />
         <Route path="/resources/dashboard-guide"   element={<DashboardGuide />} />
+        <Route path="/payment-success/:bookingId" element={<PaymentSuccess />} />
 
         {/* ── Admin ── */}
         <Route path="/admin/login"  element={<AdminLogin />} />

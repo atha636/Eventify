@@ -21,6 +21,20 @@ const bookingSchema = new mongoose.Schema({
     default: "pending"
   },
 
+  // ── PAYMENT FIELDS (NEW) ────────────────────────────────────────
+  paymentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Payment",
+    sparse: true
+  },
+  paymentStatus: {
+    type: String,
+    enum: ["pending", "paid", "failed"],
+    default: "pending"
+  },
+  paidAt: Date,
+  // ────────────────────────────────────────────────────────────────
+
   // ── Date Change Request ──────────────────────────────────────────
   dateChangeRequest: {
     requestedDate: { type: Date, default: null },
