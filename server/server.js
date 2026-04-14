@@ -29,28 +29,22 @@ app.use(express.json());
 const path = require("path");
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+const favoriteRoutes    = require("./routes/favoriteRoutes");
+const paymentRoutes     = require("./routes/paymentRoutes");
+const notificationRoutes = require("./routes/notificationRoutes"); // ← NEW
 
-// ✅ ADD THIS IMPORT HERE (with other requires)
-const favoriteRoutes = require("./routes/favoriteRoutes");
-
-const paymentRoutes = require("./routes/paymentRoutes");
-// ✅ ROUTES SECTION
-app.use("/api/auth", require("./routes/authRoutes"));
-app.use("/api/vendors", require("./routes/vendorRoutes"));
-app.use("/api/bookings", require("./routes/bookingRoutes"));
-app.use("/api/admin", require("./routes/adminRoutes"));
-app.use("/api/payments", paymentRoutes);
-
-// ✅ ADD THIS LINE HERE (with other app.use routes)
-app.use("/api/favorites", favoriteRoutes);
-
-
+app.use("/api/auth",          require("./routes/authRoutes"));
+app.use("/api/vendors",       require("./routes/vendorRoutes"));
+app.use("/api/bookings",      require("./routes/bookingRoutes"));
+app.use("/api/admin",         require("./routes/adminRoutes"));
+app.use("/api/payments",      paymentRoutes);
+app.use("/api/favorites",     favoriteRoutes);
+app.use("/api/notifications", notificationRoutes); // ← NEW
 
 app.get("/", (req, res) => res.send("API running..."));
 
 app.use((err, req, res, next) => {
   console.error("GLOBAL ERROR:", err.message);
-  console.error("STACK:", err.stack);
   res.status(500).json({ error: err.message });
 });
 

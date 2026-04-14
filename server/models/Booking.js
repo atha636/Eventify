@@ -21,7 +21,15 @@ const bookingSchema = new mongoose.Schema({
     default: "pending"
   },
 
-  // ── PAYMENT FIELDS (NEW) ────────────────────────────────────────
+  // ── USER DETAILS (filled at booking time) ──────────────────────
+  userDetails: {
+    name:    { type: String, default: "" },
+    phone:   { type: String, default: "" },
+    address: { type: String, default: "" },
+  },
+  // ────────────────────────────────────────────────────────────────
+
+  // ── PAYMENT FIELDS ───────────────────────────────────────────────
   paymentId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Payment",
@@ -35,7 +43,7 @@ const bookingSchema = new mongoose.Schema({
   paidAt: Date,
   // ────────────────────────────────────────────────────────────────
 
-  // ── Date Change Request ──────────────────────────────────────────
+  // ── DATE CHANGE REQUEST ─────────────────────────────────────────
   dateChangeRequest: {
     requestedDate: { type: Date, default: null },
     reason:        { type: String, default: "" },
