@@ -1,20 +1,3 @@
-/**
- * BookingDetailsModal — Production-Grade Refactor
- *
- * ✅ Fixed: interval memory leak (useRef + useEffect cleanup)
- * ✅ Fixed: RecaptchaVerifier leak (cleared on unmount & phone change)
- * ✅ Fixed: Firebase auth state corruption (linkWithPhoneNumber when
- *           user is already signed in, signInWithPhoneNumber as fallback)
- * ✅ Fixed: unused `phone` variable in handleVerifyOTP
- * ✅ Fixed: OTP error not cleared on resend
- * ✅ Fixed: double-submit race condition (submitting ref guard)
- * ✅ UX: auto-verify when 6th digit is entered
- * ✅ UX: Firebase error codes mapped to human-readable messages
- * ✅ UX: scroll lock on body while modal is open
- * ✅ UX: Escape key closes modal
- * ✅ UX: focus trapped inside modal (a11y)
- * ✅ Production: recaptchaVerifier isolated in a stable ref
- */
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
