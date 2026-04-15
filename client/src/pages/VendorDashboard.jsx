@@ -201,23 +201,45 @@ export default function VendorDashboard() {
                       style={{ animationDelay: `${i * 0.06}s` }}
                     >
                       {/* LEFT */}
-                      <div className="vd-booking-left">
-                        <div className="vd-avatar">
-                          {b.userId?.name?.charAt(0)?.toUpperCase() || "?"}
-                        </div>
-                        <div className="vd-booking-info">
-                          <h3 className="vd-booking-name">{b.userId?.name || "Unknown Client"}</h3>
-                          <p className="vd-booking-email">{b.userId?.email || ""}</p>
-                          <div className="vd-booking-meta">
-                            <span className="vd-meta-item">
-                              🗓 {new Date(b.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                            </span>
-                            {b.packageName && (
-                              <span className="vd-meta-item">📦 {b.packageName}</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                     <div className="vd-booking-left">
+  <div className="vd-avatar">
+    {b.userId?.name?.charAt(0)?.toUpperCase() || "?"}
+  </div>
+  <div className="vd-booking-info">
+    <h3 className="vd-booking-name">{b.userId?.name || "Unknown Client"}</h3>
+    <p className="vd-booking-email">{b.userId?.email || ""}</p>
+
+    <div className="vd-booking-meta">
+      <span className="vd-meta-item">
+        🗓 {new Date(b.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+      </span>
+
+      {b.packageName && (
+        <span className="vd-meta-item">📦 {b.packageName}</span>
+      )}
+
+      {b.packagePrice && (
+        <span className="vd-meta-item">₹ {b.packagePrice.toLocaleString()}</span>
+      )}
+    </div>
+
+    {/* ✅ NEW: Phone + Address */}
+    {(b.userDetails?.phone || b.userDetails?.address) && (
+      <div className="vd-user-details">
+        {b.userDetails.phone && (
+          <span className="vd-detail-chip">
+            📱 {b.userDetails.phone}
+          </span>
+        )}
+        {b.userDetails.address && (
+          <span className="vd-detail-chip">
+            📍 {b.userDetails.address}
+          </span>
+        )}
+      </div>
+    )}
+  </div>
+</div>
 
                       {/* RIGHT */}
                       <div className="vd-booking-right">
@@ -513,6 +535,22 @@ const styles = `
   .vd-booking-email { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
   .vd-booking-meta { display: flex; gap: 14px; flex-wrap: wrap; }
   .vd-meta-item { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+
+
+  /* ── NEW: User details ── */
+.vd-user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.vd-detail-chip {
+  font-size: 11.5px;
+  color: #6b6358;
+  line-height: 1.4;
+  max-width: 320px;
+}
 
   .vd-booking-right {
     display: flex;

@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 import PaymentModal from "./PaymentModal";
 
@@ -12,9 +13,9 @@ const TYPE_META = {
 
 function timeAgo(dateStr) {
   const diff = (Date.now() - new Date(dateStr)) / 1000;
-  if (diff < 60)   return "Just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400)return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 60)    return "Just now";
+  if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   return `${Math.floor(diff / 86400)}d ago`;
 }
 
@@ -22,8 +23,13 @@ export default function NotificationPanel({ onClose, onUnreadChange }) {
   const [notifications, setNotifications] = useState([]);
   const [unread, setUnread]               = useState(0);
   const [loading, setLoading]             = useState(true);
-  const [paymentTarget, setPaymentTarget] = useState(null); // { booking, vendor }
+  const [paymentTarget, setPaymentTarget] = useState(null);
   const panelRef = useRef(null);
+  const navigate = useNavigate();
+
+  // ── Get current user role from localStorage ──────────────────────
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const isVendor = user?.role === "vendor";
 
   // Close on outside click
   useEffect(() => {
@@ -60,10 +66,25 @@ export default function NotificationPanel({ onClose, onUnreadChange }) {
         setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
       } catch {}
     };
-    // small delay so user sees unread dots briefly
     const t = setTimeout(markRead, 1500);
     return () => clearTimeout(t);
   }, []);
+
+  // ── UPDATE 1: Navigate to correct dashboard on notification click ─
+  const handleNotifClick = (notif) => {
+    // Payment notifications open PaymentModal directly
+    if (notif.type === "payment_pending") {
+      handlePayNow(notif);
+      return;
+    }
+    // Navigate based on role
+    onClose();
+    if (isVendor) {
+      navigate("/vendor-dashboard");
+    } else {
+      navigate("/my-bookings");
+    }
+  };
 
   const handlePayNow = (notif) => {
     const booking = notif.bookingId;
@@ -122,7 +143,8 @@ export default function NotificationPanel({ onClose, onUnreadChange }) {
               return (
                 <div
                   key={notif._id}
-                  className={`np-item ${!notif.isRead ? "np-item-unread" : ""}`}
+                  className={`np-item ${!notif.isRead ? "np-item-unread" : ""} ${!isPayment ? "np-item-clickable" : ""}`}
+                  onClick={() => handleNotifClick(notif)}
                 >
                   {/* Unread dot */}
                   {!notif.isRead && <span className="np-dot" />}
@@ -145,10 +167,17 @@ export default function NotificationPanel({ onClose, onUnreadChange }) {
                     {isPayment && booking && (
                       <button
                         className="np-pay-btn"
-                        onClick={() => handlePayNow(notif)}
+                        onClick={(e) => { e.stopPropagation(); handlePayNow(notif); }}
                       >
                         💳 Pay Now — ₹{booking.packagePrice?.toLocaleString() || "—"}
                       </button>
+                    )}
+
+                    {/* Navigation hint for non-payment notifications */}
+                    {!isPayment && (
+                      <span className="np-nav-hint">
+                        {isVendor ? "View in Dashboard →" : "View Booking →"}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -227,6 +256,16 @@ const styles = `
   .np-item:hover { background:var(--surface); }
   .np-item-unread { background:rgba(201,168,76,0.04); }
 
+  /* ── UPDATE 1: Clickable notification items ── */
+  .np-item-clickable {
+    cursor:pointer;
+  }
+  .np-item-clickable:hover {
+    background:rgba(201,168,76,0.06);
+    border-left:3px solid var(--gold);
+    padding-left:15px;
+  }
+
   .np-dot {
     position:absolute; top:18px; right:14px;
     width:7px; height:7px; border-radius:50%;
@@ -251,6 +290,19 @@ const styles = `
     line-height:1.5; margin:0 0 5px;
   }
   .np-time { font-size:10.5px; color:rgba(122,114,101,0.7); letter-spacing:0.03em; }
+
+  /* Navigation hint */
+  .np-nav-hint {
+    display:block;
+    margin-top:5px;
+    font-size:10.5px;
+    color:var(--gold);
+    font-weight:500;
+    letter-spacing:0.03em;
+    opacity:0;
+    transition:opacity 0.2s;
+  }
+  .np-item-clickable:hover .np-nav-hint { opacity:1; }
 
   /* Pay Now button */
   .np-pay-btn {
