@@ -1,10 +1,12 @@
-const User    = require("../models/User");
-const Vendor  = require("../models/Vendor");
-const Booking = require("../models/Booking");
-const bcrypt  = require("bcryptjs");
-const jwt     = require("jsonwebtoken");
+const User         = require("../models/User");
+const Vendor       = require("../models/Vendor");
+const Booking      = require("../models/Booking");
+const Notification = require("../models/Notification");
+const bcrypt       = require("bcryptjs");
+const jwt          = require("jsonwebtoken");
 const {
   sendVendorVerificationResult,
+  sendEmail,
 } = require("../utils/sendEmail");
 
 // ─────────────────────────────────────────
@@ -19,8 +21,8 @@ exports.adminRegister = async (req, res) => {
     const existing = await User.findOne({ email });
     if (existing) return res.status(400).json({ msg: "Email already in use" });
     const hashed = await bcrypt.hash(password, 10);
-    const admin = await User.create({ name, email, password: hashed, role: "admin", isVerified: true });
-    const token = jwt.sign({ id: admin._id, role: admin.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    const admin  = await User.create({ name, email, password: hashed, role: "admin", isVerified: true });
+    const token  = jwt.sign({ id: admin._id, role: admin.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
     res.status(201).json({ msg: "Admin account created", token, user: { _id: admin._id, name: admin.name, email: admin.email, role: admin.role } });
   } catch (err) {
     console.error("ADMIN REGISTER ERROR:", err);
@@ -34,7 +36,7 @@ exports.adminRegister = async (req, res) => {
 exports.adminLogin = async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = await User.findOne({ email });
+    const user  = await User.findOne({ email });
     if (!user || user.role !== "admin") return res.status(403).json({ msg: "Not an admin account" });
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ msg: "Invalid credentials" });
@@ -56,13 +58,13 @@ exports.getStats = async (req, res) => {
       Vendor.countDocuments(),
       Booking.countDocuments(),
       Booking.countDocuments({ status: "pending" }),
-      User.countDocuments({ role: "vendor", isProfileVerified: "pending" }), // ← NEW
+      User.countDocuments({ role: "vendor", isProfileVerified: "pending" }),
     ]);
     const revenueAgg = await Booking.aggregate([
       { $match: { status: "approved" } },
       { $group: { _id: null, total: { $sum: "$packagePrice" } } },
     ]);
-    const totalRevenue = revenueAgg[0]?.total || 0;
+    const totalRevenue   = revenueAgg[0]?.total || 0;
     const recentBookings = await Booking.find()
       .sort({ createdAt: -1 }).limit(5)
       .populate("userId", "name email")
@@ -112,7 +114,7 @@ exports.updateUserRole = async (req, res) => {
   const { role } = req.body;
   if (!["user", "vendor"].includes(role)) return res.status(400).json({ msg: "Invalid role. Use 'user' or 'vendor'" });
   try {
-    const user = await User.findByIdAndUpdate(req.params.id, { role }, { returnDocument: 'after', select: "-password" });
+    const user = await User.findByIdAndUpdate(req.params.id, { role }, { returnDocument: "after", select: "-password" });
     if (!user) return res.status(404).json({ msg: "User not found" });
     res.json({ msg: "Role updated", user });
   } catch (err) {
@@ -161,6 +163,118 @@ exports.toggleServiceApproval = async (req, res) => {
   }
 };
 
+// ═══════════════════════════════════════════════════════════════
+// CHANGE 1 ── ADMIN SERVICE MANAGEMENT
+// ═══════════════════════════════════════════════════════════════
+
+// ─────────────────────────────────────────
+// SERVICES — EDIT TITLE (admin)
+// PUT /api/admin/services/:id/title
+// body: { title: "New Title" }
+// ─────────────────────────────────────────
+exports.editServiceTitle = async (req, res) => {
+  const { title } = req.body;
+  if (!title || !title.trim()) {
+    return res.status(400).json({ msg: "Title is required" });
+  }
+  try {
+    const service = await Vendor.findByIdAndUpdate(
+      req.params.id,
+      { title: title.trim() },
+      { returnDocument: "after" }
+    ).populate("vendorId", "name email");
+
+    if (!service) return res.status(404).json({ msg: "Service not found" });
+
+    // Notify vendor about the title change
+    setImmediate(async () => {
+      try {
+        const vendorUser = service.vendorId;
+        if (vendorUser?._id) {
+          await Notification.create({
+            userId:    vendorUser._id,
+            type:      "service_updated",
+            title:     "Service Title Updated by Admin",
+            message:   `Admin has updated your service title to "${service.title}". Your service is still active.`,
+            bookingId: null,
+          });
+        }
+        if (vendorUser?.email) {
+          await sendEmail({
+            to:      vendorUser.email,
+            subject: "Your Service Title Was Updated ✏️",
+            text:    `Hello ${vendorUser.name},\n\nAdmin has updated your service title to:\n"${service.title}"\n\nYour service remains active on Eventify.\n\n- Eventify Team`,
+          }).catch(() => {});
+        }
+      } catch (e) {
+        console.error("editServiceTitle notification error:", e.message);
+      }
+    });
+
+    res.json({ msg: "Title updated", service });
+  } catch (err) {
+    console.error("EDIT SERVICE TITLE ERROR:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
+
+// ─────────────────────────────────────────
+// SERVICES — DELETE SINGLE IMAGE (admin)
+// DELETE /api/admin/services/:id/images
+// body: { imageUrl: "https://..." }
+// ─────────────────────────────────────────
+exports.deleteServiceImage = async (req, res) => {
+  const { imageUrl } = req.body;
+  if (!imageUrl) return res.status(400).json({ msg: "imageUrl is required" });
+
+  try {
+    const service = await Vendor.findById(req.params.id).populate("vendorId", "name email");
+    if (!service) return res.status(404).json({ msg: "Service not found" });
+
+    if (!service.images.includes(imageUrl)) {
+      return res.status(404).json({ msg: "Image not found in this service" });
+    }
+
+    // Must keep at least 1 image
+    if (service.images.length <= 1) {
+      return res.status(400).json({ msg: "Cannot delete the last image. A service must have at least one image." });
+    }
+
+    service.images = service.images.filter((img) => img !== imageUrl);
+    await service.save();
+
+    // Notify vendor about image removal
+    setImmediate(async () => {
+      try {
+        const vendorUser = service.vendorId;
+        if (vendorUser?._id) {
+          await Notification.create({
+            userId:    vendorUser._id,
+            type:      "service_updated",
+            title:     "Service Image Removed by Admin",
+            message:   `Admin has removed an image from your service "${service.title}". Your service has ${service.images.length} image(s) remaining.`,
+            bookingId: null,
+          });
+        }
+        if (vendorUser?.email) {
+          await sendEmail({
+            to:      vendorUser.email,
+            subject: "Service Image Removed ⚠️",
+            text:    `Hello ${vendorUser.name},\n\nAdmin has removed an image from your service "${service.title}".\n\nYour service now has ${service.images.length} image(s). If you have questions, please contact support.\n\n- Eventify Team`,
+          }).catch(() => {});
+        }
+      } catch (e) {
+        console.error("deleteServiceImage notification error:", e.message);
+      }
+    });
+
+    res.json({ msg: "Image removed", images: service.images });
+  } catch (err) {
+    console.error("DELETE SERVICE IMAGE ERROR:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
+
 // ─────────────────────────────────────────
 // BOOKINGS — GET ALL
 // ─────────────────────────────────────────
@@ -185,12 +299,12 @@ exports.updateBookingStatus = async (req, res) => {
   if (!allowed.includes(status)) return res.status(400).json({ msg: "Invalid status" });
   try {
     const booking = await Booking.findByIdAndUpdate(
-  req.params.id,
-  { status },
-  { returnDocument: 'after' }
-)
-.populate("userId", "name email")
-.populate("vendorId", "title");
+      req.params.id,
+      { status },
+      { returnDocument: "after" }
+    )
+      .populate("userId", "name email")
+      .populate("vendorId", "title");
 
     if (!booking) return res.status(404).json({ msg: "Booking not found" });
     res.json({ msg: "Status updated", booking });
@@ -212,17 +326,15 @@ exports.deleteBooking = async (req, res) => {
   }
 };
 
-// ═════════════════════════════════════════
-// UPGRADE 3 — VENDOR PROFILE VERIFICATION
-// ═════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// VENDOR PROFILE VERIFICATION
+// ═══════════════════════════════════════════════════════════════
 
-// ─────────────────────────────────────────
 // GET all vendors pending verification
 // GET /api/admin/vendor-verifications
-// ─────────────────────────────────────────
 exports.getPendingVendors = async (req, res) => {
   try {
-    const { status = "pending" } = req.query; // ?status=pending|approved|rejected|all
+    const { status = "pending" } = req.query;
     const query = { role: "vendor" };
     if (status !== "all") query.isProfileVerified = status;
 
@@ -241,6 +353,8 @@ exports.getPendingVendors = async (req, res) => {
 // APPROVE or REJECT a vendor profile
 // PUT /api/admin/vendor-verifications/:id
 // body: { action: "approve" | "reject", reason?: "..." }
+//
+// CHANGE 1: On approve → also notifies vendor "service will be live soon"
 // ─────────────────────────────────────────
 exports.verifyVendorProfile = async (req, res) => {
   const { action, reason } = req.body;
@@ -254,18 +368,53 @@ exports.verifyVendorProfile = async (req, res) => {
     if (!vendor) return res.status(404).json({ msg: "Vendor not found" });
     if (vendor.role !== "vendor") return res.status(400).json({ msg: "User is not a vendor" });
 
-    const approved = action === "approve";
-    vendor.isProfileVerified     = approved ? "approved" : "rejected";
+    const approved                = action === "approve";
+    vendor.isProfileVerified      = approved ? "approved" : "rejected";
     vendor.profileRejectionReason = approved ? "" : (reason || "");
     await vendor.save();
 
-    // Send result email to vendor (non-fatal)
-    sendVendorVerificationResult({
-      vendorEmail: vendor.email,
-      vendorName:  vendor.name,
-      approved,
-      reason: reason || "",
-    }).catch((e) => console.error("Verification email error (non-fatal):", e.message));
+    // ── Background: email + in-app notification ──
+    setImmediate(async () => {
+      try {
+        // Send verification result email (existing helper)
+        await sendVendorVerificationResult({
+          vendorEmail: vendor.email,
+          vendorName:  vendor.name,
+          approved,
+          reason:      reason || "",
+        }).catch((e) => console.error("Verification email error (non-fatal):", e.message));
+
+        if (approved) {
+          // ── CHANGE 1: "Your service will be live very soon" in-app notification ──
+          await Notification.create({
+            userId:    vendor._id,
+            type:      "service_live_soon",
+            title:     "🎉 Profile Approved! Your Services Go Live Soon",
+            message:   "Your vendor profile has been approved by admin. Any services you add will be visible to customers very soon. Start adding your services now!",
+            bookingId: null,
+          });
+
+          // Also send a warm welcome email with next steps
+          await sendEmail({
+            to:      vendor.email,
+            subject: "✅ Profile Approved — Your Services Go Live on Eventify!",
+            text:    `Hello ${vendor.name},\n\nCongratulations! 🎉\n\nYour vendor profile on Eventify has been approved by our admin team.\n\nYour services will be live and visible to customers very soon.\n\nNext steps:\n1. Log in to your dashboard\n2. Add your services (photos, packages, pricing)\n3. Wait for bookings to roll in!\n\nWelcome to the Eventify family.\n\n- Eventify Team`,
+          }).catch(() => {});
+
+        } else {
+          // Rejection in-app notification
+          await Notification.create({
+            userId:    vendor._id,
+            type:      "profile_rejected",
+            title:     "Profile Verification Update",
+            message:   `Your vendor profile was not approved. ${reason ? `Reason: ${reason}` : "Please contact support for more details."}`,
+            bookingId: null,
+          });
+        }
+      } catch (e) {
+        console.error("verifyVendorProfile background error:", e.message);
+      }
+    });
 
     res.json({
       msg: `Vendor profile ${approved ? "approved" : "rejected"} successfully`,
