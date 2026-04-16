@@ -132,9 +132,7 @@ export default function BookingDetailsModal({
       const fullPhone = `+91${phone}`;
       let result;
 
-      // ✅ Use linkWithPhoneNumber if user is already signed-in (avoids
-      //    overwriting the current Firebase auth session).
-      //    Fall back to signInWithPhoneNumber for unauthenticated flows.
+      
       const currentUser = auth.currentUser;
      if (currentUser) {
   try {
