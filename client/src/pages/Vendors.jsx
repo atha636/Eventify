@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
@@ -24,7 +24,8 @@ const SORT_OPTIONS = [
 
 export default function Vendors() {
   const location = useLocation();
-const navigate = useNavigate();
+  const navigate = useNavigate();
+
   const [vendors, setVendors]   = useState([]);
   const [loading, setLoading]   = useState(true);
   const [search, setSearch]     = useState("");
@@ -33,42 +34,59 @@ const navigate = useNavigate();
   const [layout, setLayout]     = useState("grid");
   const [maxPrice, setMaxPrice] = useState("");
 
-  // ── Read ?q= and ?cat= from URL on mount / URL change ──────────
+  // ── Guard flag: true when WE pushed the URL, so we don't re-read it ──
+  const isNavigatingRef = useRef(false);
+
+  // ── 1. Read URL params on mount and when URL changes externally ────
   useEffect(() => {
+    // Skip if this URL change was caused by our own navigate() below
+    if (isNavigatingRef.current) {
+      isNavigatingRef.current = false;
+      return;
+    }
+
     const params = new URLSearchParams(location.search);
-    const q    = params.get("q")   || "";
-const cat  = params.get("cat") || "all";
-const max  = params.get("max") || "";
-const sortParam = params.get("sort") || "default";
+    const q         = params.get("q")    || "";
+    const cat       = params.get("cat")  || "all";
+    const max       = params.get("max")  || "";
+    const sortParam = params.get("sort") || "default";
 
-setSearch(q);
-setMaxPrice(max);
-setSort(sortParam);
-
-if (CATEGORIES.some((c) => c.value === cat)) setCategory(cat);
-else setCategory("all");
+    setSearch(q);
+    setMaxPrice(max);
+    setSort(sortParam);
+    setCategory(CATEGORIES.some((c) => c.value === cat) ? cat : "all");
   }, [location.search]);
 
+  // ── 2. Fetch vendors ONCE on mount ────────────────────────────────
   useEffect(() => {
     API.get("/vendors")
       .then((res) => setVendors(Array.isArray(res.data) ? res.data : []))
       .catch(() => setVendors([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, []); // ← empty array: runs once only
 
-useEffect(() => {
-  const params = new URLSearchParams();
+  // ── 3. Sync filters → URL (without triggering effect #1 again) ───
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (search.trim())      params.set("q",    search);
+    if (category !== "all") params.set("cat",  category);
+    if (maxPrice)           params.set("max",  maxPrice);
+    if (sort !== "default") params.set("sort", sort);
 
-  if (search.trim()) params.set("q", search);
-  if (category !== "all") params.set("cat", category);
-  if (maxPrice) params.set("max", maxPrice);
-  if (sort !== "default") params.set("sort", sort);
+    const newSearch = params.toString();
+    const current   = location.search.replace(/^\?/, "");
 
-  navigate(`/vendors?${params.toString()}`, { replace: true });
-}, [search, category, maxPrice, sort]);
+    // Only navigate if the URL actually changed
+    if (newSearch !== current) {
+      isNavigatingRef.current = true; // tell effect #1 to skip next trigger
+      navigate(`/vendors${newSearch ? `?${newSearch}` : ""}`, { replace: true });
+    }
+  }, [search, category, maxPrice, sort]); // ← NO location/navigate in deps
 
+  // ── Client-side filter + sort ─────────────────────────────────────
   const filtered = useMemo(() => {
     let list = [...vendors];
+
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
@@ -84,6 +102,7 @@ useEffect(() => {
     if (maxPrice) {
       list = list.filter((v) => (v.packages?.[0]?.price || 0) <= Number(maxPrice));
     }
+
     switch (sort) {
       case "price_asc":  list.sort((a, b) => (a.packages?.[0]?.price || 0) - (b.packages?.[0]?.price || 0)); break;
       case "price_desc": list.sort((a, b) => (b.packages?.[0]?.price || 0) - (a.packages?.[0]?.price || 0)); break;
@@ -95,7 +114,12 @@ useEffect(() => {
   }, [vendors, search, category, sort, maxPrice]);
 
   const hasActiveFilters = category !== "all" || maxPrice || search;
-  const clearAll = () => { setSearch(""); setCategory("all"); setSort("default"); setMaxPrice(""); };
+  const clearAll = () => {
+    setSearch("");
+    setCategory("all");
+    setSort("default");
+    setMaxPrice("");
+  };
 
   return (
     <>
@@ -110,7 +134,9 @@ useEffect(() => {
             <span className="vn-eyebrow">✦ Discover & Book</span>
             <h1 className="vn-hero-title">All Vendors</h1>
             <p className="vn-hero-sub">
-              {loading ? "Loading our curated vendor network…" : `${vendors.length} verified professionals across India`}
+              {loading
+                ? "Loading our curated vendor network…"
+                : `${vendors.length} verified professionals across India`}
             </p>
             <div className="vn-search-bar">
               <span className="vn-search-icon">⌕</span>
@@ -120,7 +146,9 @@ useEffect(() => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
-              {search && <button className="vn-search-clear" onClick={() => setSearch("")}>✕</button>}
+              {search && (
+                <button className="vn-search-clear" onClick={() => setSearch("")}>✕</button>
+              )}
             </div>
           </div>
         </div>
@@ -132,9 +160,9 @@ useEffect(() => {
                 key={c.value}
                 className={`vn-cat-pill ${category === c.value ? "active" : ""}`}
                 onClick={() => {
-  setCategory(c.value);
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}}
+                  setCategory(c.value);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
               >
                 <span className="vn-cat-emoji">{c.emoji}</span>
                 <span>{c.label}</span>
@@ -147,22 +175,47 @@ useEffect(() => {
           <div className="vn-toolbar-left">
             <span className="vn-result-text">
               {loading ? "Loading…" : (
-                <><strong>{filtered.length}</strong> vendor{filtered.length !== 1 ? "s" : ""}{search && <> for "<em>{search}</em>"</>}</>
+                <>
+                  <strong>{filtered.length}</strong> vendor{filtered.length !== 1 ? "s" : ""}
+                  {search && <> for "<em>{search}</em>"</>}
+                </>
               )}
             </span>
-            {hasActiveFilters && <button className="vn-clear-btn" onClick={clearAll}>✕ Clear</button>}
+            {hasActiveFilters && (
+              <button className="vn-clear-btn" onClick={clearAll}>✕ Clear</button>
+            )}
           </div>
           <div className="vn-toolbar-right">
             <div className="vn-price-wrap">
               <span className="vn-price-label">Max ₹</span>
-              <input type="number" className="vn-price-input" placeholder="Any" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} />
+              <input
+                type="number"
+                className="vn-price-input"
+                placeholder="Any"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+              />
             </div>
-            <select className="vn-sort-select" value={sort} onChange={(e) => setSort(e.target.value)}>
-              {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            <select
+              className="vn-sort-select"
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+            >
+              {SORT_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
             </select>
             <div className="vn-layout-toggle">
-              <button className={`vn-layout-btn ${layout === "grid" ? "active" : ""}`} onClick={() => setLayout("grid")} title="Grid view">⊞</button>
-              <button className={`vn-layout-btn ${layout === "list" ? "active" : ""}`} onClick={() => setLayout("list")} title="List view">☰</button>
+              <button
+                className={`vn-layout-btn ${layout === "grid" ? "active" : ""}`}
+                onClick={() => setLayout("grid")}
+                title="Grid view"
+              >⊞</button>
+              <button
+                className={`vn-layout-btn ${layout === "list" ? "active" : ""}`}
+                onClick={() => setLayout("list")}
+                title="List view"
+              >☰</button>
             </div>
           </div>
         </div>
@@ -171,26 +224,40 @@ useEffect(() => {
           {loading ? (
             <div className={`vn-grid ${layout}`}>
               {[...Array(6)].map((_, i) => (
-                <div key={i} className={`vn-skeleton ${layout === "list" ? "vn-skeleton-list" : ""}`} style={{ animationDelay: `${i * 0.07}s` }} />
+                <div
+                  key={i}
+                  className={`vn-skeleton ${layout === "list" ? "vn-skeleton-list" : ""}`}
+                  style={{ animationDelay: `${i * 0.07}s` }}
+                />
               ))}
             </div>
           ) : filtered.length === 0 ? (
             <div className="vn-empty">
               <div className="vn-empty-icon">✦</div>
               <h3>coming soon...</h3>
-              <p>{search ? `No results for "${search}". Try adjusting your search or filters.` : " vendors coming soon to match the selected filters."}</p>
+              <p>
+                {search
+                  ? `No results for "${search}". Try adjusting your search or filters.`
+                  : "Vendors coming soon to match the selected filters."}
+              </p>
               <button className="vn-empty-btn" onClick={clearAll}>Clear all filters</button>
             </div>
           ) : (
             <>
               <div className={`vn-grid ${layout}`}>
                 {filtered.map((v, i) => (
-                  <div key={v._id} className="vn-card-wrap" style={{ animationDelay: `${i * 0.05}s` }}>
+                  <div
+                    key={v._id}
+                    className="vn-card-wrap"
+                    style={{ animationDelay: `${i * 0.05}s` }}
+                  >
                     <ServiceCard vendor={v} />
                   </div>
                 ))}
               </div>
-              {filtered.length >= 12 && <p className="vn-load-hint">✦ Showing all {filtered.length} results</p>}
+              {filtered.length >= 12 && (
+                <p className="vn-load-hint">✦ Showing all {filtered.length} results</p>
+              )}
             </>
           )}
         </div>
@@ -200,7 +267,9 @@ useEffect(() => {
             <div className="vn-footer-orb" />
             <span className="vn-eyebrow" style={{ color: "var(--gold)" }}>✦ Are you a professional?</span>
             <h2 className="vn-footer-title">List your services on Eventify</h2>
-            <p className="vn-footer-sub">Join 850+ vendors and connect with thousands of clients planning their perfect event.</p>
+            <p className="vn-footer-sub">
+              Join 850+ vendors and connect with thousands of clients planning their perfect event.
+            </p>
             <a href="/register" className="vn-footer-btn">Become a Vendor →</a>
           </div>
         )}
@@ -255,7 +324,7 @@ const styles = `
   .vn-price-input::placeholder { color: #bbb4a8; }
   .vn-price-input::-webkit-outer-spin-button, .vn-price-input::-webkit-inner-spin-button { -webkit-appearance: none; }
   .vn-price-input[type=number] { -moz-appearance: textfield; }
-  .vn-sort-select { border: 1px solid var(--border); border-radius: 7px; padding: 8px 30px 8px 12px; background: var(--white); font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--ink); outline: none; cursor: pointer; transition: border-color 0.2s; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M0 0l4.5 5L9 0z' fill='%237a7265'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 11px center; }
+  .vn-sort-select { border: 1px solid var(--border); border-radius: 7px; padding: 8px 30px 8px 12px; background: var(--white); font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--ink); outline: none; cursor: pointer; transition: border-color 0.2s; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M4.5 5L0 0h9z' fill='%237a7265'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 11px center; }
   .vn-sort-select:focus { border-color: var(--gold); }
   .vn-layout-toggle { display: flex; border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
   .vn-layout-btn { padding: 8px 12px; background: var(--white); border: none; cursor: pointer; font-size: 15px; color: var(--muted); transition: background 0.2s, color 0.2s; line-height: 1; }
