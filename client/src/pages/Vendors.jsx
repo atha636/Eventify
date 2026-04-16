@@ -177,8 +177,8 @@ useEffect(() => {
           ) : filtered.length === 0 ? (
             <div className="vn-empty">
               <div className="vn-empty-icon">✦</div>
-              <h3>No vendors found</h3>
-              <p>{search ? `No results for "${search}". Try adjusting your search or filters.` : "No vendors match the selected filters."}</p>
+              <h3>coming soon...</h3>
+              <p>{search ? `No results for "${search}". Try adjusting your search or filters.` : " vendors coming soon to match the selected filters."}</p>
               <button className="vn-empty-btn" onClick={clearAll}>Clear all filters</button>
             </div>
           ) : (
