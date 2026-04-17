@@ -114,7 +114,7 @@ export default function CustomerCarePopup() {
               <p className="ccp-footer-note">
                 Or email us at{" "}
                 <a href={`mailto:${isVendor ? "vendors" : "support"}@eventify.in`} className="ccp-email-link">
-                  {isVendor ? "vendors" : "admineventify2005"}@gmail.com
+                  {isVendor ? "admineventify2005" : "admineventify2005"}@gmail.com
                 </a>
               </p>
             </div>
@@ -164,8 +164,8 @@ const styles = `
 
   .ccp-root {
     position: fixed;
-    bottom: 28px;
-    right: 28px;
+    right: max(16px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
     z-index: 9999;
     font-family: 'DM Sans', sans-serif;
     display: flex;
@@ -176,12 +176,15 @@ const styles = `
 
   /* ── PANEL ── */
   .ccp-panel {
-    width: 340px;
-    background: var(--white);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    box-shadow: 0 20px 60px rgba(14,12,10,0.18), 0 4px 20px rgba(201,168,76,0.12);
-    overflow: hidden;
+     width: min(340px, calc(100vw - 32px));
+  max-height: calc(100vh - 100px);   /* 🔥 IMPORTANT */
+  display: flex;
+  flex-direction: column;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(14,12,10,0.18), 0 4px 20px rgba(201,168,76,0.12);
+  overflow: hidden;
     animation: panelUp 0.3s cubic-bezier(0.34,1.4,0.64,1) both;
   }
   @media (max-width: 400px) {
@@ -228,7 +231,12 @@ const styles = `
   .ccp-close:hover { color: var(--cream); }
 
   /* BODY */
-  .ccp-body { padding: 18px; background: var(--surface); }
+  .ccp-body {
+  padding: 18px;
+  background: var(--surface);
+  overflow-y: auto;     /* 🔥 scroll inside */
+  flex: 1;
+}
 
   .ccp-bubble-wrap {
     display: flex; align-items: flex-start; gap: 10px;
@@ -348,7 +356,8 @@ const styles = `
   /* TOOLTIP */
   .ccp-tooltip {
     position: absolute;
-    bottom: 68px; right: 0;
+    bottom: 68px; right: 4px;
+max-width: calc(100vw - 40px);
     background: var(--ink);
     color: var(--cream);
     font-size: 12px;
@@ -398,4 +407,35 @@ const styles = `
   @keyframes tooltipOut {
     to { opacity: 0; transform: translateY(-4px); }
   }
+
+/* ===== GOLD SCROLLBAR ===== */
+.ccp-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ccp-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ccp-body::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    #e8d5a3,
+    #c9a84c
+  );
+  border-radius: 10px;
+  border: 1px solid rgba(201,168,76,0.3);
+}
+
+.ccp-body::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    #f5e6b5,
+    #d4af37
+  );
+}
+  .ccp-body::-webkit-scrollbar-thumb {
+  box-shadow: 0 0 6px rgba(201,168,76,0.4);
+}
+
 `;
