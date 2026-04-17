@@ -547,4 +547,44 @@ const styles = `
   @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
   @keyframes spin{to{transform:rotate(360deg)}}
   @keyframes payPulse{0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0.4)}50%{box-shadow:0 0 0 5px rgba(201,168,76,0)}}
+
+/* ===== GOLD SCROLLBAR (USER DASHBOARD MODAL) ===== */
+.ud-modal::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ud-modal::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ud-modal::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    #e8d5a3,
+    #c9a84c
+  );
+  border-radius: 10px;
+  border: 1px solid rgba(201,168,76,0.3);
+}
+
+.ud-modal::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    #f5e6b5,
+    #d4af37
+  );
+}
+  .ud-modal::-webkit-scrollbar {
+  width: 5px;
+}
+
+.ud-modal::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 16px 0;
+}
+
+.ud-modal::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #e8d5a3, #c9a84c);
+  border-radius: 3px;
+}
 `;
