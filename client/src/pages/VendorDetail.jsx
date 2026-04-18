@@ -6,6 +6,7 @@ import DatePicker from "react-datepicker";
 import BookingDetailsModal from "../components/BookingDetailsModal";
 import BookingWaitModal from "../components/BookingWaitModal";
 import "react-datepicker/dist/react-datepicker.css";
+import Logo from "../components/Logo";
 
 export default function VendorDetail() {
   const { id } = useParams();
@@ -132,7 +133,7 @@ export default function VendorDetail() {
       {showLoginModal && (
         <div className="vd-modal-backdrop" onClick={() => setShowLoginModal(false)}>
           <div className="vd-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="vd-modal-icon-ring"><span>✦</span></div>
+            <div className="vd-modal-icon-ring"><span><Logo /></span></div>
             <h3 className="vd-modal-title">Sign in to Continue</h3>
             <p className="vd-modal-body">
               You need an account to reserve this vendor. Sign in or create a free account — it only takes a minute.
@@ -142,7 +143,7 @@ export default function VendorDetail() {
               <button className="vd-modal-login" onClick={() => navigate("/login", { state: { from: `/vendor/${id}` } })}>Sign In</button>
               <button className="vd-modal-register" onClick={() => navigate("/register", { state: { from: `/vendor/${id}` } })}>Create Account →</button>
             </div>
-            <p className="vd-modal-note">✦ Free to join · No credit card required</p>
+            <p className="vd-modal-note"><Logo /> Free to join · No credit card required</p>
           </div>
         </div>
       )}
@@ -173,9 +174,9 @@ export default function VendorDetail() {
             <span className="vd-tag">📍 {vendor.location}</span>
             <h1 className="vd-title">{vendor.title}</h1>
             <div className="vd-badge-row">
-              <span className="vd-badge">✦ Premium Vendor</span>
-              <span className="vd-badge">✦ Verified</span>
-              <span className="vd-badge">✦ {vendor.packages?.length} Packages</span>
+              <span className="vd-badge"><Logo /> Premium Vendor</span>
+              <span className="vd-badge"><Logo /> Verified</span>
+              <span className="vd-badge"><Logo /> {vendor.packages?.length} Packages</span>
             </div>
           </div>
         </div>
@@ -261,7 +262,7 @@ export default function VendorDetail() {
                   )}
                 </button>
 
-                <p className="vd-note">✦ No payment now · Vendor confirms first · Then pay securely</p>
+                <p className="vd-note"><Logo />No payment now · Vendor confirms first · Then pay securely</p>
               </div>
             )}
 

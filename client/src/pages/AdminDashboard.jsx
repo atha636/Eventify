@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../services/api";
+import Logo from "../components/Logo";
 
 function useAdminGuard() {
   const navigate = useNavigate();
@@ -396,7 +397,7 @@ export default function AdminDashboard() {
 
         <aside className={`ad-sidebar ${sidebarOpen ? "ad-sidebar-open" : ""}`}>
           <div className="ad-sidebar-top">
-            <div className="ad-logo">✦ Evencers</div>
+            <div className="ad-logo"> <Logo /> Evencers</div>
             <div className="ad-admin-tag">Admin Panel</div>
             <div className="ad-admin-name">{admin.name}</div>
           </div>

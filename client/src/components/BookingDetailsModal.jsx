@@ -6,6 +6,7 @@ import {
   linkWithPhoneNumber,
 } from "firebase/auth";
 import { auth } from "../firebase";
+import Logo from "../components/Logo";
 
 // ─── Human-readable Firebase error messages ───────────────────────────────────
 const FIREBASE_ERRORS = {
@@ -295,7 +296,7 @@ export default function BookingDetailsModal({
 
         {/* Header */}
         <div className="bdm-header">
-          <div className="bdm-icon-ring" aria-hidden="true">✦</div>
+          <div className="bdm-icon-ring" aria-hidden="true"><Logo /></div>
           <h2 className="bdm-title">Complete Your Details</h2>
           <p className="bdm-subtitle">
             We share these with the vendor to confirm your booking
@@ -495,7 +496,7 @@ export default function BookingDetailsModal({
           </p>
         )}
 
-        <p className="bdm-note">✦ No payment now · Vendor confirms first</p>
+        <p className="bdm-note"><Logo /> No payment now · Vendor confirms first</p>
 
         {/* Invisible reCAPTCHA anchor — always rendered, cleared via ref */}
         <div id="recaptcha-container" />

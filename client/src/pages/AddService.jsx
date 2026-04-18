@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
+import Logo from "../components/Logo";
 
 const SERVICE_TYPES = [
   { value: "decor",       label: "Decor",       emoji: "🎨", available: true  },
@@ -161,7 +162,7 @@ export default function AddService() {
                 {/* Header — always shown */}
                 <div className="as-form-header">
                   <a href="/dashboard" className="as-back">← Back to Dashboard</a>
-                  <p className="as-eyebrow">✦ Vendor Portal</p>
+                  <p className="as-eyebrow"><Logo /> Vendor Portal</p>
                   <h1 className="as-title">Add New Service</h1>
                   <p className="as-subtitle">Fill in your listing details. Your service goes live immediately after publishing.</p>
                 </div>
@@ -202,7 +203,7 @@ export default function AddService() {
                       </p>
                       <div className="as-cs-divider">
                         <span />
-                        <span className="as-cs-divider-dot">✦</span>
+                        <span className="as-cs-divider-dot"><Logo /></span>
                         <span />
                       </div>
                       <div className="as-cs-steps">
@@ -449,7 +450,7 @@ export default function AddService() {
               {!isComingSoon && (
                 <div className="as-preview-col">
                   <div className="as-preview-sticky">
-                    <p className="as-preview-label">✦ Live Preview</p>
+                    <p className="as-preview-label"><Logo /> Live Preview</p>
                     <div className="as-preview-card">
                       <div className="as-preview-img">
                         {activePreview ? (

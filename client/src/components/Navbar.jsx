@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import ProfilePopup from "./ProfilePopup";
 import NotificationPanel from "./NotificationPanel";
 import API from "../services/api";
+import logo from "../assets/logo.png";
 
 export default function Navbar() {
   const location  = useLocation();
@@ -96,10 +97,10 @@ export default function Navbar() {
         <div className="nb-inner">
 
           {/* LOGO */}
-          <div className="nb-logo" onClick={handleLogoClick} style={{ cursor: "pointer" }}>
-            <span className="nb-logo-mark">✦</span>
-            <span className="nb-logo-text">Evencers</span>
-          </div>
+          <div className="nb-logo" onClick={handleLogoClick}>
+  <img src={logo} className="nb-logo-img" />
+  <span className="nb-logo-text">EVENCERS</span>
+</div>
 
           {/* DESKTOP LINKS */}
           <div className="nb-links">
@@ -387,4 +388,17 @@ const styles = `
   @keyframes heartPop{0%{transform:scale(1)}40%{transform:scale(1.35)}70%{transform:scale(0.9)}100%{transform:scale(1)}}
   @keyframes nbBellRing{0%,100%{transform:rotate(0)}20%{transform:rotate(-18deg)}40%{transform:rotate(16deg)}60%{transform:rotate(-12deg)}80%{transform:rotate(8deg)}}
   @keyframes nbBadgePop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+
+  .nb-logo-img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  border-radius: 50%; /* keeps it perfectly circular */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.nb-logo-img:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 12px rgba(201,168,76,0.4);
+}
 `;

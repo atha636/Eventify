@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
 import PaymentModal from "../components/PaymentModal";
-
+import Logo from "../components/Logo";
 const STATUS_META = {
   pending:   { label: "Pending",   color: "#c9a84c", bg: "rgba(201,168,76,0.08)",  border: "rgba(201,168,76,0.25)",  icon: "◷" },
   approved:  { label: "Confirmed", color: "#3a8a62", bg: "rgba(58,138,98,0.08)",   border: "rgba(58,138,98,0.25)",   icon: "✓" },
@@ -214,7 +214,7 @@ export default function UserDashboard() {
           <div className="ud-hero-orb ud-orb1" />
           <div className="ud-hero-orb ud-orb2" />
           <div className="ud-hero-inner">
-            <span className="ud-eyebrow">✦ Client Portal</span>
+            <span className="ud-eyebrow"><Logo /> Client Portal</span>
             <h1 className="ud-hero-title">My Bookings</h1>
             <p className="ud-hero-sub">Track and manage all your event reservations</p>
             <a href="/vendors" className="ud-hero-btn">Browse Services →</a>

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import API from "../services/api";
 import { GoogleLogin } from "@react-oauth/google";
-
+import Logo from "../components/Logo";
 export default function Login() {
   const [data, setData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
@@ -43,7 +43,7 @@ localStorage.setItem("user", JSON.stringify(res.data.user));
         {/* LEFT PANEL */}
         <div className="lg-left">
           <div className="lg-left-inner">
-            <div className="lg-logo">✦ Evencers</div>
+            <div className="lg-logo"><Logo /> Evencers</div>
 
             <div className="lg-quote-block">
               <span className="lg-quote-mark">"</span>
@@ -91,7 +91,7 @@ localStorage.setItem("user", JSON.stringify(res.data.user));
             ) : (
               <>
                 <div className="lg-card-header">
-                  <p className="lg-eyebrow">✦ Welcome back</p>
+                  <p className="lg-eyebrow"><Logo /> Welcome back</p>
                   <h1>Sign in to<br />your account</h1>
                   <p className="lg-sub-text">
                     Don't have an account?{" "}

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../services/api";
-
+import Logo from "../components/Logo";
 export default function AdminLogin() {
   const navigate  = useNavigate();
   const [mode, setMode]       = useState("login"); // "login" | "register"
@@ -41,7 +41,7 @@ export default function AdminLogin() {
         {/* Left panel */}
         <div className="al-left">
           <div className="al-left-inner">
-            <div className="al-logo">✦ Evencers</div>
+            <div className="al-logo"> <Logo /> Evencers</div>
             <h2 className="al-tagline">Admin Control Centre</h2>
             <p className="al-sub">Full oversight of users, vendors, services, and platform bookings. Restricted access only.</p>
             <div className="al-perms">

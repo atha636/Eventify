@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import Logo from "../components/Logo";
 
 const clientFAQs = [
   {
@@ -63,7 +64,7 @@ const clientFAQs = [
   },
   {
     category: "Vendors & Quality",
-    icon: "✦",
+    icon: "<Logo />",
     questions: [
       {
         q: "How are vendors verified on Evencers?",
@@ -129,7 +130,7 @@ export default function CustomerCareClient() {
           <div className="cc-hero-orb cc-orb1" />
           <div className="cc-hero-orb cc-orb2" />
           <div className="cc-hero-inner">
-            <span className="cc-eyebrow">✦ Client Support</span>
+            <span className="cc-eyebrow"><Logo /> Client Support</span>
             <h1 className="cc-hero-title">How can we<br /><em>help you today?</em></h1>
             <p className="cc-hero-sub">Find answers to common questions about bookings, payments, and more.</p>
 
@@ -170,7 +171,7 @@ export default function CustomerCareClient() {
         {/* FAQ SECTION */}
         <div className="cc-faq-section">
           <div className="cc-faq-header">
-            <p className="cc-eyebrow-dark">✦ Frequently Asked</p>
+            <p className="cc-eyebrow-dark"><Logo /> Frequently Asked</p>
             <h2 className="cc-faq-title">Common Questions</h2>
           </div>
 
@@ -229,7 +230,7 @@ export default function CustomerCareClient() {
 
         {/* CTA */}
         <div className="cc-cta">
-          <p className="cc-eyebrow-dark">✦ Still need help?</p>
+          <p className="cc-eyebrow-dark"><Logo />Still need help?</p>
           <h3 className="cc-cta-title">Can't find your answer?</h3>
           <p className="cc-cta-sub">Our support team is here for you. Send us a message and we'll get back to you within 24 hours.</p>
           <button className="cc-cta-btn" onClick={() => window.location.href = "mailto:adminevencers2005@gmail.com"}>
@@ -239,7 +240,7 @@ export default function CustomerCareClient() {
 
         {/* FOOTER */}
         <footer className="cc-footer">
-          <div className="cc-footer-logo">✦ Evencers</div>
+          <div className="cc-footer-logo"> <Logo /> Evencers</div>
           <p className="cc-footer-copy">© 2025 Evencers. Crafted with care in India.</p>
         </footer>
       </div>

@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
-
+import Logo from "../../components/Logo";
 const strategies = [
   {
     num: "01",
@@ -50,7 +50,7 @@ export default function PricingStrategy() {
           </div>
           <div className="ps-hero-inner">
             <button className="ps-back" onClick={() => navigate(-1)}>← Back</button>
-            <span className="ps-eyebrow">✦ Vendor Resources</span>
+            <span className="ps-eyebrow"><Logo /> Vendor Resources</span>
             <div className="ps-icon-wrap">💡</div>
             <h1 className="ps-title">Pricing Strategy</h1>
             <p className="ps-subtitle">
@@ -92,7 +92,7 @@ export default function PricingStrategy() {
           </div>
 
           <div className="ps-example">
-            <p className="ps-example-label">✦ Example Package Structure</p>
+            <p className="ps-example-label"><Logo /> Example Package Structure</p>
             <div className="ps-packages">
               {[
                 { name: "Essential", price: "₹15,000", tag: "", items: ["4 hours coverage", "100 edited photos", "Online gallery", "1 photographer"] },

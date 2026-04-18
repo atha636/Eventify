@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
 import ServiceCard from "../components/ServiceCard";
+import Logo from "../components/Logo";
 
 const STATUS_META = {
   pending:  { label: "Pending",  color: "#c9a84c", bg: "rgba(201,168,76,0.1)",  border: "rgba(201,168,76,0.3)"  },
@@ -202,7 +203,7 @@ export default function VendorDashboard() {
           {/* ── HEADER ── */}
           <div className="vd-header">
             <div className="vd-header-left">
-              <p className="vd-eyebrow">✦ Vendor Portal</p>
+              <p className="vd-eyebrow"><Logo />Vendor Portal</p>
               <h1 className="vd-title">Dashboard</h1>
               <p className="vd-subtitle">Manage your bookings and services</p>
             </div>

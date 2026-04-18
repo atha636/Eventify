@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
 import ServiceCard from "../components/ServiceCard";
-
+import Logo from "../components/Logo";
 const CATEGORY_META = {
   decor:       { emoji: "🎨", desc: "Transform any space into something magical and memorable.", color: "#c9a84c" },
   photography: { emoji: "📸", desc: "Capture every fleeting moment, preserved forever in stunning detail.", color: "#a07850" },
@@ -30,7 +30,7 @@ export default function Category() {
   const [search, setSearch]   = useState("");
 
   const meta = CATEGORY_META[type?.toLowerCase()] || {
-    emoji: "✦", desc: "Discover the best vendors for your event.", color: "#c9a84c",
+    emoji: "<Logo />", desc: "Discover the best vendors for your event.", color: "#c9a84c",
   };
 
   // ── Fetch vendors — AbortController stops double-fetch in React StrictMode ──

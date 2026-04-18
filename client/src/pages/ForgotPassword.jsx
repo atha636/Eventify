@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import API from "../services/api";
+import Logo from "../components/Logo";
 
 export default function ForgotPassword() {
   const [step, setStep] = useState("email"); // "email" | "otp" | "password" | "done"
@@ -132,7 +133,7 @@ export default function ForgotPassword() {
         {/* LEFT PANEL */}
         <div className="fp-left">
           <div className="fp-left-inner">
-            <div className="fp-logo">✦ Evencers</div>
+            <div className="fp-logo"><Logo /> Evencers</div>
             <div className="fp-quote-block">
               <span className="fp-quote-mark">"</span>
               <p className="fp-quote">
@@ -170,7 +171,7 @@ export default function ForgotPassword() {
               <div className="fp-section">
                 <a href="/login" className="fp-back">← Back to login</a>
                 <div className="fp-header">
-                  <p className="fp-eyebrow">✦ Account recovery</p>
+                  <p className="fp-eyebrow"><Logo /> Account recovery</p>
                   <h1>Forgot your<br />password?</h1>
                   <p className="fp-sub">No worries. Enter your email and we'll send you a 6-digit code to reset it.</p>
                 </div>
@@ -200,7 +201,7 @@ export default function ForgotPassword() {
               <div className="fp-section">
                 <button className="fp-back" onClick={() => { setStep("email"); setError(""); }}>← Change email</button>
                 <div className="fp-header">
-                  <p className="fp-eyebrow">✦ Verify identity</p>
+                  <p className="fp-eyebrow"><Logo /> Verify identity</p>
                   <h1>Check your<br />inbox</h1>
                   <p className="fp-sub">
                     We sent a 6-digit code to<br />
@@ -257,7 +258,7 @@ export default function ForgotPassword() {
             {step === "password" && (
               <div className="fp-section">
                 <div className="fp-header">
-                  <p className="fp-eyebrow">✦ Almost there</p>
+                  <p className="fp-eyebrow"><Logo /> Almost there</p>
                   <h1>Set a new<br />password</h1>
                   <p className="fp-sub">Choose something strong and memorable. At least 8 characters.</p>
                 </div>
@@ -329,7 +330,7 @@ export default function ForgotPassword() {
                 <div className="fp-done-ring">
                   <span>✓</span>
                 </div>
-                <p className="fp-eyebrow" style={{ textAlign: "center" }}>✦ Success</p>
+                <p className="fp-eyebrow" style={{ textAlign: "center" }}><Logo /> Success</p>
                 <h2>Password reset!</h2>
                 <p>Your password has been updated successfully. You can now sign in with your new password.</p>
                 <a href="/login" className="fp-btn" style={{ textDecoration: "none", textAlign: "center" }}>

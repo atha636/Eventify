@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-
+import Logo from "../components/Logo";
 const vendorFAQs = [
   {
     category: "Getting Started",
@@ -351,7 +351,7 @@ export default function CustomerCareVendor() {
           ref={contactRef}
         >
           <div className="vc-contact-header">
-            <p className="vc-eyebrow-dark">✦ Reach Us Directly</p>
+            <p className="vc-eyebrow-dark"><Logo /> Reach Us Directly</p>
             <h2 className="vc-section-title">Get in Touch</h2>
             <p className="vc-section-sub">Multiple ways to connect with our dedicated vendor success team</p>
           </div>
@@ -439,7 +439,7 @@ export default function CustomerCareVendor() {
           ref={faqRef}
         >
           <div className="vc-faq-header">
-            <p className="vc-eyebrow-dark">✦ Vendor FAQ</p>
+            <p className="vc-eyebrow-dark"><Logo /> Vendor FAQ</p>
             <h2 className="vc-section-title">Partner Questions</h2>
             <p className="vc-section-sub">Answers to the most common questions from our vendor partners</p>
           </div>
@@ -535,7 +535,7 @@ export default function CustomerCareVendor() {
         {/* ── RESOURCES ── */}
         <div className={`vc-resources ${resVisible ? "revealed" : ""}`} ref={resRef}>
           <div className="vc-res-header">
-            <p className="vc-eyebrow-dark">✦ Vendor Resources</p>
+            <p className="vc-eyebrow-dark"><Logo /> Vendor Resources</p>
             <h2 className="vc-section-title">Helpful Guides</h2>
             <p className="vc-section-sub">Curated resources to help you get the most out of Evencers</p>
           </div>
@@ -568,7 +568,7 @@ export default function CustomerCareVendor() {
         {/* ── ESCALATION TIMELINE ── */}
         <div className={`vc-timeline-section ${tlVisible ? "revealed" : ""}`} ref={tlRef}>
           <div className="vc-timeline-header">
-            <p className="vc-eyebrow-gold">✦ Our Support Promise</p>
+            <p className="vc-eyebrow-gold"><Logo /> Our Support Promise</p>
             <h2 className="vc-section-title" style={{ color: "var(--cream)" }}>
               What to Expect
             </h2>
@@ -603,7 +603,7 @@ export default function CustomerCareVendor() {
           <div className="vc-cta-orb vc-cta-orb2" />
           <div className="vc-noise" style={{ opacity: 0.03 }} />
           <div className="vc-cta-inner">
-            <p className="vc-eyebrow-gold">✦ We're Here For You</p>
+            <p className="vc-eyebrow-gold"><Logo /> We're Here For You</p>
             <h3 className="vc-cta-title">Still have questions?</h3>
             <p className="vc-cta-sub">
               Our dedicated vendor success team is available Mon–Sat, 10 AM – 7 PM IST.
@@ -643,7 +643,7 @@ export default function CustomerCareVendor() {
 
         {/* ── FOOTER ── */}
         <footer className="vc-footer">
-          <div className="vc-footer-logo">✦ Evencers</div>
+          <div className="vc-footer-logo"><Logo />Evencers</div>
           <p className="vc-footer-copy">© 2025 Evencers. Crafted with care in India.</p>
           <div className="vc-footer-contact">
             <a href="mailto:adminevencers2005@gmail.com" className="vc-footer-link">adminevencers2005@gmail.com</a>

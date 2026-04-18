@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
-
+import Logo from "../../components/Logo";
 const tips = [
   {
     icon: "📐",
@@ -75,7 +75,7 @@ export default function PhotoGuidelines() {
           </div>
           <div className="pg-hero-inner">
             <button className="pg-back" onClick={() => navigate(-1)}>← Back</button>
-            <span className="pg-eyebrow">✦ Vendor Resources</span>
+            <span className="pg-eyebrow"><Logo /> Vendor Resources</span>
             <div className="pg-icon-wrap">📸</div>
             <h1 className="pg-title">Photo Guidelines</h1>
             <p className="pg-subtitle">
@@ -119,7 +119,7 @@ export default function PhotoGuidelines() {
           </div>
 
           <div className="pg-checklist">
-            <p className="pg-cl-label">✦ Quick Upload Checklist</p>
+            <p className="pg-cl-label"><Logo /> Quick Upload Checklist</p>
             <div className="pg-cl-grid">
               {[
                 "Minimum 5 images uploaded",

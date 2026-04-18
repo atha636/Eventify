@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
-
+import Logo from "../../components/Logo";
 const features = [
   {
     icon: "🏠",
@@ -62,7 +62,7 @@ export default function DashboardGuide() {
           </div>
           <div className="dg-hero-inner">
             <button className="dg-back" onClick={() => navigate(-1)}>← Back</button>
-            <span className="dg-eyebrow">✦ Vendor Resources</span>
+            <span className="dg-eyebrow"><Logo /> Vendor Resources</span>
             <div className="dg-icon-wrap">📊</div>
             <h1 className="dg-title">Dashboard Guide</h1>
             <p className="dg-subtitle">
@@ -103,7 +103,7 @@ export default function DashboardGuide() {
           ))}
 
           <div className="dg-support">
-            <p className="dg-support-eyebrow">✦ Need help?</p>
+            <p className="dg-support-eyebrow"><Logo /> Need help?</p>
             <h3 className="dg-support-title">Can't find what you're looking for?</h3>
             <p className="dg-support-text">Our support team is available 7 days a week via the Help button on your dashboard.</p>
             <button className="dg-support-btn" onClick={() => navigate("/customer-care/vendor")}>

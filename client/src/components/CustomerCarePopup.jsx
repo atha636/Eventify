@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import Logo from "../components/Logo";
 
 export default function CustomerCarePopup() {
   const [open, setOpen] = useState(false);
@@ -63,7 +64,7 @@ export default function CustomerCarePopup() {
             {/* Header */}
             <div className="ccp-header">
               <div className="ccp-header-left">
-                <div className="ccp-avatar">✦</div>
+                <div className="ccp-avatar"><Logo /></div>
                 <div>
                   <p className="ccp-name">Evencers Support</p>
                   <span className="ccp-status">
@@ -78,7 +79,7 @@ export default function CustomerCarePopup() {
             {/* Greeting bubble */}
             <div className="ccp-body">
               <div className="ccp-bubble-wrap">
-                <div className="ccp-avatar-sm">✦</div>
+                <div className="ccp-avatar-sm"><Logo /></div>
                 <div className="ccp-bubble">
                   <p>
                     Hi there{user?.name ? `, ${user.name.split(" ")[0]}` : ""}! 👋

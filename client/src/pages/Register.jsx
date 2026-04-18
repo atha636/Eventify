@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import API from "../services/api";
 import { GoogleLogin } from "@react-oauth/google";
-
+import Logo from "../components/Logo";
 const OTP_WINDOW_MS = 60 * 1000; // 1 minute
 const MAX_OTP_SENDS = 3;
 
@@ -217,7 +217,7 @@ export default function Register() {
         {/* LEFT PANEL */}
         <div className="rg-left">
           <div className="rg-left-inner">
-            <div className="rg-logo">✦ Evencers</div>
+            <div className="rg-logo"><Logo /> Evencers</div>
             <h2 className="rg-tagline">
               Every great event<br />begins with a single step.
             </h2>

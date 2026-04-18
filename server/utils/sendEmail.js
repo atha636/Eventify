@@ -1,3 +1,4 @@
+
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
@@ -25,7 +26,7 @@ const sendOTP = async (email, otp) => {
     html: `
       <div style="font-family:'Segoe UI',sans-serif;max-width:480px;margin:0 auto;background:#faf7f2;border:1px solid rgba(201,168,76,0.25);border-radius:12px;padding:40px 36px;">
         <div style="text-align:center;margin-bottom:28px;">
-          <span style="font-size:1.2rem;letter-spacing:0.15em;color:#c9a84c;font-weight:600;">✦ EVENCERS</span>
+          <span style="font-size:1.2rem;letter-spacing:0.15em;color:#c9a84c;font-weight:600;"> EVENCERS</span>
         </div>
         <h2 style="font-size:1.4rem;color:#0e0c0a;margin-bottom:8px;">Verify your email</h2>
         <p style="color:#7a7265;font-size:14px;line-height:1.6;margin-bottom:28px;">
@@ -49,7 +50,7 @@ const sendResetOTP = async (email, otp) => {
     html: `
       <div style="font-family:'Segoe UI',sans-serif;max-width:480px;margin:0 auto;background:#faf7f2;border:1px solid rgba(201,168,76,0.25);border-radius:12px;padding:40px 36px;">
         <div style="text-align:center;margin-bottom:28px;">
-          <span style="font-size:1.2rem;letter-spacing:0.15em;color:#c9a84c;font-weight:600;">✦ EVENCERS</span>
+          <span style="font-size:1.2rem;letter-spacing:0.15em;color:#c9a84c;font-weight:600;"> EVENCERS</span>
         </div>
         <h2 style="font-size:1.4rem;color:#0e0c0a;margin-bottom:8px;">Reset your password</h2>
         <p style="color:#7a7265;font-size:14px;line-height:1.6;margin-bottom:28px;">
@@ -77,7 +78,7 @@ const sendVendorVerificationRequest = async ({ vendorName, vendorEmail, adminEma
     html: `
       <div style="font-family:'Segoe UI',sans-serif;max-width:480px;margin:0 auto;background:#faf7f2;border:1px solid rgba(201,168,76,0.25);border-radius:12px;padding:40px 36px;">
         <div style="text-align:center;margin-bottom:28px;">
-          <span style="font-size:1.2rem;letter-spacing:0.15em;color:#c9a84c;font-weight:600;">✦ EVENCERS ADMIN</span>
+          <span style="font-size:1.2rem;letter-spacing:0.15em;color:#c9a84c;font-weight:600;"> EVENCERS ADMIN</span>
         </div>
         <h2 style="font-size:1.4rem;color:#0e0c0a;margin-bottom:8px;">New Vendor Profile to Review</h2>
         <p style="color:#7a7265;font-size:14px;line-height:1.6;margin-bottom:20px;">
@@ -143,7 +144,7 @@ const sendVendorVerificationResult = async ({ vendorEmail, vendorName, approved,
     html: `
       <div style="font-family:'Segoe UI',sans-serif;max-width:480px;margin:0 auto;background:#faf7f2;border:1px solid rgba(201,168,76,0.25);border-radius:12px;padding:40px 36px;">
         <div style="text-align:center;margin-bottom:28px;">
-          <span style="font-size:1.2rem;letter-spacing:0.15em;color:#c9a84c;font-weight:600;">✦ EVENCERS</span>
+          <span style="font-size:1.2rem;letter-spacing:0.15em;color:#c9a84c;font-weight:600;"> EVENCERS</span>
         </div>
         ${bodyHtml}
         <p style="color:#bbb4a8;font-size:11px;text-align:center;margin-top:24px;">

@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
+import Logo from "../components/Logo";
 
 export default function ServiceGallery() {
   const { id } = useParams();
@@ -201,7 +202,7 @@ useEffect(() => {
         <div className="sg-hero-content">
           <button className="sg-back" onClick={() => navigate(`/vendor/${id}`)}>← Back to Service</button>
           <div>
-            <p className="sg-hero-eyebrow">✦ Portfolio Gallery</p>
+            <p className="sg-hero-eyebrow"><Logo /> Portfolio Gallery</p>
             <h1 className="sg-hero-title">{vendor.title}</h1>
             <div className="sg-hero-meta">
               <span className="sg-hero-loc">📍 {vendor.location}</span>

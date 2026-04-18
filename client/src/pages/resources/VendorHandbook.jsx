@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
-
+import Logo from "../../components/Logo";
 const sections = [
   {
     icon: "📋",
@@ -61,7 +61,7 @@ export default function VendorHandbook() {
           </div>
           <div className="res-hero-inner">
             <button className="res-back" onClick={() => navigate(-1)}>← Back</button>
-            <span className="res-eyebrow">✦ Vendor Resources</span>
+            <span className="res-eyebrow"><Logo /> Vendor Resources</span>
             <div className="res-icon-wrap">📖</div>
             <h1 className="res-title">Vendor Handbook</h1>
             <p className="res-subtitle">
@@ -101,7 +101,7 @@ export default function VendorHandbook() {
             ))}
 
             <div className="res-cta-card">
-              <p className="res-cta-label">✦ Ready to list?</p>
+              <p className="res-cta-label"><Logo /> Ready to list?</p>
               <h3 className="res-cta-title">Start building your profile today.</h3>
               <button className="res-cta-btn" onClick={() => navigate("/vendor-dashboard")}>
                 Go to Dashboard →
