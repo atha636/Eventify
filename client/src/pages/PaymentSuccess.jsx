@@ -212,7 +212,7 @@ export default function PaymentSuccess() {
 
           {/* Footer */}
           <div className="ps-footer">
-            <p>Questions? Contact our support team at support@eventify.com</p>
+            <p>Questions? Contact our support team at admineventify2005@gmail.com</p>
           </div>
         </div>
       </div>
