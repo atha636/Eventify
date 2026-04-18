@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { createOrder, verifyPayment } from "../services/paymentService";
+import { useNavigate } from "react-router-dom";
 
 export default function PaymentModal({ booking, vendor, onSuccess, onClose }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
+const navigate = useNavigate();
   const amount = booking.packagePrice || vendor?.packages?.[0]?.price || 0;
 
   const handlePayment = async () => {
@@ -45,7 +46,8 @@ export default function PaymentModal({ booking, vendor, onSuccess, onClose }) {
             );
 
             if (verifyData.success) {
-              onSuccess(verifyData);
+  onSuccess(verifyData); // optional
+  navigate(`/payment-success/${booking._id}`);
             } else {
               setError("Payment verification failed");
             }

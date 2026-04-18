@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 import PaymentModal from "./PaymentModal";
 
+
 const TYPE_META = {
   booking_received: { icon: "📋", color: "#c9a84c",  bg: "rgba(201,168,76,0.08)"  },
   booking_approved: { icon: "✓",  color: "#3a8a62",  bg: "rgba(58,138,98,0.08)"   },
