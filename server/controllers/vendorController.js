@@ -91,7 +91,7 @@ exports.addService = async (req, res) => {
     await sendEmail({
       to:      user.email,
       subject: "Service Added Successfully ✅",
-      text:    `Hello ${user.name},\n\nYour service "${vendor.title}" has been added successfully.\n\n- Eventify Team`,
+      text:    `Hello ${user.name},\n\nYour service "${vendor.title}" has been added successfully.\n\n- Evencers Team`,
     });
 
     res.status(201).json(vendor);
@@ -145,7 +145,7 @@ exports.editService = async (req, res) => {
       await sendEmail({
         to:      user.email,
         subject: "Service Updated ✏️",
-        text:    `Hello ${user.name},\n\nYour service "${updated.title}" has been updated successfully.\n\n- Eventify Team`,
+        text:    `Hello ${user.name},\n\nYour service "${updated.title}" has been updated successfully.\n\n- Evencers Team`,
       }).catch((e) => console.error("Email send error (non-fatal):", e.message));
     }
 
@@ -190,7 +190,7 @@ exports.deleteService = async (req, res) => {
       await sendEmail({
         to:      user.email,
         subject: "Service Deleted ⚠️",
-        text:    `Hello ${user.name},\n\nYour service "${service.title}" has been removed from Eventify.\n\n- Eventify Team`,
+        text:    `Hello ${user.name},\n\nYour service "${service.title}" has been removed from Evencers.\n\n- Evencers Team`,
       }).catch((e) => console.error("Email send error (non-fatal):", e.message));
     }
 

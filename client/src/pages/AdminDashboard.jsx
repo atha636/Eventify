@@ -396,7 +396,7 @@ export default function AdminDashboard() {
 
         <aside className={`ad-sidebar ${sidebarOpen ? "ad-sidebar-open" : ""}`}>
           <div className="ad-sidebar-top">
-            <div className="ad-logo">✦ Eventify</div>
+            <div className="ad-logo">✦ Evencers</div>
             <div className="ad-admin-tag">Admin Panel</div>
             <div className="ad-admin-name">{admin.name}</div>
           </div>

@@ -21,7 +21,7 @@ const clientFAQs = [
       },
       {
         q: "Can I book multiple vendors for the same event?",
-        a: "Absolutely! You can book as many vendors as you need — photography, catering, decor, and more — all from your single Eventify account.",
+        a: "Absolutely! You can book as many vendors as you need — photography, catering, decor, and more — all from your single Evencers account.",
       },
     ],
   },
@@ -49,7 +49,7 @@ const clientFAQs = [
     questions: [
       {
         q: "Is my payment information secure?",
-        a: "Yes. All payments are processed through encrypted, PCI-compliant gateways. Eventify never stores your card details.",
+        a: "Yes. All payments are processed through encrypted, PCI-compliant gateways. Evencers never stores your card details.",
       },
       {
         q: "What payment methods are accepted?",
@@ -66,7 +66,7 @@ const clientFAQs = [
     icon: "✦",
     questions: [
       {
-        q: "How are vendors verified on Eventify?",
+        q: "How are vendors verified on Evencers?",
         a: "Every vendor goes through identity verification, portfolio review, and background checks before being listed. We also monitor ratings and reviews continuously.",
       },
       {
@@ -152,7 +152,7 @@ export default function CustomerCareClient() {
         {/* CONTACT CARDS */}
         <div className="cc-contact-strip">
           {[
-            { icon: "✉", title: "Email Support", desc: "admineventify2005@gmail.com", sub: "Reply within 24 hours" },
+            { icon: "✉", title: "Email Support", desc: "adminevencers2005@gmail.com", sub: "Reply within 24 hours" },
             { icon: "💬", title: "Live Chat", desc: "Chat with our team", sub: "Available 9 AM – 9 PM" },
             { icon: "📞", title: "Call Us", desc: "+91 7023017517", sub: "Mon – Sat, 10 AM – 7 PM" },
           ].map((c, i) => (
@@ -232,15 +232,15 @@ export default function CustomerCareClient() {
           <p className="cc-eyebrow-dark">✦ Still need help?</p>
           <h3 className="cc-cta-title">Can't find your answer?</h3>
           <p className="cc-cta-sub">Our support team is here for you. Send us a message and we'll get back to you within 24 hours.</p>
-          <button className="cc-cta-btn" onClick={() => window.location.href = "mailto:admineventify2005@gmail.com"}>
+          <button className="cc-cta-btn" onClick={() => window.location.href = "mailto:adminevencers2005@gmail.com"}>
             Contact Support →
           </button>
         </div>
 
         {/* FOOTER */}
         <footer className="cc-footer">
-          <div className="cc-footer-logo">✦ Eventify</div>
-          <p className="cc-footer-copy">© 2025 Eventify. Crafted with care in India.</p>
+          <div className="cc-footer-logo">✦ Evencers</div>
+          <p className="cc-footer-copy">© 2025 Evencers. Crafted with care in India.</p>
         </footer>
       </div>
     </>

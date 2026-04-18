@@ -5,7 +5,7 @@ const tips = [
   {
     icon: "📐",
     title: "Recommended Dimensions",
-    content: `Upload images at a minimum of 1200 × 800 px (landscape orientation preferred). For cover/hero photos, aim for 1600 × 900 px or wider. Images below 800px wide will appear blurry on high-resolution screens and may be flagged for quality review. Eventify auto-compresses large files — no need to manually resize above 4MB.`,
+    content: `Upload images at a minimum of 1200 × 800 px (landscape orientation preferred). For cover/hero photos, aim for 1600 × 900 px or wider. Images below 800px wide will appear blurry on high-resolution screens and may be flagged for quality review. Evencers auto-compresses large files — no need to manually resize above 4MB.`,
     tag: "Technical",
   },
   {

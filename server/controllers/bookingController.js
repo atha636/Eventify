@@ -78,14 +78,14 @@ exports.createBooking = async (req, res) => {
           emailPromises.push(sendEmail({
             to:      vendorUser.email,
             subject: "New Booking Received 🎉",
-            text:    `Hello ${vendorUser.name},\n\nYou have received a new booking!\n\nService: ${vendor.title}\nDate: ${booking.date}\nCustomer: ${userDetails.name}\nPhone: ${userDetails.phone}\nAddress: ${userDetails.address}\n\n- Eventify Team`,
+            text:    `Hello ${vendorUser.name},\n\nYou have received a new booking!\n\nService: ${vendor.title}\nDate: ${booking.date}\nCustomer: ${userDetails.name}\nPhone: ${userDetails.phone}\nAddress: ${userDetails.address}\n\n- Evencers Team`,
           }));
         }
         if (user?.email) {
           emailPromises.push(sendEmail({
             to:      user.email,
             subject: "Booking Request Sent 🎉",
-            text:    `Hello ${user.name},\n\nYour booking request has been sent!\n\nService: ${vendor.title}\nDate: ${booking.date}\n\nThe vendor will confirm soon. You'll be notified.\n\n- Eventify Team`,
+            text:    `Hello ${user.name},\n\nYour booking request has been sent!\n\nService: ${vendor.title}\nDate: ${booking.date}\n\nThe vendor will confirm soon. You'll be notified.\n\n- Evencers Team`,
           }));
         }
         await Promise.all(emailPromises);
@@ -155,7 +155,7 @@ exports.updateBookingStatus = async (req, res) => {
             await sendEmail({
               to:      user.email,
               subject: "Booking Approved — Pay Now to Confirm 🎉",
-              text:    `Hello ${user.name},\n\nGreat news! Your booking has been APPROVED!\n\nService: ${vendor?.title}\nDate: ${booking.date}\n\nPlease log in to Eventify and complete your payment to confirm the booking.\n\n- Eventify Team`,
+              text:    `Hello ${user.name},\n\nGreat news! Your booking has been APPROVED!\n\nService: ${vendor?.title}\nDate: ${booking.date}\n\nPlease log in to Evencers and complete your payment to confirm the booking.\n\n- Evencers Team`,
             });
           }
         }
@@ -172,7 +172,7 @@ exports.updateBookingStatus = async (req, res) => {
             await sendEmail({
               to:      user.email,
               subject: "Booking Rejected ❌",
-              text:    `Hello ${user.name},\n\nSorry, your booking has been rejected.\n\nService: ${vendor?.title}\nDate: ${booking.date}\n\nYou can explore other vendors on Eventify.\n\n- Eventify Team`,
+              text:    `Hello ${user.name},\n\nSorry, your booking has been rejected.\n\nService: ${vendor?.title}\nDate: ${booking.date}\n\nYou can explore other vendors on Evencers.\n\n- Evencers Team`,
             });
           }
         }
@@ -211,7 +211,7 @@ exports.cancelBooking = async (req, res) => {
           await sendEmail({
             to:      vendorUser.email,
             subject: "Booking Cancelled ❌",
-            text:    `Hello ${vendorUser.name},\n\nA booking has been cancelled.\n\nService: ${vendor?.title}\nDate: ${booking.date}\nCancelled by: ${user?.name}\n\n- Eventify Team`,
+            text:    `Hello ${vendorUser.name},\n\nA booking has been cancelled.\n\nService: ${vendor?.title}\nDate: ${booking.date}\nCancelled by: ${user?.name}\n\n- Evencers Team`,
           });
         }
       } catch (err) {
@@ -309,7 +309,7 @@ exports.requestDateChange = async (req, res) => {
           await sendEmail({
             to:      vendorUser.email,
             subject: "Booking Change Request 📅",
-            text:    `Hello ${vendorUser.name},\n\nA client has requested changes to their booking.\n\nService: ${vendor?.title}\nClient: ${user?.name}\nChanges Requested:\n${changeItems.map((c) => `  • ${c}`).join("\n")}${reason ? `\nReason: ${reason}` : ""}\n\nPlease log in to your dashboard to accept or reject this request.\n\n- Eventify Team`,
+            text:    `Hello ${vendorUser.name},\n\nA client has requested changes to their booking.\n\nService: ${vendor?.title}\nClient: ${user?.name}\nChanges Requested:\n${changeItems.map((c) => `  • ${c}`).join("\n")}${reason ? `\nReason: ${reason}` : ""}\n\nPlease log in to your dashboard to accept or reject this request.\n\n- Evencers Team`,
           });
         }
       } catch (err) {
@@ -388,7 +388,7 @@ exports.handleDateChangeRequest = async (req, res) => {
             await sendEmail({
               to:      user.email,
               subject: "Booking Changes Approved ✅",
-              text:    `Hello ${user.name},\n\nGreat news! The vendor has approved your requested changes.\n\n${appliedItems.join("\n")}\n\nYour booking has been updated accordingly.\n\n- Eventify Team`,
+              text:    `Hello ${user.name},\n\nGreat news! The vendor has approved your requested changes.\n\n${appliedItems.join("\n")}\n\nYour booking has been updated accordingly.\n\n- Evencers Team`,
             });
           }
         } else {
@@ -405,7 +405,7 @@ exports.handleDateChangeRequest = async (req, res) => {
             await sendEmail({
               to:      user.email,
               subject: "Booking Change Request Declined ❌",
-              text:    `Hello ${user.name},\n\nUnfortunately, the vendor was unable to accept your requested changes.\n\nYour original booking details remain unchanged:\nDate: ${new Date(booking.date).toLocaleDateString("en-IN")}\nAddress: ${booking.userDetails.address}\n\nIf you have further questions, please contact the vendor or Eventify support.\n\n- Eventify Team`,
+              text:    `Hello ${user.name},\n\nUnfortunately, the vendor was unable to accept your requested changes.\n\nYour original booking details remain unchanged:\nDate: ${new Date(booking.date).toLocaleDateString("en-IN")}\nAddress: ${booking.userDetails.address}\n\nIf you have further questions, please contact the vendor or Evencers support.\n\n- Evencers Team`,
             });
           }
         }

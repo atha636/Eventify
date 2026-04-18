@@ -98,7 +98,7 @@ export default function Navbar() {
           {/* LOGO */}
           <div className="nb-logo" onClick={handleLogoClick} style={{ cursor: "pointer" }}>
             <span className="nb-logo-mark">✦</span>
-            <span className="nb-logo-text">Eventify</span>
+            <span className="nb-logo-text">Evencers</span>
           </div>
 
           {/* DESKTOP LINKS */}

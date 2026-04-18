@@ -8,12 +8,12 @@ const vendorFAQs = [
     icon: "🚀",
     questions: [
       {
-        q: "How do I list my services on Eventify?",
+        q: "How do I list my services on Evencers?",
         a: "Register with the 'I'm a Vendor' option, then head to your Vendor Dashboard and click 'Add New Service'. Fill in your details, upload portfolio photos, and set your packages. Your listing will be reviewed within 24 hours.",
       },
       {
-        q: "Is there a fee to list on Eventify?",
-        a: "Creating a vendor profile is free. Eventify charges a small service fee (8–12%) only when you receive a confirmed booking — no upfront or monthly charges.",
+        q: "Is there a fee to list on Evencers?",
+        a: "Creating a vendor profile is free. Evencers charges a small service fee (8–12%) only when you receive a confirmed booking — no upfront or monthly charges.",
       },
       {
         q: "How long does profile verification take?",
@@ -57,15 +57,15 @@ const vendorFAQs = [
       },
       {
         q: "What payment methods can clients pay me with?",
-        a: "Clients can pay via cards, UPI, and net banking through Eventify's secure payment gateway. You don't need to handle any payment collection yourself.",
+        a: "Clients can pay via cards, UPI, and net banking through Evencers's secure payment gateway. You don't need to handle any payment collection yourself.",
       },
       {
-        q: "How much commission does Eventify charge?",
-        a: "Eventify's platform fee ranges from 8–12% depending on your vendor tier. This covers payment processing, marketing, and platform support. The fee is deducted before payout.",
+        q: "How much commission does Evencers charge?",
+        a: "Evencers's platform fee ranges from 8–12% depending on your vendor tier. This covers payment processing, marketing, and platform support. The fee is deducted before payout.",
       },
       {
         q: "Are there any tax implications I should know about?",
-        a: "Eventify provides a detailed earnings statement for each financial year. If your annual revenue exceeds the GST threshold, you'll need to register for GST separately. Consult a tax advisor for guidance.",
+        a: "Evencers provides a detailed earnings statement for each financial year. If your annual revenue exceeds the GST threshold, you'll need to register for GST separately. Consult a tax advisor for guidance.",
       },
     ],
   },
@@ -79,7 +79,7 @@ const vendorFAQs = [
       },
       {
         q: "How do client reviews work?",
-        a: "After a completed booking, clients receive an automated email inviting them to leave a review. Only verified clients who booked through Eventify can leave reviews — no fake reviews.",
+        a: "After a completed booking, clients receive an automated email inviting them to leave a review. Only verified clients who booked through Evencers can leave reviews — no fake reviews.",
       },
       {
         q: "Can I edit my packages and pricing at any time?",
@@ -100,8 +100,8 @@ const vendorFAQs = [
         a: "We take all disputes seriously and investigate both sides fairly. You'll be notified immediately and given 48 hours to provide your response and any supporting evidence.",
       },
       {
-        q: "How do I contact Eventify vendor support?",
-        a: "Vendor support is available via email at admineventify2005@gmail.com or by calling +91 70230 17517 (Mon–Sat, 10 AM – 7 PM IST). You can also use the 'Contact Support' button in your Dashboard.",
+        q: "How do I contact Evencers vendor support?",
+        a: "Vendor support is available via email at adminevencers2005@gmail.com or by calling +91 70230 17517 (Mon–Sat, 10 AM – 7 PM IST). You can also use the 'Contact Support' button in your Dashboard.",
       },
       {
         q: "Can my account be suspended? What are the reasons?",
@@ -120,9 +120,9 @@ const CONTACT_CHANNELS = [
       </svg>
     ),
     label: "Email Support",
-    value: "admineventify2005@gmail.com",
+    value: "adminevencers2005@gmail.com",
     sub: "We reply within 24 hours",
-    action: () => (window.location.href = "mailto:admineventify2005@gmail.com"),
+    action: () => (window.location.href = "mailto:adminevencers2005@gmail.com"),
     cta: "Send Email",
     accent: "#c9a84c",
   },
@@ -150,7 +150,7 @@ const CONTACT_CHANNELS = [
     sub: "Quick replies on WhatsApp",
     action: () =>
       window.open(
-        "https://wa.me/917023017517?text=Hello%20Eventify%20Vendor%20Support",
+        "https://wa.me/917023017517?text=Hello%20Evencers%20Vendor%20Support",
         "_blank"
       ),
     cta: "Chat on WhatsApp",
@@ -268,7 +268,7 @@ export default function CustomerCareVendor() {
               <em>Help Centre</em>
             </h1>
             <p className="vc-hero-sub">
-              Everything you need to grow, manage, and succeed as an Eventify vendor partner.
+              Everything you need to grow, manage, and succeed as an Evencers vendor partner.
               We're here every step of the way.
             </p>
 
@@ -393,7 +393,7 @@ export default function CustomerCareVendor() {
                     className={`vc-copy-btn ${copiedIndex === i ? "copied" : ""}`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleCopy(i === 0 ? "admineventify2005@gmail.com" : "+917023017517", i);
+                      handleCopy(i === 0 ? "adminevencers2005@gmail.com" : "+917023017517", i);
                     }}
                     aria-label="Copy to clipboard"
                     title={copiedIndex === i ? "Copied!" : "Copy"}
@@ -475,9 +475,9 @@ export default function CustomerCareVendor() {
 
                   <div className="vc-sidebar-contact">
                     <p className="vc-sidebar-contact-title">Need direct help?</p>
-                    <a href="mailto:admineventify2005@gmail.com" className="vc-sidebar-link">
+                    <a href="mailto:adminevencers2005@gmail.com" className="vc-sidebar-link">
                       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="11" height="11"><rect x="1" y="3" width="14" height="10" rx="1.5" /><polyline points="1,3 8,9 15,3" /></svg>
-                      admineventify2005@gmail.com
+                      adminevencers2005@gmail.com
                     </a>
                     <a href="tel:+917023017517" className="vc-sidebar-link">
                       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="11" height="11"><path d="M15 11.3v2A1.33 1.33 0 0 1 13.67 14.6 13.19 13.19 0 0 1 7.74 12.6a13 13 0 0 1-4-4 13.19 13.19 0 0 1-2-5.93A1.33 1.33 0 0 1 3.07 1.33h2A1.33 1.33 0 0 1 6.4 2.49c.085.64.24 1.27.47 1.87a1.33 1.33 0 0 1-.3 1.4l-.85.85A10.67 10.67 0 0 0 9.72 10.6l.85-.85a1.33 1.33 0 0 1 1.4-.3c.6.23 1.23.387 1.87.47A1.33 1.33 0 0 1 15 11.3z" /></svg>
@@ -537,11 +537,11 @@ export default function CustomerCareVendor() {
           <div className="vc-res-header">
             <p className="vc-eyebrow-dark">✦ Vendor Resources</p>
             <h2 className="vc-section-title">Helpful Guides</h2>
-            <p className="vc-section-sub">Curated resources to help you get the most out of Eventify</p>
+            <p className="vc-section-sub">Curated resources to help you get the most out of Evencers</p>
           </div>
           <div className="vc-res-grid">
             {[
-              { icon: "📖", title: "Vendor Handbook", desc: "Everything you need to know about selling on Eventify.", link: "/resources/vendor-handbook", tag: "Essential" },
+              { icon: "📖", title: "Vendor Handbook", desc: "Everything you need to know about selling on Evencers.", link: "/resources/vendor-handbook", tag: "Essential" },
               { icon: "📸", title: "Photo Guidelines", desc: "Tips to make your portfolio stand out to clients.", link: "/resources/photo-guidelines", tag: "Popular" },
               { icon: "💡", title: "Pricing Strategy", desc: "How to price your packages competitively.", link: "/resources/pricing-strategy", tag: "Growth" },
               { icon: "📊", title: "Dashboard Guide", desc: "Walk-through of all your vendor dashboard features.", link: "/resources/dashboard-guide", tag: "New" },
@@ -611,14 +611,14 @@ export default function CustomerCareVendor() {
             </p>
 
             <div className="vc-cta-contact-row">
-              <a href="mailto:admineventify2005@gmail.com" className="vc-cta-contact-pill">
-                <span>✉</span>admineventify2005@gmail.com
+              <a href="mailto:adminevencers2005@gmail.com" className="vc-cta-contact-pill">
+                <span>✉</span>adminevencers2005@gmail.com
               </a>
               <a href="tel:+917023017517" className="vc-cta-contact-pill">
                 <span>📞</span>+91 70230 17517
               </a>
               <a
-                href="https://wa.me/917023017517?text=Hello%20Eventify%20Vendor%20Support"
+                href="https://wa.me/917023017517?text=Hello%20Evencers%20Vendor%20Support"
                 target="_blank"
                 rel="noreferrer"
                 className="vc-cta-contact-pill vc-cta-wa-pill"
@@ -630,7 +630,7 @@ export default function CustomerCareVendor() {
             <div className="vc-cta-btns">
               <button
                 className="vc-cta-primary"
-                onClick={() => (window.location.href = "mailto:admineventify2005@gmail.com")}
+                onClick={() => (window.location.href = "mailto:adminevencers2005@gmail.com")}
               >
                 Email Vendor Support
               </button>
@@ -643,10 +643,10 @@ export default function CustomerCareVendor() {
 
         {/* ── FOOTER ── */}
         <footer className="vc-footer">
-          <div className="vc-footer-logo">✦ Eventify</div>
-          <p className="vc-footer-copy">© 2025 Eventify. Crafted with care in India.</p>
+          <div className="vc-footer-logo">✦ Evencers</div>
+          <p className="vc-footer-copy">© 2025 Evencers. Crafted with care in India.</p>
           <div className="vc-footer-contact">
-            <a href="mailto:admineventify2005@gmail.com" className="vc-footer-link">admineventify2005@gmail.com</a>
+            <a href="mailto:adminevencers2005@gmail.com" className="vc-footer-link">adminevencers2005@gmail.com</a>
             <span className="vc-footer-sep">·</span>
             <a href="tel:+917023017517" className="vc-footer-link">+91 70230 17517</a>
           </div>

@@ -65,7 +65,7 @@ export default function CustomerCarePopup() {
               <div className="ccp-header-left">
                 <div className="ccp-avatar">✦</div>
                 <div>
-                  <p className="ccp-name">Eventify Support</p>
+                  <p className="ccp-name">Evencers Support</p>
                   <span className="ccp-status">
                     <span className="ccp-dot" />
                     Online · Typically replies in minutes
@@ -84,7 +84,7 @@ export default function CustomerCarePopup() {
                     Hi there{user?.name ? `, ${user.name.split(" ")[0]}` : ""}! 👋
                     {isVendor
                       ? " Welcome to Vendor Support. How can we help your business today?"
-                      : " Welcome to Eventify! How can we help you plan your perfect event?"}
+                      : " Welcome to Evencers! How can we help you plan your perfect event?"}
                   </p>
                 </div>
               </div>
@@ -113,7 +113,7 @@ export default function CustomerCarePopup() {
               </button>
               <p className="ccp-footer-note">
                 Or email us at{" "}
-                <a href={`mailto:${isVendor ? "vendors" : "support"}@eventify.in`} className="ccp-email-link">
+                <a href={`mailto:${isVendor ? "vendors" : "support"}@evencers.in`} className="ccp-email-link">
                   {isVendor ? "admineventify2005" : "admineventify2005"}@gmail.com
                 </a>
               </p>

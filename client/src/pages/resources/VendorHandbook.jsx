@@ -5,7 +5,7 @@ const sections = [
   {
     icon: "📋",
     title: "Getting Started",
-    content: `Welcome to Eventify's vendor community. Before listing your first service, complete your profile with a professional photo, a compelling bio, and your service area. A complete profile receives 3× more inquiries than an incomplete one. Make sure your contact details are accurate — clients will reach you directly for consultations.`,
+    content: `Welcome to Evencers's vendor community. Before listing your first service, complete your profile with a professional photo, a compelling bio, and your service area. A complete profile receives 3× more inquiries than an incomplete one. Make sure your contact details are accurate — clients will reach you directly for consultations.`,
   },
   {
     icon: "🧾",
@@ -35,12 +35,12 @@ const sections = [
   {
     icon: "💬",
     title: "Communication Standards",
-    content: `Respond to all client messages within 4 hours during business hours. Be clear, professional, and warm. Avoid committing to anything outside the platform before booking is confirmed. Document all agreements in writing. If a dispute arises, Eventify's support team can only assist with platform-documented transactions.`,
+    content: `Respond to all client messages within 4 hours during business hours. Be clear, professional, and warm. Avoid committing to anything outside the platform before booking is confirmed. Document all agreements in writing. If a dispute arises, Evencers's support team can only assist with platform-documented transactions.`,
   },
   {
     icon: "🚫",
     title: "What's Not Allowed",
-    content: `Do not list services you are not qualified to deliver. Do not ask clients to pay outside the platform. Do not post misleading photos or fabricated reviews. Violations will result in suspension or permanent removal. Eventify maintains a zero-tolerance policy for misrepresentation. When in doubt, contact support before acting.`,
+    content: `Do not list services you are not qualified to deliver. Do not ask clients to pay outside the platform. Do not post misleading photos or fabricated reviews. Violations will result in suspension or permanent removal. Evencers maintains a zero-tolerance policy for misrepresentation. When in doubt, contact support before acting.`,
   },
 ];
 
@@ -65,7 +65,7 @@ export default function VendorHandbook() {
             <div className="res-icon-wrap">📖</div>
             <h1 className="res-title">Vendor Handbook</h1>
             <p className="res-subtitle">
-              Everything you need to know about listing, managing, and growing your business on Eventify.
+              Everything you need to know about listing, managing, and growing your business on Evencers.
             </p>
             <div className="res-meta">
               <span>8 sections</span>

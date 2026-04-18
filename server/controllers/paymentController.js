@@ -149,7 +149,7 @@ exports.verifyPayment = async (req, res) => {
           await sendEmail({
             to: user.email,
             subject: "Payment Successful ✓ - Booking Confirmed",
-            text: `Hello ${user.name},\n\nYour payment has been received successfully!\n\nService: ${payment.orderDetails.vendorName}\nAmount Paid: ₹${payment.amount}\nEvent Date: ${new Date(payment.orderDetails.eventDate).toLocaleDateString()}\n\nYour booking is now confirmed. The vendor will be in touch shortly.\n\nOrder ID: ${payment.orderId}\nPayment ID: ${payment.paymentId}\n\n- Eventify Team`
+            text: `Hello ${user.name},\n\nYour payment has been received successfully!\n\nService: ${payment.orderDetails.vendorName}\nAmount Paid: ₹${payment.amount}\nEvent Date: ${new Date(payment.orderDetails.eventDate).toLocaleDateString()}\n\nYour booking is now confirmed. The vendor will be in touch shortly.\n\nOrder ID: ${payment.orderId}\nPayment ID: ${payment.paymentId}\n\n- Evencers Team`
           });
         }
 
@@ -158,7 +158,7 @@ exports.verifyPayment = async (req, res) => {
           await sendEmail({
             to: vendorUser.email,
             subject: "New Booking Received - Payment Confirmed 🎉",
-            text: `Hello ${vendorUser.name},\n\nYou have received a new confirmed booking!\n\nCustomer: ${user?.name}\nEmail: ${user?.email}\nEvent Date: ${new Date(payment.orderDetails.eventDate).toLocaleDateString()}\nAmount Received: ₹${payment.amount}\n\nPlease reach out to the customer to confirm the final details.\n\nOrder ID: ${payment.orderId}\n\n- Eventify Team`
+            text: `Hello ${vendorUser.name},\n\nYou have received a new confirmed booking!\n\nCustomer: ${user?.name}\nEmail: ${user?.email}\nEvent Date: ${new Date(payment.orderDetails.eventDate).toLocaleDateString()}\nAmount Received: ₹${payment.amount}\n\nPlease reach out to the customer to confirm the final details.\n\nOrder ID: ${payment.orderId}\n\n- Evencers Team`
           });
         }
       } catch (emailErr) {
@@ -284,7 +284,7 @@ exports.requestRefund = async (req, res) => {
           await sendEmail({
             to: vendorUser.email,
             subject: "Refund Request Received",
-            text: `Hello ${vendorUser.name},\n\nA customer has requested a refund for their booking.\n\nCustomer: ${user?.name}\nAmount: ₹${payment.amount}\nReason: ${reason || "Not specified"}\n\nPlease review and approve/deny this request in your dashboard.\n\nOrder ID: ${payment.orderId}\n\n- Eventify Team`
+            text: `Hello ${vendorUser.name},\n\nA customer has requested a refund for their booking.\n\nCustomer: ${user?.name}\nAmount: ₹${payment.amount}\nReason: ${reason || "Not specified"}\n\nPlease review and approve/deny this request in your dashboard.\n\nOrder ID: ${payment.orderId}\n\n- Evencers Team`
           });
         }
       } catch (emailErr) {
@@ -363,8 +363,8 @@ exports.processRefund = async (req, res) => {
               ? "Refund Approved ✓" 
               : "Refund Request Declined",
             text: action === "approve"
-              ? `Hello ${user.name},\n\nYour refund has been approved and processed!\n\nAmount: ₹${payment.amount}\nRefund ID: ${payment.refund.refundId}\n\nThe funds should reflect in your account within 3-5 business days.\n\n- Eventify Team`
-              : `Hello ${user.name},\n\nYour refund request has been declined by the vendor.\n\nPlease contact support for further assistance.\n\n- Eventify Team`
+              ? `Hello ${user.name},\n\nYour refund has been approved and processed!\n\nAmount: ₹${payment.amount}\nRefund ID: ${payment.refund.refundId}\n\nThe funds should reflect in your account within 3-5 business days.\n\n- Evencers Team`
+              : `Hello ${user.name},\n\nYour refund request has been declined by the vendor.\n\nPlease contact support for further assistance.\n\n- Evencers Team`
           });
         }
       } catch (emailErr) {

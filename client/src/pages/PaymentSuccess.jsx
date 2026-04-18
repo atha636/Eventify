@@ -44,7 +44,7 @@ export default function PaymentSuccess() {
 
   const handleShare = async () => {
     if (!booking) return;
-    const text = `I just booked ${booking.vendorId?.title} on Eventify for ${new Date(booking.date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}!`;
+    const text = `I just booked ${booking.vendorId?.title} on Evencers for ${new Date(booking.date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}!`;
     if (navigator.share) {
       try { await navigator.share({ title: "Booking Confirmation", text, url: window.location.href }); } catch {}
     } else {
@@ -248,7 +248,7 @@ export default function PaymentSuccess() {
           </div>
 
           <div className="ps-footer">
-            <p>Questions? Contact our support team at <strong>support@eventify.com</strong></p>
+            <p>Questions? Contact our support team at <strong>support@evencers.com</strong></p>
           </div>
         </div>
       </div>

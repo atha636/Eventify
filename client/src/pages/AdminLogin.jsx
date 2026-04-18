@@ -41,7 +41,7 @@ export default function AdminLogin() {
         {/* Left panel */}
         <div className="al-left">
           <div className="al-left-inner">
-            <div className="al-logo">✦ Eventify</div>
+            <div className="al-logo">✦ Evencers</div>
             <h2 className="al-tagline">Admin Control Centre</h2>
             <p className="al-sub">Full oversight of users, vendors, services, and platform bookings. Restricted access only.</p>
             <div className="al-perms">
@@ -89,7 +89,7 @@ export default function AdminLogin() {
                 <label>Email Address</label>
                 <div className="al-input-wrap">
                   <span className="al-icon">✉</span>
-                  <input type="email" placeholder="admin@eventify.com" value={data.email} onChange={e => setData({...data, email: e.target.value})} />
+                  <input type="email" placeholder="admin@evencers.com" value={data.email} onChange={e => setData({...data, email: e.target.value})} />
                 </div>
               </div>
               <div className="al-field">
@@ -120,7 +120,7 @@ export default function AdminLogin() {
             </button>
 
             <p className="al-back-link">
-              <a href="/" className="al-link">← Back to Eventify</a>
+              <a href="/" className="al-link">← Back to Evencers</a>
             </p>
           </div>
         </div>

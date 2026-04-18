@@ -30,7 +30,7 @@ const navigate = useNavigate();
         key: orderData.keyId,
         amount: orderData.amount,
         currency: orderData.currency,
-        name: "Eventify",
+        name: "Evencers",
         description: `${booking.packageName || "Service"} - ${vendor?.title}`,
         order_id: orderData.orderId,
         

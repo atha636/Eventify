@@ -145,7 +145,7 @@ export default function Home() {
   const testimonials = [
     { name: "Priya S.", event: "Wedding · Delhi", text: "Found our photographer and decorator within an hour. Absolutely seamless experience.", avatar: "P" },
     { name: "Rohan M.", event: "Corporate · Mumbai", text: "The vendor quality is exceptional. Our product launch was a massive success.", avatar: "R" },
-    { name: "Ananya K.", event: "Birthday · Bangalore", text: "I was overwhelmed planning alone. Eventify made it feel effortless and fun.", avatar: "A" },
+    { name: "Ananya K.", event: "Birthday · Bangalore", text: "I was overwhelmed planning alone. Evencers made it feel effortless and fun.", avatar: "A" },
   ];
 
   const [servicesRef, servicesVisible] = useReveal();
@@ -301,7 +301,7 @@ export default function Home() {
           <div className="hm-how-inner">
             <div className={`hm-section-header hm-reveal ${howVisible ? "hm-revealed" : ""}`}>
               <p className="hm-eyebrow" style={{ color: "var(--gold-light)" }}>✦ Simple process</p>
-              <h2 className="hm-section-title" style={{ color: "var(--cream)" }}>How Eventify works</h2>
+              <h2 className="hm-section-title" style={{ color: "var(--cream)" }}>How Evencers works</h2>
             </div>
             <div className="hm-steps">
               {[
@@ -358,7 +358,7 @@ export default function Home() {
           <div className={`hm-cta-inner hm-reveal ${ctaVisible ? "hm-revealed" : ""}`}>
             <p className="hm-eyebrow" style={{ color: "var(--gold)" }}>✦ Ready to begin?</p>
             <h2 className="hm-cta-title">Your dream event starts here.</h2>
-            <p className="hm-cta-sub">Join over 12,000 clients who planned their perfect day with Eventify.</p>
+            <p className="hm-cta-sub">Join over 12,000 clients who planned their perfect day with Evencers.</p>
             <div className="hm-cta-btns">
               <button className="hm-cta-primary" onClick={() => navigate("/register")}>
                 <span>Get Started Free</span>
@@ -373,8 +373,8 @@ export default function Home() {
 
         {/* ── FOOTER ── */}
         <footer className="hm-footer">
-          <div className="hm-footer-logo">✦ Eventify</div>
-          <p className="hm-footer-copy">© 2025 Eventify. Crafted with care in India.</p>
+          <div className="hm-footer-logo">✦ Evencers</div>
+          <p className="hm-footer-copy">© 2025 Evencers. Crafted with care in India.</p>
           <div className="hm-footer-links">
             {["About", "Vendors", "Privacy", "Terms", "Contact"].map((l) => (
               <a key={l} href="#" className="hm-footer-link">{l}</a>
@@ -391,7 +391,7 @@ export default function Home() {
             </a>
             <span className="hm-footer-contact-sep">·</span>
             <a
-              href="https://wa.me/917023017517?text=Hello%20Eventify%20Support"
+              href="https://wa.me/917023017517?text=Hello%20Evencers%20Support"
               target="_blank"
               rel="noreferrer"
               className="hm-footer-contact-link"

@@ -10,7 +10,7 @@ const transporter = nodemailer.createTransport({
 
 const sendEmail = async ({ to, subject, text, html }) => {
   await transporter.sendMail({
-    from: `"Eventify" <${process.env.EMAIL_USER}>`,
+    from: `"Evencers" <${process.env.EMAIL_USER}>`,
     to,
     subject,
     text,
@@ -21,11 +21,11 @@ const sendEmail = async ({ to, subject, text, html }) => {
 const sendOTP = async (email, otp) => {
   await sendEmail({
     to: email,
-    subject: "Your Eventify Verification Code",
+    subject: "Your Evencers Verification Code",
     html: `
       <div style="font-family:'Segoe UI',sans-serif;max-width:480px;margin:0 auto;background:#faf7f2;border:1px solid rgba(201,168,76,0.25);border-radius:12px;padding:40px 36px;">
         <div style="text-align:center;margin-bottom:28px;">
-          <span style="font-size:1.2rem;letter-spacing:0.15em;color:#c9a84c;font-weight:600;">✦ EVENTIFY</span>
+          <span style="font-size:1.2rem;letter-spacing:0.15em;color:#c9a84c;font-weight:600;">✦ EVENCERS</span>
         </div>
         <h2 style="font-size:1.4rem;color:#0e0c0a;margin-bottom:8px;">Verify your email</h2>
         <p style="color:#7a7265;font-size:14px;line-height:1.6;margin-bottom:28px;">
@@ -45,11 +45,11 @@ const sendOTP = async (email, otp) => {
 const sendResetOTP = async (email, otp) => {
   await sendEmail({
     to: email,
-    subject: "Reset Your Eventify Password",
+    subject: "Reset Your Evencers Password",
     html: `
       <div style="font-family:'Segoe UI',sans-serif;max-width:480px;margin:0 auto;background:#faf7f2;border:1px solid rgba(201,168,76,0.25);border-radius:12px;padding:40px 36px;">
         <div style="text-align:center;margin-bottom:28px;">
-          <span style="font-size:1.2rem;letter-spacing:0.15em;color:#c9a84c;font-weight:600;">✦ EVENTIFY</span>
+          <span style="font-size:1.2rem;letter-spacing:0.15em;color:#c9a84c;font-weight:600;">✦ EVENCERS</span>
         </div>
         <h2 style="font-size:1.4rem;color:#0e0c0a;margin-bottom:8px;">Reset your password</h2>
         <p style="color:#7a7265;font-size:14px;line-height:1.6;margin-bottom:28px;">
@@ -77,11 +77,11 @@ const sendVendorVerificationRequest = async ({ vendorName, vendorEmail, adminEma
     html: `
       <div style="font-family:'Segoe UI',sans-serif;max-width:480px;margin:0 auto;background:#faf7f2;border:1px solid rgba(201,168,76,0.25);border-radius:12px;padding:40px 36px;">
         <div style="text-align:center;margin-bottom:28px;">
-          <span style="font-size:1.2rem;letter-spacing:0.15em;color:#c9a84c;font-weight:600;">✦ EVENTIFY ADMIN</span>
+          <span style="font-size:1.2rem;letter-spacing:0.15em;color:#c9a84c;font-weight:600;">✦ EVENCERS ADMIN</span>
         </div>
         <h2 style="font-size:1.4rem;color:#0e0c0a;margin-bottom:8px;">New Vendor Profile to Review</h2>
         <p style="color:#7a7265;font-size:14px;line-height:1.6;margin-bottom:20px;">
-          A new vendor has registered and is awaiting your approval before they can go live on Eventify.
+          A new vendor has registered and is awaiting your approval before they can go live on Evencers.
         </p>
         <div style="background:#fff;border:1px solid rgba(201,168,76,0.25);border-radius:10px;padding:20px;margin-bottom:24px;">
           <p style="font-size:13px;color:#0e0c0a;margin:0 0 6px;"><strong>Name:</strong> ${vendorName}</p>
@@ -94,7 +94,7 @@ const sendVendorVerificationRequest = async ({ vendorName, vendorEmail, adminEma
           </a>
         </p>
         <p style="color:#bbb4a8;font-size:11px;text-align:center;margin-top:20px;">
-          This is an automated notification from Eventify.
+          This is an automated notification from Evencers.
         </p>
       </div>
     `,
@@ -106,12 +106,12 @@ const sendVendorVerificationRequest = async ({ vendorName, vendorEmail, adminEma
 // ─────────────────────────────────────────────────────────────────────
 const sendVendorVerificationResult = async ({ vendorEmail, vendorName, approved, reason }) => {
   const subject = approved
-    ? "🎉 Your Eventify Vendor Profile is Approved!"
-    : "Your Eventify Vendor Profile — Action Required";
+    ? "🎉 Your Evencers Vendor Profile is Approved!"
+    : "Your Evencers Vendor Profile — Action Required";
 
   const bodyHtml = approved
     ? `
-      <h2 style="font-size:1.4rem;color:#0e0c0a;margin-bottom:8px;">You're Live on Eventify!</h2>
+      <h2 style="font-size:1.4rem;color:#0e0c0a;margin-bottom:8px;">You're Live on Evencers!</h2>
       <p style="color:#7a7265;font-size:14px;line-height:1.6;margin-bottom:20px;">
         Hi <strong>${vendorName}</strong>, your vendor profile has been <strong style="color:#2d6a4f;">approved</strong> by our team.
         You can now add services and start accepting bookings from clients.
@@ -143,11 +143,11 @@ const sendVendorVerificationResult = async ({ vendorEmail, vendorName, approved,
     html: `
       <div style="font-family:'Segoe UI',sans-serif;max-width:480px;margin:0 auto;background:#faf7f2;border:1px solid rgba(201,168,76,0.25);border-radius:12px;padding:40px 36px;">
         <div style="text-align:center;margin-bottom:28px;">
-          <span style="font-size:1.2rem;letter-spacing:0.15em;color:#c9a84c;font-weight:600;">✦ EVENTIFY</span>
+          <span style="font-size:1.2rem;letter-spacing:0.15em;color:#c9a84c;font-weight:600;">✦ EVENCERS</span>
         </div>
         ${bodyHtml}
         <p style="color:#bbb4a8;font-size:11px;text-align:center;margin-top:24px;">
-          — The Eventify Team
+          — The Evencers Team
         </p>
       </div>
     `,

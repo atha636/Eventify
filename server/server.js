@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-//  server.js — Production-hardened entry point for Eventify
+//  server.js — Production-hardened entry point for Evencers
 // ═══════════════════════════════════════════════════════════════
 const express        = require("express");
 const cors           = require("cors");
@@ -23,7 +23,7 @@ app.set("trust proxy", 1);
 
 // ═══════════════════════════════════════════════════════════════
 // 🔐 SECURITY HEADERS — Helmet
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════ 
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }, // allow Cloudinary images
@@ -160,7 +160,7 @@ app.use("/api/notifications", notificationLimiter, notificationRoutes);
 app.use("/api/payments",      paymentLimiter, paymentRoutes);
 
 // ── Health check ─────────────────────────────────────────────
-app.get("/", (req, res) => res.json({ status: "ok", app: "Eventify API" }));
+app.get("/", (req, res) => res.json({ status: "ok", app: "Evencers API" }));
 
 // ═══════════════════════════════════════════════════════════════
 // 🔐 GLOBAL ERROR HANDLER
@@ -186,5 +186,5 @@ app.use((err, req, res, next) => {
 // ── Start server ─────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () =>
-  console.log(`✅ Eventify server running on port ${PORT} [${process.env.NODE_ENV || "development"}]`)
+  console.log(`✅ Evencers server running on port ${PORT} [${process.env.NODE_ENV || "development"}]`)
 );

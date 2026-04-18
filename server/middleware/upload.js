@@ -6,7 +6,7 @@ const cloudinary = require("../config/cloudinary"); // your existing cloudinary 
 const storage = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder: "eventify/services",
+    folder: "evencers/services",
     allowed_formats: ["jpg", "jpeg", "png", "webp"],
     transformation: [{ width: 1200, quality: "auto", fetch_format: "auto" }],
   },

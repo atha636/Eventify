@@ -132,7 +132,7 @@ export default function ForgotPassword() {
         {/* LEFT PANEL */}
         <div className="fp-left">
           <div className="fp-left-inner">
-            <div className="fp-logo">✦ Eventify</div>
+            <div className="fp-logo">✦ Evencers</div>
             <div className="fp-quote-block">
               <span className="fp-quote-mark">"</span>
               <p className="fp-quote">

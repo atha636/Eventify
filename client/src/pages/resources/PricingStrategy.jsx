@@ -5,7 +5,7 @@ const strategies = [
   {
     num: "01",
     title: "Research Your Market",
-    content: `Before setting any price, spend an hour browsing competitors in your category and city on Eventify. Note their package names, price points, and inclusions. You're not setting a price in a vacuum — you're setting a price relative to alternatives your client will also consider. Price too low and you signal poor quality; too high without justification and you lose the click.`,
+    content: `Before setting any price, spend an hour browsing competitors in your category and city on Evencers. Note their package names, price points, and inclusions. You're not setting a price in a vacuum — you're setting a price relative to alternatives your client will also consider. Price too low and you signal poor quality; too high without justification and you lose the click.`,
   },
   {
     num: "02",

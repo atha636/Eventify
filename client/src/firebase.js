@@ -3,8 +3,8 @@ import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBwW2ESIFKrTVMauwYvi9GTNmuSo5Kj5p0",
-  authDomain: "eventify-3078b.firebaseapp.com",
-  projectId: "eventify-3078b",
+  authDomain: "evencers-3078b.firebaseapp.com",
+  projectId: "evencers-3078b",
   appId: "1:382533521520:web:8307d67304b68804c6e4b5"
 };
 

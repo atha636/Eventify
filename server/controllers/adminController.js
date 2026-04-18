@@ -203,7 +203,7 @@ exports.editServiceTitle = async (req, res) => {
           await sendEmail({
             to:      vendorUser.email,
             subject: "Your Service Title Was Updated ✏️",
-            text:    `Hello ${vendorUser.name},\n\nAdmin has updated your service title to:\n"${service.title}"\n\nYour service remains active on Eventify.\n\n- Eventify Team`,
+            text:    `Hello ${vendorUser.name},\n\nAdmin has updated your service title to:\n"${service.title}"\n\nYour service remains active on Evencers.\n\n- Evencers Team`,
           }).catch(() => {});
         }
       } catch (e) {
@@ -260,7 +260,7 @@ exports.deleteServiceImage = async (req, res) => {
           await sendEmail({
             to:      vendorUser.email,
             subject: "Service Image Removed ⚠️",
-            text:    `Hello ${vendorUser.name},\n\nAdmin has removed an image from your service "${service.title}".\n\nYour service now has ${service.images.length} image(s). If you have questions, please contact support.\n\n- Eventify Team`,
+            text:    `Hello ${vendorUser.name},\n\nAdmin has removed an image from your service "${service.title}".\n\nYour service now has ${service.images.length} image(s). If you have questions, please contact support.\n\n- Evencers Team`,
           }).catch(() => {});
         }
       } catch (e) {
@@ -397,8 +397,8 @@ exports.verifyVendorProfile = async (req, res) => {
           // Also send a warm welcome email with next steps
           await sendEmail({
             to:      vendor.email,
-            subject: "✅ Profile Approved — Your Services Go Live on Eventify!",
-            text:    `Hello ${vendor.name},\n\nCongratulations! 🎉\n\nYour vendor profile on Eventify has been approved by our admin team.\n\nYour services will be live and visible to customers very soon.\n\nNext steps:\n1. Log in to your dashboard\n2. Add your services (photos, packages, pricing)\n3. Wait for bookings to roll in!\n\nWelcome to the Eventify family.\n\n- Eventify Team`,
+            subject: "✅ Profile Approved — Your Services Go Live on Evencers!",
+            text:    `Hello ${vendor.name},\n\nCongratulations! 🎉\n\nYour vendor profile on Evencers has been approved by our admin team.\n\nYour services will be live and visible to customers very soon.\n\nNext steps:\n1. Log in to your dashboard\n2. Add your services (photos, packages, pricing)\n3. Wait for bookings to roll in!\n\nWelcome to the Evencers family.\n\n- Evencers Team`,
           }).catch(() => {});
 
         } else {
