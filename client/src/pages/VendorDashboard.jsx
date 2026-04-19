@@ -30,9 +30,39 @@ function fmtTime(date) {
 }
 
 // ═══════════════════════════════════════════════════════
+// CONFIRM UNDO POPUP  ← NEW
+// ═══════════════════════════════════════════════════════
+function ConfirmUndoPopup({ bookingName, onConfirm, onCancel, confirming }) {
+  const handleBackdrop = (e) => { if (e.target === e.currentTarget) onCancel(); };
+
+  return (
+    <div className="cu-overlay" onClick={handleBackdrop}>
+      <div className="cu-modal">
+        <div className="cu-icon-wrap">↩</div>
+        <h3 className="cu-title">Move Back to Pending?</h3>
+        <p className="cu-sub">
+          This will revert <strong>{bookingName || "this booking"}</strong>'s status from{" "}
+          <span className="cu-status-word cu-approved">Approved</span> back to{" "}
+          <span className="cu-status-word cu-pending">Pending</span>.
+          The client will need to await re-approval.
+        </p>
+        <div className="cu-btns">
+          <button className="cu-cancel-btn" onClick={onCancel} disabled={confirming}>
+            Cancel
+          </button>
+          <button className="cu-confirm-btn" onClick={onConfirm} disabled={confirming}>
+            {confirming ? <span className="cu-spinner" /> : "↩ Yes, Move to Pending"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════
 // BOOKING DETAIL POPUP
 // ═══════════════════════════════════════════════════════
-function BookingDetailPopup({ booking, onClose, onUpdateStatus, updating }) {
+function BookingDetailPopup({ booking, onClose, onUpdateStatus, updating, onRequestUndo }) {
   const b       = booking;
   const meta    = STATUS_META[b.status] || STATUS_META.pending;
   const payMeta = PAY_META[b.paymentStatus] || PAY_META.pending;
@@ -169,9 +199,14 @@ function BookingDetailPopup({ booking, onClose, onUpdateStatus, updating }) {
           </div>
         )}
 
+        {/* ── UNDO BUTTON → now triggers confirmation popup ── */}
         {b.status === "approved" && !hasDcr && (
           <div className="bd-actions">
-            <button className="bd-undo-btn" onClick={() => onUpdateStatus(b._id, "pending")} disabled={!!updating}>
+            <button
+              className="bd-undo-btn"
+              onClick={() => onRequestUndo(b)}
+              disabled={!!updating}
+            >
               ↩ Move back to Pending
             </button>
           </div>
@@ -247,7 +282,9 @@ export default function VendorDashboard() {
   const [filter,        setFilter]        = useState("all");
   const [popupBooking,  setPopupBooking]  = useState(null);
   const [responding,    setResponding]    = useState(null);
-  const [detailBooking, setDetailBooking] = useState(null); // ← booking detail popup
+  const [detailBooking, setDetailBooking] = useState(null);
+  const [undoTarget,    setUndoTarget]    = useState(null);   // ← NEW: booking awaiting undo confirm
+  const [confirming,    setConfirming]    = useState(false);  // ← NEW: spinner state for confirm btn
 
   const fetchBookings = async () => {
     const token = localStorage.getItem("token");
@@ -283,11 +320,34 @@ export default function VendorDashboard() {
     try {
       await API.put(`/bookings/${id}`, { status }, { headers: { Authorization: `Bearer ${token}` } });
       await fetchBookings();
-      // keep detail popup in sync
       setDetailBooking((prev) => prev && prev._id === id ? { ...prev, status } : prev);
     } finally {
       setUpdating(null);
     }
+  };
+
+  // ── NEW: opens the confirm undo popup (from booking card OR detail popup) ──
+  const handleRequestUndo = (booking) => {
+    setUndoTarget(booking);
+  };
+
+  // ── NEW: confirmed → call API, close both popups ──
+  const handleConfirmUndo = async () => {
+    if (!undoTarget) return;
+    setConfirming(true);
+    try {
+      await updateStatus(undoTarget._id, "pending");
+      setUndoTarget(null);
+      // Also close detail popup if open for same booking
+      setDetailBooking((prev) => prev && prev._id === undoTarget._id ? { ...prev, status: "pending" } : prev);
+    } finally {
+      setConfirming(false);
+    }
+  };
+
+  // ── NEW: cancelled → just close confirm popup ──
+  const handleCancelUndo = () => {
+    setUndoTarget(null);
   };
 
   const handleAcceptChange = async () => {
@@ -329,6 +389,7 @@ export default function VendorDashboard() {
       <div className="vd-root">
         <Navbar />
 
+        {/* ── DATE CHANGE POPUP ── */}
         {popupBooking && (
           <DateChangePopup
             booking={popupBooking}
@@ -338,12 +399,24 @@ export default function VendorDashboard() {
           />
         )}
 
+        {/* ── BOOKING DETAIL POPUP ── */}
         {detailBooking && (
           <BookingDetailPopup
             booking={detailBooking}
             onClose={() => setDetailBooking(null)}
             onUpdateStatus={updateStatus}
             updating={updating}
+            onRequestUndo={handleRequestUndo}   // ← pass handler
+          />
+        )}
+
+        {/* ── CONFIRM UNDO POPUP (NEW) ── */}
+        {undoTarget && (
+          <ConfirmUndoPopup
+            bookingName={undoTarget.userId?.name}
+            onConfirm={handleConfirmUndo}
+            onCancel={handleCancelUndo}
+            confirming={confirming}
           />
         )}
 
@@ -521,8 +594,14 @@ export default function VendorDashboard() {
                             </button>
                           </div>
                         )}
+                        {/* ── UNDO on card → also triggers confirm popup ── */}
                         {b.status === "approved" && !hasDcr && (
-                          <button className="vd-undo-btn" onClick={(e) => { e.stopPropagation(); updateStatus(b._id, "pending"); }}>Undo</button>
+                          <button
+                            className="vd-undo-btn"
+                            onClick={(e) => { e.stopPropagation(); handleRequestUndo(b); }}
+                          >
+                            Undo
+                          </button>
                         )}
                         <span className="vd-view-hint">View details →</span>
                       </div>
@@ -552,6 +631,88 @@ const styles = `
 
   .vd-root { font-family: 'DM Sans', sans-serif; background: var(--cream); min-height: 100vh; color: var(--ink); }
   .vd-body { width: 100%; max-width: 1200px; margin: 0 auto; padding: 48px 32px 80px; }
+
+  /* ═══════════════════════════════════════════
+     CONFIRM UNDO POPUP  ← NEW
+  ═══════════════════════════════════════════ */
+  .cu-overlay {
+    position: fixed; inset: 0;
+    background: rgba(14,12,10,0.65); backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1300; padding: 20px;
+    animation: fadeIn 0.18s ease both;
+  }
+  .cu-modal {
+    background: var(--white);
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 20px;
+    padding: 36px 32px 30px;
+    width: min(440px, 95vw);
+    box-shadow: 0 32px 80px rgba(0,0,0,0.22);
+    animation: popupUp 0.28s cubic-bezier(0.34,1.2,0.64,1) both;
+    text-align: center;
+  }
+  .cu-icon-wrap {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: rgba(201,168,76,0.08);
+    border: 1px solid rgba(201,168,76,0.25);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; color: var(--gold);
+    margin: 0 auto 20px;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .cu-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.55rem; font-weight: 600;
+    color: var(--ink); margin-bottom: 12px;
+  }
+  .cu-sub {
+    font-size: 13.5px; color: var(--muted);
+    line-height: 1.7; margin-bottom: 28px;
+  }
+  .cu-sub strong { color: var(--ink); font-weight: 500; }
+  .cu-status-word {
+    display: inline-block; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 2px 10px; border-radius: 20px;
+  }
+  .cu-approved {
+    color: #2d6a4f; background: rgba(45,106,79,0.1);
+    border: 1px solid rgba(45,106,79,0.25);
+  }
+  .cu-pending {
+    color: #c9a84c; background: rgba(201,168,76,0.1);
+    border: 1px solid rgba(201,168,76,0.3);
+  }
+  .cu-btns { display: flex; gap: 10px; }
+  .cu-cancel-btn {
+    flex: 1; padding: 13px 16px;
+    background: none; color: var(--muted);
+    border: 1px solid var(--border); border-radius: 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .cu-cancel-btn:hover:not(:disabled) { border-color: var(--gold); color: var(--ink); }
+  .cu-cancel-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .cu-confirm-btn {
+    flex: 2; padding: 13px 16px;
+    background: var(--ink); color: var(--white);
+    border: none; border-radius: 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all 0.22s;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .cu-confirm-btn:hover:not(:disabled) {
+    background: #2a2420; transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(14,12,10,0.2);
+  }
+  .cu-confirm-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+  .cu-spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white; border-radius: 50%;
+    animation: spin 0.7s linear infinite; display: inline-block;
+  }
 
   /* ═══════════════════════════════════════════
      BOOKING DETAIL POPUP
@@ -585,7 +746,6 @@ const styles = `
   }
   .bd-close:hover { background: var(--ink); color: var(--white); border-color: var(--ink); }
 
-  /* Top row */
   .bd-top { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; flex-wrap: wrap; }
   .bd-avatar {
     width: 54px; height: 54px; border-radius: 50%;
@@ -601,7 +761,6 @@ const styles = `
     padding: 5px 14px; border-radius: 20px; white-space: nowrap; flex-shrink: 0;
   }
 
-  /* Payment banner */
   .bd-pay-banner {
     display: flex; align-items: center; gap: 14px;
     border-radius: 14px; padding: 16px 20px; margin-bottom: 24px;
@@ -620,7 +779,6 @@ const styles = `
     color: #2d6a4f; flex-shrink: 0;
   }
 
-  /* Info grid */
   .bd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
   .bd-info-block {
     background: var(--surface); border: 1px solid var(--border);
@@ -629,13 +787,11 @@ const styles = `
   .bd-info-label { font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
   .bd-info-value { font-size: 13.5px; color: var(--ink); font-weight: 500; }
 
-  /* Section title divider */
   .bd-section-title {
     font-size: 10px; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase;
     color: var(--muted); margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
   }
 
-  /* Client details */
   .bd-client-details {
     background: var(--surface); border: 1px solid var(--border);
     border-radius: 12px; padding: 16px; margin-bottom: 24px;
@@ -646,7 +802,6 @@ const styles = `
   .bd-detail-label { display: block; font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
   .bd-detail-value { font-size: 13.5px; color: var(--ink); }
 
-  /* DCR box */
   .bd-dcr-box {
     background: rgba(201,168,76,0.06); border: 1px solid rgba(201,168,76,0.3);
     border-radius: 12px; padding: 16px; margin-bottom: 24px;
@@ -662,7 +817,6 @@ const styles = `
   .bd-dcr-val { color: var(--ink); font-weight: 500; }
   .bd-dcr-reason { font-size: 12.5px; color: var(--muted); font-style: italic; padding-top: 10px; border-top: 1px solid rgba(201,168,76,0.2); margin-top: 4px; }
 
-  /* Popup action buttons */
   .bd-actions { display: flex; gap: 10px; margin-top: 4px; }
   .bd-accept-btn {
     flex: 2; padding: 14px 16px; background: #2d6a4f; color: white; border: none; border-radius: 10px;
@@ -839,6 +993,8 @@ const styles = `
     .bd-top { flex-wrap: wrap; }
     .bd-status-badge { margin-left: 0; }
     .bd-actions { flex-direction: column; }
+    .cu-modal { padding: 28px 20px 24px; }
+    .cu-btns { flex-direction: column; }
   }
 
   @keyframes fadeUp  { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
