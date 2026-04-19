@@ -13,17 +13,19 @@ export default function ProfilePopup({ onClose }) {
   const [loading, setLoading]     = useState(false);
   const [msg, setMsg]             = useState({ text: "", type: "" });
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
 
   const popupRef = useRef(null);
 
-  // Close on outside click
+  // Close on outside click — but NOT when the logout confirm modal is open
   useEffect(() => {
     const handler = (e) => {
+      if (showLogoutConfirm) return; // let the modal handle its own clicks
       if (popupRef.current && !popupRef.current.contains(e.target)) onClose();
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [onClose]);
+  }, [onClose, showLogoutConfirm]);
 
   const showMsg = (text, type = "success") => {
     setMsg({ text, type });
@@ -64,8 +66,11 @@ export default function ProfilePopup({ onClose }) {
   };
 
   const handleLogout = () => {
-    localStorage.clear();
-    window.location.href = "/";
+    setLogoutLoading(true);
+    setTimeout(() => {
+      localStorage.clear();
+      window.location.href = "/";
+    }, 1500);
   };
 
   const initial = (user.name || "U").charAt(0).toUpperCase();
@@ -164,11 +169,12 @@ export default function ProfilePopup({ onClose }) {
             <h3 className="lc-title">Logging out?</h3>
             <p className="lc-desc">You'll need to sign in again to access your account.</p>
             <div className="lc-actions">
-              <button className="lc-btn-cancel" onClick={() => setShowLogoutConfirm(false)}>
+              <button className="lc-btn-cancel" onClick={() => setShowLogoutConfirm(false)} disabled={logoutLoading}>
                 Stay
               </button>
-              <button className="lc-btn-confirm" onClick={handleLogout}>
-                Yes, Log Out
+              <button className="lc-btn-confirm" onClick={handleLogout} disabled={logoutLoading}>
+                {logoutLoading ? <span className="lc-spinner" /> : null}
+                {logoutLoading ? "Logging out…" : "Yes, Log Out"}
               </button>
             </div>
           </div>
@@ -373,6 +379,15 @@ const styles = `
     border: none; border-radius: 8px; cursor: pointer;
     font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
     transition: background 0.2s, transform 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
   }
   .lc-btn-confirm:hover { background: #a04a4a; transform: scale(1.02); }
+  .lc-btn-confirm:disabled { opacity: 0.75; cursor: not-allowed; transform: none; }
+  .lc-btn-cancel:disabled { opacity: 0.5; cursor: not-allowed; }
+  .lc-spinner {
+    width: 13px; height: 13px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+    animation: ppSpin 0.7s linear infinite; display: inline-block;
+    flex-shrink: 0;
+  }
 `;
