@@ -64,7 +64,7 @@ const clientFAQs = [
   },
   {
     category: "Vendors & Quality",
-    icon: "<Logo />",
+    icon: "🌟",
     questions: [
       {
         q: "How are vendors verified on Evencers?",
@@ -171,7 +171,10 @@ export default function CustomerCareClient() {
         {/* FAQ SECTION */}
         <div className="cc-faq-section">
           <div className="cc-faq-header">
-            <p className="cc-eyebrow-dark"><Logo /> Frequently Asked</p>
+            <div className="cc-eyebrow-dark cc-eyebrow-wrap">
+  <Logo />
+  <span>Frequently Asked</span>
+</div>
             <h2 className="cc-faq-title">Common Questions</h2>
           </div>
 
@@ -230,7 +233,10 @@ export default function CustomerCareClient() {
 
         {/* CTA */}
         <div className="cc-cta">
-          <p className="cc-eyebrow-dark"><Logo />Still need help?</p>
+          <div className="cc-eyebrow-dark cc-eyebrow-wrap">
+  
+  <span>Still need help?</span>
+</div>
           <h3 className="cc-cta-title">Can't find your answer?</h3>
           <p className="cc-cta-sub">Our support team is here for you. Send us a message and we'll get back to you within 24 hours.</p>
           <button className="cc-cta-btn" onClick={() => window.location.href = "mailto:adminevencers2005@gmail.com"}>
@@ -357,4 +363,18 @@ const styles = `
   .cc-footer-copy { font-size: 12px; color: var(--muted); }
 
   @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .cc-eyebrow-wrap {
+  display: flex;
+  flex-direction: column;   /* 👈 THIS IS THE MAIN FIX */
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+/* control logo size */
+.cc-eyebrow-wrap img,
+.cc-eyebrow-wrap svg {
+  width: 26px;
+  height: 26px;
+}
 `;

@@ -131,7 +131,7 @@ export default function Vendors() {
           <div className="vn-hero-orb vn-orb1" />
           <div className="vn-hero-orb vn-orb2" />
           <div className="vn-hero-inner">
-            <span className="vn-eyebrow"><Logo /> Discover & Book</span>
+            <span className="vn-eyebrow"> Discover & Book</span>
             <h1 className="vn-hero-title">All Vendors</h1>
             <p className="vn-hero-sub">
               {loading
@@ -233,7 +233,7 @@ export default function Vendors() {
             </div>
           ) : filtered.length === 0 ? (
             <div className="vn-empty">
-              <div className="vn-empty-icon"><Logo /></div>
+              <div className="vn-empty-icon">✨</div>
               <h3>coming soon...</h3>
               <p>
                 {search
@@ -256,7 +256,7 @@ export default function Vendors() {
                 ))}
               </div>
               {filtered.length >= 12 && (
-                <p className="vn-load-hint"><Logo /> Showing all {filtered.length} results</p>
+                <p className="vn-load-hint"> Showing all {filtered.length} results</p>
               )}
             </>
           )}
@@ -265,7 +265,12 @@ export default function Vendors() {
         {!loading && vendors.length > 0 && (
           <div className="vn-footer-cta">
             <div className="vn-footer-orb" />
-            <span className="vn-eyebrow" style={{ color: "var(--gold)" }}><Logo /> Are you a professional?</span>
+           <div className="vn-eyebrow" style={{ color: "var(--gold)" }}>
+  <div className="vn-eyebrow-logo">
+    <Logo />
+  </div>
+  <span>Are you a professional?</span>
+</div>
             <h2 className="vn-footer-title">List your services on Evencers</h2>
             <p className="vn-footer-sub">
               Join 850+ vendors and connect with thousands of clients planning their perfect event.
@@ -364,4 +369,17 @@ const styles = `
   @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .vn-eyebrow {
+  display: flex;
+  flex-direction: column;   /* 👈 IMPORTANT */
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.vn-eyebrow-logo img,
+.vn-eyebrow-logo svg {
+  width: 28px;   /* adjust size */
+  height: 28px;
+}
 `;

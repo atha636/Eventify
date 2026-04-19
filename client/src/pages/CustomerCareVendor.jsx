@@ -351,7 +351,10 @@ export default function CustomerCareVendor() {
           ref={contactRef}
         >
           <div className="vc-contact-header">
-            <p className="vc-eyebrow-dark"><Logo /> Reach Us Directly</p>
+           <div className="vc-eyebrow-dark vc-eyebrow-wrap">
+  <Logo />
+  <span>Reach Us Directly</span>
+</div>
             <h2 className="vc-section-title">Get in Touch</h2>
             <p className="vc-section-sub">Multiple ways to connect with our dedicated vendor success team</p>
           </div>
@@ -439,7 +442,10 @@ export default function CustomerCareVendor() {
           ref={faqRef}
         >
           <div className="vc-faq-header">
-            <p className="vc-eyebrow-dark"><Logo /> Vendor FAQ</p>
+            <div className="vc-eyebrow-dark vc-eyebrow-wrap">
+  <Logo />
+  <span>Vendor FAQ</span>
+</div>
             <h2 className="vc-section-title">Partner Questions</h2>
             <p className="vc-section-sub">Answers to the most common questions from our vendor partners</p>
           </div>
@@ -535,7 +541,10 @@ export default function CustomerCareVendor() {
         {/* ── RESOURCES ── */}
         <div className={`vc-resources ${resVisible ? "revealed" : ""}`} ref={resRef}>
           <div className="vc-res-header">
-            <p className="vc-eyebrow-dark"><Logo /> Vendor Resources</p>
+            <div className="vc-eyebrow-dark vc-eyebrow-wrap">
+  <Logo />
+  <span>Vendor Resources</span>
+</div>
             <h2 className="vc-section-title">Helpful Guides</h2>
             <p className="vc-section-sub">Curated resources to help you get the most out of Evencers</p>
           </div>
@@ -568,7 +577,10 @@ export default function CustomerCareVendor() {
         {/* ── ESCALATION TIMELINE ── */}
         <div className={`vc-timeline-section ${tlVisible ? "revealed" : ""}`} ref={tlRef}>
           <div className="vc-timeline-header">
-            <p className="vc-eyebrow-gold"><Logo /> Our Support Promise</p>
+            <div className="vc-eyebrow-dark vc-eyebrow-wrap">
+  <Logo />
+  <span>Our Support Promise</span>
+</div>
             <h2 className="vc-section-title" style={{ color: "var(--cream)" }}>
               What to Expect
             </h2>
@@ -603,7 +615,10 @@ export default function CustomerCareVendor() {
           <div className="vc-cta-orb vc-cta-orb2" />
           <div className="vc-noise" style={{ opacity: 0.03 }} />
           <div className="vc-cta-inner">
-            <p className="vc-eyebrow-gold"><Logo /> We're Here For You</p>
+            <div className="vc-eyebrow-dark vc-eyebrow-wrap">
+  <Logo />
+  <span> We're Here For You</span>
+</div>
             <h3 className="vc-cta-title">Still have questions?</h3>
             <p className="vc-cta-sub">
               Our dedicated vendor success team is available Mon–Sat, 10 AM – 7 PM IST.
@@ -1319,4 +1334,18 @@ const styles = `
     }
     .vc-stats-strip.revealed .vc-stat { opacity: 1; transform: none; }
   }
+    .vc-eyebrow-wrap {
+  display: flex;
+  flex-direction: column;   /* 👈 THIS FIXES EVERYTHING */
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+/* control logo size everywhere */
+.vc-eyebrow-wrap img,
+.vc-eyebrow-wrap svg {
+  width: 26px;
+  height: 26px;
+}
 `;

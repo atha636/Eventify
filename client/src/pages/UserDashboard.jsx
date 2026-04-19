@@ -214,7 +214,10 @@ export default function UserDashboard() {
           <div className="ud-hero-orb ud-orb1" />
           <div className="ud-hero-orb ud-orb2" />
           <div className="ud-hero-inner">
-            <span className="ud-eyebrow"><Logo /> Client Portal</span>
+            <div className="ud-eyebrow">
+              
+              <span>Client Portal</span>
+            </div>
             <h1 className="ud-hero-title">My Bookings</h1>
             <p className="ud-hero-sub">Track and manage all your event reservations</p>
             <a href="/vendors" className="ud-hero-btn">Browse Services →</a>
@@ -465,7 +468,25 @@ const styles = `
   .ud-orb1{width:500px;height:500px;background:var(--gold);top:-200px;left:-80px}
   .ud-orb2{width:300px;height:300px;background:#7b5ea7;bottom:-80px;right:-60px}
   .ud-hero-inner{position:relative;z-index:2;animation:fadeUp 0.55s ease both}
-  .ud-eyebrow{display:block;font-size:10.5px;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;font-weight:400}
+  .ud-eyebrow {
+  display: flex;
+  flex-direction: column;   /* 👈 MAIN FIX */
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 14px;
+  font-weight: 400;
+}
+  .ud-eyebrow img,
+.ud-eyebrow svg {
+  width: 26px;
+  height: 26px;
+}
   .ud-hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(2.4rem,5vw,3.4rem);font-weight:300;color:var(--white);margin-bottom:10px;letter-spacing:0.02em;line-height:1.1}
   .ud-hero-sub{font-size:13.5px;color:rgba(245,240,232,0.45);margin-bottom:28px;font-weight:300}
   .ud-hero-btn{display:inline-block;padding:12px 28px;background:var(--gold);color:var(--ink);text-decoration:none;border-radius:7px;font-size:13px;font-weight:500;letter-spacing:0.04em;transition:all 0.22s ease}
