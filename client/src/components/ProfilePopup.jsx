@@ -12,6 +12,7 @@ export default function ProfilePopup({ onClose }) {
   const [confirmPw, setConfirmPw] = useState("");
   const [loading, setLoading]     = useState(false);
   const [msg, setMsg]             = useState({ text: "", type: "" });
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const popupRef = useRef(null);
 
@@ -35,7 +36,6 @@ export default function ProfilePopup({ onClose }) {
     setLoading(true);
     try {
       const res = await API.put("/auth/update-profile", { name: name.trim(), email: email.trim() });
-      // Update localStorage
       const updated = { ...user, name: res.data.user.name, email: res.data.user.email };
       localStorage.setItem("user", JSON.stringify(updated));
       showMsg("Profile updated successfully!");
@@ -146,12 +146,34 @@ export default function ProfilePopup({ onClose }) {
 
         {/* ── Footer ── */}
         <div className="pp-footer">
-          <button className="pp-logout-btn" onClick={handleLogout}>
+          <button className="pp-logout-btn" onClick={() => setShowLogoutConfirm(true)}>
             <span className="pp-logout-icon">↩</span>
             Log Out
           </button>
         </div>
       </div>
+
+      {/* ── Logout Confirmation Modal ── */}
+      {showLogoutConfirm && (
+        <>
+          <div className="lc-overlay" />
+          <div className="lc-modal">
+            <div className="lc-icon-wrap">
+              <span className="lc-icon">↩</span>
+            </div>
+            <h3 className="lc-title">Logging out?</h3>
+            <p className="lc-desc">You'll need to sign in again to access your account.</p>
+            <div className="lc-actions">
+              <button className="lc-btn-cancel" onClick={() => setShowLogoutConfirm(false)}>
+                Stay
+              </button>
+              <button className="lc-btn-confirm" onClick={handleLogout}>
+                Yes, Log Out
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 }
@@ -243,6 +265,7 @@ const styles = `
     font-family: 'DM Sans', sans-serif; font-size: 13px; color: #0e0c0a;
     background: #faf7f2; outline: none;
     transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
   }
   .pp-input:focus { border-color: #c9a84c; box-shadow: 0 0 0 3px rgba(201,168,76,0.1); }
   .pp-input::placeholder { color: #bbb4a8; }
@@ -280,4 +303,76 @@ const styles = `
   }
   .pp-logout-btn:hover { background: rgba(184,92,92,0.06); border-color: #b85c5c; }
   .pp-logout-icon { font-size: 14px; }
+
+  /* ── Logout Confirmation Modal ── */
+  .lc-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(14,12,10,0.45);
+    backdrop-filter: blur(4px);
+    animation: lcFadeIn 0.2s ease both;
+  }
+  @keyframes lcFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  .lc-modal {
+    position: fixed; z-index: 1001;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    background: #ffffff;
+    border-radius: 18px;
+    border: 1px solid rgba(201,168,76,0.18);
+    box-shadow: 0 24px 64px rgba(14,12,10,0.22), 0 4px 16px rgba(14,12,10,0.1);
+    padding: 28px 24px 22px;
+    text-align: center;
+    font-family: 'DM Sans', sans-serif;
+    animation: lcPopIn 0.25s cubic-bezier(0.34,1.3,0.64,1) both;
+  }
+  @keyframes lcPopIn {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
+    to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  }
+  .lc-icon-wrap {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: rgba(184,92,92,0.08);
+    border: 1.5px solid rgba(184,92,92,0.2);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+  }
+  .lc-icon {
+    font-size: 22px; color: #b85c5c;
+    display: inline-block;
+  }
+  .lc-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.25rem; font-weight: 600;
+    color: #0e0c0a; margin: 0 0 8px;
+    letter-spacing: 0.01em;
+  }
+  .lc-desc {
+    font-size: 12.5px; color: #7a7265;
+    margin: 0 0 22px; line-height: 1.5;
+  }
+  .lc-actions {
+    display: flex; gap: 10px;
+  }
+  .lc-btn-cancel {
+    flex: 1; padding: 10px;
+    background: #faf7f2;
+    border: 1px solid rgba(201,168,76,0.22);
+    border-radius: 8px; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 13px;
+    font-weight: 500; color: #0e0c0a;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .lc-btn-cancel:hover { background: #f0ece4; border-color: rgba(201,168,76,0.4); }
+  .lc-btn-confirm {
+    flex: 1; padding: 10px;
+    background: #b85c5c; color: #ffffff;
+    border: none; border-radius: 8px; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .lc-btn-confirm:hover { background: #a04a4a; transform: scale(1.02); }
 `;
