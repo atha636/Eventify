@@ -269,7 +269,7 @@ export default function Home() {
         {/* ── SERVICES ── */}
         <section className="hm-section" ref={servicesRef}>
           <div className={`hm-section-header hm-reveal ${servicesVisible ? "hm-revealed" : ""}`}>
-            <p className="hm-eyebrow"><Logo /> What we offer</p>
+            <p className="hm-eyebrow"> What we offer</p>
             <h2 className="hm-section-title">Browse by Service</h2>
             <p className="hm-section-sub">Hand-picked professionals for every kind of celebration</p>
           </div>
@@ -301,7 +301,7 @@ export default function Home() {
         <section className="hm-how" ref={howRef}>
           <div className="hm-how-inner">
             <div className={`hm-section-header hm-reveal ${howVisible ? "hm-revealed" : ""}`}>
-              <p className="hm-eyebrow" style={{ color: "var(--gold-light)" }}><Logo /> Simple process</p>
+              <p className="hm-eyebrow" style={{ color: "var(--gold-light)" }}> Simple process</p>
               <h2 className="hm-section-title" style={{ color: "var(--cream)" }}>How Evencers works</h2>
             </div>
             <div className="hm-steps">
@@ -328,7 +328,7 @@ export default function Home() {
         {/* ── TESTIMONIALS ── */}
         <section className="hm-section" ref={testRef}>
           <div className={`hm-section-header hm-reveal ${testVisible ? "hm-revealed" : ""}`}>
-            <p className="hm-eyebrow"><Logo />Client stories</p>
+            <p className="hm-eyebrow">Client stories</p>
             <h2 className="hm-section-title">Loved by thousands</h2>
           </div>
           <div className="hm-testimonials">
@@ -357,7 +357,7 @@ export default function Home() {
           <div className="hm-cta-orb hm-cta-orb1" />
           <div className="hm-cta-orb hm-cta-orb2" />
           <div className={`hm-cta-inner hm-reveal ${ctaVisible ? "hm-revealed" : ""}`}>
-            <p className="hm-eyebrow" style={{ color: "var(--gold)" }}><Logo /> Ready to begin?</p>
+            <p className="hm-eyebrow" style={{ color: "var(--gold)" }}> Ready to begin?</p>
             <h2 className="hm-cta-title">Your dream event starts here.</h2>
             <p className="hm-cta-sub">Join over 12,000 clients who planned their perfect day with Evencers.</p>
             <div className="hm-cta-btns">

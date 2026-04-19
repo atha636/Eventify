@@ -143,7 +143,7 @@ export default function VendorDetail() {
               <button className="vd-modal-login" onClick={() => navigate("/login", { state: { from: `/vendor/${id}` } })}>Sign In</button>
               <button className="vd-modal-register" onClick={() => navigate("/register", { state: { from: `/vendor/${id}` } })}>Create Account →</button>
             </div>
-            <p className="vd-modal-note"><Logo /> Free to join · No credit card required</p>
+            <p className="vd-modal-note">Free to join · No credit card required</p>
           </div>
         </div>
       )}
@@ -262,7 +262,7 @@ export default function VendorDetail() {
                   )}
                 </button>
 
-                <p className="vd-note"><Logo />No payment now · Vendor confirms first · Then pay securely</p>
+                <p className="vd-note">No payment now · Vendor confirms first · Then pay securely</p>
               </div>
             )}
 
