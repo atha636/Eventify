@@ -37,7 +37,8 @@ app.use(
 const allowedOrigins = [
   "http://localhost:5173",
   "https://eventfiy.vercel.app",
-  // add more production domains here
+  "https://evencers.com",
+  "https://www.evencers.com"
 ];
 
 app.use(
