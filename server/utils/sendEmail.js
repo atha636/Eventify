@@ -1,25 +1,12 @@
 
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-const transporter = nodemailer.createTransport({
-  host: "74.125.133.108",  // Gmail SMTP hardcoded IPv4 — bypasses IPv6 DNS
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  tls: {
-    servername: "smtp.gmail.com", // Required when using IP instead of hostname
-  },
-});
-
-const sendEmail = async ({ to, subject, text, html }) => {
-  await transporter.sendMail({
-    from: `"Evencers" <${process.env.EMAIL_USER}>`,
+const sendEmail = async ({ to, subject, html }) => {
+  await resend.emails.send({
+    from: "Evencers <onboarding@resend.dev>",
     to,
     subject,
-    text,
     html,
   });
 };
