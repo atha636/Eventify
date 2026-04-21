@@ -34,10 +34,8 @@ export default function Navbar() {
   const user  = JSON.parse(localStorage.getItem("user") || "null");
   const isUser   = user?.role === "user";
   const isVendor = user?.role === "vendor";
-  // Both users and vendors receive notifications
   const canReceiveNotifs = isUser || isVendor;
 
-  // ── Fetch unread count on mount (users + vendors) ─────────────────
   useEffect(() => {
     if (!token || !canReceiveNotifs) return;
     const fetchCount = async () => {
@@ -47,7 +45,6 @@ export default function Navbar() {
       } catch {}
     };
     fetchCount();
-    // Poll every 30 seconds for new notifications
     const interval = setInterval(fetchCount, 30000);
     return () => clearInterval(interval);
   }, [token, canReceiveNotifs]);
@@ -74,7 +71,6 @@ export default function Navbar() {
 
   const initial = (user?.name || "U").charAt(0).toUpperCase();
 
-  // Shared bell button component logic
   const BellButton = ({ onClick }) => (
     <button
       className="nb-bell-btn"
@@ -98,15 +94,16 @@ export default function Navbar() {
 
           {/* LOGO */}
           <div className="nb-logo" onClick={handleLogoClick}>
-  <img src={logo} className="nb-logo-img" />
-  <span className="nb-logo-text">EVENCERS</span>
-</div>
+            <img src={logo} className="nb-logo-img" />
+            <span className="nb-logo-text">EVENCERS</span>
+          </div>
 
           {/* DESKTOP LINKS */}
           <div className="nb-links">
             <Link to="/" className={`nb-link ${isActive("/") ? "nb-link-active" : ""}`}>Home</Link>
             <Link to="/category/decor" className={`nb-link ${location.pathname.startsWith("/category") ? "nb-link-active" : ""}`}>Services</Link>
             <Link to="/vendors" className={`nb-link ${isActive("/vendors") ? "nb-link-active" : ""}`}>Vendors</Link>
+            <Link to="/about" className={`nb-link ${isActive("/about") ? "nb-link-active" : ""}`}>About Us</Link>
           </div>
 
           {/* ACTIONS */}
@@ -117,8 +114,6 @@ export default function Navbar() {
                 {isVendor && (
                   <>
                     <Link to="/vendor-dashboard" className="nb-ghost-btn">Dashboard</Link>
-
-                    {/* VENDOR NOTIFICATION BELL */}
                     <BellButton onClick={() => { setNotifOpen(o => !o); setProfileOpen(false); }} />
                   </>
                 )}
@@ -134,13 +129,11 @@ export default function Navbar() {
                       {isActive("/favourites") ? "♥" : "♡"}
                     </Link>
                     <Link to="/my-bookings" className="nb-ghost-btn">My Bookings</Link>
-
-                    {/* USER NOTIFICATION BELL */}
                     <BellButton onClick={() => { setNotifOpen(o => !o); setProfileOpen(false); }} />
                   </>
                 )}
 
-                {/* PROFILE AVATAR — both roles */}
+                {/* PROFILE AVATAR */}
                 <button
                   className="nb-avatar-btn"
                   onClick={() => { setProfileOpen(o => !o); setNotifOpen(false); }}
@@ -173,6 +166,7 @@ export default function Navbar() {
             <Link to="/" className="nb-mobile-link">Home</Link>
             <Link to="/category/decor" className="nb-mobile-link">Services</Link>
             <Link to="/vendors" className="nb-mobile-link">Vendors</Link>
+            <Link to="/about" className="nb-mobile-link">About Us</Link>
           </div>
           <div className="nb-mobile-divider" />
           <div className="nb-mobile-actions">
@@ -229,7 +223,7 @@ export default function Navbar() {
       {/* ── PROFILE POPUP ── */}
       {profileOpen && <ProfilePopup onClose={() => setProfileOpen(false)} />}
 
-      {/* ── NOTIFICATION PANEL (users + vendors) ── */}
+      {/* ── NOTIFICATION PANEL ── */}
       {notifOpen && (
         <NotificationPanel
           onClose={() => setNotifOpen(false)}
@@ -307,12 +301,12 @@ const styles = `
 
   .nb-inner { display:flex; align-items:center; justify-content:space-between; max-width:1200px; margin:0 auto; padding:0 36px; height:var(--nb-height); }
 
-  .nb-logo { display:flex; align-items:center; gap:8px; flex-shrink:0; text-decoration:none; user-select:none; }
+  .nb-logo { display:flex; align-items:center; gap:8px; flex-shrink:0; text-decoration:none; user-select:none; cursor:pointer; }
   .nb-logo-mark { font-size:0.95rem; transition:color 0.3s,transform 0.4s ease; display:inline-block; }
   .nb-logo:hover .nb-logo-mark { transform:rotate(45deg) scale(1.1); color:var(--gold)!important; }
   .nb-logo-text { font-family:'Cormorant Garamond',serif; font-size:1.35rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; transition:color 0.3s; }
 
-  .nb-links { display:flex; align-items:center; gap:36px; }
+  .nb-links { display:flex; align-items:center; gap:32px; }
   .nb-link { text-decoration:none; font-size:12.5px; font-weight:400; letter-spacing:0.06em; text-transform:uppercase; transition:color 0.2s; position:relative; padding-bottom:3px; }
   .nb-link::after { content:''; position:absolute; bottom:-1px; left:0; width:0; height:1px; background:var(--gold); transition:width 0.28s cubic-bezier(0.4,0,0.2,1); }
   .nb-link:hover::after,.nb-link-active::after { width:100%; }
@@ -325,26 +319,11 @@ const styles = `
   .nb-heart-btn:hover { transform:scale(1.15); background:rgba(192,68,90,0.08); }
   .nb-heart-btn.nb-heart-active { animation:heartPop 0.35s ease; }
 
-  /* ── BELL BUTTON ── */
-  .nb-bell-btn {
-    position:relative; width:34px; height:34px; border-radius:50%;
-    background:none; border:none; cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
-    font-size:16px; transition:transform 0.2s,background 0.2s;
-  }
+  .nb-bell-btn { position:relative; width:34px; height:34px; border-radius:50%; background:none; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:transform 0.2s,background 0.2s; }
   .nb-bell-btn:hover { transform:scale(1.12); background:var(--gold-glow); }
   .nb-bell-btn:hover .nb-bell-icon { animation:nbBellRing 0.4s ease; }
   .nb-bell-icon { display:inline-block; }
-  .nb-bell-badge {
-    position:absolute; top:0; right:0;
-    min-width:16px; height:16px; border-radius:8px;
-    background:#e03c3c; color:#fff;
-    font-size:9px; font-weight:700; font-family:'DM Sans',sans-serif;
-    display:flex; align-items:center; justify-content:center;
-    padding:0 3px;
-    border:1.5px solid var(--white);
-    animation:nbBadgePop 0.3s cubic-bezier(0.34,1.6,0.64,1) both;
-  }
+  .nb-bell-badge { position:absolute; top:0; right:0; min-width:16px; height:16px; border-radius:8px; background:#e03c3c; color:#fff; font-size:9px; font-weight:700; font-family:'DM Sans',sans-serif; display:flex; align-items:center; justify-content:center; padding:0 3px; border:1.5px solid var(--white); animation:nbBadgePop 0.3s cubic-bezier(0.34,1.6,0.64,1) both; }
 
   .nb-solid-btn { text-decoration:none; font-family:'DM Sans',sans-serif; font-size:12.5px; font-weight:500; letter-spacing:0.04em; padding:9px 20px; border-radius:6px; cursor:pointer; transition:background 0.22s ease,color 0.22s ease,border-color 0.22s ease,transform 0.18s ease,box-shadow 0.22s ease; display:inline-block; }
   .nb-solid-btn:hover { transform:translateY(-1px); box-shadow:0 4px 18px rgba(201,168,76,0.22); }
@@ -363,7 +342,7 @@ const styles = `
   .nb-burger.open span:nth-child(3) { width:22px; transform:translateY(-6.5px) rotate(-45deg); }
 
   .nb-mobile-menu { display:none; flex-direction:column; overflow:hidden; max-height:0; transition:max-height 0.38s cubic-bezier(0.4,0,0.2,1); background:var(--white); border-top:1px solid var(--border); }
-  .nb-mobile-menu.open { max-height:560px; }
+  .nb-mobile-menu.open { max-height:600px; }
   .nb-mobile-menu.nb-mobile-dark { background:rgba(11,9,7,0.97); backdrop-filter:blur(16px); border-top:1px solid rgba(201,168,76,0.12); }
   .nb-mobile-menu.nb-mobile-dark .nb-mobile-link { color:rgba(245,240,232,0.75); }
   .nb-mobile-menu.nb-mobile-dark .nb-mobile-link:hover { color:var(--gold); background:rgba(201,168,76,0.06); }
@@ -389,16 +368,6 @@ const styles = `
   @keyframes nbBellRing{0%,100%{transform:rotate(0)}20%{transform:rotate(-18deg)}40%{transform:rotate(16deg)}60%{transform:rotate(-12deg)}80%{transform:rotate(8deg)}}
   @keyframes nbBadgePop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
 
-  .nb-logo-img {
-  width: 42px;
-  height: 42px;
-  object-fit: contain;
-  border-radius: 50%; /* keeps it perfectly circular */
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.nb-logo-img:hover {
-  transform: scale(1.08);
-  box-shadow: 0 0 12px rgba(201,168,76,0.4);
-}
+  .nb-logo-img { width:42px; height:42px; object-fit:contain; border-radius:50%; transition:transform 0.3s ease,box-shadow 0.3s ease; }
+  .nb-logo-img:hover { transform:scale(1.08); box-shadow:0 0 12px rgba(201,168,76,0.4); }
 `;

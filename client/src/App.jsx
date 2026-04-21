@@ -16,6 +16,7 @@ import Favorites          from "./pages/Favorites";
 import CustomerCareClient from "./pages/CustomerCareClient";
 import CustomerCareVendor from "./pages/CustomerCareVendor";
 import PaymentSuccess     from "./pages/PaymentSuccess";
+import AboutUs            from "./pages/AboutUs";
 
 // ── Resource pages ──────────────────────────────────────────────────
 import VendorHandbook   from "./pages/resources/VendorHandbook";
@@ -40,6 +41,8 @@ export default function App() {
         <Route path="/vendor/:id"              element={<VendorDetail />} />
         <Route path="/vendor/:id/gallery"      element={<ServiceGallery />} />
         <Route path="/vendors"                 element={<Vendors />} />
+        <Route path="/about"                   element={<AboutUs />} />
+
 
         {/* ── Vendor ── */}
         <Route path="/vendor-dashboard"        element={<VendorDashboard />} />
