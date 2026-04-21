@@ -117,9 +117,9 @@ export default function AboutUs() {
         <section className="au-stats-section" ref={statsRef}>
           <div className="au-stats-grid">
             {[
-              { num: "12", suffix: "K+", label: "Happy Clients", sub: "across India" },
-              { num: "850", suffix: "+", label: "Verified Vendors", sub: "manually screened" },
-              { num: "50", suffix: "+", label: "Cities", sub: "and growing" },
+              { num: "1", suffix: "K+", label: "Happy Clients", sub: "across India" },
+              { num: "150", suffix: "+", label: "Verified Vendors", sub: "manually screened" },
+              { num: "10", suffix: "+", label: "Cities", sub: "and growing" },
               { num: "4", suffix: ".9★", label: "Average Rating", sub: "from real clients" },
             ].map((s, i) => (
               <div
@@ -144,7 +144,7 @@ export default function AboutUs() {
               <p className="au-eyebrow">Our Mission</p>
               <h2 className="au-section-title">Making magic <em>accessible</em></h2>
               <p className="au-body-text">
-                In 2023, our founders tried planning a corporate event in Delhi. What should have taken a weekend ended up taking three weeks — calling vendors, chasing confirmations, getting ghosted, and settling for mediocre options.
+                In 2026, our founders tried planning a corporate event in Delhi. What should have taken a weekend ended up taking three weeks — calling vendors, chasing confirmations, getting ghosted, and settling for mediocre options.
               </p>
               <p className="au-body-text">
                 We built Evencers so that no one ever has to experience that again. Our platform connects clients with India's finest verified event professionals — from decorators and photographers to caterers and musicians — all in one seamless experience.
@@ -213,7 +213,7 @@ export default function AboutUs() {
                   "Free listing with verified badge",
                   "Instant booking notifications",
                   "Dashboard to manage all inquiries",
-                  "Zero commission on your first 10 bookings",
+                  "minimum commission on your first 10 bookings",
                   "Dedicated vendor support team",
                 ].map((perk, i) => (
                   <li key={i} className="au-vendor-perk">
@@ -276,7 +276,7 @@ export default function AboutUs() {
             <p className="au-eyebrow" style={{ color: "var(--gold)" }}>Ready to begin?</p>
             <h2 className="au-cta-title">Your next great event starts here.</h2>
             <p className="au-cta-sub">
-              Join over 12,000 clients who planned their perfect day with Evencers.
+              Join over 1000 clients who planned their perfect day with Evencers.
             </p>
             <div className="au-cta-btns">
               <button className="au-btn-primary au-btn-lg" onClick={() => navigate("/register")}>
