@@ -2,3 +2,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://evencers.com/sitemap.xml
+# updated
