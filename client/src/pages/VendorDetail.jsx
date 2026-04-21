@@ -1,13 +1,161 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
-import DatePicker from "react-datepicker";
 import BookingDetailsModal from "../components/BookingDetailsModal";
 import BookingWaitModal from "../components/BookingWaitModal";
-import "react-datepicker/dist/react-datepicker.css";
 import Logo from "../components/Logo";
 
+// ── Compact Custom Calendar ───────────────────────────────────────────────────
+function CustomDatePicker({ value, onChange, hasError }) {
+  const [open, setOpen]             = useState(false);
+  const [viewYear, setViewYear]     = useState(() => new Date().getFullYear());
+  const [viewMonth, setViewMonth]   = useState(() => new Date().getMonth());
+  const [showYearGrid, setShowYearGrid] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const today   = new Date(); today.setHours(0,0,0,0);
+  const minDate = new Date(today.getTime() + 86400000);
+  const selected = value ? new Date(value + "T00:00:00") : null;
+
+  const MONTHS = ["January","February","March","April","May","June",
+                  "July","August","September","October","November","December"];
+  const DAYS   = ["Su","Mo","Tu","We","Th","Fr","Sa"];
+
+  const firstDay    = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const daysInPrev  = new Date(viewYear, viewMonth, 0).getDate();
+
+  const cells = [];
+  for (let i = firstDay - 1; i >= 0; i--)
+    cells.push({ day: daysInPrev - i, type: "prev" });
+  for (let i = 1; i <= daysInMonth; i++)
+    cells.push({ day: i, type: "cur" });
+  const remaining = 42 - cells.length;
+  for (let i = 1; i <= remaining; i++)
+    cells.push({ day: i, type: "next" });
+
+  const handleDayClick = (cell) => {
+    if (cell.type !== "cur") return;
+    const d = new Date(viewYear, viewMonth, cell.day);
+    if (d < minDate) return;
+    const iso = `${viewYear}-${String(viewMonth+1).padStart(2,"0")}-${String(cell.day).padStart(2,"0")}`;
+    onChange(iso);
+    setOpen(false);
+  };
+
+  const prevMonth = () => {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y-1); }
+    else setViewMonth(m => m-1);
+  };
+  const nextMonth = () => {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y+1); }
+    else setViewMonth(m => m+1);
+  };
+
+  const isDisabled = (cell) => {
+    if (cell.type !== "cur") return true;
+    return new Date(viewYear, viewMonth, cell.day) < minDate;
+  };
+  const isSelected = (cell) => {
+    if (!selected || cell.type !== "cur") return false;
+    return selected.getFullYear() === viewYear &&
+           selected.getMonth()    === viewMonth &&
+           selected.getDate()     === cell.day;
+  };
+  const isToday = (cell) => {
+    if (cell.type !== "cur") return false;
+    return today.getFullYear() === viewYear &&
+           today.getMonth()    === viewMonth &&
+           today.getDate()     === cell.day;
+  };
+
+  const displayValue = selected
+    ? selected.toLocaleDateString("en-IN", { day:"2-digit", month:"long", year:"numeric" })
+    : "Select your event date";
+
+  const yearBase = Math.floor(viewYear / 12) * 12;
+  const years    = Array.from({length:12}, (_,i) => yearBase + i);
+
+  return (
+    <div className="cdp-root" ref={ref}>
+      <button
+        type="button"
+        className={`cdp-trigger ${hasError ? "error" : ""} ${open ? "open" : ""}`}
+        onClick={() => setOpen(o => !o)}
+      >
+        <span className="cdp-icon">🗓</span>
+        <span className={`cdp-val ${!selected ? "placeholder" : ""}`}>{displayValue}</span>
+        <span className="cdp-arrow">{open ? "▲" : "▼"}</span>
+      </button>
+
+      {open && (
+        <div className="cdp-pop">
+          {/* Header */}
+          <div className="cdp-header">
+            <button className="cdp-nav" onClick={prevMonth}>‹</button>
+            <button className="cdp-month-btn" onClick={() => setShowYearGrid(g => !g)}>
+              {MONTHS[viewMonth].slice(0,3)} {viewYear}
+              <span className="cdp-chevron">{showYearGrid ? "▲" : "▼"}</span>
+            </button>
+            <button className="cdp-nav" onClick={nextMonth}>›</button>
+          </div>
+
+          {showYearGrid ? (
+            <div className="cdp-year-grid">
+              <div className="cdp-yr-nav-row">
+                <button className="cdp-yr-nav" onClick={() => setViewYear(y => y-12)}>‹</button>
+                <span className="cdp-yr-range">{yearBase}–{yearBase+11}</span>
+                <button className="cdp-yr-nav" onClick={() => setViewYear(y => y+12)}>›</button>
+              </div>
+              <div className="cdp-yr-cells">
+                {years.map(y => (
+                  <button
+                    key={y}
+                    className={`cdp-yr-cell ${y === viewYear ? "active" : ""}`}
+                    onClick={() => { setViewYear(y); setShowYearGrid(false); }}
+                  >{y}</button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="cdp-daynames">
+                {DAYS.map(d => <span key={d}>{d}</span>)}
+              </div>
+              <div className="cdp-grid">
+                {cells.map((cell, idx) => (
+                  <button
+                    key={idx}
+                    className={[
+                      "cdp-cell",
+                      cell.type !== "cur" ? "other"    : "",
+                      isDisabled(cell)    ? "disabled" : "",
+                      isSelected(cell)    ? "selected" : "",
+                      isToday(cell)       ? "today"    : "",
+                    ].filter(Boolean).join(" ")}
+                    onClick={() => handleDayClick(cell)}
+                    disabled={isDisabled(cell)}
+                  >
+                    {cell.day}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Main Component ────────────────────────────────────────────────────────────
 export default function VendorDetail() {
   const { id } = useParams();
   const [vendor, setVendor] = useState(null);
@@ -25,46 +173,32 @@ export default function VendorDetail() {
   const user    = JSON.parse(localStorage.getItem("user"));
   const isVendor = user?.role === "vendor";
 
-  // ── Fetch vendor — AbortController prevents double-call in StrictMode ──
   useEffect(() => {
     const controller = new AbortController();
-
     API.get(`/vendors/single/${id}`, { signal: controller.signal })
       .then((res) => {
         setVendor(res.data);
         if (res.data?.packages?.length > 0) setSelectedPackage(0);
       })
       .catch((err) => {
-        // Ignore abort errors — they're intentional (StrictMode cleanup)
-        if (err.name !== "CanceledError" && err.code !== "ERR_CANCELED") {
+        if (err.name !== "CanceledError" && err.code !== "ERR_CANCELED")
           console.error("Failed to load vendor:", err);
-        }
       });
-
-    // Cleanup: cancel in-flight request when component unmounts or id changes
     return () => controller.abort();
-  }, [id]); // ← only re-fetch if the vendor id changes
+  }, [id]);
 
-  // ── STEP 1: Validate → open details form ────────────────────────
   const handleReserveClick = () => {
     if (isVendor) { setShowVendorModal(true); return; }
-
     const token = localStorage.getItem("token");
-    if (!token) { setShowLoginModal(true); return; }
-
-    if (!selectedDate) {
-      setDateWarning("Please select a date to continue.");
-      return;
-    }
+    if (!token)  { setShowLoginModal(true);  return; }
+    if (!selectedDate) { setDateWarning("Please select a date to continue."); return; }
     const picked = new Date(selectedDate);
-    if (isNaN(picked.getTime()))        { setDateWarning("Please select a valid date."); return; }
-    if (picked.getFullYear() > 2100)    { setDateWarning("Please select a realistic date."); return; }
-
+    if (isNaN(picked.getTime()))     { setDateWarning("Please select a valid date."); return; }
+    if (picked.getFullYear() > 2100) { setDateWarning("Please select a realistic date."); return; }
     setDateWarning("");
     setShowDetailsModal(true);
   };
 
-  // ── STEP 2: Submit booking ───────────────────────────────────────
   const handleDetailsConfirm = async (userDetails) => {
     const token = localStorage.getItem("token");
     setLoading(true);
@@ -80,7 +214,6 @@ export default function VendorDetail() {
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
       setShowDetailsModal(false);
       setShowWaitModal(true);
     } catch (err) {
@@ -114,15 +247,12 @@ export default function VendorDetail() {
 
       {showDetailsModal && pkg && (
         <BookingDetailsModal
-          pkg={pkg}
-          vendor={vendor}
-          date={selectedDate}
+          pkg={pkg} vendor={vendor} date={selectedDate}
           onConfirm={handleDetailsConfirm}
           onClose={() => setShowDetailsModal(false)}
           loading={loading}
         />
       )}
-
       {showWaitModal && (
         <BookingWaitModal
           vendor={vendor}
@@ -130,6 +260,7 @@ export default function VendorDetail() {
         />
       )}
 
+      {/* Login modal */}
       {showLoginModal && (
         <div className="vd-modal-backdrop" onClick={() => setShowLoginModal(false)}>
           <div className="vd-modal" onClick={(e) => e.stopPropagation()}>
@@ -148,6 +279,7 @@ export default function VendorDetail() {
         </div>
       )}
 
+      {/* Vendor modal */}
       {showVendorModal && (
         <div className="vd-modal-backdrop" onClick={() => setShowVendorModal(false)}>
           <div className="vd-modal" onClick={(e) => e.stopPropagation()}>
@@ -167,6 +299,7 @@ export default function VendorDetail() {
       )}
 
       <div className="vd-root">
+        {/* Hero */}
         <div className="vd-hero">
           <img src={vendor.images?.[0] || "/placeholder.jpg"} alt={vendor.title} className="vd-hero-img" />
           <div className="vd-hero-overlay" />
@@ -174,14 +307,25 @@ export default function VendorDetail() {
             <span className="vd-tag">📍 {vendor.location}</span>
             <h1 className="vd-title">{vendor.title}</h1>
             <div className="vd-badge-row">
-              <span className="vd-badge"><Logo /> Premium Vendor</span>
-              <span className="vd-badge"><Logo /> Verified</span>
-              <span className="vd-badge"><Logo /> {vendor.packages?.length} Packages</span>
+              <span className="vd-badge">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                Premium Vendor
+              </span>
+              <span className="vd-badge">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                Verified
+              </span>
+              <span className="vd-badge">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                {vendor.packages?.length} {vendor.packages?.length === 1 ? "Package" : "Packages"}
+              </span>
             </div>
           </div>
         </div>
 
+        {/* Body */}
         <div className="vd-body">
+          {/* Sidebar */}
           <aside className="vd-sidebar">
             <h2 className="vd-section-label">Choose a Package</h2>
             <div className="vd-pkg-list">
@@ -204,6 +348,7 @@ export default function VendorDetail() {
             </div>
           </aside>
 
+          {/* Main */}
           <main className="vd-main">
             {pkg && (
               <div className="vd-booking-panel">
@@ -221,26 +366,14 @@ export default function VendorDetail() {
 
                 <div className="vd-divider" />
 
+                {/* Calendar */}
                 <div className="vd-date-section">
                   <label className="vd-label">Select Your Date</label>
-                  <div className={`vd-date-wrapper ${dateWarning ? "date-error" : ""}`}>
-                    <span className="vd-date-icon">🗓</span>
-                    <DatePicker
-                      selected={selectedDate ? new Date(selectedDate) : null}
-                      onChange={(date) => {
-                        setSelectedDate(date.toISOString().split("T")[0]);
-                        setDateWarning("");
-                      }}
-                      minDate={new Date(Date.now() + 86400000)}
-                      placeholderText="Select your event date"
-                      className="vd-date-input"
-                      dateFormat="dd MMMM yyyy"
-                      showMonthDropdown showYearDropdown
-                      scrollableYearDropdown yearDropdownItemNumber={10}
-                      dropdownMode="scroll"
-                      portalId="root"
-                    />
-                  </div>
+                  <CustomDatePicker
+                    value={selectedDate}
+                    onChange={(iso) => { setSelectedDate(iso); setDateWarning(""); }}
+                    hasError={!!dateWarning}
+                  />
                   {dateWarning && (
                     <p className="vd-date-warning">
                       <span className="vd-warn-icon">⚠</span> {dateWarning}
@@ -285,6 +418,7 @@ export default function VendorDetail() {
   );
 }
 
+// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap');
 
@@ -299,6 +433,7 @@ const styles = `
 
   .vd-root { font-family:'DM Sans',sans-serif; background:var(--cream); min-height:100vh; color:var(--ink); }
 
+  /* ── Modals ── */
   .vd-modal-backdrop { position:fixed; inset:0; background:rgba(14,12,10,0.6); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:999; animation:fadeIn 0.2s ease both; padding:20px; }
   .vd-modal { background:var(--white); border-radius:16px; padding:44px 40px 36px; max-width:420px; width:100%; text-align:center; animation:modalUp 0.28s cubic-bezier(0.34,1.4,0.64,1) both; border:1px solid var(--border); box-shadow:0 24px 64px rgba(14,12,10,0.18); }
   .vd-modal-icon-ring { width:60px; height:60px; background:linear-gradient(135deg,rgba(201,168,76,0.15),rgba(201,168,76,0.05)); border:1.5px solid var(--border); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.5rem; color:var(--gold); margin:0 auto 20px; }
@@ -315,6 +450,7 @@ const styles = `
   .vd-modal-register:hover { background:var(--gold); color:var(--ink); transform:translateY(-1px); }
   .vd-modal-note { font-size:11px; color:var(--muted); margin-top:18px; letter-spacing:0.05em; }
 
+  /* ── Hero ── */
   .vd-hero { position:relative; height:520px; overflow:hidden; }
   .vd-hero-img { width:100%; height:100%; object-fit:cover; display:block; transform:scale(1.03); transition:transform 8s ease; }
   .vd-hero:hover .vd-hero-img { transform:scale(1); }
@@ -322,11 +458,26 @@ const styles = `
   .vd-hero-content { position:absolute; bottom:0; left:0; right:0; padding:48px 56px; animation:fadeUp 0.7s ease both; }
   .vd-tag { font-size:12px; font-weight:500; letter-spacing:0.15em; text-transform:uppercase; color:var(--gold-light); display:block; margin-bottom:12px; }
   .vd-title { font-family:'Cormorant Garamond',serif; font-size:clamp(2.4rem,5vw,3.6rem); font-weight:300; color:var(--white); line-height:1.1; margin:0 0 20px; }
-  .vd-badge-row { display:flex; gap:16px; flex-wrap:wrap; }
-  .vd-badge { font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold); border:1px solid var(--gold); padding:5px 12px; border-radius:2px; backdrop-filter:blur(4px); background:rgba(201,168,76,0.08); }
+  .vd-badge-row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .vd-badge { display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold); border:1px solid rgba(201,168,76,0.5); padding:6px 14px; border-radius:20px; backdrop-filter:blur(6px); background:rgba(201,168,76,0.1); transition:background 0.2s, border-color 0.2s; }
+  .vd-badge:hover { background:rgba(201,168,76,0.2); border-color:var(--gold); }
+  .vd-badge svg { flex-shrink:0; }
 
+  /* ── Body layout ── */
   .vd-body { display:grid; grid-template-columns:340px 1fr; gap:0; max-width:1200px; margin:0 auto; padding:48px 32px; align-items:start; }
-  @media(max-width:900px){.vd-body{grid-template-columns:1fr}.vd-hero-content{padding:32px}.vd-modal-actions{flex-direction:column}}
+  @media(max-width:900px){
+    .vd-body { grid-template-columns:1fr; padding:32px 20px; }
+    .vd-hero-content { padding:32px 24px; }
+    .vd-sidebar { padding-right:0; margin-bottom:32px; }
+    .vd-modal-actions { flex-direction:column; }
+    .vd-hero { height:360px; }
+  }
+  @media(max-width:480px){
+    .vd-hero { height:280px; }
+    .vd-body { padding:20px 16px; }
+    .vd-booking-panel { padding:24px 18px; }
+    .vd-modal { padding:32px 24px 28px; }
+  }
 
   .vd-sidebar { padding-right:40px; }
   .vd-section-label { font-size:10px; font-weight:500; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); margin:0 0 20px; }
@@ -337,7 +488,7 @@ const styles = `
   .vd-pkg-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
   .vd-pkg-name { font-family:'Cormorant Garamond',serif; font-size:1.15rem; font-weight:600; color:var(--ink); }
   .vd-pkg-price { font-size:13px; font-weight:500; color:var(--gold); white-space:nowrap; }
-  .vd-pkg-desc { font-size:12.5px; color:var(--muted); line-height:1.5; margin:0; }
+  .vd-pkg-desc { font-size:12.5px; color:var(--muted); line-height:1.5; margin:0; padding-left:0; list-style:none; }
   .vd-pkg-selected-dot { position:absolute; top:0; left:0; width:3px; height:100%; background:var(--gold); border-radius:0 2px 2px 0; }
 
   .vd-main { display:flex; flex-direction:column; gap:40px; }
@@ -348,16 +499,11 @@ const styles = `
   .vd-panel-price { text-align:right; }
   .vd-price-label { display:block; font-size:11px; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:2px; }
   .vd-price-value { font-family:'Cormorant Garamond',serif; font-size:1.8rem; font-weight:600; color:var(--ink); }
-  .vd-panel-desc { font-size:13.5px; color:var(--muted); line-height:1.7; margin:0; }
+  .vd-panel-desc { font-size:13.5px; color:var(--muted); line-height:1.7; margin:0; padding-left:0; list-style:none; }
   .vd-divider { height:1px; background:var(--border); margin:24px 0; }
 
   .vd-date-section { margin-bottom:28px; }
   .vd-label { display:block; font-size:11px; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
-  .vd-date-wrapper { display:flex; align-items:center; gap:12px; border:1px solid var(--border); border-radius:6px; padding:12px 16px; background:var(--surface); transition:border-color 0.2s,background 0.2s; }
-  .vd-date-wrapper:focus-within { border-color:var(--gold); }
-  .vd-date-wrapper.date-error { border-color:var(--danger-border); background:var(--danger-bg); animation:shake 0.35s ease; }
-  .vd-date-icon { font-size:16px; }
-  .vd-date-input { border:none; background:transparent; font-family:'DM Sans',sans-serif; font-size:14px; color:var(--ink); outline:none; width:100%; cursor:pointer; }
   .vd-date-warning { display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--danger); margin:8px 0 0; padding:9px 13px; background:var(--danger-bg); border:1px solid var(--danger-border); border-radius:5px; animation:fadeUp 0.2s ease both; }
   .vd-warn-icon { font-size:13px; flex-shrink:0; }
 
@@ -375,34 +521,135 @@ const styles = `
   .vd-loader { min-height:80vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; color:var(--muted); font-size:13px; letter-spacing:0.1em; }
   .vd-spinner { width:36px; height:36px; border:2px solid var(--border); border-top-color:var(--gold); border-radius:50%; animation:spin 0.9s linear infinite; }
 
-  @keyframes spin { to{transform:rotate(360deg)} }
-  @keyframes fadeUp { from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)} }
-  @keyframes fadeIn { from{opacity:0}to{opacity:1} }
-  @keyframes modalUp { from{opacity:0;transform:translateY(24px) scale(0.96)}to{opacity:1;transform:translateY(0) scale(1)} }
-  @keyframes shake { 0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)} }
+  /* ═══════════════════════════════════════════
+     COMPACT CUSTOM DATE PICKER
+  ═══════════════════════════════════════════ */
+  .cdp-root { position:relative; width:100%; }
 
-  .react-datepicker-wrapper{width:100%}.react-datepicker__input-container{width:100%}
-  .react-datepicker{font-family:'DM Sans',sans-serif;border:1px solid rgba(201,168,76,0.25);border-radius:14px;overflow:hidden;box-shadow:0 12px 48px rgba(14,12,10,0.12);background:#fff}
-  .react-datepicker__header{background:#0e0c0a;border-bottom:1px solid rgba(201,168,76,0.15);padding:18px 0 0;border-radius:0}
-  .react-datepicker__current-month{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:400;font-style:italic;color:#fff;letter-spacing:0.03em;margin-bottom:4px}
-  .react-datepicker__month-read-view--selected-month,.react-datepicker__year-read-view--selected-year{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-style:italic;color:#fff}
-  .react-datepicker__month-read-view--down-arrow,.react-datepicker__year-read-view--down-arrow{border-top-color:#c9a84c;top:4px}
-  .react-datepicker__day-names{background:#0e0c0a;padding:8px 8px 10px;margin:0}
-  .react-datepicker__day-name{font-size:10px;font-weight:500;letter-spacing:0.15em;text-transform:uppercase;color:#c9a84c;width:2rem;line-height:2rem}
-  .react-datepicker__navigation{top:18px}
-  .react-datepicker__navigation-icon::before{border-color:#c9a84c;border-width:1.5px 1.5px 0 0}
-  .react-datepicker__navigation:hover .react-datepicker__navigation-icon::before{border-color:#fff}
-  .react-datepicker__month{padding:10px 8px 14px;margin:0}
-  .react-datepicker__day{font-size:13px;color:#0e0c0a;width:2rem;line-height:2rem;border-radius:50%;transition:background 0.15s,color 0.15s}
-  .react-datepicker__day:hover:not(.react-datepicker__day--disabled){background:#f5f0e8;color:#0e0c0a;border-radius:50%}
-  .react-datepicker__day--selected,.react-datepicker__day--keyboard-selected{background:#c9a84c!important;color:#0e0c0a!important;font-weight:500;border-radius:50%}
-  .react-datepicker__day--today:not(.react-datepicker__day--selected){font-weight:500;color:#c9a84c;background:transparent}
-  .react-datepicker__day--disabled{color:rgba(14,12,10,0.2)!important;cursor:not-allowed}
-  .react-datepicker__day--outside-month{color:rgba(14,12,10,0.18)}
-  .react-datepicker__month-dropdown,.react-datepicker__year-dropdown{background:#fff;border:1px solid rgba(201,168,76,0.25);border-radius:10px;box-shadow:0 10px 36px rgba(14,12,10,0.14);max-height:200px;overflow-y:auto}
-  .react-datepicker__month-option,.react-datepicker__year-option{font-size:13px;color:#0e0c0a;padding:6px 16px;transition:background 0.15s}
-  .react-datepicker__month-option:hover,.react-datepicker__year-option:hover{background:#f5f0e8;color:#c9a84c}
-  .react-datepicker__month-option--selected_month,.react-datepicker__year-option--selected_year{background:rgba(201,168,76,0.12);color:#c9a84c;font-weight:500}
-  .react-datepicker-popper{z-index:9999!important}
-  .react-datepicker__triangle{display:none}
+  /* Trigger */
+  .cdp-trigger {
+    width:100%; display:flex; align-items:center; gap:9px;
+    border:1px solid var(--border); border-radius:6px;
+    padding:11px 14px; background:var(--surface);
+    font-family:'DM Sans',sans-serif; font-size:13px; color:var(--ink);
+    cursor:pointer; transition:border-color 0.2s, box-shadow 0.2s;
+    text-align:left;
+  }
+  .cdp-trigger:hover, .cdp-trigger.open {
+    border-color:var(--gold);
+    box-shadow:0 0 0 3px rgba(201,168,76,0.08);
+  }
+  .cdp-trigger.error { border-color:var(--danger-border); background:var(--danger-bg); animation:shake 0.35s ease; }
+  .cdp-icon  { font-size:14px; flex-shrink:0; line-height:1; }
+  .cdp-val   { flex:1; font-size:13px; }
+  .cdp-val.placeholder { color:var(--muted); }
+  .cdp-arrow { font-size:9px; color:var(--muted); flex-shrink:0; }
+
+  /* Popup — fixed 272 px, repositions on mobile */
+  .cdp-pop {
+    position:absolute; top:calc(100% + 6px); left:0;
+    width:272px;
+    background:var(--white);
+    border:1px solid rgba(201,168,76,0.22);
+    border-radius:12px; overflow:hidden;
+    box-shadow:0 12px 40px rgba(14,12,10,0.16);
+    z-index:9999;
+    animation:cdpDrop 0.18s cubic-bezier(0.34,1.3,0.64,1) both;
+  }
+  @media(max-width:360px){
+    .cdp-pop { width:calc(100vw - 32px); left:0; }
+  }
+
+  /* Header bar */
+  .cdp-header {
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--ink); padding:9px 10px;
+  }
+  .cdp-nav {
+    background:none; border:none; color:var(--gold); font-size:16px;
+    cursor:pointer; width:28px; height:28px; border-radius:4px;
+    display:flex; align-items:center; justify-content:center;
+    transition:background 0.15s; flex-shrink:0; line-height:1;
+  }
+  .cdp-nav:hover { background:rgba(201,168,76,0.15); }
+  .cdp-month-btn {
+    background:none; border:none; cursor:pointer;
+    font-family:'Cormorant Garamond',serif; font-size:0.95rem;
+    font-style:italic; color:var(--white); letter-spacing:0.04em;
+    padding:3px 8px; border-radius:4px;
+    display:flex; align-items:center; gap:5px;
+    transition:background 0.15s;
+  }
+  .cdp-month-btn:hover { background:rgba(201,168,76,0.15); }
+  .cdp-chevron { font-size:8px; color:var(--gold); }
+
+  /* Day-name row */
+  .cdp-daynames {
+    display:grid; grid-template-columns:repeat(7,1fr);
+    background:#1a1714; padding:4px 8px 5px;
+  }
+  .cdp-daynames span {
+    font-size:9px; font-weight:600; letter-spacing:0.1em;
+    text-transform:uppercase; color:var(--gold);
+    text-align:center; line-height:2;
+  }
+
+  /* Day cell grid */
+  .cdp-grid {
+    display:grid; grid-template-columns:repeat(7,1fr);
+    padding:5px 8px 8px; gap:1px;
+  }
+  .cdp-cell {
+    aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+    font-size:11.5px; font-family:'DM Sans',sans-serif;
+    color:var(--ink); background:none; border:none; border-radius:50%;
+    cursor:pointer; transition:background 0.12s, color 0.12s, transform 0.1s;
+    line-height:1;
+  }
+  .cdp-cell:hover:not(.disabled):not(.other) { background:var(--cream); transform:scale(1.1); }
+  .cdp-cell.other    { color:rgba(14,12,10,0.18); cursor:default; }
+  .cdp-cell.disabled { color:rgba(14,12,10,0.18) !important; cursor:not-allowed; }
+  .cdp-cell.today:not(.selected) {
+    color:var(--gold); font-weight:600;
+    box-shadow:inset 0 0 0 1px rgba(201,168,76,0.45);
+  }
+  .cdp-cell.selected {
+    background:var(--gold) !important; color:var(--ink) !important;
+    font-weight:700; box-shadow:0 2px 8px rgba(201,168,76,0.4);
+  }
+
+  /* Year picker */
+  .cdp-year-grid { padding:10px 12px; }
+  .cdp-yr-nav-row {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:8px;
+  }
+  .cdp-yr-range { font-size:11px; color:var(--muted); letter-spacing:0.06em; }
+  .cdp-yr-nav {
+    background:none; border:none; color:var(--gold); font-size:14px;
+    cursor:pointer; width:26px; height:26px; border-radius:4px;
+    display:flex; align-items:center; justify-content:center;
+    transition:background 0.15s;
+  }
+  .cdp-yr-nav:hover { background:var(--surface); }
+  .cdp-yr-cells {
+    display:grid; grid-template-columns:repeat(4,1fr); gap:4px;
+  }
+  .cdp-yr-cell {
+    padding:7px 0; background:none;
+    border:1px solid transparent; border-radius:5px;
+    font-family:'DM Sans',sans-serif; font-size:12px;
+    color:var(--ink); cursor:pointer; text-align:center;
+    transition:all 0.13s;
+  }
+  .cdp-yr-cell:hover  { background:var(--surface); border-color:var(--border); }
+  .cdp-yr-cell.active { background:var(--ink); color:var(--white); border-color:var(--ink); }
+
+  /* Animations */
+  @keyframes spin    { to{transform:rotate(360deg)} }
+  @keyframes fadeUp  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
+  @keyframes modalUp { from{opacity:0;transform:translateY(24px) scale(0.96)} to{opacity:1;transform:translateY(0) scale(1)} }
+  @keyframes shake   { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px)} 40%{transform:translateX(5px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+  @keyframes cdpDrop { from{opacity:0;transform:translateY(-6px) scale(0.97)} to{opacity:1;transform:translateY(0) scale(1)} }
 `;

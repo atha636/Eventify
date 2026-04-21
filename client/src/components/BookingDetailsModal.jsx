@@ -496,7 +496,7 @@ export default function BookingDetailsModal({
           </p>
         )}
 
-        <p className="bdm-note"><Logo /> No payment now · Vendor confirms first</p>
+        <p className="bdm-note"> No payment now · Vendor confirms first</p>
 
         {/* Invisible reCAPTCHA anchor — always rendered, cleared via ref */}
         <div id="recaptcha-container" />
