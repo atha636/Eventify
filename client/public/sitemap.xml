@@ -20,5 +20,11 @@
     <loc>https://evencers.com/login</loc>
     <priority>0.5</priority>
   </url>
+<url>
+  <loc>https://evencers.com/vendors/photographers</loc>
+</url>
 
+<url>
+  <loc>https://evencers.com/vendors/decorators</loc>
+</url>
 </urlset>
