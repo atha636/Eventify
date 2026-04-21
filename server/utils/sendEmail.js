@@ -2,13 +2,15 @@
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
+  host: "74.125.133.108",  // Gmail SMTP hardcoded IPv4 — bypasses IPv6 DNS
   port: 587,
   secure: false,
-  family: 4,          // ← Force IPv4 (fixes Railway ENETUNREACH error)
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
+  },
+  tls: {
+    servername: "smtp.gmail.com", // Required when using IP instead of hostname
   },
 });
 
