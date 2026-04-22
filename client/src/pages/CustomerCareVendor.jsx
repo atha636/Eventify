@@ -179,29 +179,78 @@ const VENDOR_QUICK_CHIPS = [
   "Client raised complaint",
 ];
 
+// FIX: Updated match arrays to include the exact chip text phrases
+// and more flexible keyword fragments so nothing falls through to the fallback.
 const VENDOR_BOT_RESPONSES = [
   {
-    match: ["add service", "list service", "list my service", "create service", "post service"],
+    match: [
+      "how to add a service",
+      "add a service",
+      "add service",
+      "list service",
+      "list my service",
+      "create service",
+      "post service",
+      "new service",
+    ],
     reply: `Adding a service is quick and easy! Here's how:\n\n1️⃣ Go to your **Vendor Dashboard**\n2️⃣ Click **+ Add New Service**\n3️⃣ Fill in service name, description, location\n4️⃣ Upload portfolio photos (up to 20)\n5️⃣ Set your packages & pricing\n6️⃣ Submit for review\n\nYour listing goes live within **24 hours** after our team reviews it! ✅`,
   },
   {
-    match: ["paid", "payment", "payout", "earnings", "money", "when do i get"],
+    match: [
+      "when do i get paid",
+      "paid",
+      "payment",
+      "payout",
+      "earnings",
+      "money",
+      "when do i get",
+    ],
     reply: `Here's how vendor payments work on Evencers:\n\n💰 Payments are released to your bank account **3–5 business days** after the event date\n📊 Track all payouts in your Dashboard under **Earnings**\n🏦 Make sure your bank details are updated in your profile\n\nEvencers deducts a platform fee of **8–12%** before payout. No hidden charges! 🎯`,
   },
   {
-    match: ["approve", "accept booking", "booking request", "confirm booking", "how to approve"],
+    match: [
+      "how to approve bookings",
+      "approve booking",
+      "approve",
+      "accept booking",
+      "booking request",
+      "confirm booking",
+    ],
     reply: `Managing bookings is simple:\n\n1️⃣ You'll get an **email notification** for every new booking\n2️⃣ Go to your **Vendor Dashboard → Bookings**\n3️⃣ Click **✓ Accept** or **✕ Reject** on each request\n\n⏰ Try to respond within **24 hours** — fast responses improve your ranking on Evencers! 📈`,
   },
   {
-    match: ["commission", "fee", "platform fee", "charge", "percent", "cut"],
+    match: [
+      "platform commission",
+      "commission",
+      "fee",
+      "platform fee",
+      "charge",
+      "percent",
+      "cut",
+    ],
     reply: `Evencers has a simple, transparent fee structure:\n\n• **Platform fee:** 8–12% per confirmed booking\n• **Listing:** Completely FREE\n• **No monthly fees** or upfront charges\n\nThe fee covers: payment processing, marketing exposure, and platform support. You only pay when you earn! 💼`,
   },
   {
-    match: ["rank", "ranking", "visibility", "search", "appear", "improve"],
+    match: [
+      "improve my ranking",
+      "rank",
+      "ranking",
+      "visibility",
+      "search result",
+      "appear higher",
+      "improve",
+    ],
     reply: `Here's how to rank higher on Evencers:\n\n⭐ Complete your profile **100%**\n📸 Upload **high-quality** portfolio photos\n⚡ Respond to booking requests **quickly**\n🌟 Collect more **verified client reviews**\n✅ Maintain a **rating above 4.0**\n📅 Keep your availability calendar **updated**\n\nActive vendors with fast response times get featured more prominently! 🚀`,
   },
   {
-    match: ["complaint", "dispute", "false complaint", "client complaint", "review"],
+    match: [
+      "client raised complaint",
+      "complaint",
+      "dispute",
+      "false complaint",
+      "client complaint",
+      "review issue",
+    ],
     reply: `If a client raises a complaint:\n\n1️⃣ You'll be **notified immediately** by email\n2️⃣ You have **48 hours** to provide your response and evidence\n3️⃣ Our support team reviews both sides fairly\n4️⃣ Resolution is communicated to both parties within **72 hours**\n\nFor urgent disputes, email us at **adminevencers2005@gmail.com** with your booking ID 📧`,
   },
   {
@@ -221,7 +270,7 @@ const VENDOR_BOT_RESPONSES = [
     reply: `Accounts may be temporarily suspended for:\n\n❌ Repeated cancellations without notice\n⬇️ Ratings dropping below **3.0**\n🚫 Verified fraudulent activity\n📜 Violation of vendor terms of service\n\nIf you believe your suspension is incorrect, email us at **adminevencers2005@gmail.com** with your account details. We review all cases within 48 hours.`,
   },
   {
-    match: ["hello", "hi", "hey", "hii", "help", "namaste"],
+    match: ["hello", "hi", "hey", "hii", "namaste"],
     reply: `Hello, Partner! 👋 I'm **Nova**, your Evencers vendor support assistant.\n\nI'm here to help you with:\n🚀 Getting started & listing services\n📅 Managing bookings & clients\n💰 Payments & earnings\n⭐ Growing your profile visibility\n\nWhat can I help you with today?`,
   },
   {
@@ -231,6 +280,11 @@ const VENDOR_BOT_RESPONSES = [
   {
     match: ["contact", "email", "phone", "call", "reach", "support"],
     reply: `Here's how to reach our vendor support team:\n\n📧 **Email:** adminevencers2005@gmail.com\n📞 **Phone:** +91 70230 17517\n💬 **WhatsApp:** +91 70230 17517\n🕐 **Hours:** Mon–Sat, 10 AM – 7 PM IST\n\nFor fastest response, include your **vendor ID** and **booking ID** in your message!`,
+  },
+  // Catch-all "help" separately so it doesn't swallow other queries
+  {
+    match: ["help"],
+    reply: `Hello, Partner! 👋 I'm **Nova**, your Evencers vendor support assistant.\n\nI'm here to help you with:\n🚀 Getting started & listing services\n📅 Managing bookings & clients\n💰 Payments & earnings\n⭐ Growing your profile visibility\n\nWhat can I help you with today?`,
   },
 ];
 
@@ -1151,44 +1205,41 @@ const styles = `
   .vc-chat-fab-ring { position: absolute; inset: -6px; border-radius: 50%; border: 2px solid rgba(201,168,76,0.35); animation: fabRing 2.5s ease-in-out infinite; }
   @keyframes fabRing { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(1.55); opacity: 0; } }
 
+  /* ── FIX: Chat window — no clipping on any screen size ── */
   .vc-chat-window {
-    position: fixed; bottom: 100px; right: 28px; z-index: 8999;
-    width: 370px; max-height: 560px;
-    background: var(--white); border: 1px solid var(--border);
+    position: fixed;
+    bottom: 100px;
+    right: 28px;
+    z-index: 8999;
+    width: 370px;
+    /* prevent the window from ever going off-screen left */
+    max-width: calc(100vw - 20px);
+    max-height: 560px;
+    background: var(--white);
+    border: 1px solid var(--border);
     border-radius: 20px;
     box-shadow: 0 24px 72px rgba(14,12,10,0.22), 0 0 0 1px rgba(201,168,76,0.08);
-    display: flex; flex-direction: column; overflow: hidden;
-    transform: scale(0.88) translateY(20px); opacity: 0; pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: scale(0.88) translateY(20px);
+    opacity: 0;
+    pointer-events: none;
     transform-origin: bottom right;
     transition: transform 0.32s cubic-bezier(.34,1.26,.64,1), opacity 0.28s ease;
   }
   .vc-chat-window.show { transform: scale(1) translateY(0); opacity: 1; pointer-events: auto; }
+
+  /* Mobile: snap to safe edges */
   @media (max-width: 480px) {
     .vc-chat-window {
-  position: fixed;
-  bottom: 100px;
-
-  /* ✅ FIX START */
-  right: 16px;
-  left: auto;
-  width: 360px;
-  max-width: calc(100vw - 32px);
-  /* ✅ FIX END */
-
-  max-height: 560px;
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  box-shadow: 0 24px 72px rgba(14,12,10,0.22), 0 0 0 1px rgba(201,168,76,0.08);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  transform: scale(0.88) translateY(20px);
-  opacity: 0;
-  pointer-events: none;
-  transform-origin: bottom right;
-  transition: transform 0.32s cubic-bezier(.34,1.26,.64,1), opacity 0.28s ease;
-}
+      right: 12px;
+      bottom: 90px;
+      width: calc(100vw - 24px);
+      max-width: calc(100vw - 24px);
+      max-height: 72vh;
+      border-radius: 16px;
+    }
     .vc-chat-fab { bottom: 20px; right: 16px; }
   }
 
@@ -1243,7 +1294,5 @@ const styles = `
   .vc-chat-send.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
   .vc-chat-send.active:hover { background: var(--gold); color: var(--ink); border-color: var(--gold); transform: scale(1.05); }
   .vc-chat-send:disabled { opacity: 0.45; cursor: not-allowed; }
-  body {
-  overflow-x: hidden;
-}
+  body { overflow-x: hidden; }
 `;

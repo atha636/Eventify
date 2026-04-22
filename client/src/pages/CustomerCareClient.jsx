@@ -110,29 +110,73 @@ const QUICK_CHIPS = [
   "Vendor rejected me",
 ];
 
+// FIX: Updated match arrays to include exact chip text phrases
+// so every chip maps to a real response and nothing falls through to the fallback.
 const BOT_RESPONSES = [
   {
-    match: ["book", "reserve", "how to book", "booking"],
+    match: [
+      "how do i book",
+      "how to book",
+      "book a vendor",
+      "book",
+      "reserve",
+      "booking",
+    ],
     reply: `Booking on Evencers is super easy! Here's how:\n\n1️⃣ Go to **Explore Vendors** and browse services\n2️⃣ Click on any vendor to see their packages\n3️⃣ Choose a package, pick your event date & address\n4️⃣ Click **Reserve Now** to send a booking request\n\nThe vendor will review and confirm within 24–48 hours. You'll get notified once it's approved! 🎉`,
   },
   {
-    match: ["cancel", "cancellation", "undo", "delete booking"],
+    match: [
+      "cancel my booking",
+      "cancel",
+      "cancellation",
+      "undo",
+      "delete booking",
+    ],
     reply: `You can cancel a **Pending** booking anytime:\n\n1️⃣ Go to **My Bookings**\n2️⃣ Find the booking you want to cancel\n3️⃣ Click the **Cancel** button\n\n⚠️ **Note:** Once a booking is Approved, cancellation may not be available. Refunds for eligible cancellations are processed within 5–7 business days.`,
   },
   {
-    match: ["pay", "payment", "upi", "card", "razorpay", "how to pay"],
+    match: [
+      "payment methods",
+      "pay",
+      "payment",
+      "upi",
+      "card",
+      "razorpay",
+      "how to pay",
+    ],
     reply: `Payments on Evencers are 100% secure! 💳\n\n✅ After a vendor **approves** your booking, a **Pay Now** button appears on your dashboard\n✅ We accept: Credit/Debit cards, UPI (GPay, PhonePe, Paytm), Net Banking\n✅ Payment is encrypted and PCI-compliant\n\nYou'll get a GST invoice by email automatically after payment.`,
   },
   {
-    match: ["change date", "reschedule", "change address", "modify", "edit booking"],
+    match: [
+      "change booking date",
+      "change date",
+      "reschedule",
+      "change address",
+      "modify",
+      "edit booking",
+    ],
     reply: `Want to reschedule or change your address? Here's how:\n\n1️⃣ Open **My Bookings**\n2️⃣ Click **📅 Change Date / Address** on your booking\n3️⃣ Enter your new preferred date or address\n4️⃣ Add a reason (optional) and submit\n\nThe vendor will review your request and accept or decline. You'll be notified! ✅`,
   },
   {
-    match: ["track", "status", "where is", "check booking", "booking status"],
+    match: [
+      "track my booking",
+      "track",
+      "status",
+      "where is",
+      "check booking",
+      "booking status",
+    ],
     reply: `To track your booking status:\n\n📋 Go to **My Bookings** from your dashboard\n\nYou'll see one of these statuses:\n• **Pending** — Waiting for vendor approval\n• **Confirmed** — Vendor approved, payment needed\n• **Declined** — Vendor couldn't accept\n\nYou can also filter by status using the tabs at the top! 🔍`,
   },
   {
-    match: ["reject", "rejected", "declined", "vendor declined", "vendor rejected"],
+    match: [
+      "vendor rejected me",
+      "reject",
+      "rejected",
+      "declined",
+      "vendor declined",
+      "vendor rejected",
+    ],
     reply: `If a vendor declines your booking:\n\n• The booking will show as **Declined** in your dashboard\n• You're free to browse and book another vendor for the same date\n• No payment is charged for declined bookings\n\n💡 Tip: Try booking 2–3 vendors early to compare options before confirming!`,
   },
   {
@@ -144,7 +188,7 @@ const BOT_RESPONSES = [
     reply: `Forgot your password? No worries!\n\n1️⃣ Go to the **Login** page\n2️⃣ Click **Forgot Password**\n3️⃣ Enter your registered email\n4️⃣ You'll receive a 6-digit OTP\n5️⃣ Enter the OTP and set a new password\n\nIf you're still having trouble, email us at **adminevencers2005@gmail.com** 📧`,
   },
   {
-    match: ["vendor", "find vendor", "browse", "explore", "search"],
+    match: ["vendor", "find vendor", "browse", "explore", "search vendor"],
     reply: `Finding the perfect vendor is easy!\n\n🔍 Click **Explore Vendors** in the navigation\n🎯 Filter by service type, location, and budget\n⭐ Check ratings and reviews from real clients\n📸 Browse portfolios before booking\n\nAll vendors are verified by our team before listing! ✅`,
   },
   {
@@ -152,7 +196,7 @@ const BOT_RESPONSES = [
     reply: `Yes, you get a GST-compliant invoice for every booking! 📄\n\n✅ It's emailed to you automatically after payment\n✅ You can also download it anytime from **My Bookings → View Details**\n\nFor any invoice issues, contact us at **adminevencers2005@gmail.com**`,
   },
   {
-    match: ["hello", "hi", "hey", "hii", "namaste", "help"],
+    match: ["hello", "hi", "hey", "hii", "namaste"],
     reply: `Hello! 👋 I'm **Aria**, your Evencers support assistant.\n\nI'm here to help you with:\n📅 Bookings & scheduling\n💳 Payments & refunds\n🔄 Cancellations & changes\n🌟 Finding the right vendor\n\nWhat can I help you with today?`,
   },
   {
@@ -162,6 +206,11 @@ const BOT_RESPONSES = [
   {
     match: ["contact", "email", "phone", "call", "reach", "support team"],
     reply: `Here's how to reach our support team:\n\n📧 **Email:** adminevencers2005@gmail.com\n📞 **Phone:** +91 70230 17517\n🕐 **Hours:** Mon–Sat, 10 AM – 7 PM IST\n\nFor fastest response, email us with your booking ID and we'll get back within 24 hours! 💬`,
+  },
+  // Catch-all "help" last so it won't swallow real queries
+  {
+    match: ["help"],
+    reply: `Hello! 👋 I'm **Aria**, your Evencers support assistant.\n\nI'm here to help you with:\n📅 Bookings & scheduling\n💳 Payments & refunds\n🔄 Cancellations & changes\n🌟 Finding the right vendor\n\nWhat can I help you with today?`,
   },
 ];
 
@@ -781,25 +830,42 @@ const styles = `
     100% { transform: scale(1.55); opacity: 0;   }
   }
 
-  /* Chat Window */
+  /* ── FIX: Chat window — no clipping on any screen size ── */
   .cc-chat-window {
-    position: fixed; bottom: 100px; right: 28px; z-index: 8999;
-    width: 370px; max-height: 560px;
-    background: var(--white); border: 1px solid var(--border);
+    position: fixed;
+    bottom: 100px;
+    right: 28px;
+    z-index: 8999;
+    width: 370px;
+    /* prevent the window from ever going off-screen left */
+    max-width: calc(100vw - 20px);
+    max-height: 560px;
+    background: var(--white);
+    border: 1px solid var(--border);
     border-radius: 20px;
     box-shadow: 0 24px 72px rgba(14,12,10,0.22), 0 0 0 1px rgba(201,168,76,0.08);
-    display: flex; flex-direction: column; overflow: hidden;
-    transform: scale(0.88) translateY(20px); opacity: 0; pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: scale(0.88) translateY(20px);
+    opacity: 0;
+    pointer-events: none;
     transform-origin: bottom right;
     transition: transform 0.32s cubic-bezier(.34,1.26,.64,1), opacity 0.28s ease;
   }
   .cc-chat-window.show {
     transform: scale(1) translateY(0); opacity: 1; pointer-events: auto;
   }
+
+  /* Mobile: snap to safe edges */
   @media (max-width: 480px) {
     .cc-chat-window {
-      width: calc(100vw - 24px); right: 12px; bottom: 90px;
-      max-height: 70vh; border-radius: 16px;
+      right: 12px;
+      bottom: 90px;
+      width: calc(100vw - 24px);
+      max-width: calc(100vw - 24px);
+      max-height: 72vh;
+      border-radius: 16px;
     }
     .cc-chat-fab { bottom: 20px; right: 16px; }
   }
