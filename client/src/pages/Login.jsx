@@ -47,8 +47,8 @@ export default function Login() {
             </div>
             <div className="lg-stats">
               {[
-                { num: "1K+", label: "Happy Clients" },
-                { num: "150+", label: "Verified Vendors" },
+                { num: "100+", label: "Happy Clients" },
+                { num: "20+", label: "Verified Vendors" },
                 { num: "4.9★", label: "Avg. Rating" },
               ].map((s, i) => (
                 <div key={i} className="lg-stat">
