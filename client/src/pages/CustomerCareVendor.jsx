@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Logo from "../components/Logo";
+
 const vendorFAQs = [
   {
     category: "Getting Started",
@@ -148,11 +149,7 @@ const CONTACT_CHANNELS = [
     label: "WhatsApp",
     value: "+91 70230 17517",
     sub: "Quick replies on WhatsApp",
-    action: () =>
-      window.open(
-        "https://wa.me/917023017517?text=Hello%20Evencers%20Vendor%20Support",
-        "_blank"
-      ),
+    action: () => window.open("https://wa.me/917023017517?text=Hello%20Evencers%20Vendor%20Support", "_blank"),
     cta: "Chat on WhatsApp",
     accent: "#25d366",
   },
@@ -171,6 +168,258 @@ const CONTACT_CHANNELS = [
     accent: "#7b86c9",
   },
 ];
+
+// ── AI CHAT DATA ─────────────────────────────────────────────────────────────
+const VENDOR_QUICK_CHIPS = [
+  "How to add a service?",
+  "When do I get paid?",
+  "How to approve bookings?",
+  "Platform commission?",
+  "Improve my ranking",
+  "Client raised complaint",
+];
+
+const VENDOR_BOT_RESPONSES = [
+  {
+    match: ["add service", "list service", "list my service", "create service", "post service"],
+    reply: `Adding a service is quick and easy! Here's how:\n\n1️⃣ Go to your **Vendor Dashboard**\n2️⃣ Click **+ Add New Service**\n3️⃣ Fill in service name, description, location\n4️⃣ Upload portfolio photos (up to 20)\n5️⃣ Set your packages & pricing\n6️⃣ Submit for review\n\nYour listing goes live within **24 hours** after our team reviews it! ✅`,
+  },
+  {
+    match: ["paid", "payment", "payout", "earnings", "money", "when do i get"],
+    reply: `Here's how vendor payments work on Evencers:\n\n💰 Payments are released to your bank account **3–5 business days** after the event date\n📊 Track all payouts in your Dashboard under **Earnings**\n🏦 Make sure your bank details are updated in your profile\n\nEvencers deducts a platform fee of **8–12%** before payout. No hidden charges! 🎯`,
+  },
+  {
+    match: ["approve", "accept booking", "booking request", "confirm booking", "how to approve"],
+    reply: `Managing bookings is simple:\n\n1️⃣ You'll get an **email notification** for every new booking\n2️⃣ Go to your **Vendor Dashboard → Bookings**\n3️⃣ Click **✓ Accept** or **✕ Reject** on each request\n\n⏰ Try to respond within **24 hours** — fast responses improve your ranking on Evencers! 📈`,
+  },
+  {
+    match: ["commission", "fee", "platform fee", "charge", "percent", "cut"],
+    reply: `Evencers has a simple, transparent fee structure:\n\n• **Platform fee:** 8–12% per confirmed booking\n• **Listing:** Completely FREE\n• **No monthly fees** or upfront charges\n\nThe fee covers: payment processing, marketing exposure, and platform support. You only pay when you earn! 💼`,
+  },
+  {
+    match: ["rank", "ranking", "visibility", "search", "appear", "improve"],
+    reply: `Here's how to rank higher on Evencers:\n\n⭐ Complete your profile **100%**\n📸 Upload **high-quality** portfolio photos\n⚡ Respond to booking requests **quickly**\n🌟 Collect more **verified client reviews**\n✅ Maintain a **rating above 4.0**\n📅 Keep your availability calendar **updated**\n\nActive vendors with fast response times get featured more prominently! 🚀`,
+  },
+  {
+    match: ["complaint", "dispute", "false complaint", "client complaint", "review"],
+    reply: `If a client raises a complaint:\n\n1️⃣ You'll be **notified immediately** by email\n2️⃣ You have **48 hours** to provide your response and evidence\n3️⃣ Our support team reviews both sides fairly\n4️⃣ Resolution is communicated to both parties within **72 hours**\n\nFor urgent disputes, email us at **adminevencers2005@gmail.com** with your booking ID 📧`,
+  },
+  {
+    match: ["cancel", "cancellation", "cancel booking"],
+    reply: `Need to cancel a confirmed booking?\n\n⚠️ Vendor cancellations require at least **72 hours notice**\n📧 Notify the client and our team immediately\n\n**Important:** Repeated cancellations can affect:\n• Your profile visibility\n• Your ranking in search results\n• Account standing\n\nWe recommend keeping your availability calendar updated to prevent double-bookings! 📅`,
+  },
+  {
+    match: ["photo", "image", "portfolio", "upload", "picture"],
+    reply: `Tips for a great portfolio on Evencers:\n\n📸 Upload up to **20 photos** per service listing\n🖼 Use **1200px+ wide** high-resolution images\n🎨 Show variety: setup shots, candid moments, final results\n⭐ Your first 3–5 photos are most important — make them count!\n\nVendors with 10+ quality photos get **3x more profile views**! 🔥`,
+  },
+  {
+    match: ["verify", "verification", "account verify", "profile verify"],
+    reply: `Vendor verification on Evencers:\n\n✅ Profile verification takes **24–48 hours**\n📧 You'll receive an email once your profile is live\n\nVerification checks include:\n• Identity documents\n• Portfolio review\n• Background check\n\nAfter verification, you'll have a **Verified** badge on your profile — this significantly increases client trust and bookings! 🏅`,
+  },
+  {
+    match: ["suspend", "banned", "account suspend", "suspended"],
+    reply: `Accounts may be temporarily suspended for:\n\n❌ Repeated cancellations without notice\n⬇️ Ratings dropping below **3.0**\n🚫 Verified fraudulent activity\n📜 Violation of vendor terms of service\n\nIf you believe your suspension is incorrect, email us at **adminevencers2005@gmail.com** with your account details. We review all cases within 48 hours.`,
+  },
+  {
+    match: ["hello", "hi", "hey", "hii", "help", "namaste"],
+    reply: `Hello, Partner! 👋 I'm **Nova**, your Evencers vendor support assistant.\n\nI'm here to help you with:\n🚀 Getting started & listing services\n📅 Managing bookings & clients\n💰 Payments & earnings\n⭐ Growing your profile visibility\n\nWhat can I help you with today?`,
+  },
+  {
+    match: ["thank", "thanks", "thankyou", "great", "perfect", "awesome"],
+    reply: `You're welcome! 😊 Happy to help you grow your business on Evencers.\n\nFor anything else, our vendor support team is available:\n📧 **adminevencers2005@gmail.com**\n📞 **+91 70230 17517** (Mon–Sat, 10–7 PM)\n\nWishing you lots of bookings! 🎉`,
+  },
+  {
+    match: ["contact", "email", "phone", "call", "reach", "support"],
+    reply: `Here's how to reach our vendor support team:\n\n📧 **Email:** adminevencers2005@gmail.com\n📞 **Phone:** +91 70230 17517\n💬 **WhatsApp:** +91 70230 17517\n🕐 **Hours:** Mon–Sat, 10 AM – 7 PM IST\n\nFor fastest response, include your **vendor ID** and **booking ID** in your message!`,
+  },
+];
+
+function getVendorBotReply(input) {
+  const lower = input.toLowerCase().trim();
+  for (const item of VENDOR_BOT_RESPONSES) {
+    if (item.match.some((kw) => lower.includes(kw))) {
+      return item.reply;
+    }
+  }
+  return `I'm not sure about that specific query, but I'm happy to help! 🤔\n\nYou can:\n• Try rephrasing your question\n• Browse the FAQs below\n• Email us at **adminevencers2005@gmail.com**\n• Call **+91 70230 17517** (Mon–Sat, 10–7 PM)\n\nOur vendor support team typically responds within 24 hours!`;
+}
+
+function formatMsg(text) {
+  return text
+    .split("\n")
+    .map((line) => {
+      return line
+        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+        .replace(/\*(.+?)\*/g, "<em>$1</em>");
+    })
+    .join("<br/>");
+}
+
+// ── AI CHAT WIDGET ───────────────────────────────────────────────────────────
+function AIChatWidget() {
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState([
+    {
+      from: "bot",
+      text: `Hello, Partner! 👋 I'm **Nova**, your Evencers vendor support assistant.\n\nI can help you with bookings, payments, listings, and anything else about growing your business on Evencers. What do you need?`,
+      time: new Date(),
+    },
+  ]);
+  const [input, setInput] = useState("");
+  const [typing, setTyping] = useState(false);
+  const [unread, setUnread] = useState(0);
+  const bottomRef = useRef(null);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (open) {
+      setUnread(0);
+      setTimeout(() => inputRef.current?.focus(), 200);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (open) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, typing, open]);
+
+  const sendMessage = (text) => {
+    const msg = text || input.trim();
+    if (!msg) return;
+    setInput("");
+
+    setMessages((p) => [...p, { from: "user", text: msg, time: new Date() }]);
+    setTyping(true);
+
+    const delay = 850 + Math.random() * 750;
+    setTimeout(() => {
+      const reply = getVendorBotReply(msg);
+      setTyping(false);
+      setMessages((p) => [...p, { from: "bot", text: reply, time: new Date() }]);
+      if (!open) setUnread((u) => u + 1);
+    }, delay);
+  };
+
+  const fmt = (d) =>
+    d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+
+  return (
+    <>
+      {/* Floating Button */}
+      <button
+        className={`vc-chat-fab ${open ? "open" : ""}`}
+        onClick={() => setOpen((o) => !o)}
+        aria-label="Open vendor chat support"
+      >
+        {open ? (
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2.2" width="20" height="20">
+            <line x1="4" y1="4" x2="16" y2="16" />
+            <line x1="16" y1="4" x2="4" y2="16" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" width="22" height="22">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+        )}
+        {!open && unread > 0 && (
+          <span className="vc-chat-badge">{unread}</span>
+        )}
+        {!open && <span className="vc-chat-fab-ring" />}
+      </button>
+
+      {/* Chat Window */}
+      <div className={`vc-chat-window ${open ? "show" : ""}`} role="dialog" aria-label="Vendor chat support">
+        {/* Header */}
+        <div className="vc-chat-header">
+          <div className="vc-chat-header-left">
+            <div className="vc-chat-avatar-wrap">
+              <div className="vc-chat-bot-avatar">N</div>
+              <span className="vc-chat-online-dot" />
+            </div>
+            <div>
+              <p className="vc-chat-bot-name">Nova</p>
+              <p className="vc-chat-bot-status">
+                <span className="vc-chat-status-dot" />
+                Online · Vendor Support
+              </p>
+            </div>
+          </div>
+          <button className="vc-chat-close-btn" onClick={() => setOpen(false)} aria-label="Close chat">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" width="13" height="13">
+              <line x1="2" y1="2" x2="14" y2="14" />
+              <line x1="14" y1="2" x2="2" y2="14" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Messages */}
+        <div className="vc-chat-messages">
+          {messages.map((m, i) => (
+            <div key={i} className={`vc-msg-row ${m.from}`}>
+              {m.from === "bot" && (
+                <div className="vc-msg-bot-icon">N</div>
+              )}
+              <div className="vc-msg-bubble-wrap">
+                <div
+                  className={`vc-msg-bubble ${m.from}`}
+                  dangerouslySetInnerHTML={{ __html: formatMsg(m.text) }}
+                />
+                <span className="vc-msg-time">{fmt(m.time)}</span>
+              </div>
+            </div>
+          ))}
+
+          {typing && (
+            <div className="vc-msg-row bot">
+              <div className="vc-msg-bot-icon">N</div>
+              <div className="vc-msg-bubble bot vc-typing-bubble">
+                <span className="vc-dot" /><span className="vc-dot" /><span className="vc-dot" />
+              </div>
+            </div>
+          )}
+          <div ref={bottomRef} />
+        </div>
+
+        {/* Quick Chips */}
+        <div className="vc-chat-chips">
+          {VENDOR_QUICK_CHIPS.map((chip) => (
+            <button
+              key={chip}
+              className="vc-chip"
+              onClick={() => sendMessage(chip)}
+              disabled={typing}
+            >
+              {chip}
+            </button>
+          ))}
+        </div>
+
+        {/* Input */}
+        <div className="vc-chat-input-row">
+          <input
+            ref={inputRef}
+            className="vc-chat-input"
+            placeholder="Ask a vendor question…"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+            disabled={typing}
+          />
+          <button
+            className={`vc-chat-send ${input.trim() ? "active" : ""}`}
+            onClick={() => sendMessage()}
+            disabled={!input.trim() || typing}
+            aria-label="Send message"
+          >
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+              <line x1="2" y1="10" x2="17" y2="10" />
+              <polyline points="12,5 17,10 12,15" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
 
 /* ── Scroll-reveal hook ── */
 function useReveal(threshold = 0.15) {
@@ -209,6 +458,7 @@ function Counter({ target, suffix = "" }) {
   return <span ref={ref}>{target.startsWith("₹") ? "₹" : ""}{display}{suffix}</span>;
 }
 
+// ── MAIN PAGE ────────────────────────────────────────────────────────────────
 export default function CustomerCareVendor() {
   const [openItem, setOpenItem] = useState(null);
   const navigate = useNavigate();
@@ -249,6 +499,9 @@ export default function CustomerCareVendor() {
       <style>{styles}</style>
       <Navbar />
 
+      {/* AI CHAT WIDGET */}
+      <AIChatWidget />
+
       <div className="vc-root">
 
         {/* ── HERO ── */}
@@ -284,22 +537,32 @@ export default function CustomerCareVendor() {
                 placeholder="Search vendor questions…"
                 value={searchQuery}
                 aria-label="Search FAQ"
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setOpenItem(null);
-                }}
+                onChange={(e) => { setSearchQuery(e.target.value); setOpenItem(null); }}
               />
               {searchQuery && (
-                <button
-                  className="vc-search-clear"
-                  onClick={() => setSearchQuery("")}
-                  aria-label="Clear search"
-                >
+                <button className="vc-search-clear" onClick={() => setSearchQuery("")} aria-label="Clear search">
                   <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" width="12" height="12">
                     <line x1="1" y1="1" x2="13" y2="13" /><line x1="13" y1="1" x2="1" y2="13" />
                   </svg>
                 </button>
               )}
+            </div>
+
+            {/* Chat CTA Banner */}
+            <div className="vc-chat-cta-banner">
+              <div className="vc-chat-cta-left">
+                <div className="vc-chat-cta-avatar">N</div>
+                <div>
+                  <p className="vc-chat-cta-title">Chat with Nova</p>
+                  <p className="vc-chat-cta-sub">Vendor AI assistant · Instant answers</p>
+                </div>
+              </div>
+              <button
+                className="vc-chat-cta-btn"
+                onClick={() => document.querySelector(".vc-chat-fab")?.click()}
+              >
+                Start Chat →
+              </button>
             </div>
 
             <div className="vc-hero-quick-links">
@@ -346,15 +609,12 @@ export default function CustomerCareVendor() {
         </div>
 
         {/* ── CONTACT CHANNELS ── */}
-        <div
-          className={`vc-contact-section ${contactVisible ? "revealed" : ""}`}
-          ref={contactRef}
-        >
+        <div className={`vc-contact-section ${contactVisible ? "revealed" : ""}`} ref={contactRef}>
           <div className="vc-contact-header">
-           <div className="vc-eyebrow-dark vc-eyebrow-wrap">
-  <Logo />
-  <span>Reach Us Directly</span>
-</div>
+            <div className="vc-eyebrow-dark vc-eyebrow-wrap">
+              <Logo />
+              <span>Reach Us Directly</span>
+            </div>
             <h2 className="vc-section-title">Get in Touch</h2>
             <p className="vc-section-sub">Multiple ways to connect with our dedicated vendor success team</p>
           </div>
@@ -389,8 +649,6 @@ export default function CustomerCareVendor() {
                     </svg>
                   </span>
                 </div>
-
-                {/* Copy-to-clipboard for phone/email */}
                 {(i === 0 || i === 1 || i === 2) && (
                   <button
                     className={`vc-copy-btn ${copiedIndex === i ? "copied" : ""}`}
@@ -417,7 +675,6 @@ export default function CustomerCareVendor() {
             ))}
           </div>
 
-          {/* Office hours banner */}
           <div className="vc-hours-banner">
             <div className="vc-hours-dot" />
             <div className="vc-hours-content">
@@ -436,16 +693,12 @@ export default function CustomerCareVendor() {
         </div>
 
         {/* ── FAQ SECTION ── */}
-        <div
-          className={`vc-faq-section ${faqVisible ? "revealed" : ""}`}
-          id="vc-faq"
-          ref={faqRef}
-        >
+        <div className={`vc-faq-section ${faqVisible ? "revealed" : ""}`} id="vc-faq" ref={faqRef}>
           <div className="vc-faq-header">
             <div className="vc-eyebrow-dark vc-eyebrow-wrap">
-  <Logo />
-  <span>Vendor FAQ</span>
-</div>
+              <Logo />
+              <span>Vendor FAQ</span>
+            </div>
             <h2 className="vc-section-title">Partner Questions</h2>
             <p className="vc-section-sub">Answers to the most common questions from our vendor partners</p>
           </div>
@@ -453,12 +706,8 @@ export default function CustomerCareVendor() {
           {filteredFAQs.length === 0 ? (
             <div className="vc-no-results">
               <span>🔍</span>
-              <p>
-                No results for "<strong>{searchQuery}</strong>"
-              </p>
-              <button className="vc-clear-btn" onClick={() => setSearchQuery("")}>
-                Clear search
-              </button>
+              <p>No results for "<strong>{searchQuery}</strong>"</p>
+              <button className="vc-clear-btn" onClick={() => setSearchQuery("")}>Clear search</button>
             </div>
           ) : (
             <div className="vc-faq-layout">
@@ -468,10 +717,7 @@ export default function CustomerCareVendor() {
                     <button
                       key={i}
                       className={`vc-cat-tab ${openCategory === i ? "active" : ""}`}
-                      onClick={() => {
-                        setOpenCategory(i);
-                        setOpenItem(null);
-                      }}
+                      onClick={() => { setOpenCategory(i); setOpenItem(null); }}
                     >
                       <span className="vc-cat-emoji">{cat.icon}</span>
                       <span>{cat.category}</span>
@@ -494,26 +740,17 @@ export default function CustomerCareVendor() {
               )}
 
               <div className="vc-questions">
-                {(searchQuery
-                  ? filteredFAQs
-                  : [filteredFAQs[openCategory]]
-                ).map((cat, catI) => (
+                {(searchQuery ? filteredFAQs : [filteredFAQs[openCategory]]).map((cat, catI) => (
                   <div key={catI}>
                     {searchQuery && (
-                      <p className="vc-cat-label">
-                        {cat.icon} {cat.category}
-                      </p>
+                      <p className="vc-cat-label">{cat.icon} {cat.category}</p>
                     )}
                     {cat.questions.map((item, qI) => {
                       const key = `${catI}-${qI}`;
                       const isOpen = openItem === key;
                       return (
                         <div key={qI} className={`vc-faq-item ${isOpen ? "open" : ""}`}>
-                          <button
-                            className="vc-faq-q"
-                            onClick={() => toggle(key)}
-                            aria-expanded={isOpen}
-                          >
+                          <button className="vc-faq-q" onClick={() => toggle(key)} aria-expanded={isOpen}>
                             <span>{item.q}</span>
                             <span className={`vc-faq-arrow ${isOpen ? "up" : ""}`} aria-hidden="true">
                               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2" width="14" height="14">
@@ -521,11 +758,7 @@ export default function CustomerCareVendor() {
                               </svg>
                             </span>
                           </button>
-                          <div
-                            className={`vc-faq-a-wrap ${isOpen ? "open" : ""}`}
-                            role="region"
-                            aria-hidden={!isOpen}
-                          >
+                          <div className={`vc-faq-a-wrap ${isOpen ? "open" : ""}`} role="region" aria-hidden={!isOpen}>
                             <p className="vc-faq-a">{item.a}</p>
                           </div>
                         </div>
@@ -542,9 +775,9 @@ export default function CustomerCareVendor() {
         <div className={`vc-resources ${resVisible ? "revealed" : ""}`} ref={resRef}>
           <div className="vc-res-header">
             <div className="vc-eyebrow-dark vc-eyebrow-wrap">
-  <Logo />
-  <span>Vendor Resources</span>
-</div>
+              <Logo />
+              <span>Vendor Resources</span>
+            </div>
             <h2 className="vc-section-title">Helpful Guides</h2>
             <p className="vc-section-sub">Curated resources to help you get the most out of Evencers</p>
           </div>
@@ -578,12 +811,10 @@ export default function CustomerCareVendor() {
         <div className={`vc-timeline-section ${tlVisible ? "revealed" : ""}`} ref={tlRef}>
           <div className="vc-timeline-header">
             <div className="vc-eyebrow-dark vc-eyebrow-wrap">
-  <Logo />
-  <span>Our Support Promise</span>
-</div>
-            <h2 className="vc-section-title" style={{ color: "var(--cream)" }}>
-              What to Expect
-            </h2>
+              <Logo />
+              <span>Our Support Promise</span>
+            </div>
+            <h2 className="vc-section-title" style={{ color: "var(--cream)" }}>What to Expect</h2>
           </div>
           <div className="vc-timeline">
             {[
@@ -616,15 +847,14 @@ export default function CustomerCareVendor() {
           <div className="vc-noise" style={{ opacity: 0.03 }} />
           <div className="vc-cta-inner">
             <div className="vc-eyebrow-dark vc-eyebrow-wrap">
-  <Logo />
-  <span> We're Here For You</span>
-</div>
+              <Logo />
+              <span>We're Here For You</span>
+            </div>
             <h3 className="vc-cta-title">Still have questions?</h3>
             <p className="vc-cta-sub">
               Our dedicated vendor success team is available Mon–Sat, 10 AM – 7 PM IST.
               Reach us by email, phone, or WhatsApp — we always respond.
             </p>
-
             <div className="vc-cta-contact-row">
               <a href="mailto:adminevencers2005@gmail.com" className="vc-cta-contact-pill">
                 <span>✉</span>adminevencers2005@gmail.com
@@ -632,26 +862,15 @@ export default function CustomerCareVendor() {
               <a href="tel:+917023017517" className="vc-cta-contact-pill">
                 <span>📞</span>+91 70230 17517
               </a>
-              <a
-                href="https://wa.me/917023017517?text=Hello%20Evencers%20Vendor%20Support"
-                target="_blank"
-                rel="noreferrer"
-                className="vc-cta-contact-pill vc-cta-wa-pill"
-              >
+              <a href="https://wa.me/917023017517?text=Hello%20Evencers%20Vendor%20Support" target="_blank" rel="noreferrer" className="vc-cta-contact-pill vc-cta-wa-pill">
                 <span>💬</span>WhatsApp Us
               </a>
             </div>
-
             <div className="vc-cta-btns">
-              <button
-                className="vc-cta-primary"
-                onClick={() => (window.location.href = "mailto:adminevencers2005@gmail.com")}
-              >
+              <button className="vc-cta-primary" onClick={() => (window.location.href = "mailto:adminevencers2005@gmail.com")}>
                 Email Vendor Support
               </button>
-              <a href="/vendor-dashboard" className="vc-cta-secondary">
-                Go to Dashboard →
-              </a>
+              <a href="/vendor-dashboard" className="vc-cta-secondary">Go to Dashboard →</a>
             </div>
           </div>
         </div>
@@ -671,649 +890,225 @@ export default function CustomerCareVendor() {
   );
 }
 
-// ── STYLES ──────────────────────────────────────────────────────────────────
+// ── STYLES ───────────────────────────────────────────────────────────────────
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --ink: #0e0c0a;
-    --cream: #f5f0e8;
-    --gold: #c9a84c;
-    --gold-light: #e8d5a3;
-    --muted: #7a7265;
-    --border: rgba(201,168,76,0.2);
-    --surface: #faf7f2;
-    --white: #ffffff;
+    --ink: #0e0c0a; --cream: #f5f0e8; --gold: #c9a84c; --gold-light: #e8d5a3;
+    --muted: #7a7265; --border: rgba(201,168,76,0.2); --surface: #faf7f2; --white: #ffffff;
   }
 
-  .vc-root {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--cream);
-    min-height: 100vh;
-    color: var(--ink);
-    overflow-x: hidden;
-  }
+  .vc-root { font-family: 'DM Sans', sans-serif; background: var(--cream); min-height: 100vh; color: var(--ink); overflow-x: hidden; }
+  :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 4px; }
 
-  /* ── FOCUS VISIBLE (accessibility) ── */
-  :focus-visible {
-    outline: 2px solid var(--gold);
-    outline-offset: 3px;
-    border-radius: 4px;
-  }
+  .vc-noise { position: absolute; inset: 0; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E"); opacity: 0.055; mix-blend-mode: overlay; }
 
-  /* ── NOISE TEXTURE ── */
-  .vc-noise {
-    position: absolute; inset: 0; pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
-    opacity: 0.055;
-    mix-blend-mode: overlay;
-  }
-
-  /* ── HERO ── */
-  .vc-hero {
-    position: relative; overflow: hidden;
-    background: var(--ink);
-    padding: 120px 32px 80px;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .vc-hero-orb {
-    position: absolute; border-radius: 50%;
-    filter: blur(100px); opacity: 0.14; pointer-events: none;
-    will-change: transform;
-    animation: orbFloat 9s ease-in-out infinite alternate;
-  }
+  /* HERO */
+  .vc-hero { position: relative; overflow: hidden; background: var(--ink); padding: 120px 32px 80px; display: flex; align-items: center; justify-content: center; }
+  .vc-hero-orb { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.14; pointer-events: none; will-change: transform; animation: orbFloat 9s ease-in-out infinite alternate; }
   .vc-orb1 { width: 420px; height: 420px; background: var(--gold); top: -80px; right: -60px; }
   .vc-orb2 { width: 350px; height: 350px; background: #5e7ab8; bottom: -60px; left: -40px; animation-delay: -3s; }
   .vc-orb3 { width: 200px; height: 200px; background: #a78bfa; top: 40%; left: 50%; opacity: 0.08; animation-delay: -6s; }
-  @keyframes orbFloat {
-    from { transform: scale(1) translate(0,0); }
-    to   { transform: scale(1.15) translate(18px,-14px); }
-  }
-
-  .vc-grid-lines {
-    position: absolute; inset: 0; pointer-events: none;
-    background-image:
-      linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px);
-    background-size: 56px 56px;
-    mask-image: radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, transparent 70%);
-  }
-
-  .vc-hero-inner {
-    position: relative; z-index: 2;
-    text-align: center; max-width: 640px; width: 100%;
-    animation: fadeUp 0.7s cubic-bezier(.22,1,.36,1) both;
-  }
-
-  .vc-hero-eyebrow {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
-    color: var(--gold); border: 1px solid rgba(201,168,76,0.3);
-    padding: 6px 16px; border-radius: 24px;
-    background: rgba(201,168,76,0.08); margin-bottom: 22px;
-    animation: fadeUp 0.7s 0.1s cubic-bezier(.22,1,.36,1) both;
-  }
-  .vc-eyebrow-dot {
-    width: 5px; height: 5px; border-radius: 50%; background: var(--gold); flex-shrink: 0;
-    animation: dotBlink 2.5s ease-in-out infinite;
-  }
-  @keyframes dotBlink {
-    0%,100% { opacity: 1; transform: scale(1); }
-    50%      { opacity: 0.35; transform: scale(0.6); }
-  }
-
-  .vc-hero-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(2.6rem, 5.5vw, 3.8rem);
-    font-weight: 300; color: var(--white);
-    line-height: 1.1; margin-bottom: 18px;
-    animation: fadeUp 0.7s 0.15s cubic-bezier(.22,1,.36,1) both;
-  }
+  @keyframes orbFloat { from { transform: scale(1) translate(0,0); } to { transform: scale(1.15) translate(18px,-14px); } }
+  .vc-grid-lines { position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px); background-size: 56px 56px; mask-image: radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, transparent 70%); }
+  .vc-hero-inner { position: relative; z-index: 2; text-align: center; max-width: 640px; width: 100%; animation: fadeUp 0.7s cubic-bezier(.22,1,.36,1) both; }
+  .vc-hero-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); border: 1px solid rgba(201,168,76,0.3); padding: 6px 16px; border-radius: 24px; background: rgba(201,168,76,0.08); margin-bottom: 22px; animation: fadeUp 0.7s 0.1s cubic-bezier(.22,1,.36,1) both; }
+  .vc-eyebrow-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); flex-shrink: 0; animation: dotBlink 2.5s ease-in-out infinite; }
+  @keyframes dotBlink { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.6); } }
+  .vc-hero-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.6rem, 5.5vw, 3.8rem); font-weight: 300; color: var(--white); line-height: 1.1; margin-bottom: 18px; animation: fadeUp 0.7s 0.15s cubic-bezier(.22,1,.36,1) both; }
   .vc-hero-title em { font-style: italic; color: var(--gold-light); }
-
-  .vc-hero-sub {
-    font-size: 14px; color: rgba(245,240,232,0.58); line-height: 1.75;
-    margin-bottom: 32px; max-width: 480px; margin-left: auto; margin-right: auto;
-    animation: fadeUp 0.7s 0.2s cubic-bezier(.22,1,.36,1) both;
-  }
+  .vc-hero-sub { font-size: 14px; color: rgba(245,240,232,0.58); line-height: 1.75; margin-bottom: 28px; max-width: 480px; margin-left: auto; margin-right: auto; animation: fadeUp 0.7s 0.2s cubic-bezier(.22,1,.36,1) both; }
 
   /* Search */
-  .vc-search-wrap {
-    display: flex; align-items: center; background: var(--white);
-    border-radius: 12px; padding: 6px 6px 6px 16px; gap: 10px;
-    max-width: 500px; margin: 0 auto 22px;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(201,168,76,0.08);
-    transition: box-shadow 0.3s, transform 0.2s;
-    animation: fadeUp 0.7s 0.25s cubic-bezier(.22,1,.36,1) both;
-  }
-  .vc-search-wrap:focus-within {
-    box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 0 2px var(--gold);
-    transform: translateY(-1px);
-  }
+  .vc-search-wrap { display: flex; align-items: center; background: var(--white); border-radius: 12px; padding: 6px 6px 6px 16px; gap: 10px; max-width: 500px; margin: 0 auto 18px; box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(201,168,76,0.08); transition: box-shadow 0.3s, transform 0.2s; animation: fadeUp 0.7s 0.25s cubic-bezier(.22,1,.36,1) both; }
+  .vc-search-wrap:focus-within { box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 0 2px var(--gold); transform: translateY(-1px); }
   .vc-search-icon { color: var(--muted); flex-shrink: 0; display: flex; align-items: center; }
-  .vc-search-input {
-    flex: 1; border: none; outline: none;
-    font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink);
-    background: transparent;
-  }
+  .vc-search-input { flex: 1; border: none; outline: none; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink); background: transparent; }
   .vc-search-input::placeholder { color: #bbb4a8; }
-  .vc-search-clear {
-    background: none; border: none; display: flex; align-items: center; justify-content: center;
-    color: var(--muted); cursor: pointer; padding: 8px;
-    border-radius: 50%; transition: all 0.2s; flex-shrink: 0;
-  }
+  .vc-search-clear { background: none; border: none; display: flex; align-items: center; justify-content: center; color: var(--muted); cursor: pointer; padding: 8px; border-radius: 50%; transition: all 0.2s; flex-shrink: 0; }
   .vc-search-clear:hover { background: var(--surface); color: var(--ink); }
 
-  .vc-hero-quick-links {
-    display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
-    animation: fadeUp 0.7s 0.32s cubic-bezier(.22,1,.36,1) both;
+  /* Chat CTA Banner */
+  .vc-chat-cta-banner {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 12px; padding: 14px 18px; max-width: 500px; margin: 0 auto 18px;
+    animation: fadeUp 0.7s 0.28s cubic-bezier(.22,1,.36,1) both;
   }
-  .vc-quick-pill {
-    font-size: 11.5px; color: var(--gold-light);
-    border: 1px solid rgba(201,168,76,0.22); border-radius: 24px;
-    padding: 5px 14px; cursor: pointer; transition: all 0.22s;
-    background: rgba(201,168,76,0.06); user-select: none;
-  }
-  .vc-quick-pill:hover {
-    background: rgba(201,168,76,0.15); border-color: var(--gold);
-    transform: translateY(-2px);
-  }
+  .vc-chat-cta-left { display: flex; align-items: center; gap: 12px; }
+  .vc-chat-cta-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--gold); color: var(--ink); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600; flex-shrink: 0; }
+  .vc-chat-cta-title { font-size: 13px; font-weight: 500; color: var(--white); margin-bottom: 2px; }
+  .vc-chat-cta-sub { font-size: 11px; color: rgba(245,240,232,0.5); }
+  .vc-chat-cta-btn { padding: 9px 20px; background: var(--gold); color: var(--ink); border: none; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: all 0.22s; flex-shrink: 0; }
+  .vc-chat-cta-btn:hover { background: var(--gold-light); transform: translateY(-1px); }
 
-  /* ── STATS STRIP ── */
-  .vc-stats-strip {
-    display: grid; grid-template-columns: repeat(4,1fr);
-    background: var(--surface); border-bottom: 1px solid var(--border);
-  }
+  .vc-hero-quick-links { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; animation: fadeUp 0.7s 0.34s cubic-bezier(.22,1,.36,1) both; }
+  .vc-quick-pill { font-size: 11.5px; color: var(--gold-light); border: 1px solid rgba(201,168,76,0.22); border-radius: 24px; padding: 5px 14px; cursor: pointer; transition: all 0.22s; background: rgba(201,168,76,0.06); user-select: none; }
+  .vc-quick-pill:hover { background: rgba(201,168,76,0.15); border-color: var(--gold); transform: translateY(-2px); }
+
+  /* STATS */
+  .vc-stats-strip { display: grid; grid-template-columns: repeat(4,1fr); background: var(--surface); border-bottom: 1px solid var(--border); }
   @media (max-width: 700px) { .vc-stats-strip { grid-template-columns: repeat(2,1fr); } }
-
-  .vc-stat {
-    display: flex; flex-direction: column; gap: 4px;
-    padding: 24px 20px; text-align: center;
-    border-right: 1px solid var(--border);
-    opacity: 0; transform: translateY(14px);
-    transition: opacity 0.5s var(--delay, 0ms), transform 0.5s var(--delay, 0ms);
-  }
-  .vc-stats-strip.revealed .vc-stat {
-    opacity: 1; transform: none;
-  }
+  .vc-stat { display: flex; flex-direction: column; gap: 4px; padding: 24px 20px; text-align: center; border-right: 1px solid var(--border); opacity: 0; transform: translateY(14px); transition: opacity 0.5s var(--delay, 0ms), transform 0.5s var(--delay, 0ms); }
+  .vc-stats-strip.revealed .vc-stat { opacity: 1; transform: none; }
   .vc-stat:last-child { border-right: none; }
-  .vc-stat-num {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.85rem; font-weight: 600; color: var(--gold);
-    font-variant-numeric: tabular-nums;
-  }
+  .vc-stat-num { font-family: 'Cormorant Garamond', serif; font-size: 1.85rem; font-weight: 600; color: var(--gold); font-variant-numeric: tabular-nums; }
   .vc-stat-label { font-size: 11px; color: var(--muted); letter-spacing: 0.07em; }
 
-  /* ── CONTACT SECTION ── */
-  .vc-contact-section { max-width: 1060px; margin: 0 auto; padding: 72px 32px 48px; }
+  /* CONTACT SECTION */
+  .vc-contact-section { max-width: 1060px; margin: 0 auto; padding: 72px 32px 48px; opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .vc-contact-section.revealed { opacity: 1; transform: none; }
   .vc-contact-header { text-align: center; margin-bottom: 44px; }
-  .vc-section-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 300; color: var(--ink);
-    margin-bottom: 8px;
-  }
+  .vc-section-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 300; color: var(--ink); margin-bottom: 8px; }
   .vc-section-sub { font-size: 13.5px; color: var(--muted); line-height: 1.6; }
-  .vc-eyebrow-dark {
-    display: block; font-size: 10px; letter-spacing: 0.22em;
-    text-transform: uppercase; color: var(--gold); margin-bottom: 10px;
-  }
-  .vc-eyebrow-gold {
-    display: block; font-size: 10px; letter-spacing: 0.22em;
-    text-transform: uppercase; color: var(--gold); margin-bottom: 10px;
-  }
+  .vc-eyebrow-dark { display: block; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
 
-  .vc-contact-grid {
-    display: grid; grid-template-columns: repeat(4,1fr); gap: 16px;
-    margin-bottom: 28px;
-  }
+  .vc-contact-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 28px; }
   @media (max-width: 900px) { .vc-contact-grid { grid-template-columns: repeat(2,1fr); } }
   @media (max-width: 500px) { .vc-contact-grid { grid-template-columns: 1fr; } }
 
-  /* ── CONTACT CARD — fixed layout ── */
-  .vc-contact-card {
-    position: relative; overflow: hidden;
-    background: var(--white); border: 1px solid var(--border);
-    border-radius: 14px; padding: 24px 20px 18px;
-    cursor: pointer;
-    transition: transform 0.3s cubic-bezier(.22,1,.36,1), border-color 0.3s, box-shadow 0.3s;
-    display: flex; flex-direction: column; gap: 0;
-
-    /* Scroll-reveal */
-    opacity: 0; transform: translateY(18px);
-    transition:
-      opacity 0.5s var(--delay, 0ms),
-      transform 0.5s var(--delay, 0ms),
-      border-color 0.3s,
-      box-shadow 0.3s;
-  }
-  .vc-contact-section.revealed .vc-contact-card {
-    opacity: 1; transform: translateY(0);
-  }
-  .vc-contact-card:hover {
-    border-color: var(--ch-accent, var(--gold));
-    transform: translateY(-5px) !important;
-    box-shadow: 0 16px 44px rgba(0,0,0,0.09);
-  }
-
-  /* Shine sweep on hover */
-  .vc-contact-card-shine {
-    position: absolute; inset: 0; pointer-events: none;
-    background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.25) 50%, transparent 65%);
-    transform: translateX(-100%);
-    transition: transform 0.55s ease;
-  }
+  .vc-contact-card { position: relative; overflow: hidden; background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 24px 20px 18px; cursor: pointer; display: flex; flex-direction: column; gap: 0; opacity: 0; transform: translateY(18px); transition: opacity 0.5s var(--delay, 0ms), transform 0.5s var(--delay, 0ms), border-color 0.3s, box-shadow 0.3s; }
+  .vc-contact-section.revealed .vc-contact-card { opacity: 1; transform: translateY(0); }
+  .vc-contact-card:hover { border-color: var(--ch-accent, var(--gold)); transform: translateY(-5px) !important; box-shadow: 0 16px 44px rgba(0,0,0,0.09); }
+  .vc-contact-card-shine { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.25) 50%, transparent 65%); transform: translateX(-100%); transition: transform 0.55s ease; }
   .vc-contact-card:hover .vc-contact-card-shine { transform: translateX(120%); }
-
-  .vc-contact-card-glow {
-    position: absolute; top: -40px; right: -40px;
-    width: 120px; height: 120px; border-radius: 50%;
-    background: var(--ch-accent, var(--gold));
-    opacity: 0; filter: blur(36px);
-    transition: opacity 0.4s; pointer-events: none;
-  }
+  .vc-contact-card-glow { position: absolute; top: -40px; right: -40px; width: 120px; height: 120px; border-radius: 50%; background: var(--ch-accent, var(--gold)); opacity: 0; filter: blur(36px); transition: opacity 0.4s; pointer-events: none; }
   .vc-contact-card:hover .vc-contact-card-glow { opacity: 0.18; }
-
-  .vc-contact-icon-wrap {
-    width: 46px; height: 46px; border-radius: 12px;
-    background: rgba(201,168,76,0.07); border: 1px solid rgba(201,168,76,0.15);
-    display: flex; align-items: center; justify-content: center;
-    margin-bottom: 16px; flex-shrink: 0;
-    transition: background 0.3s, transform 0.3s, border-color 0.3s;
-  }
-  .vc-contact-card:hover .vc-contact-icon-wrap {
-    background: rgba(201,168,76,0.13);
-    border-color: var(--ch-accent, var(--gold));
-    transform: scale(1.08);
-  }
-
-  .vc-contact-info {
-    display: flex; flex-direction: column; gap: 3px;
-    flex: 1; margin-bottom: 14px;
-  }
-  .vc-contact-label {
-    font-size: 9.5px; font-weight: 500; letter-spacing: 0.16em;
-    text-transform: uppercase; color: var(--gold);
-  }
-  .vc-contact-value {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1rem; font-weight: 600; color: var(--ink); line-height: 1.35;
-    word-break: break-word;
-  }
+  .vc-contact-icon-wrap { width: 46px; height: 46px; border-radius: 12px; background: rgba(201,168,76,0.07); border: 1px solid rgba(201,168,76,0.15); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; flex-shrink: 0; transition: background 0.3s, transform 0.3s, border-color 0.3s; }
+  .vc-contact-card:hover .vc-contact-icon-wrap { background: rgba(201,168,76,0.13); border-color: var(--ch-accent, var(--gold)); transform: scale(1.08); }
+  .vc-contact-info { display: flex; flex-direction: column; gap: 3px; flex: 1; margin-bottom: 14px; }
+  .vc-contact-label { font-size: 9.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); }
+  .vc-contact-value { font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 600; color: var(--ink); line-height: 1.35; word-break: break-word; }
   .vc-contact-sub { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
-
-  .vc-contact-footer {
-    display: flex; align-items: center; gap: 6px;
-    padding-top: 12px; border-top: 1px solid var(--border);
-  }
-  .vc-contact-cta {
-    font-size: 12px; font-weight: 500; color: var(--gold);
-    letter-spacing: 0.04em; flex: 1;
-    transition: letter-spacing 0.2s;
-  }
+  .vc-contact-footer { display: flex; align-items: center; gap: 6px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .vc-contact-cta { font-size: 12px; font-weight: 500; color: var(--gold); letter-spacing: 0.04em; flex: 1; transition: letter-spacing 0.2s; }
   .vc-contact-card:hover .vc-contact-cta { letter-spacing: 0.08em; }
-  .vc-contact-arrow {
-    display: flex; align-items: center; color: var(--gold); opacity: 0.7;
-    transform: translateX(0); transition: transform 0.25s;
-  }
+  .vc-contact-arrow { display: flex; align-items: center; color: var(--gold); opacity: 0.7; transform: translateX(0); transition: transform 0.25s; }
   .vc-contact-card:hover .vc-contact-arrow { transform: translateX(4px); opacity: 1; }
-
-  /* Copy button */
-  .vc-copy-btn {
-    position: absolute; top: 12px; right: 12px;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 6px; padding: 5px 7px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--muted); transition: all 0.2s; opacity: 0;
-    pointer-events: none;
-    z-index: 2;
-  }
+  .vc-copy-btn { position: absolute; top: 12px; right: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 5px 7px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--muted); transition: all 0.2s; opacity: 0; pointer-events: none; z-index: 2; }
   .vc-contact-card:hover .vc-copy-btn { opacity: 1; pointer-events: auto; }
   .vc-copy-btn:hover { background: var(--ink); color: var(--white); border-color: var(--ink); }
   .vc-copy-btn.copied { background: #2d6a4f; color: #fff; border-color: #2d6a4f; opacity: 1; pointer-events: none; }
 
-  /* Hours banner */
-  .vc-hours-banner {
-    display: flex; align-items: center; gap: 16px;
-    background: var(--white); border: 1px solid var(--border);
-    border-radius: 12px; padding: 18px 24px;
-  }
+  .vc-hours-banner { display: flex; align-items: center; gap: 16px; background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 18px 24px; }
   @media (max-width: 640px) { .vc-hours-banner { flex-direction: column; align-items: flex-start; } }
-  .vc-hours-dot {
-    width: 10px; height: 10px; border-radius: 50%;
-    background: var(--gold); flex-shrink: 0;
-    box-shadow: 0 0 0 4px rgba(201,168,76,0.2);
-    animation: pulseDot 2s ease-in-out infinite;
-  }
-  @keyframes pulseDot {
-    0%,100% { box-shadow: 0 0 0 4px rgba(201,168,76,0.2); }
-    50%      { box-shadow: 0 0 0 8px rgba(201,168,76,0.07); }
-  }
+  .vc-hours-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--gold); flex-shrink: 0; box-shadow: 0 0 0 4px rgba(201,168,76,0.2); animation: pulseDot 2s ease-in-out infinite; }
+  @keyframes pulseDot { 0%,100% { box-shadow: 0 0 0 4px rgba(201,168,76,0.2); } 50% { box-shadow: 0 0 0 8px rgba(201,168,76,0.07); } }
   .vc-hours-content { flex: 1; display: flex; flex-direction: column; gap: 2px; }
   .vc-hours-title { font-size: 12px; font-weight: 500; color: var(--ink); letter-spacing: 0.05em; }
   .vc-hours-text { font-size: 12.5px; color: var(--muted); }
-  .vc-hours-badge {
-    display: flex; align-items: center; gap: 6px;
-    font-size: 11px; font-weight: 500; color: #2d6a4f;
-    background: rgba(45,106,79,0.08); border: 1px solid rgba(45,106,79,0.2);
-    padding: 5px 12px; border-radius: 20px; white-space: nowrap;
-  }
-  .vc-hours-live {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: #2d6a4f;
-    animation: pulseLive 1.8s ease-in-out infinite;
-  }
-  @keyframes pulseLive {
-    0%,100% { opacity: 1; } 50% { opacity: 0.35; }
-  }
+  .vc-hours-badge { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500; color: #2d6a4f; background: rgba(45,106,79,0.08); border: 1px solid rgba(45,106,79,0.2); padding: 5px 12px; border-radius: 20px; white-space: nowrap; }
+  .vc-hours-live { width: 6px; height: 6px; border-radius: 50%; background: #2d6a4f; animation: pulseLive 1.8s ease-in-out infinite; }
+  @keyframes pulseLive { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
 
-  /* ── FAQ ── */
-  .vc-faq-section {
-    max-width: 1000px; margin: 0 auto; padding: 56px 32px 72px;
-    opacity: 0; transform: translateY(20px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
-  }
+  /* FAQ */
+  .vc-faq-section { max-width: 1000px; margin: 0 auto; padding: 56px 32px 72px; opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
   .vc-faq-section.revealed { opacity: 1; transform: none; }
   .vc-faq-header { text-align: center; margin-bottom: 48px; }
   .vc-faq-layout { display: grid; grid-template-columns: 240px 1fr; gap: 40px; }
   @media (max-width: 720px) { .vc-faq-layout { grid-template-columns: 1fr; } }
-
   .vc-cat-tabs { display: flex; flex-direction: column; gap: 5px; }
-  .vc-cat-tab {
-    display: flex; align-items: center; gap: 10px;
-    padding: 12px 16px; background: none;
-    border: 1px solid transparent; border-radius: 9px;
-    font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--muted);
-    cursor: pointer; text-align: left; transition: all 0.2s;
-  }
+  .vc-cat-tab { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: none; border: 1px solid transparent; border-radius: 9px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--muted); cursor: pointer; text-align: left; transition: all 0.2s; }
   .vc-cat-tab:hover { background: var(--white); border-color: var(--border); color: var(--ink); }
-  .vc-cat-tab.active {
-    background: var(--white); border-color: var(--gold); color: var(--ink);
-    font-weight: 500; box-shadow: 0 2px 14px rgba(201,168,76,0.12);
-  }
+  .vc-cat-tab.active { background: var(--white); border-color: var(--gold); color: var(--ink); font-weight: 500; box-shadow: 0 2px 14px rgba(201,168,76,0.12); }
   .vc-cat-emoji { font-size: 1rem; }
-  .vc-cat-count {
-    margin-left: auto; font-size: 10px; font-weight: 500;
-    color: var(--gold); background: rgba(201,168,76,0.1);
-    border: 1px solid rgba(201,168,76,0.2);
-    padding: 1px 7px; border-radius: 10px;
-  }
-
-  .vc-sidebar-contact {
-    margin-top: 20px; padding: 18px 16px;
-    background: var(--ink); border-radius: 10px;
-    display: flex; flex-direction: column; gap: 8px;
-  }
-  .vc-sidebar-contact-title {
-    font-size: 10px; font-weight: 500; letter-spacing: 0.15em;
-    text-transform: uppercase; color: var(--gold); margin-bottom: 4px;
-  }
-  .vc-sidebar-link {
-    font-size: 11.5px; color: rgba(245,240,232,0.55);
-    text-decoration: none; transition: color 0.2s;
-    word-break: break-all; display: flex; align-items: center; gap: 6px;
-  }
+  .vc-cat-count { margin-left: auto; font-size: 10px; font-weight: 500; color: var(--gold); background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.2); padding: 1px 7px; border-radius: 10px; }
+  .vc-sidebar-contact { margin-top: 20px; padding: 18px 16px; background: var(--ink); border-radius: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .vc-sidebar-contact-title { font-size: 10px; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); margin-bottom: 4px; }
+  .vc-sidebar-link { font-size: 11.5px; color: rgba(245,240,232,0.55); text-decoration: none; transition: color 0.2s; word-break: break-all; display: flex; align-items: center; gap: 6px; }
   .vc-sidebar-link:hover { color: var(--gold); }
-
   .vc-questions { display: flex; flex-direction: column; gap: 10px; }
-  .vc-cat-label {
-    font-size: 11px; font-weight: 500; letter-spacing: 0.15em;
-    text-transform: uppercase; color: var(--gold); margin-bottom: 12px; margin-top: 8px;
-  }
-
-  .vc-faq-item {
-    background: var(--white); border: 1px solid var(--border);
-    border-radius: 11px; overflow: hidden;
-    transition: border-color 0.25s, box-shadow 0.25s;
-  }
-  .vc-faq-item.open {
-    border-color: var(--gold); box-shadow: 0 4px 22px rgba(201,168,76,0.1);
-  }
-  .vc-faq-q {
-    width: 100%; display: flex; justify-content: space-between; align-items: center;
-    gap: 16px; padding: 18px 22px; background: none; border: none;
-    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
-    color: var(--ink); cursor: pointer; text-align: left; transition: background 0.2s;
-  }
+  .vc-cat-label { font-size: 11px; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; margin-top: 8px; }
+  .vc-faq-item { background: var(--white); border: 1px solid var(--border); border-radius: 11px; overflow: hidden; transition: border-color 0.25s, box-shadow 0.25s; }
+  .vc-faq-item.open { border-color: var(--gold); box-shadow: 0 4px 22px rgba(201,168,76,0.1); }
+  .vc-faq-q { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px 22px; background: none; border: none; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; color: var(--ink); cursor: pointer; text-align: left; transition: background 0.2s; }
   .vc-faq-q:hover { background: var(--surface); }
-  .vc-faq-arrow {
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; color: var(--gold);
-    transition: transform 0.32s cubic-bezier(.34,1.56,.64,1);
-    will-change: transform;
-  }
+  .vc-faq-arrow { display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--gold); transition: transform 0.32s cubic-bezier(.34,1.56,.64,1); will-change: transform; }
   .vc-faq-arrow.up { transform: rotate(180deg); }
-  .vc-faq-a-wrap {
-    display: grid; grid-template-rows: 0fr;
-    transition: grid-template-rows 0.35s cubic-bezier(.22,1,.36,1);
-  }
+  .vc-faq-a-wrap { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.35s cubic-bezier(.22,1,.36,1); }
   .vc-faq-a-wrap.open { grid-template-rows: 1fr; }
-  .vc-faq-a-wrap > p {
-    overflow: hidden;
-    font-size: 13.5px; color: var(--muted); line-height: 1.8;
-    padding: 0 22px;
-    border-top: 1px solid transparent;
-    transition: padding 0.35s, border-color 0.2s;
-  }
-  .vc-faq-a-wrap.open > p {
-    padding: 14px 22px 20px;
-    border-top-color: var(--border);
-  }
-
+  .vc-faq-a-wrap > p { overflow: hidden; font-size: 13.5px; color: var(--muted); line-height: 1.8; padding: 0 22px; border-top: 1px solid transparent; transition: padding 0.35s, border-color 0.2s; }
+  .vc-faq-a-wrap.open > p { padding: 14px 22px 20px; border-top-color: var(--border); }
   .vc-no-results { text-align: center; padding: 60px 20px; }
   .vc-no-results span { font-size: 2.5rem; display: block; margin-bottom: 16px; }
   .vc-no-results p { font-size: 14px; color: var(--muted); margin-bottom: 20px; }
   .vc-no-results strong { color: var(--ink); }
-  .vc-clear-btn {
-    padding: 10px 24px; background: var(--ink); color: var(--white);
-    border: none; border-radius: 6px; font-family: 'DM Sans', sans-serif;
-    font-size: 13px; cursor: pointer; transition: background 0.2s;
-  }
+  .vc-clear-btn { padding: 10px 24px; background: var(--ink); color: var(--white); border: none; border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; transition: background 0.2s; }
   .vc-clear-btn:hover { background: var(--gold); color: var(--ink); }
 
-  /* ── RESOURCES ── */
-  .vc-resources {
-    max-width: 1060px; margin: 0 auto; padding: 0 32px 72px;
-    opacity: 0; transform: translateY(20px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
-  }
+  /* RESOURCES */
+  .vc-resources { max-width: 1060px; margin: 0 auto; padding: 0 32px 72px; opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
   .vc-resources.revealed { opacity: 1; transform: none; }
   .vc-res-header { text-align: center; margin-bottom: 36px; }
   .vc-res-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; }
   @media (max-width: 800px) { .vc-res-grid { grid-template-columns: repeat(2,1fr); } }
   @media (max-width: 500px) { .vc-res-grid { grid-template-columns: 1fr; } }
-
-  .vc-res-card {
-    position: relative;
-    background: var(--white); border: 1px solid var(--border);
-    border-radius: 12px; padding: 26px 20px 22px;
-    cursor: pointer;
-    overflow: hidden;
-    opacity: 0; transform: translateY(14px);
-    transition:
-      opacity 0.5s var(--delay, 0ms),
-      transform 0.5s var(--delay, 0ms),
-      border-color 0.28s,
-      box-shadow 0.28s;
-  }
-  .vc-resources.revealed .vc-res-card {
-    opacity: 1; transform: none;
-  }
-  .vc-res-card::after {
-    content: '';
-    position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(201,168,76,0.06), transparent);
-    transition: left 0.5s ease;
-  }
+  .vc-res-card { position: relative; background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 26px 20px 22px; cursor: pointer; overflow: hidden; opacity: 0; transform: translateY(14px); transition: opacity 0.5s var(--delay, 0ms), transform 0.5s var(--delay, 0ms), border-color 0.28s, box-shadow 0.28s; }
+  .vc-resources.revealed .vc-res-card { opacity: 1; transform: none; }
+  .vc-res-card::after { content: ''; position: absolute; top: 0; left: -100%; width: 60%; height: 100%; background: linear-gradient(90deg, transparent, rgba(201,168,76,0.06), transparent); transition: left 0.5s ease; }
   .vc-res-card:hover::after { left: 140%; }
-  .vc-res-card:hover {
-    border-color: var(--gold); transform: translateY(-4px) !important;
-    box-shadow: 0 12px 32px rgba(201,168,76,0.13);
-  }
-  .vc-res-tag {
-    display: inline-block; font-size: 9px; font-weight: 600; letter-spacing: 0.12em;
-    text-transform: uppercase; color: var(--gold);
-    background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.2);
-    padding: 2px 8px; border-radius: 20px; margin-bottom: 12px;
-  }
+  .vc-res-card:hover { border-color: var(--gold); transform: translateY(-4px) !important; box-shadow: 0 12px 32px rgba(201,168,76,0.13); }
+  .vc-res-tag { display: inline-block; font-size: 9px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.2); padding: 2px 8px; border-radius: 20px; margin-bottom: 12px; }
   .vc-res-icon { font-size: 1.7rem; display: block; margin-bottom: 12px; }
-  .vc-res-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.08rem; font-weight: 600; color: var(--ink); margin-bottom: 7px;
-  }
+  .vc-res-title { font-family: 'Cormorant Garamond', serif; font-size: 1.08rem; font-weight: 600; color: var(--ink); margin-bottom: 7px; }
   .vc-res-desc { font-size: 12.5px; color: var(--muted); line-height: 1.65; margin-bottom: 14px; }
   .vc-res-link { font-size: 12px; color: var(--gold); font-weight: 500; }
   .vc-res-card:hover .vc-res-link { text-decoration: underline; }
 
-  /* ── TIMELINE ── */
-  .vc-timeline-section {
-    background: var(--ink); padding: 72px 32px;
-    position: relative; overflow: hidden;
-    opacity: 0; transform: translateY(20px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
-  }
+  /* TIMELINE */
+  .vc-timeline-section { background: var(--ink); padding: 72px 32px; position: relative; overflow: hidden; opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
   .vc-timeline-section.revealed { opacity: 1; transform: none; }
-  .vc-timeline-section::before {
-    content: ''; position: absolute; inset: 0;
-    background: radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.07) 0%, transparent 55%);
-    pointer-events: none;
-  }
+  .vc-timeline-section::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.07) 0%, transparent 55%); pointer-events: none; }
   .vc-timeline-header { text-align: center; margin-bottom: 52px; position: relative; z-index: 1; }
-
-  .vc-timeline {
-    max-width: 760px; margin: 0 auto;
-    display: flex; flex-direction: column; gap: 0;
-    position: relative; z-index: 1;
-  }
-  .vc-timeline-item {
-    display: grid; grid-template-columns: 100px 56px 1fr; gap: 0;
-    align-items: flex-start;
-    opacity: 0; transform: translateX(-14px);
-    transition: opacity 0.5s var(--delay, 0ms), transform 0.5s var(--delay, 0ms);
-  }
+  .vc-timeline { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 0; position: relative; z-index: 1; }
+  .vc-timeline-item { display: grid; grid-template-columns: 100px 56px 1fr; gap: 0; align-items: flex-start; opacity: 0; transform: translateX(-14px); transition: opacity 0.5s var(--delay, 0ms), transform 0.5s var(--delay, 0ms); }
   .vc-timeline-section.revealed .vc-timeline-item { opacity: 1; transform: none; }
   @media (max-width: 600px) { .vc-timeline-item { grid-template-columns: 80px 44px 1fr; } }
-
   .vc-timeline-left { padding-top: 14px; text-align: right; padding-right: 16px; }
-  .vc-timeline-time {
-    font-size: 10.5px; font-weight: 500; letter-spacing: 0.1em;
-    color: var(--gold); text-transform: uppercase;
-  }
-  .vc-timeline-line-wrap {
-    display: flex; flex-direction: column; align-items: center; position: relative;
-  }
-  .vc-timeline-dot {
-    width: 44px; height: 44px; border-radius: 50%;
-    background: rgba(201,168,76,0.12); border: 1px solid rgba(201,168,76,0.3);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.1rem; flex-shrink: 0; z-index: 1;
-    transition: background 0.3s, transform 0.3s;
-  }
+  .vc-timeline-time { font-size: 10.5px; font-weight: 500; letter-spacing: 0.1em; color: var(--gold); text-transform: uppercase; }
+  .vc-timeline-line-wrap { display: flex; flex-direction: column; align-items: center; position: relative; }
+  .vc-timeline-dot { width: 44px; height: 44px; border-radius: 50%; background: rgba(201,168,76,0.12); border: 1px solid rgba(201,168,76,0.3); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; z-index: 1; transition: background 0.3s, transform 0.3s; }
   .vc-timeline-item:hover .vc-timeline-dot { background: rgba(201,168,76,0.24); transform: scale(1.08); }
-  .vc-timeline-connector {
-    width: 1px; flex: 1; min-height: 32px;
-    background: rgba(201,168,76,0.18); margin: 4px 0;
-  }
+  .vc-timeline-connector { width: 1px; flex: 1; min-height: 32px; background: rgba(201,168,76,0.18); margin: 4px 0; }
   .vc-timeline-right { padding: 10px 0 32px 20px; }
-  .vc-timeline-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.1rem; font-weight: 600; color: var(--cream); margin-bottom: 5px;
-  }
+  .vc-timeline-title { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600; color: var(--cream); margin-bottom: 5px; }
   .vc-timeline-desc { font-size: 13px; color: var(--muted); line-height: 1.7; }
 
-  /* ── CTA ── */
-  .vc-cta {
-    position: relative; overflow: hidden;
-    text-align: center; padding: 88px 32px;
-    background: var(--ink);
-  }
+  /* CTA */
+  .vc-cta { position: relative; overflow: hidden; text-align: center; padding: 88px 32px; background: var(--ink); }
   .vc-cta-orb { position: absolute; border-radius: 50%; filter: blur(100px); pointer-events: none; will-change: transform; }
-  .vc-cta-orb1 {
-    width: 440px; height: 440px; background: var(--gold); opacity: 0.08;
-    top: 50%; left: 50%; transform: translate(-50%, -50%);
-    animation: orbFloat 8s ease-in-out infinite alternate;
-  }
-  .vc-cta-orb2 {
-    width: 240px; height: 240px; background: #5e7ab8; opacity: 0.1;
-    top: 10%; right: 8%; animation: orbFloat 10s ease-in-out infinite alternate-reverse;
-  }
+  .vc-cta-orb1 { width: 440px; height: 440px; background: var(--gold); opacity: 0.08; top: 50%; left: 50%; transform: translate(-50%, -50%); animation: orbFloat 8s ease-in-out infinite alternate; }
+  .vc-cta-orb2 { width: 240px; height: 240px; background: #5e7ab8; opacity: 0.1; top: 10%; right: 8%; animation: orbFloat 10s ease-in-out infinite alternate-reverse; }
   .vc-cta-inner { position: relative; z-index: 1; max-width: 600px; margin: 0 auto; }
-  .vc-cta-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 300; color: var(--white);
-    margin: 10px 0 14px;
-  }
-  .vc-cta-sub {
-    font-size: 13.5px; color: rgba(245,240,232,0.5); margin-bottom: 28px;
-    max-width: 480px; margin-left: auto; margin-right: auto; line-height: 1.75;
-  }
-  .vc-cta-contact-row {
-    display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 30px;
-  }
-  .vc-cta-contact-pill {
-    display: inline-flex; align-items: center; gap: 7px;
-    padding: 9px 18px; border-radius: 30px;
-    font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 500;
-    text-decoration: none; transition: all 0.25s;
-    background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.22);
-    color: var(--gold-light);
-  }
-  .vc-cta-contact-pill:hover {
-    background: rgba(201,168,76,0.18); border-color: var(--gold);
-    transform: translateY(-2px); box-shadow: 0 6px 20px rgba(201,168,76,0.2);
-  }
+  .vc-cta-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 300; color: var(--white); margin: 10px 0 14px; }
+  .vc-cta-sub { font-size: 13.5px; color: rgba(245,240,232,0.5); margin-bottom: 28px; max-width: 480px; margin-left: auto; margin-right: auto; line-height: 1.75; }
+  .vc-cta-contact-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 30px; }
+  .vc-cta-contact-pill { display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: 30px; font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 500; text-decoration: none; transition: all 0.25s; background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.22); color: var(--gold-light); }
+  .vc-cta-contact-pill:hover { background: rgba(201,168,76,0.18); border-color: var(--gold); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(201,168,76,0.2); }
   .vc-cta-wa-pill { border-color: rgba(37,211,102,0.3); color: #7de8a8; }
   .vc-cta-wa-pill:hover { background: rgba(37,211,102,0.1); border-color: rgba(37,211,102,0.6); }
-
   .vc-cta-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-  .vc-cta-primary {
-    padding: 14px 32px; background: var(--gold); color: var(--ink);
-    border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif;
-    font-size: 14px; font-weight: 500; cursor: pointer;
-    transition: all 0.25s; position: relative; overflow: hidden;
-  }
-  .vc-cta-primary::after {
-    content: ''; position: absolute; inset: 0;
-    background: rgba(255,255,255,0); transition: background 0.2s;
-  }
+  .vc-cta-primary { padding: 14px 32px; background: var(--gold); color: var(--ink); border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.25s; }
   .vc-cta-primary:hover { background: var(--cream); transform: translateY(-2px); box-shadow: 0 10px 30px rgba(201,168,76,0.35); }
-  .vc-cta-primary:active { transform: translateY(0); box-shadow: none; }
-  .vc-cta-secondary {
-    padding: 14px 32px; background: transparent; color: var(--cream);
-    border: 1px solid rgba(245,240,232,0.22); border-radius: 8px;
-    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
-    text-decoration: none; display: inline-flex; align-items: center; transition: all 0.25s;
-  }
+  .vc-cta-secondary { padding: 14px 32px; background: transparent; color: var(--cream); border: 1px solid rgba(245,240,232,0.22); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; text-decoration: none; display: inline-flex; align-items: center; transition: all 0.25s; }
   .vc-cta-secondary:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-2px); }
 
-  /* ── FOOTER ── */
-  .vc-footer {
-    background: #0a0806; padding: 32px;
-    text-align: center; border-top: 1px solid rgba(201,168,76,0.1);
-    display: flex; flex-direction: column; gap: 10px; align-items: center;
-  }
-  .vc-footer-logo {
-    font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600;
-    color: var(--gold); letter-spacing: 0.2em; text-transform: uppercase;
-  }
+  /* FOOTER */
+  .vc-footer { background: #0a0806; padding: 32px; text-align: center; border-top: 1px solid rgba(201,168,76,0.1); display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  .vc-footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600; color: var(--gold); letter-spacing: 0.2em; text-transform: uppercase; }
   .vc-footer-copy { font-size: 12px; color: rgba(122,114,101,0.5); }
   .vc-footer-contact { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
   .vc-footer-link { font-size: 12px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
   .vc-footer-link:hover { color: var(--gold); }
   .vc-footer-sep { color: var(--border); }
 
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(22px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
+  .vc-eyebrow-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+  .vc-eyebrow-wrap img, .vc-eyebrow-wrap svg { width: 26px; height: 26px; }
 
-  /* ── CONTACT SECTION REVEAL ── */
-  .vc-contact-section {
-    opacity: 0; transform: translateY(20px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
-  }
-  .vc-contact-section.revealed { opacity: 1; transform: none; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
 
   @media (max-width: 480px) {
     .vc-hero { padding: 90px 20px 60px; }
@@ -1325,27 +1120,130 @@ const styles = `
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .vc-hero-orb, .vc-eyebrow-dot, .vc-hours-dot, .vc-hours-live,
-    .vc-cta-orb { animation: none !important; }
-    .vc-contact-card, .vc-stat, .vc-res-card, .vc-timeline-item,
-    .vc-faq-section, .vc-resources, .vc-timeline-section,
-    .vc-contact-section {
-      opacity: 1 !important; transform: none !important; transition: border-color 0.2s, box-shadow 0.2s !important;
-    }
+    .vc-hero-orb, .vc-eyebrow-dot, .vc-hours-dot, .vc-hours-live, .vc-cta-orb { animation: none !important; }
+    .vc-contact-card, .vc-stat, .vc-res-card, .vc-timeline-item, .vc-faq-section, .vc-resources, .vc-timeline-section, .vc-contact-section { opacity: 1 !important; transform: none !important; }
     .vc-stats-strip.revealed .vc-stat { opacity: 1; transform: none; }
   }
-    .vc-eyebrow-wrap {
-  display: flex;
-  flex-direction: column;   /* 👈 THIS FIXES EVERYTHING */
-  align-items: center;
-  gap: 6px;
-  text-align: center;
-}
 
-/* control logo size everywhere */
-.vc-eyebrow-wrap img,
-.vc-eyebrow-wrap svg {
-  width: 26px;
-  height: 26px;
+  /* ════════════════════════════════════════════════
+     AI CHAT WIDGET — VENDOR
+  ════════════════════════════════════════════════ */
+
+  .vc-chat-fab {
+    position: fixed; bottom: 28px; right: 28px; z-index: 9000;
+    width: 58px; height: 58px; border-radius: 50%;
+    background: var(--ink); color: var(--white);
+    border: 2px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 8px 28px rgba(14,12,10,0.35);
+    transition: transform 0.3s cubic-bezier(.34,1.56,.64,1), background 0.25s, box-shadow 0.25s;
+  }
+  .vc-chat-fab:hover {
+    transform: scale(1.1) translateY(-2px);
+    background: var(--gold); color: var(--ink);
+    box-shadow: 0 12px 36px rgba(201,168,76,0.4);
+  }
+  .vc-chat-fab.open { background: var(--ink); color: var(--white); border-color: rgba(201,168,76,0.4); }
+
+  .vc-chat-badge { position: absolute; top: -4px; right: -4px; width: 20px; height: 20px; border-radius: 50%; background: #e05555; color: white; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; border: 2px solid var(--cream); font-family: 'DM Sans', sans-serif; }
+
+  .vc-chat-fab-ring { position: absolute; inset: -6px; border-radius: 50%; border: 2px solid rgba(201,168,76,0.35); animation: fabRing 2.5s ease-in-out infinite; }
+  @keyframes fabRing { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(1.55); opacity: 0; } }
+
+  .vc-chat-window {
+    position: fixed; bottom: 100px; right: 28px; z-index: 8999;
+    width: 370px; max-height: 560px;
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: 0 24px 72px rgba(14,12,10,0.22), 0 0 0 1px rgba(201,168,76,0.08);
+    display: flex; flex-direction: column; overflow: hidden;
+    transform: scale(0.88) translateY(20px); opacity: 0; pointer-events: none;
+    transform-origin: bottom right;
+    transition: transform 0.32s cubic-bezier(.34,1.26,.64,1), opacity 0.28s ease;
+  }
+  .vc-chat-window.show { transform: scale(1) translateY(0); opacity: 1; pointer-events: auto; }
+  @media (max-width: 480px) {
+    .vc-chat-window {
+  position: fixed;
+  bottom: 100px;
+
+  /* ✅ FIX START */
+  right: 16px;
+  left: auto;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  /* ✅ FIX END */
+
+  max-height: 560px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 24px 72px rgba(14,12,10,0.22), 0 0 0 1px rgba(201,168,76,0.08);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: scale(0.88) translateY(20px);
+  opacity: 0;
+  pointer-events: none;
+  transform-origin: bottom right;
+  transition: transform 0.32s cubic-bezier(.34,1.26,.64,1), opacity 0.28s ease;
+}
+    .vc-chat-fab { bottom: 20px; right: 16px; }
+  }
+
+  .vc-chat-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; background: var(--ink); border-bottom: 1px solid rgba(201,168,76,0.15); flex-shrink: 0; }
+  .vc-chat-header-left { display: flex; align-items: center; gap: 12px; }
+  .vc-chat-avatar-wrap { position: relative; }
+  .vc-chat-bot-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--gold); color: var(--ink); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; font-weight: 600; }
+  .vc-chat-online-dot { position: absolute; bottom: 1px; right: 1px; width: 10px; height: 10px; border-radius: 50%; background: #3dba7a; border: 2px solid var(--ink); }
+  .vc-chat-bot-name { font-size: 13.5px; font-weight: 500; color: var(--white); margin-bottom: 2px; }
+  .vc-chat-bot-status { display: flex; align-items: center; gap: 5px; font-size: 11px; color: rgba(245,240,232,0.5); }
+  .vc-chat-status-dot { width: 6px; height: 6px; border-radius: 50%; background: #3dba7a; flex-shrink: 0; animation: statusBlink 2.2s ease-in-out infinite; }
+  @keyframes statusBlink { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .vc-chat-close-btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: rgba(245,240,232,0.6); transition: all 0.2s; flex-shrink: 0; }
+  .vc-chat-close-btn:hover { background: rgba(255,255,255,0.16); color: var(--white); }
+
+  .vc-chat-messages { flex: 1; overflow-y: auto; padding: 18px 14px 10px; display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+  .vc-chat-messages::-webkit-scrollbar { width: 4px; }
+  .vc-chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .vc-msg-row { display: flex; align-items: flex-end; gap: 8px; }
+  .vc-msg-row.user { flex-direction: row-reverse; }
+  .vc-msg-bot-icon { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; background: var(--gold); color: var(--ink); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 0.9rem; font-weight: 600; margin-bottom: 16px; }
+  .vc-msg-bubble-wrap { display: flex; flex-direction: column; gap: 3px; max-width: 82%; }
+  .vc-msg-row.user .vc-msg-bubble-wrap { align-items: flex-end; }
+  .vc-msg-bubble { padding: 11px 14px; border-radius: 14px; font-family: 'DM Sans', sans-serif; font-size: 13px; line-height: 1.65; animation: msgPop 0.26s cubic-bezier(.34,1.4,.64,1) both; word-break: break-word; }
+  .vc-msg-bubble.bot { background: var(--surface); color: var(--ink); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+  .vc-msg-bubble.user { background: var(--ink); color: var(--white); border-bottom-right-radius: 4px; }
+  .vc-msg-bubble strong { font-weight: 600; }
+  .vc-msg-bubble em { font-style: italic; }
+  .vc-msg-time { font-size: 10px; color: #c0b8ae; }
+  .vc-msg-row.user .vc-msg-time { text-align: right; }
+  @keyframes msgPop { from { opacity: 0; transform: scale(0.88) translateY(6px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+  .vc-typing-bubble { display: flex; align-items: center; gap: 5px; padding: 14px 18px; width: fit-content; }
+  .vc-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); opacity: 0.55; animation: dotBounce 1.2s ease-in-out infinite; flex-shrink: 0; }
+  .vc-dot:nth-child(2) { animation-delay: 0.18s; }
+  .vc-dot:nth-child(3) { animation-delay: 0.36s; }
+  @keyframes dotBounce { 0%,80%,100% { transform: translateY(0); opacity: 0.55; } 40% { transform: translateY(-6px); opacity: 1; } }
+
+  .vc-chat-chips { display: flex; gap: 6px; padding: 8px 14px; overflow-x: auto; flex-shrink: 0; border-top: 1px solid var(--border); scrollbar-width: none; }
+  .vc-chat-chips::-webkit-scrollbar { display: none; }
+  .vc-chip { display: inline-flex; align-items: center; white-space: nowrap; padding: 6px 13px; border-radius: 20px; background: var(--surface); border: 1px solid var(--border); font-family: 'DM Sans', sans-serif; font-size: 11.5px; color: var(--muted); cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
+  .vc-chip:hover:not(:disabled) { background: rgba(201,168,76,0.08); border-color: var(--gold); color: var(--ink); }
+  .vc-chip:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .vc-chat-input-row { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--border); flex-shrink: 0; background: var(--white); }
+  .vc-chat-input { flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 10px 13px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--ink); background: var(--surface); outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+  .vc-chat-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.1); }
+  .vc-chat-input::placeholder { color: #c0b8ae; }
+  .vc-chat-input:disabled { opacity: 0.6; }
+  .vc-chat-send { width: 38px; height: 38px; border-radius: 8px; flex-shrink: 0; background: var(--surface); border: 1px solid var(--border); color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.22s; }
+  .vc-chat-send.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+  .vc-chat-send.active:hover { background: var(--gold); color: var(--ink); border-color: var(--gold); transform: scale(1.05); }
+  .vc-chat-send:disabled { opacity: 0.45; cursor: not-allowed; }
+  body {
+  overflow-x: hidden;
 }
 `;
