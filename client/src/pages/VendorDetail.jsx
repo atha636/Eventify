@@ -6,19 +6,54 @@ import BookingDetailsModal from "../components/BookingDetailsModal";
 import BookingWaitModal from "../components/BookingWaitModal";
 import Logo from "../components/Logo";
 
-// ── Compact Custom Calendar ───────────────────────────────────────────────────
+// ── Custom Calendar ───────────────────────────────────────────────────────────
 function CustomDatePicker({ value, onChange, hasError }) {
   const [open, setOpen]             = useState(false);
   const [viewYear, setViewYear]     = useState(() => new Date().getFullYear());
   const [viewMonth, setViewMonth]   = useState(() => new Date().getMonth());
   const [showYearGrid, setShowYearGrid] = useState(false);
-  const ref = useRef(null);
+  const [popupStyle, setPopupStyle] = useState({});
+  const ref     = useRef(null);
+  const trigRef = useRef(null);
 
+  // Close on outside click
   useEffect(() => {
     const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  // Compute popup position so it never overflows the viewport
+  useEffect(() => {
+    if (!open || !trigRef.current) return;
+    const rect   = trigRef.current.getBoundingClientRect();
+    const popW   = Math.min(288, window.innerWidth - 24);
+    const popH   = 320; // approx popup height
+    const spaceBelow = window.innerHeight - rect.bottom - 8;
+    const spaceAbove = rect.top - 8;
+
+    let top, left;
+
+    // vertical: prefer below, else above
+    if (spaceBelow >= popH || spaceBelow >= spaceAbove) {
+      top = rect.bottom + window.scrollY + 6;
+    } else {
+      top = rect.top + window.scrollY - popH - 6;
+    }
+
+    // horizontal: align left edge, clamp to screen
+    left = rect.left + window.scrollX;
+    const rightEdge = left + popW;
+    if (rightEdge > window.innerWidth - 12) {
+      left = window.innerWidth - popW - 12;
+    }
+    if (left < 12) left = 12;
+
+    setPopupStyle({ position: "fixed", top: rect.bottom + 6, left, width: popW,
+      ...(spaceBelow < popH && spaceAbove > spaceBelow
+        ? { top: rect.top - popH - 6 }
+        : {}) });
+  }, [open]);
 
   const today   = new Date(); today.setHours(0,0,0,0);
   const minDate = new Date(today.getTime() + 86400000);
@@ -86,6 +121,7 @@ function CustomDatePicker({ value, onChange, hasError }) {
   return (
     <div className="cdp-root" ref={ref}>
       <button
+        ref={trigRef}
         type="button"
         className={`cdp-trigger ${hasError ? "error" : ""} ${open ? "open" : ""}`}
         onClick={() => setOpen(o => !o)}
@@ -96,7 +132,7 @@ function CustomDatePicker({ value, onChange, hasError }) {
       </button>
 
       {open && (
-        <div className="cdp-pop">
+        <div className="cdp-pop" style={popupStyle}>
           {/* Header */}
           <div className="cdp-header">
             <button className="cdp-nav" onClick={prevMonth}>‹</button>
@@ -418,7 +454,6 @@ export default function VendorDetail() {
   );
 }
 
-// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap');
 
@@ -522,11 +557,11 @@ const styles = `
   .vd-spinner { width:36px; height:36px; border:2px solid var(--border); border-top-color:var(--gold); border-radius:50%; animation:spin 0.9s linear infinite; }
 
   /* ═══════════════════════════════════════════
-     COMPACT CUSTOM DATE PICKER
+     CUSTOM DATE PICKER — fixed-position popup
   ═══════════════════════════════════════════ */
   .cdp-root { position:relative; width:100%; }
 
-  /* Trigger */
+  /* Trigger button */
   .cdp-trigger {
     width:100%; display:flex; align-items:center; gap:9px;
     border:1px solid var(--border); border-radius:6px;
@@ -536,8 +571,7 @@ const styles = `
     text-align:left;
   }
   .cdp-trigger:hover, .cdp-trigger.open {
-    border-color:var(--gold);
-    box-shadow:0 0 0 3px rgba(201,168,76,0.08);
+    border-color:var(--gold); box-shadow:0 0 0 3px rgba(201,168,76,0.08);
   }
   .cdp-trigger.error { border-color:var(--danger-border); background:var(--danger-bg); animation:shake 0.35s ease; }
   .cdp-icon  { font-size:14px; flex-shrink:0; line-height:1; }
@@ -545,19 +579,15 @@ const styles = `
   .cdp-val.placeholder { color:var(--muted); }
   .cdp-arrow { font-size:9px; color:var(--muted); flex-shrink:0; }
 
-  /* Popup — fixed 272 px, repositions on mobile */
+  /* Popup — now uses fixed positioning (set via JS) so it never clips */
   .cdp-pop {
-    position:absolute; top:calc(100% + 6px); left:0;
-    width:272px;
+    /* position/top/left/width set via inline style from JS */
+    z-index:9999;
     background:var(--white);
     border:1px solid rgba(201,168,76,0.22);
     border-radius:12px; overflow:hidden;
-    box-shadow:0 12px 40px rgba(14,12,10,0.16);
-    z-index:9999;
+    box-shadow:0 12px 40px rgba(14,12,10,0.18);
     animation:cdpDrop 0.18s cubic-bezier(0.34,1.3,0.64,1) both;
-  }
-  @media(max-width:360px){
-    .cdp-pop { width:calc(100vw - 32px); left:0; }
   }
 
   /* Header bar */
@@ -577,8 +607,7 @@ const styles = `
     font-family:'Cormorant Garamond',serif; font-size:0.95rem;
     font-style:italic; color:var(--white); letter-spacing:0.04em;
     padding:3px 8px; border-radius:4px;
-    display:flex; align-items:center; gap:5px;
-    transition:background 0.15s;
+    display:flex; align-items:center; gap:5px; transition:background 0.15s;
   }
   .cdp-month-btn:hover { background:rgba(201,168,76,0.15); }
   .cdp-chevron { font-size:8px; color:var(--gold); }
@@ -590,8 +619,7 @@ const styles = `
   }
   .cdp-daynames span {
     font-size:9px; font-weight:600; letter-spacing:0.1em;
-    text-transform:uppercase; color:var(--gold);
-    text-align:center; line-height:2;
+    text-transform:uppercase; color:var(--gold); text-align:center; line-height:2;
   }
 
   /* Day cell grid */
@@ -603,15 +631,13 @@ const styles = `
     aspect-ratio:1; display:flex; align-items:center; justify-content:center;
     font-size:11.5px; font-family:'DM Sans',sans-serif;
     color:var(--ink); background:none; border:none; border-radius:50%;
-    cursor:pointer; transition:background 0.12s, color 0.12s, transform 0.1s;
-    line-height:1;
+    cursor:pointer; transition:background 0.12s, color 0.12s, transform 0.1s; line-height:1;
   }
   .cdp-cell:hover:not(.disabled):not(.other) { background:var(--cream); transform:scale(1.1); }
   .cdp-cell.other    { color:rgba(14,12,10,0.18); cursor:default; }
   .cdp-cell.disabled { color:rgba(14,12,10,0.18) !important; cursor:not-allowed; }
   .cdp-cell.today:not(.selected) {
-    color:var(--gold); font-weight:600;
-    box-shadow:inset 0 0 0 1px rgba(201,168,76,0.45);
+    color:var(--gold); font-weight:600; box-shadow:inset 0 0 0 1px rgba(201,168,76,0.45);
   }
   .cdp-cell.selected {
     background:var(--gold) !important; color:var(--ink) !important;
@@ -620,32 +646,23 @@ const styles = `
 
   /* Year picker */
   .cdp-year-grid { padding:10px 12px; }
-  .cdp-yr-nav-row {
-    display:flex; align-items:center; justify-content:space-between;
-    margin-bottom:8px;
-  }
+  .cdp-yr-nav-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
   .cdp-yr-range { font-size:11px; color:var(--muted); letter-spacing:0.06em; }
   .cdp-yr-nav {
     background:none; border:none; color:var(--gold); font-size:14px;
     cursor:pointer; width:26px; height:26px; border-radius:4px;
-    display:flex; align-items:center; justify-content:center;
-    transition:background 0.15s;
+    display:flex; align-items:center; justify-content:center; transition:background 0.15s;
   }
   .cdp-yr-nav:hover { background:var(--surface); }
-  .cdp-yr-cells {
-    display:grid; grid-template-columns:repeat(4,1fr); gap:4px;
-  }
+  .cdp-yr-cells { display:grid; grid-template-columns:repeat(4,1fr); gap:4px; }
   .cdp-yr-cell {
-    padding:7px 0; background:none;
-    border:1px solid transparent; border-radius:5px;
-    font-family:'DM Sans',sans-serif; font-size:12px;
-    color:var(--ink); cursor:pointer; text-align:center;
-    transition:all 0.13s;
+    padding:7px 0; background:none; border:1px solid transparent; border-radius:5px;
+    font-family:'DM Sans',sans-serif; font-size:12px; color:var(--ink);
+    cursor:pointer; text-align:center; transition:all 0.13s;
   }
   .cdp-yr-cell:hover  { background:var(--surface); border-color:var(--border); }
   .cdp-yr-cell.active { background:var(--ink); color:var(--white); border-color:var(--ink); }
 
-  /* Animations */
   @keyframes spin    { to{transform:rotate(360deg)} }
   @keyframes fadeUp  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
   @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
