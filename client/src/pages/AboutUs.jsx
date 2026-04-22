@@ -93,10 +93,10 @@ export default function AboutUs() {
   ];
 
   const team = [
-    { initial: "A", name: "Akarsh",         role: "Co-founder & CEO",        desc: "Passionate about making luxury events accessible to everyone in India.",       gradient: "135deg, #c9a84c 0%, #e8d5a3 100%" },
-    { initial: "S", name: "Akarsh",         role: "Head of Vendor Relations", desc: "Bridging the gap between talented vendors and clients who deserve them.",       gradient: "135deg, #a78bfa 0%, #c4b5fd 100%" },
-    { initial: "R", name: "Atharv Patidar", role: "CTO",                      desc: "Building the infrastructure that makes seamless bookings possible at scale.",   gradient: "135deg, #34d399 0%, #6ee7b7 100%" },
-    { initial: "P", name: "Atharv Patidar", role: "Head of Design",           desc: "Ensuring every touchpoint feels as beautiful as the events we support.",        gradient: "135deg, #f87171 0%, #fca5a5 100%" },
+    { initial: "A", name: "Akarsh",         role: "founder & CEO",        desc: "Passionate about making luxury events accessible to everyone in India.",       gradient: "135deg, #c9a84c 0%, #e8d5a3 100%" },
+    { initial: "A", name: "Akarsh",         role: "Head of Vendor Relations", desc: "Bridging the gap between talented vendors and clients who deserve them.",       gradient: "135deg, #a78bfa 0%, #c4b5fd 100%" },
+    { initial: "A", name: "Atharv Patidar", role: "Co-founder & CTO",                      desc: "Building the infrastructure that makes seamless bookings possible at scale.",   gradient: "135deg, #34d399 0%, #6ee7b7 100%" },
+    { initial: "A", name: "Atharv Patidar", role: "Head of Design",           desc: "Ensuring every touchpoint feels as beautiful as the events we support.",        gradient: "135deg, #f87171 0%, #fca5a5 100%" },
   ];
 
   const timeline = [
