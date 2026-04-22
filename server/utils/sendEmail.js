@@ -2,13 +2,21 @@
 const { Resend } = require("resend");
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const sendEmail = async ({ to, subject, html }) => {
-  await resend.emails.send({
-    from: "Evencers <noreply@evencers.com>",
-    to,
-    subject,
-    html,
-  });
+const sendEmail = async ({ to, subject, html, text }) => {
+  try {
+    const res = await resend.emails.send({
+      from: "Evencers <noreply@evencers.com>",
+      to,
+      subject,
+      html: html || `<pre>${text}</pre>`, // ✅ fallback
+      text,
+    });
+
+    return res;
+  } catch (error) {
+    console.error("❌ Email error:", error);
+    throw error;
+  }
 };
 
 const sendOTP = async (email, otp) => {
