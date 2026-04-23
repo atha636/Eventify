@@ -65,7 +65,7 @@ exports.verifyOTP = async (req, res) => {
     user.otpExpires = null;
     await user.save();
 
-    // ── UPGRADE 3: Notify admin when a vendor verifies email ─────
+    // Notify admin when a vendor verifies email
     if (user.role === "vendor") {
       const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
       sendVendorVerificationRequest({
@@ -74,7 +74,6 @@ exports.verifyOTP = async (req, res) => {
         adminEmail,
       }).catch((e) => console.error("Admin notify error (non-fatal):", e.message));
     }
-    // ─────────────────────────────────────────────────────────────
 
     const token = jwt.sign(
       { id: user._id, role: user.role },
@@ -109,11 +108,11 @@ exports.login = async (req, res) => {
 };
 
 // ─────────────────────────────────────────
-// GOOGLE LOGIN
+// GOOGLE LOGIN — FIXED
 // ─────────────────────────────────────────
 exports.googleLogin = async (req, res) => {
   try {
-    const { token } = req.body;
+    const { token, role } = req.body; // ← FIXED: destructure role from request
     if (!token) return res.status(400).json({ msg: "No token provided" });
 
     const ticket = await client.verifyIdToken({ idToken: token, audience: process.env.GOOGLE_CLIENT_ID });
@@ -121,11 +120,30 @@ exports.googleLogin = async (req, res) => {
     let user = await User.findOne({ email });
 
     if (!user) {
+      // ── NEW USER: use the role they selected on the register page ──
+      const assignedRole = role === "vendor" ? "vendor" : "user"; // safe fallback to "user"
+
       user = await User.create({
-        name, email, password: null, avatar: picture,
-        role: "user", isVerified: true, isProfileVerified: "approved",
+        name,
+        email,
+        password: null,
+        avatar: picture,
+        role: assignedRole,                                              // ← FIXED: use selected role
+        isVerified: true,
+        isProfileVerified: assignedRole === "vendor" ? "pending" : "approved", // ← FIXED: vendors start pending
       });
+
+      // Notify admin if a new vendor registers via Google
+      if (assignedRole === "vendor") {
+        const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
+        sendVendorVerificationRequest({
+          vendorName:  user.name,
+          vendorEmail: user.email,
+          adminEmail,
+        }).catch((e) => console.error("Admin notify error (non-fatal):", e.message));
+      }
     }
+    // ── EXISTING USER: keep their stored role — do NOT overwrite ──
 
     const jwtToken = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
     res.json({ token: jwtToken, user });
@@ -202,10 +220,6 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
-// ═══════════════════════════════════════════
-// UPGRADE 2 — PROFILE MANAGEMENT
-// ═══════════════════════════════════════════
-
 // ─────────────────────────────────────────
 // UPDATE PROFILE (name + email)
 // PUT /api/auth/update-profile
@@ -223,7 +237,7 @@ exports.updateProfile = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       req.user.id,
       { name: name.trim(), email: email.toLowerCase().trim() },
-      {returnDocument: 'after', select: "-password -otp -otpExpires -resetOtp -resetOtpExpires" }
+      { returnDocument: 'after', select: "-password -otp -otpExpires -resetOtp -resetOtpExpires" }
     );
     if (!user) return res.status(404).json({ msg: "User not found" });
     res.json({ msg: "Profile updated", user });
@@ -261,5 +275,3 @@ exports.changePassword = async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 };
-
-

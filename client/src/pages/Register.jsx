@@ -15,8 +15,8 @@ export default function Register() {
   const [timer, setTimer] = useState(0);
   const [canResend, setCanResend] = useState(false);
   const [otpSendCount, setOtpSendCount] = useState(0);
-  const [windowExpiry, setWindowExpiry] = useState(null); // timestamp when 1-min window resets
-  const [windowTimer, setWindowTimer] = useState(0); // countdown to window reset
+  const [windowExpiry, setWindowExpiry] = useState(null);
+  const [windowTimer, setWindowTimer] = useState(0);
   const [maxReached, setMaxReached] = useState(false);
   const [verifySuccess, setVerifySuccess] = useState(false);
   const otpRefs = useRef([]);
@@ -25,9 +25,9 @@ export default function Register() {
   useEffect(() => {
     const savedStep = localStorage.getItem("otp_step");
     const savedEmail = localStorage.getItem("otp_email");
-    const savedExpiry = localStorage.getItem("otp_resend_expiry"); // when next resend unlocks
+    const savedExpiry = localStorage.getItem("otp_resend_expiry");
     const savedCount = parseInt(localStorage.getItem("otp_send_count") || "0", 10);
-    const savedWindowExpiry = localStorage.getItem("otp_window_expiry"); // 1-min window end
+    const savedWindowExpiry = localStorage.getItem("otp_window_expiry");
 
     if (savedStep === "otp" && savedEmail) {
       setStep("otp");
@@ -36,7 +36,6 @@ export default function Register() {
 
       const now = Date.now();
 
-      // Check if 1-min send window is expired → reset count
       if (savedWindowExpiry) {
         const winExp = parseInt(savedWindowExpiry, 10);
         if (now < winExp) {
@@ -45,7 +44,6 @@ export default function Register() {
             setMaxReached(true);
           }
         } else {
-          // Window expired, reset
           localStorage.setItem("otp_send_count", "0");
           localStorage.removeItem("otp_window_expiry");
           setOtpSendCount(0);
@@ -53,7 +51,6 @@ export default function Register() {
         }
       }
 
-      // Restore per-resend 30s timer
       if (savedExpiry) {
         const remaining = Math.ceil((parseInt(savedExpiry, 10) - now) / 1000);
         if (remaining > 0) {
@@ -126,7 +123,6 @@ export default function Register() {
       setOtpSendCount(newCount);
       localStorage.setItem("otp_send_count", String(newCount));
 
-      // Set 1-min window on first send
       if (!isResend || !windowExpiry) {
         const winEnd = now + OTP_WINDOW_MS;
         setWindowExpiry(winEnd);
@@ -459,10 +455,14 @@ export default function Register() {
                   <div style={{ textAlign: "center", marginBottom: "10px", fontSize: "12px", color: "#7a7265" }}>
                     or continue with
                   </div>
+                  {/* ── FIX: pass selected role to Google login ── */}
                   <GoogleLogin
                     onSuccess={async (credentialResponse) => {
                       try {
-                        const res = await API.post("/auth/google", { token: credentialResponse.credential });
+                        const res = await API.post("/auth/google", {
+                          token: credentialResponse.credential,
+                          role: data.role, // ← FIXED: send selected role
+                        });
                         localStorage.setItem("token", res.data.token);
                         localStorage.setItem("user", JSON.stringify(res.data.user));
                         window.location.href = "/";
