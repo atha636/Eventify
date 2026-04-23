@@ -48,7 +48,7 @@ export default function App() {
         <Route path="/vendor-dashboard"        element={<VendorDashboard />} />
         <Route path="/add-service"             element={<AddService />} />
         <Route path="/edit-service/:id"        element={<EditService />} />
-
+        <Route path="/services"                element={<Vendors />} />
         {/* ── User ── */}
         <Route path="/my-bookings"             element={<UserDashboard />} />
         <Route path="/favourites"              element={<Favorites />} />
