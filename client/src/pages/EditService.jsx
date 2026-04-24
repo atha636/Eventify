@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
-import Logo from "../components/Logo";
 
 const SERVICE_TYPES = [
   { value: "decor",       label: "Decor",        emoji: "🎨" },
@@ -207,7 +206,7 @@ export default function EditService() {
               <div className="es-form-col">
                 <div className="es-form-header">
                   <a href="/dashboard" className="es-back">← Back to Dashboard</a>
-                  <p className="es-eyebrow"><Logo />Vendor Portal</p>
+                  <p className="es-eyebrow">Vendor Portal</p>
                   <h1 className="es-title">Edit Service</h1>
                   <p className="es-subtitle">Update your listing details. Changes go live instantly.</p>
                 </div>
@@ -457,7 +456,7 @@ export default function EditService() {
               {/* ── RIGHT — LIVE PREVIEW ── */}
               <div className="es-preview-col">
                 <div className="es-preview-sticky">
-                  <p className="es-preview-label"><Logo />Live Preview</p>
+                  <p className="es-preview-label">Live Preview</p>
                   <div className="es-preview-card">
                     <div className="es-preview-img">
                       {previewUrl ? (
