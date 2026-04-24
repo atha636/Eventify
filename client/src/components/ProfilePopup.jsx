@@ -17,15 +17,26 @@ export default function ProfilePopup({ onClose }) {
 
   const popupRef = useRef(null);
 
-  // Close on outside click — but NOT when the logout confirm modal is open
+  // Close on outside click/touch — but NOT when the logout confirm modal is open
   useEffect(() => {
     const handler = (e) => {
       if (showLogoutConfirm) return; // let the modal handle its own clicks
       if (popupRef.current && !popupRef.current.contains(e.target)) onClose();
     };
+    // ✅ FIX: Listen to both mousedown AND touchend for mobile support
     document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener("touchend", handler);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("touchend", handler);
+    };
   }, [onClose, showLogoutConfirm]);
+
+  // ✅ FIX: Prevent background scroll when any modal is open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
 
   const showMsg = (text, type = "success") => {
     setMsg({ text, type });
@@ -71,6 +82,13 @@ export default function ProfilePopup({ onClose }) {
       localStorage.clear();
       window.location.href = "/";
     }, 1500);
+  };
+
+  // ✅ FIX: Stop touch/click propagation so tapping logout button
+  //         doesn't bubble up and trigger the outside-click handler
+  const handleLogoutBtnClick = (e) => {
+    e.stopPropagation();
+    setShowLogoutConfirm(true);
   };
 
   const initial = (user.name || "U").charAt(0).toUpperCase();
@@ -151,7 +169,8 @@ export default function ProfilePopup({ onClose }) {
 
         {/* ── Footer ── */}
         <div className="pp-footer">
-          <button className="pp-logout-btn" onClick={() => setShowLogoutConfirm(true)}>
+          {/* ✅ FIX: Use handleLogoutBtnClick to stop propagation on mobile */}
+          <button className="pp-logout-btn" onClick={handleLogoutBtnClick}>
             <span className="pp-logout-icon">↩</span>
             Log Out
           </button>
@@ -161,8 +180,17 @@ export default function ProfilePopup({ onClose }) {
       {/* ── Logout Confirmation Modal ── */}
       {showLogoutConfirm && (
         <>
-          <div className="lc-overlay" />
-          <div className="lc-modal">
+          {/* ✅ FIX: z-index raised to 1100+ to always sit above the profile popup */}
+          <div
+            className="lc-overlay"
+            onClick={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+          />
+          <div
+            className="lc-modal"
+            onClick={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+          >
             <div className="lc-icon-wrap">
               <span className="lc-icon">↩</span>
             </div>
@@ -191,6 +219,8 @@ const styles = `
   .pp-popup {
     position: fixed; top: 74px; right: 20px; z-index: 999;
     width: 320px;
+    /* ✅ FIX: On small screens, make the popup fill width better */
+    max-width: calc(100vw - 24px);
     background: #ffffff;
     border: 1px solid rgba(201,168,76,0.22);
     border-radius: 16px;
@@ -306,15 +336,21 @@ const styles = `
     font-family: 'DM Sans', sans-serif; font-size: 13px; color: #b85c5c;
     display: flex; align-items: center; justify-content: center; gap: 7px;
     transition: background 0.2s, border-color 0.2s;
+    /* ✅ FIX: Ensure tap target is large enough on mobile */
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
   }
   .pp-logout-btn:hover { background: rgba(184,92,92,0.06); border-color: #b85c5c; }
   .pp-logout-icon { font-size: 14px; }
 
   /* ── Logout Confirmation Modal ── */
   .lc-overlay {
-    position: fixed; inset: 0; z-index: 1000;
-    background: rgba(14,12,10,0.45);
+    position: fixed; inset: 0;
+    /* ✅ FIX: z-index must be higher than pp-popup (999) and pp-backdrop (998) */
+    z-index: 1100;
+    background: rgba(14,12,10,0.55);
     backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     animation: lcFadeIn 0.2s ease both;
   }
   @keyframes lcFadeIn {
@@ -322,10 +358,13 @@ const styles = `
     to   { opacity: 1; }
   }
   .lc-modal {
-    position: fixed; z-index: 1001;
+    position: fixed;
+    /* ✅ FIX: z-index must be above the overlay */
+    z-index: 1101;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
     width: 300px;
+    max-width: calc(100vw - 32px);
     background: #ffffff;
     border-radius: 18px;
     border: 1px solid rgba(201,168,76,0.18);
@@ -371,6 +410,8 @@ const styles = `
     font-family: 'DM Sans', sans-serif; font-size: 13px;
     font-weight: 500; color: #0e0c0a;
     transition: background 0.2s, border-color 0.2s;
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
   }
   .lc-btn-cancel:hover { background: #f0ece4; border-color: rgba(201,168,76,0.4); }
   .lc-btn-confirm {
@@ -380,6 +421,8 @@ const styles = `
     font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
     transition: background 0.2s, transform 0.15s;
     display: flex; align-items: center; justify-content: center; gap: 7px;
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
   }
   .lc-btn-confirm:hover { background: #a04a4a; transform: scale(1.02); }
   .lc-btn-confirm:disabled { opacity: 0.75; cursor: not-allowed; transform: none; }
