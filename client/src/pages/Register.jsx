@@ -5,6 +5,26 @@ import Logo from "../components/Logo";
 const OTP_WINDOW_MS = 60 * 1000; // 1 minute
 const MAX_OTP_SENDS = 3;
 
+// ── Full-screen Google sign-in loading overlay ──────────────────────────────
+function GoogleLoadingOverlay({ name }) {
+  return (
+    <div className="gl-overlay">
+      <div className="gl-card">
+        <div className="gl-icon-ring">
+          <div className="gl-spinner-ring" />
+          <span className="gl-g-letter">G</span>
+        </div>
+        <h3 className="gl-title">Signing you in…</h3>
+        {name && <p className="gl-name">Welcome, {name}</p>}
+        <p className="gl-sub">Setting up your account, just a moment.</p>
+        <div className="gl-dots">
+          <span /><span /><span />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Register() {
   const [data, setData] = useState({ name: "", email: "", password: "", role: "user" });
   const [loading, setLoading] = useState(false);
@@ -19,6 +39,11 @@ export default function Register() {
   const [windowTimer, setWindowTimer] = useState(0);
   const [maxReached, setMaxReached] = useState(false);
   const [verifySuccess, setVerifySuccess] = useState(false);
+
+  // ── Google loading state ──
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleUserName, setGoogleUserName] = useState("");
+
   const otpRefs = useRef([]);
 
   // ─── RESTORE STATE FROM LOCALSTORAGE ────────────────────────────────
@@ -40,9 +65,7 @@ export default function Register() {
         const winExp = parseInt(savedWindowExpiry, 10);
         if (now < winExp) {
           setWindowExpiry(winExp);
-          if (savedCount >= MAX_OTP_SENDS) {
-            setMaxReached(true);
-          }
+          if (savedCount >= MAX_OTP_SENDS) setMaxReached(true);
         } else {
           localStorage.setItem("otp_send_count", "0");
           localStorage.removeItem("otp_window_expiry");
@@ -53,13 +76,8 @@ export default function Register() {
 
       if (savedExpiry) {
         const remaining = Math.ceil((parseInt(savedExpiry, 10) - now) / 1000);
-        if (remaining > 0) {
-          setTimer(remaining);
-          setCanResend(false);
-        } else {
-          setCanResend(true);
-          setTimer(0);
-        }
+        if (remaining > 0) { setTimer(remaining); setCanResend(false); }
+        else { setCanResend(true); setTimer(0); }
       }
     }
   }, []);
@@ -69,11 +87,7 @@ export default function Register() {
     if (step !== "otp" || timer <= 0) return;
     const interval = setInterval(() => {
       setTimer((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          setCanResend(true);
-          return 0;
-        }
+        if (prev <= 1) { clearInterval(interval); setCanResend(true); return 0; }
         return prev - 1;
       });
     }, 1000);
@@ -86,11 +100,8 @@ export default function Register() {
     const tick = () => {
       const remaining = Math.ceil((windowExpiry - Date.now()) / 1000);
       if (remaining <= 0) {
-        setWindowTimer(0);
-        setWindowExpiry(null);
-        setMaxReached(false);
-        setOtpSendCount(0);
-        setCanResend(true);
+        setWindowTimer(0); setWindowExpiry(null); setMaxReached(false);
+        setOtpSendCount(0); setCanResend(true);
         localStorage.setItem("otp_send_count", "0");
         localStorage.removeItem("otp_window_expiry");
       } else {
@@ -117,7 +128,6 @@ export default function Register() {
     setLoading(true);
     try {
       await API.post("/auth/register", data);
-
       const now = Date.now();
       const newCount = isResend ? otpSendCount + 1 : 1;
       setOtpSendCount(newCount);
@@ -130,8 +140,7 @@ export default function Register() {
       }
 
       if (newCount >= MAX_OTP_SENDS) {
-        setMaxReached(true);
-        setCanResend(false);
+        setMaxReached(true); setCanResend(false);
       } else {
         setCanResend(false);
         const resendExpiry = now + 30000;
@@ -159,30 +168,21 @@ export default function Register() {
   };
 
   const handleOtpKeyDown = (index, e) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      otpRefs.current[index - 1]?.focus();
-    }
+    if (e.key === "Backspace" && !otp[index] && index > 0) otpRefs.current[index - 1]?.focus();
     if (e.key === "ArrowLeft" && index > 0) otpRefs.current[index - 1]?.focus();
     if (e.key === "ArrowRight" && index < 5) otpRefs.current[index + 1]?.focus();
   };
 
   const handleOtpPaste = (e) => {
     const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
-    if (pasted.length === 6) {
-      setOtp(pasted.split(""));
-      otpRefs.current[5]?.focus();
-    }
+    if (pasted.length === 6) { setOtp(pasted.split("")); otpRefs.current[5]?.focus(); }
   };
 
   // ─── VERIFY OTP ──────────────────────────────────────────────────────
   const handleVerify = async () => {
     const otpString = otp.join("");
-    if (otpString.length < 6) {
-      setError("Please enter the complete 6-digit code.");
-      return;
-    }
-    setLoading(true);
-    setError("");
+    if (otpString.length < 6) { setError("Please enter the complete 6-digit code."); return; }
+    setLoading(true); setError("");
     try {
       const res = await API.post("/auth/verify-otp", { email: data.email, otp: otpString });
       localStorage.removeItem("otp_step");
@@ -203,12 +203,40 @@ export default function Register() {
     }
   };
 
+  // ─── GOOGLE LOGIN ────────────────────────────────────────────────────
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setGoogleLoading(true);
+    setError("");
+    try {
+      const res = await API.post("/auth/google", {
+        token: credentialResponse.credential,
+        role: data.role,
+      });
+      // Extract name for the overlay greeting
+      const userName = res.data.user?.name || "";
+      setGoogleUserName(userName);
+
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+
+      // Small extra delay so the loading screen feels intentional, not broken
+      setTimeout(() => { window.location.href = "/"; }, 1000);
+    } catch {
+      setGoogleLoading(false);
+      setError("Google signup failed. Please try again.");
+    }
+  };
+
   const filledCount = otp.filter(Boolean).length;
   const progressPct = (filledCount / 6) * 100;
 
   return (
     <>
       <style>{styles}</style>
+
+      {/* ── Google loading overlay — shown on top of everything ── */}
+      {googleLoading && <GoogleLoadingOverlay name={googleUserName} />}
+
       <div className="rg-root">
         {/* LEFT PANEL */}
         <div className="rg-left">
@@ -238,8 +266,6 @@ export default function Register() {
             {/* ── OTP STEP ── */}
             {step === "otp" ? (
               <div className="otp-wrapper">
-
-                {/* Header */}
                 <div className="otp-header">
                   <div className="otp-icon-ring">
                     {verifySuccess ? (
@@ -255,41 +281,30 @@ export default function Register() {
                   <p className="otp-subtitle">
                     {verifySuccess
                       ? "Redirecting you to your dashboard…"
-                      : <>We sent a 6-digit code to<br /><strong>{data.email}</strong></>
+                      : <><span>We sent a 6-digit code to</span><br /><strong>{data.email}</strong></>
                     }
                   </p>
                 </div>
 
                 {!verifySuccess && (
                   <>
-                    {/* Attempt badge */}
                     <div className="otp-attempt-bar">
                       {[...Array(MAX_OTP_SENDS)].map((_, i) => (
-                        <div
-                          key={i}
-                          className={`otp-attempt-dot ${i < otpSendCount ? "used" : ""}`}
-                          title={i < otpSendCount ? "OTP sent" : "Available"}
-                        />
+                        <div key={i} className={`otp-attempt-dot ${i < otpSendCount ? "used" : ""}`} title={i < otpSendCount ? "OTP sent" : "Available"} />
                       ))}
-                      <span className="otp-attempt-label">
-                        {otpSendCount}/{MAX_OTP_SENDS} sends used
-                      </span>
+                      <span className="otp-attempt-label">{otpSendCount}/{MAX_OTP_SENDS} sends used</span>
                     </div>
 
-                    {/* Max reached lockout */}
                     {maxReached && (
                       <div className="otp-lockout">
                         <span className="otp-lockout-icon">⏳</span>
                         <div>
                           <p className="otp-lockout-title">Maximum OTPs reached</p>
-                          <p className="otp-lockout-sub">
-                            You can request a new code in <strong>{windowTimer}s</strong>
-                          </p>
+                          <p className="otp-lockout-sub">You can request a new code in <strong>{windowTimer}s</strong></p>
                         </div>
                       </div>
                     )}
 
-                    {/* OTP Boxes */}
                     <div className="otp-boxes" onPaste={handleOtpPaste}>
                       {otp.map((digit, i) => (
                         <input
@@ -307,55 +322,34 @@ export default function Register() {
                       ))}
                     </div>
 
-                    {/* Fill progress */}
                     <div className="otp-progress-track">
                       <div className="otp-progress-fill" style={{ width: `${progressPct}%` }} />
                     </div>
 
-                    {/* Error */}
-                    {error && (
-                      <div className="otp-error">
-                        <span>⚠</span> {error}
-                      </div>
-                    )}
+                    {error && <div className="otp-error"><span>⚠</span> {error}</div>}
 
-                    {/* Verify button */}
                     <button
                       className={`rg-submit ${loading ? "loading" : ""} ${filledCount === 6 ? "ready" : ""}`}
                       disabled={loading || filledCount < 6}
                       onClick={handleVerify}
                     >
                       {loading ? <span className="rg-spinner" /> : (
-                        <span className="otp-btn-inner">
-                          Verify & Continue
-                          <span className="otp-btn-arrow">→</span>
-                        </span>
+                        <span className="otp-btn-inner">Verify & Continue <span className="otp-btn-arrow">→</span></span>
                       )}
                     </button>
 
-                    {/* Resend row */}
                     <div className="otp-resend-row">
                       <span className="otp-resend-label">Didn't receive it?</span>
                       {maxReached ? (
                         <span className="otp-resend-locked">Wait {windowTimer}s to resend</span>
                       ) : canResend ? (
-                        <button
-                          className="otp-resend-btn"
-                          onClick={() => sendOtp(true)}
-                          disabled={loading}
-                        >
-                          Resend code
-                        </button>
+                        <button className="otp-resend-btn" onClick={() => sendOtp(true)} disabled={loading}>Resend code</button>
                       ) : (
                         <span className="otp-timer-badge">
                           <span className="otp-timer-ring">
                             <svg viewBox="0 0 36 36" className="otp-ring-svg">
                               <circle cx="18" cy="18" r="15" className="otp-ring-track" />
-                              <circle
-                                cx="18" cy="18" r="15"
-                                className="otp-ring-progress"
-                                strokeDasharray={`${((30 - timer) / 30) * 94} 94`}
-                              />
+                              <circle cx="18" cy="18" r="15" className="otp-ring-progress" strokeDasharray={`${((30 - timer) / 30) * 94} 94`} />
                             </svg>
                           </span>
                           Resend in {timer}s
@@ -363,17 +357,8 @@ export default function Register() {
                       )}
                     </div>
 
-                    {/* Change email */}
                     <div className="otp-change-email">
-                      <button
-                        className="otp-change-btn"
-                        onClick={() => {
-                          setStep("register");
-                          setOtp(["", "", "", "", "", ""]);
-                          setError("");
-                          localStorage.removeItem("otp_step");
-                        }}
-                      >
+                      <button className="otp-change-btn" onClick={() => { setStep("register"); setOtp(["", "", "", "", "", ""]); setError(""); localStorage.removeItem("otp_step"); }}>
                         ← Change email address
                       </button>
                     </div>
@@ -390,11 +375,7 @@ export default function Register() {
 
                 <div className="rg-role-toggle">
                   {["user", "vendor"].map((r) => (
-                    <button
-                      key={r}
-                      className={`rg-role-btn ${data.role === r ? "active" : ""}`}
-                      onClick={() => setData({ ...data, role: r })}
-                    >
+                    <button key={r} className={`rg-role-btn ${data.role === r ? "active" : ""}`} onClick={() => setData({ ...data, role: r })}>
                       {r === "user" ? "👤 I'm a Client" : "🏢 I'm a Vendor"}
                     </button>
                   ))}
@@ -405,73 +386,40 @@ export default function Register() {
                     <label>Full Name</label>
                     <div className="rg-input-wrap">
                       <span className="rg-icon">◈</span>
-                      <input
-                        placeholder="Jane Doe"
-                        value={data.name}
-                        onChange={(e) => setData({ ...data, name: e.target.value })}
-                      />
+                      <input placeholder="Jane Doe" value={data.name} onChange={(e) => setData({ ...data, name: e.target.value })} />
                     </div>
                   </div>
                   <div className="rg-field">
                     <label>Email Address</label>
                     <div className="rg-input-wrap">
                       <span className="rg-icon">✉</span>
-                      <input
-                        placeholder="jane@example.com"
-                        type="email"
-                        value={data.email}
-                        onChange={(e) => setData({ ...data, email: e.target.value })}
-                      />
+                      <input placeholder="jane@example.com" type="email" value={data.email} onChange={(e) => setData({ ...data, email: e.target.value })} />
                     </div>
                   </div>
                   <div className="rg-field">
                     <label>Password</label>
                     <div className="rg-input-wrap">
                       <span className="rg-icon">◆</span>
-                      <input
-                        placeholder="Min. 8 characters"
-                        type={showPass ? "text" : "password"}
-                        value={data.password}
-                        onChange={(e) => setData({ ...data, password: e.target.value })}
-                      />
-                      <button className="rg-eye" onClick={() => setShowPass(!showPass)}>
-                        {showPass ? "🙈" : "👁"}
-                      </button>
+                      <input placeholder="Min. 8 characters" type={showPass ? "text" : "password"} value={data.password} onChange={(e) => setData({ ...data, password: e.target.value })} />
+                      <button className="rg-eye" onClick={() => setShowPass(!showPass)}>{showPass ? "🙈" : "👁"}</button>
                     </div>
                   </div>
                 </div>
 
                 {error && <p className="rg-error">⚠ {error}</p>}
 
-                <button
-                  className={`rg-submit ${loading ? "loading" : ""}`}
-                  onClick={() => sendOtp(false)}
-                  disabled={loading}
-                >
+                <button className={`rg-submit ${loading ? "loading" : ""}`} onClick={() => sendOtp(false)} disabled={loading}>
                   {loading ? <span className="rg-spinner" /> : "Create My Account →"}
                 </button>
 
                 <div style={{ marginTop: "16px" }}>
-                  <div style={{ textAlign: "center", marginBottom: "10px", fontSize: "12px", color: "#7a7265" }}>
-                    or continue with
+                  <div className="rg-divider-label">or continue with</div>
+                  <div className={`rg-google-wrap ${googleLoading ? "rg-google-faded" : ""}`}>
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={() => setError("Google signup failed")}
+                    />
                   </div>
-                  {/* ── FIX: pass selected role to Google login ── */}
-                  <GoogleLogin
-                    onSuccess={async (credentialResponse) => {
-                      try {
-                        const res = await API.post("/auth/google", {
-                          token: credentialResponse.credential,
-                          role: data.role, // ← FIXED: send selected role
-                        });
-                        localStorage.setItem("token", res.data.token);
-                        localStorage.setItem("user", JSON.stringify(res.data.user));
-                        window.location.href = "/";
-                      } catch {
-                        setError("Google signup failed");
-                      }
-                    }}
-                    onError={() => setError("Google signup failed")}
-                  />
                 </div>
 
                 <p className="rg-terms">
@@ -504,352 +452,205 @@ const styles = `
     --white: #ffffff;
   }
 
-  .rg-root {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    min-height: 100vh;
-    font-family: 'DM Sans', sans-serif;
-  }
-  @media (max-width: 780px) {
-    .rg-root { grid-template-columns: 1fr; }
-    .rg-left { display: none; }
+  .rg-root { display:grid; grid-template-columns:1fr 1fr; min-height:100vh; font-family:'DM Sans',sans-serif; }
+  @media(max-width:780px){
+    .rg-root{grid-template-columns:1fr}
+    .rg-left{display:none}
   }
 
   /* ─── LEFT ─── */
-  .rg-left {
-    background: var(--ink);
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    padding: 60px 56px;
-  }
-  .rg-left-inner { position: relative; z-index: 2; }
-  .rg-logo {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.3rem;
-    font-weight: 600;
-    color: var(--gold);
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    margin-bottom: 64px;
-  }
-  .rg-tagline {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(2rem, 3.5vw, 2.8rem);
-    font-weight: 300;
-    font-style: italic;
-    color: var(--cream);
-    line-height: 1.2;
-    margin-bottom: 20px;
-  }
-  .rg-sub { font-size: 13.5px; color: var(--muted); line-height: 1.7; margin-bottom: 48px; max-width: 320px; }
-  .rg-features { display: flex; flex-direction: column; gap: 14px; }
-  .rg-feature-item { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--gold-light); }
-  .rg-check {
-    width: 22px; height: 22px;
-    border: 1px solid var(--gold);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px; color: var(--gold); flex-shrink: 0;
-  }
-  .rg-orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.18; pointer-events: none; }
-  .rg-orb1 { width: 400px; height: 400px; background: var(--gold); top: -100px; right: -120px; }
-  .rg-orb2 { width: 300px; height: 300px; background: #8b5c8b; bottom: -80px; left: -60px; }
+  .rg-left { background:var(--ink); position:relative; overflow:hidden; display:flex; align-items:center; padding:60px 56px; }
+  .rg-left-inner { position:relative; z-index:2; }
+  .rg-logo { font-family:'Cormorant Garamond',serif; font-size:1.3rem; font-weight:600; color:var(--gold); letter-spacing:0.18em; text-transform:uppercase; margin-bottom:64px; }
+  .rg-tagline { font-family:'Cormorant Garamond',serif; font-size:clamp(2rem,3.5vw,2.8rem); font-weight:300; font-style:italic; color:var(--cream); line-height:1.2; margin-bottom:20px; }
+  .rg-sub { font-size:13.5px; color:var(--muted); line-height:1.7; margin-bottom:48px; max-width:320px; }
+  .rg-features { display:flex; flex-direction:column; gap:14px; }
+  .rg-feature-item { display:flex; align-items:center; gap:12px; font-size:13px; color:var(--gold-light); }
+  .rg-check { width:22px; height:22px; border:1px solid var(--gold); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--gold); flex-shrink:0; }
+  .rg-orb { position:absolute; border-radius:50%; filter:blur(80px); opacity:0.18; pointer-events:none; }
+  .rg-orb1 { width:400px; height:400px; background:var(--gold); top:-100px; right:-120px; }
+  .rg-orb2 { width:300px; height:300px; background:#8b5c8b; bottom:-80px; left:-60px; }
 
   /* ─── RIGHT ─── */
-  .rg-right {
-    background: var(--cream);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 48px 32px;
+  .rg-right { background:var(--cream); display:flex; align-items:center; justify-content:center; padding:48px 32px; }
+  .rg-card { width:100%; max-width:420px; background:var(--white); border:1px solid var(--border); border-radius:16px; padding:44px 40px; box-shadow:0 12px 48px rgba(14,12,10,0.07); animation:fadeUp 0.5s ease both; }
+  .rg-card-header { margin-bottom:28px; }
+  .rg-card-header h1 { font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:600; color:var(--ink); margin-bottom:6px; }
+  .rg-card-header p { font-size:13px; color:var(--muted); }
+
+  .rg-role-toggle { display:grid; grid-template-columns:1fr 1fr; gap:8px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:5px; margin-bottom:28px; }
+  .rg-role-btn { padding:10px; border:none; border-radius:6px; background:transparent; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--muted); cursor:pointer; transition:all 0.22s ease; font-weight:400; }
+  .rg-role-btn.active { background:var(--white); color:var(--ink); font-weight:500; box-shadow:0 2px 10px rgba(14,12,10,0.08); border:1px solid var(--border); }
+
+  .rg-fields { display:flex; flex-direction:column; gap:18px; margin-bottom:22px; }
+  .rg-field { display:flex; flex-direction:column; gap:7px; }
+  .rg-field label { font-size:11px; font-weight:500; letter-spacing:0.13em; text-transform:uppercase; color:var(--muted); }
+  .rg-input-wrap { display:flex; align-items:center; gap:10px; border:1px solid var(--border); border-radius:7px; padding:12px 14px; background:var(--surface); transition:border-color 0.2s,box-shadow 0.2s; }
+  .rg-input-wrap:focus-within { border-color:var(--gold); box-shadow:0 0 0 3px rgba(201,168,76,0.1); }
+  .rg-icon { font-size:13px; color:var(--gold); opacity:0.8; flex-shrink:0; }
+  .rg-input-wrap input { border:none; background:transparent; font-family:'DM Sans',sans-serif; font-size:14px; color:var(--ink); outline:none; width:100%; }
+  .rg-input-wrap input::placeholder { color:#bbb4a8; }
+  .rg-eye { background:none; border:none; cursor:pointer; font-size:14px; padding:0; line-height:1; flex-shrink:0; }
+  .rg-error { font-size:12.5px; color:var(--error); background:rgba(184,92,92,0.07); border:1px solid rgba(184,92,92,0.2); border-radius:6px; padding:10px 14px; margin-bottom:16px; }
+
+  .rg-submit { width:100%; padding:15px; background:var(--ink); color:var(--white); border:none; border-radius:7px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; letter-spacing:0.04em; cursor:pointer; transition:all 0.25s ease; display:flex; align-items:center; justify-content:center; margin-bottom:16px; min-height:50px; opacity:0.5; }
+  .rg-submit.ready,.rg-submit:not([disabled]) { opacity:1; }
+  .rg-submit:hover:not(:disabled) { background:var(--gold); color:var(--ink); box-shadow:0 6px 24px rgba(201,168,76,0.3); transform:translateY(-1px); }
+  .rg-submit.loading { opacity:0.65; pointer-events:none; }
+  .rg-spinner { width:18px; height:18px; border:2px solid rgba(255,255,255,0.3); border-top-color:white; border-radius:50%; animation:spin 0.7s linear infinite; display:inline-block; }
+  .rg-terms { font-size:11.5px; color:var(--muted); text-align:center; line-height:1.6; }
+  .rg-link { color:var(--gold); text-decoration:none; font-weight:500; }
+  .rg-link:hover { text-decoration:underline; }
+
+  /* Google divider & wrapper */
+  .rg-divider-label { text-align:center; margin-bottom:10px; font-size:12px; color:var(--muted); }
+  .rg-google-wrap { transition:opacity 0.3s ease; display:flex; justify-content:center; }
+  .rg-google-faded { opacity:0.4; pointer-events:none; }
+
+  /* ─── GOOGLE LOADING OVERLAY ─── */
+  .gl-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(245,240,232,0.92);
+    backdrop-filter: blur(12px);
+    display: flex; align-items: center; justify-content: center;
+    animation: glFadeIn 0.3s ease both;
   }
-  .rg-card {
-    width: 100%;
-    max-width: 420px;
+  @keyframes glFadeIn { from{opacity:0} to{opacity:1} }
+
+  .gl-card {
     background: var(--white);
     border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 44px 40px;
-    box-shadow: 0 12px 48px rgba(14,12,10,0.07);
-    animation: fadeUp 0.5s ease both;
+    border-radius: 20px;
+    padding: 48px 44px;
+    text-align: center;
+    max-width: 340px; width: 90%;
+    box-shadow: 0 24px 64px rgba(14,12,10,0.12);
+    animation: glPopIn 0.38s cubic-bezier(0.34,1.3,0.64,1) both;
   }
-  .rg-card-header { margin-bottom: 28px; }
-  .rg-card-header h1 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 2rem; font-weight: 600; color: var(--ink); margin-bottom: 6px;
-  }
-  .rg-card-header p { font-size: 13px; color: var(--muted); }
-
-  /* ROLE TOGGLE */
-  .rg-role-toggle {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; padding: 5px; margin-bottom: 28px;
-  }
-  .rg-role-btn {
-    padding: 10px; border: none; border-radius: 6px;
-    background: transparent; font-family: 'DM Sans', sans-serif;
-    font-size: 13px; color: var(--muted); cursor: pointer;
-    transition: all 0.22s ease; font-weight: 400;
-  }
-  .rg-role-btn.active {
-    background: var(--white); color: var(--ink); font-weight: 500;
-    box-shadow: 0 2px 10px rgba(14,12,10,0.08); border: 1px solid var(--border);
+  @keyframes glPopIn {
+    from { opacity:0; transform:scale(0.9) translateY(16px); }
+    to   { opacity:1; transform:scale(1) translateY(0); }
   }
 
-  /* FIELDS */
-  .rg-fields { display: flex; flex-direction: column; gap: 18px; margin-bottom: 22px; }
-  .rg-field { display: flex; flex-direction: column; gap: 7px; }
-  .rg-field label {
-    font-size: 11px; font-weight: 500; letter-spacing: 0.13em;
-    text-transform: uppercase; color: var(--muted);
-  }
-  .rg-input-wrap {
-    display: flex; align-items: center; gap: 10px;
-    border: 1px solid var(--border); border-radius: 7px;
-    padding: 12px 14px; background: var(--surface);
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-  .rg-input-wrap:focus-within {
-    border-color: var(--gold);
-    box-shadow: 0 0 0 3px rgba(201,168,76,0.1);
-  }
-  .rg-icon { font-size: 13px; color: var(--gold); opacity: 0.8; flex-shrink: 0; }
-  .rg-input-wrap input {
-    border: none; background: transparent;
-    font-family: 'DM Sans', sans-serif; font-size: 14px;
-    color: var(--ink); outline: none; width: 100%;
-  }
-  .rg-input-wrap input::placeholder { color: #bbb4a8; }
-  .rg-eye { background: none; border: none; cursor: pointer; font-size: 14px; padding: 0; line-height: 1; flex-shrink: 0; }
-  .rg-error {
-    font-size: 12.5px; color: var(--error);
-    background: rgba(184,92,92,0.07); border: 1px solid rgba(184,92,92,0.2);
-    border-radius: 6px; padding: 10px 14px; margin-bottom: 16px;
-  }
-
-  /* SUBMIT */
-  .rg-submit {
-    width: 100%; padding: 15px;
-    background: var(--ink); color: var(--white);
-    border: none; border-radius: 7px;
-    font-family: 'DM Sans', sans-serif; font-size: 14px;
-    font-weight: 500; letter-spacing: 0.04em;
-    cursor: pointer; transition: all 0.25s ease;
+  /* Icon ring with spinner */
+  .gl-icon-ring {
+    position: relative;
+    width: 72px; height: 72px;
+    margin: 0 auto 24px;
     display: flex; align-items: center; justify-content: center;
-    margin-bottom: 16px; min-height: 50px;
-    opacity: 0.5;
   }
-  .rg-submit.ready, .rg-submit:not([disabled]) {
-    opacity: 1;
+  .gl-spinner-ring {
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    border: 2.5px solid rgba(201,168,76,0.2);
+    border-top-color: var(--gold);
+    animation: glSpin 0.9s linear infinite;
   }
-  .rg-submit:hover:not(:disabled) {
-    background: var(--gold); color: var(--ink);
-    box-shadow: 0 6px 24px rgba(201,168,76,0.3);
-    transform: translateY(-1px);
+  @keyframes glSpin { to { transform: rotate(360deg); } }
+
+  .gl-g-letter {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4285F4, #34A853, #FBBC05, #EA4335);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.5rem; font-weight: 600; color: white;
+    box-shadow: 0 4px 16px rgba(66,133,244,0.25);
+    animation: glPulseRing 2s ease-in-out infinite;
   }
-  .rg-submit.loading { opacity: 0.65; pointer-events: none; }
-  .rg-spinner {
-    width: 18px; height: 18px;
-    border: 2px solid rgba(255,255,255,0.3);
-    border-top-color: white; border-radius: 50%;
-    animation: spin 0.7s linear infinite; display: inline-block;
+  @keyframes glPulseRing {
+    0%, 100% { box-shadow: 0 4px 16px rgba(66,133,244,0.25); }
+    50% { box-shadow: 0 4px 28px rgba(66,133,244,0.45); }
   }
-  .rg-terms { font-size: 11.5px; color: var(--muted); text-align: center; line-height: 1.6; }
-  .rg-link { color: var(--gold); text-decoration: none; font-weight: 500; }
-  .rg-link:hover { text-decoration: underline; }
+
+  .gl-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.6rem; font-weight: 600; color: var(--ink);
+    margin-bottom: 6px; letter-spacing: 0.01em;
+  }
+  .gl-name {
+    font-size: 13px; color: var(--gold); font-weight: 500;
+    margin-bottom: 6px;
+  }
+  .gl-sub {
+    font-size: 12.5px; color: var(--muted); line-height: 1.6;
+    margin-bottom: 24px;
+  }
+
+  /* Animated dots */
+  .gl-dots {
+    display: flex; justify-content: center; gap: 8px;
+  }
+  .gl-dots span {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--gold); opacity: 0.3;
+    animation: glDotBounce 1.2s ease-in-out infinite;
+  }
+  .gl-dots span:nth-child(1) { animation-delay: 0s; }
+  .gl-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .gl-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes glDotBounce {
+    0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+    40% { opacity: 1; transform: scale(1.2); }
+  }
 
   /* ─── OTP SECTION ─── */
   .otp-wrapper { animation: fadeUp 0.45s ease both; }
+  .otp-header { text-align:center; margin-bottom:28px; }
+  .otp-icon-ring { position:relative; width:68px; height:68px; margin:0 auto 18px; background:linear-gradient(135deg,rgba(201,168,76,0.12),rgba(201,168,76,0.04)); border:1.5px solid var(--border); border-radius:50%; display:flex; align-items:center; justify-content:center; }
+  .otp-icon-envelope { font-size:26px; }
+  .otp-icon-success { font-size:28px; color:var(--success); animation:successPop 0.4s cubic-bezier(0.34,1.56,0.64,1) both; }
+  .otp-icon-pulse { position:absolute; inset:-6px; border-radius:50%; border:1.5px solid rgba(201,168,76,0.35); animation:pulse 2s ease-in-out infinite; }
+  .otp-title { font-family:'Cormorant Garamond',serif; font-size:1.75rem; font-weight:600; color:var(--ink); margin-bottom:8px; }
+  .otp-subtitle { font-size:13px; color:var(--muted); line-height:1.6; }
+  .otp-subtitle strong { color:var(--ink); font-weight:500; }
 
-  .otp-header { text-align: center; margin-bottom: 28px; }
+  .otp-attempt-bar { display:flex; align-items:center; gap:8px; justify-content:center; margin-bottom:22px; }
+  .otp-attempt-dot { width:10px; height:10px; border-radius:50%; border:1.5px solid var(--border); background:var(--surface); transition:all 0.3s ease; }
+  .otp-attempt-dot.used { background:var(--gold); border-color:var(--gold); box-shadow:0 0 6px rgba(201,168,76,0.4); }
+  .otp-attempt-label { font-size:11px; color:var(--muted); letter-spacing:0.06em; margin-left:4px; }
 
-  .otp-icon-ring {
-    position: relative;
-    width: 68px; height: 68px;
-    margin: 0 auto 18px;
-    background: linear-gradient(135deg, rgba(201,168,76,0.12), rgba(201,168,76,0.04));
-    border: 1.5px solid var(--border);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .otp-icon-envelope { font-size: 26px; }
-  .otp-icon-success {
-    font-size: 28px; color: var(--success);
-    animation: successPop 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
-  }
-  .otp-icon-pulse {
-    position: absolute;
-    inset: -6px;
-    border-radius: 50%;
-    border: 1.5px solid rgba(201,168,76,0.35);
-    animation: pulse 2s ease-in-out infinite;
-  }
-  .otp-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.75rem; font-weight: 600; color: var(--ink);
-    margin-bottom: 8px;
-  }
-  .otp-subtitle { font-size: 13px; color: var(--muted); line-height: 1.6; }
-  .otp-subtitle strong { color: var(--ink); font-weight: 500; }
+  .otp-lockout { display:flex; align-items:flex-start; gap:12px; background:rgba(184,92,92,0.06); border:1px solid rgba(184,92,92,0.18); border-radius:10px; padding:14px 16px; margin-bottom:20px; }
+  .otp-lockout-icon { font-size:20px; flex-shrink:0; margin-top:1px; }
+  .otp-lockout-title { font-size:13px; font-weight:500; color:var(--error); margin-bottom:3px; }
+  .otp-lockout-sub { font-size:12px; color:var(--muted); }
+  .otp-lockout-sub strong { color:var(--ink); }
 
-  /* Attempt dots */
-  .otp-attempt-bar {
-    display: flex; align-items: center; gap: 8px;
-    justify-content: center; margin-bottom: 22px;
-  }
-  .otp-attempt-dot {
-    width: 10px; height: 10px; border-radius: 50%;
-    border: 1.5px solid var(--border);
-    background: var(--surface);
-    transition: all 0.3s ease;
-  }
-  .otp-attempt-dot.used {
-    background: var(--gold);
-    border-color: var(--gold);
-    box-shadow: 0 0 6px rgba(201,168,76,0.4);
-  }
-  .otp-attempt-label {
-    font-size: 11px; color: var(--muted);
-    letter-spacing: 0.06em; margin-left: 4px;
-  }
+  .otp-boxes { display:flex; justify-content:center; gap:10px; margin-bottom:14px; }
+  .otp-box { width:52px; height:60px; text-align:center; font-family:'Cormorant Garamond',serif; font-size:1.8rem; font-weight:600; color:var(--ink); background:var(--surface); border:1.5px solid var(--border); border-radius:10px; outline:none; transition:all 0.2s ease; caret-color:var(--gold); }
+  .otp-box:focus { border-color:var(--gold); background:#fff; box-shadow:0 0 0 3px rgba(201,168,76,0.12),0 4px 16px rgba(201,168,76,0.1); transform:translateY(-2px); }
+  .otp-box.filled { border-color:rgba(201,168,76,0.5); background:linear-gradient(135deg,#fff 60%,rgba(201,168,76,0.05)); }
+  .otp-box.shake { animation:shake 0.4s ease; }
 
-  /* Lockout banner */
-  .otp-lockout {
-    display: flex; align-items: flex-start; gap: 12px;
-    background: rgba(184,92,92,0.06);
-    border: 1px solid rgba(184,92,92,0.18);
-    border-radius: 10px; padding: 14px 16px;
-    margin-bottom: 20px;
-  }
-  .otp-lockout-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
-  .otp-lockout-title { font-size: 13px; font-weight: 500; color: var(--error); margin-bottom: 3px; }
-  .otp-lockout-sub { font-size: 12px; color: var(--muted); }
-  .otp-lockout-sub strong { color: var(--ink); }
+  .otp-progress-track { height:2px; background:rgba(201,168,76,0.12); border-radius:999px; margin-bottom:18px; overflow:hidden; }
+  .otp-progress-fill { height:100%; background:linear-gradient(90deg,var(--gold-light),var(--gold)); border-radius:999px; transition:width 0.3s ease; }
 
-  /* OTP Boxes */
-  .otp-boxes {
-    display: flex; justify-content: center; gap: 10px;
-    margin-bottom: 14px;
-  }
-  .otp-box {
-    width: 52px; height: 60px;
-    text-align: center;
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.8rem; font-weight: 600;
-    color: var(--ink);
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    outline: none;
-    transition: all 0.2s ease;
-    caret-color: var(--gold);
-  }
-  .otp-box:focus {
-    border-color: var(--gold);
-    background: #fff;
-    box-shadow: 0 0 0 3px rgba(201,168,76,0.12), 0 4px 16px rgba(201,168,76,0.1);
-    transform: translateY(-2px);
-  }
-  .otp-box.filled {
-    border-color: rgba(201,168,76,0.5);
-    background: linear-gradient(135deg, #fff 60%, rgba(201,168,76,0.05));
-    color: var(--ink);
-  }
-  .otp-box.shake { animation: shake 0.4s ease; }
+  .otp-error { font-size:12.5px; color:var(--error); background:rgba(184,92,92,0.07); border:1px solid rgba(184,92,92,0.2); border-radius:6px; padding:10px 14px; margin-bottom:16px; text-align:center; }
 
-  /* Progress bar */
-  .otp-progress-track {
-    height: 2px;
-    background: rgba(201,168,76,0.12);
-    border-radius: 999px;
-    margin-bottom: 18px;
-    overflow: hidden;
-  }
-  .otp-progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--gold-light), var(--gold));
-    border-radius: 999px;
-    transition: width 0.3s ease;
-  }
+  .otp-btn-inner { display:flex; align-items:center; justify-content:center; gap:8px; }
+  .otp-btn-arrow { transition:transform 0.2s ease; }
+  .rg-submit:hover .otp-btn-arrow { transform:translateX(4px); }
 
-  /* Error */
-  .otp-error {
-    font-size: 12.5px; color: var(--error);
-    background: rgba(184,92,92,0.07);
-    border: 1px solid rgba(184,92,92,0.2);
-    border-radius: 6px; padding: 10px 14px;
-    margin-bottom: 16px; text-align: center;
-  }
+  .otp-resend-row { display:flex; align-items:center; justify-content:center; gap:8px; font-size:12.5px; color:var(--muted); margin-bottom:16px; }
+  .otp-resend-label { color:var(--muted); }
+  .otp-resend-btn { background:none; border:none; color:var(--gold); font-family:'DM Sans',sans-serif; font-size:12.5px; font-weight:500; cursor:pointer; padding:0; text-decoration:underline; transition:opacity 0.2s; }
+  .otp-resend-btn:hover { opacity:0.75; }
+  .otp-resend-locked { font-size:12px; color:var(--error); font-weight:500; }
 
-  /* Verify button inner */
-  .otp-btn-inner { display: flex; align-items: center; justify-content: center; gap: 8px; }
-  .otp-btn-arrow { transition: transform 0.2s ease; }
-  .rg-submit:hover .otp-btn-arrow { transform: translateX(4px); }
+  .otp-timer-badge { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); }
+  .otp-timer-ring { width:20px; height:20px; display:inline-block; }
+  .otp-ring-svg { width:100%; height:100%; transform:rotate(-90deg); }
+  .otp-ring-track { fill:none; stroke:rgba(201,168,76,0.15); stroke-width:4; }
+  .otp-ring-progress { fill:none; stroke:var(--gold); stroke-width:4; stroke-linecap:round; transition:stroke-dasharray 1s linear; }
 
-  /* Resend row */
-  .otp-resend-row {
-    display: flex; align-items: center; justify-content: center;
-    gap: 8px; font-size: 12.5px; color: var(--muted);
-    margin-bottom: 16px;
-  }
-  .otp-resend-label { color: var(--muted); }
-  .otp-resend-btn {
-    background: none; border: none;
-    color: var(--gold); font-family: 'DM Sans', sans-serif;
-    font-size: 12.5px; font-weight: 500;
-    cursor: pointer; padding: 0; text-decoration: underline;
-    transition: opacity 0.2s;
-  }
-  .otp-resend-btn:hover { opacity: 0.75; }
-  .otp-resend-locked { font-size: 12px; color: var(--error); font-weight: 500; }
-
-  /* Circular timer badge */
-  .otp-timer-badge {
-    display: flex; align-items: center; gap: 6px;
-    font-size: 12px; color: var(--muted);
-  }
-  .otp-timer-ring { width: 20px; height: 20px; display: inline-block; }
-  .otp-ring-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-  .otp-ring-track { fill: none; stroke: rgba(201,168,76,0.15); stroke-width: 4; }
-  .otp-ring-progress {
-    fill: none; stroke: var(--gold); stroke-width: 4;
-    stroke-linecap: round;
-    transition: stroke-dasharray 1s linear;
-  }
-
-  /* Change email */
-  .otp-change-email { text-align: center; }
-  .otp-change-btn {
-    background: none; border: none;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 12px; color: var(--muted);
-    cursor: pointer; padding: 0;
-    transition: color 0.2s;
-  }
-  .otp-change-btn:hover { color: var(--ink); }
+  .otp-change-email { text-align:center; }
+  .otp-change-btn { background:none; border:none; font-family:'DM Sans',sans-serif; font-size:12px; color:var(--muted); cursor:pointer; padding:0; transition:color 0.2s; }
+  .otp-change-btn:hover { color:var(--ink); }
 
   /* ─── ANIMATIONS ─── */
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(18px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); opacity: 0.6; }
-    50% { transform: scale(1.12); opacity: 0.2; }
-  }
-  @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    20% { transform: translateX(-5px); }
-    40% { transform: translateX(5px); }
-    60% { transform: translateX(-3px); }
-    80% { transform: translateX(3px); }
-  }
-  @keyframes successPop {
-    from { transform: scale(0); opacity: 0; }
-    to   { transform: scale(1); opacity: 1; }
-  }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  @keyframes pulse { 0%,100%{transform:scale(1);opacity:0.6} 50%{transform:scale(1.12);opacity:0.2} }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px)} 40%{transform:translateX(5px)} 60%{transform:translateX(-3px)} 80%{transform:translateX(3px)} }
+  @keyframes successPop { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
 `;
