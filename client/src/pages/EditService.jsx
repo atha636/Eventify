@@ -3,13 +3,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
 import Logo from "../components/Logo";
+
 const SERVICE_TYPES = [
-  { value: "decor",       label: "Decor",                    emoji: "🎨" },
-  { value: "photography", label: "Photography",              emoji: "📸" },
-  { value: "catering",    label: "Catering coming soon..",   emoji: "🍽⌛" },
-  { value: "music",       label: "Music & DJ coming soon..", emoji: "🎵⌛" },
-  { value: "florals",     label: "Florals coming soon..",    emoji: "💐⌛" },
-  { value: "venues",      label: "Venues coming soon..",     emoji: "🏛⌛" },
+  { value: "decor",       label: "Decor",        emoji: "🎨" },
+  { value: "photography", label: "Photography",   emoji: "📸" },
+  { value: "catering",    label: "Catering",      emoji: "🍽️" },
+  { value: "music",       label: "Music & DJ",    emoji: "🎵" },
+  { value: "florals",     label: "Florals",       emoji: "💐" },
+  { value: "venues",      label: "Venues",        emoji: "🏛️" },
 ];
 
 const TIER_LABELS = ["Basic", "Standard", "Premium", "Ultra Premium"];
@@ -31,10 +32,18 @@ export default function EditService() {
   const [removedImages,  setRemovedImages]  = useState([]);
   const [previewUrl,     setPreviewUrl]     = useState("");
 
-  const [loading,  setLoading]  = useState(true);
-  const [saving,   setSaving]   = useState(false);
-  const [success,  setSuccess]  = useState(false);
-  const [error,    setError]    = useState("");
+  const [loading,         setLoading]         = useState(true);
+  const [saving,          setSaving]          = useState(false);
+  const [success,         setSuccess]         = useState(false);
+  const [error,           setError]           = useState("");
+  const [comingSoonToast, setComingSoonToast] = useState("");
+
+  // ── Auto-dismiss coming soon toast ────────────────────────────
+  useEffect(() => {
+    if (!comingSoonToast) return;
+    const t = setTimeout(() => setComingSoonToast(""), 3000);
+    return () => clearTimeout(t);
+  }, [comingSoonToast]);
 
   // ── Load existing service ──────────────────────────────────────
   useEffect(() => {
@@ -119,13 +128,13 @@ export default function EditService() {
 
     const token = localStorage.getItem("token");
     const data  = new FormData();
-    data.append("serviceType",   form.serviceType);
-    data.append("title",         form.title);
-    data.append("description",   form.description);
-    data.append("location",      form.location);
-    data.append("packages",      JSON.stringify(packages));
-    data.append("existingImages",JSON.stringify(existingImages));
-    data.append("removedImages", JSON.stringify(removedImages));
+    data.append("serviceType",    form.serviceType);
+    data.append("title",          form.title);
+    data.append("description",    form.description);
+    data.append("location",       form.location);
+    data.append("packages",       JSON.stringify(packages));
+    data.append("existingImages", JSON.stringify(existingImages));
+    data.append("removedImages",  JSON.stringify(removedImages));
     newImages.forEach((img) => data.append("images", img));
 
     try {
@@ -168,6 +177,16 @@ export default function EditService() {
         <Navbar />
         <div className="es-body">
 
+          {/* ── COMING SOON TOAST ── */}
+          {comingSoonToast && (
+            <div className="es-coming-toast">
+              <span>⏳</span>
+              <span>
+                <strong>{comingSoonToast}</strong> editing is coming soon — stay tuned!
+              </span>
+            </div>
+          )}
+
           {success ? (
             // ── SUCCESS ──────────────────────────────────────────
             <div className="es-success-screen">
@@ -188,7 +207,7 @@ export default function EditService() {
               <div className="es-form-col">
                 <div className="es-form-header">
                   <a href="/dashboard" className="es-back">← Back to Dashboard</a>
-                  <p className="es-eyebrow">Vendor Portal</p>
+                  <p className="es-eyebrow"><Logo />Vendor Portal</p>
                   <h1 className="es-title">Edit Service</h1>
                   <p className="es-subtitle">Update your listing details. Changes go live instantly.</p>
                 </div>
@@ -197,16 +216,40 @@ export default function EditService() {
                 <div className="es-field">
                   <label className="es-label">Service Category</label>
                   <div className="es-type-grid">
-                    {SERVICE_TYPES.map((t) => (
-                      <button
-                        key={t.value}
-                        className={`es-type-btn ${form.serviceType === t.value ? "active" : ""}`}
-                        onClick={() => set("serviceType", t.value)}
-                      >
-                        <span className="es-type-emoji">{t.emoji}</span>
-                        <span>{t.label}</span>
-                      </button>
-                    ))}
+                    {SERVICE_TYPES.map((t) => {
+                      const isAvailable = t.value === "decor" || t.value === "photography";
+
+                      if (!isAvailable) {
+                        return (
+                          <div
+                            key={t.value}
+                            className="es-type-btn es-type-soon"
+                            onClick={() => setComingSoonToast(t.label)}
+                            title={`${t.label} — editing coming soon`}
+                          >
+                            <span className="es-soon-badge">Soon</span>
+                            <span className="es-type-emoji">{t.emoji}</span>
+                            <span>{t.label}</span>
+                            <div className="es-soon-overlay">
+                              <span className="es-soon-hourglass">⏳</span>
+                              <span className="es-soon-overlay-title">Coming Soon</span>
+                              <span className="es-soon-overlay-sub">Not editable yet</span>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <button
+                          key={t.value}
+                          className={`es-type-btn ${form.serviceType === t.value ? "active" : ""}`}
+                          onClick={() => set("serviceType", t.value)}
+                        >
+                          <span className="es-type-emoji">{t.emoji}</span>
+                          <span>{t.label}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -414,7 +457,7 @@ export default function EditService() {
               {/* ── RIGHT — LIVE PREVIEW ── */}
               <div className="es-preview-col">
                 <div className="es-preview-sticky">
-                  <p className="es-preview-label">Live Preview</p>
+                  <p className="es-preview-label"><Logo />Live Preview</p>
                   <div className="es-preview-card">
                     <div className="es-preview-img">
                       {previewUrl ? (
@@ -628,12 +671,14 @@ const styles = `
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
   }
   @media (max-width: 580px) { .es-type-grid { grid-template-columns: repeat(2,1fr); } }
+
+  /* Available service button */
   .es-type-btn {
     display: flex; flex-direction: column; align-items: center; gap: 6px;
     padding: 14px 10px; border: 1px solid var(--border); border-radius: 8px;
     background: var(--white); cursor: pointer;
     font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--muted);
-    transition: all 0.2s;
+    transition: all 0.2s; position: relative; overflow: hidden;
   }
   .es-type-btn:hover { border-color: var(--gold); color: var(--ink); }
   .es-type-btn.active {
@@ -643,6 +688,72 @@ const styles = `
     box-shadow: 0 2px 12px rgba(201,168,76,0.15);
   }
   .es-type-emoji { font-size: 1.4rem; }
+
+  /* Coming soon service button */
+  .es-type-soon {
+    cursor: not-allowed !important;
+    opacity: 0.68;
+  }
+  .es-type-soon:hover {
+    border-color: rgba(201,168,76,0.3) !important;
+    color: var(--muted) !important;
+    background: var(--white) !important;
+    box-shadow: none !important;
+    opacity: 0.85;
+  }
+  .es-type-soon:hover .es-soon-overlay {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* "Soon" pill badge (top-right corner) */
+  .es-soon-badge {
+    position: absolute; top: 6px; right: 6px;
+    font-size: 8px; font-weight: 500; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--gold);
+    background: rgba(201,168,76,0.1); border: 1px solid var(--border);
+    padding: 2px 6px; border-radius: 20px;
+    pointer-events: none;
+  }
+
+  /* Dark overlay that slides up on hover */
+  .es-soon-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(160deg, rgba(14,12,10,0.9), rgba(50,38,18,0.93));
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    border-radius: 7px;
+    pointer-events: none;
+  }
+  .es-soon-hourglass {
+    font-size: 15px;
+    animation: tickHour 1.6s ease-in-out infinite;
+  }
+  .es-soon-overlay-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px; font-weight: 600;
+    color: var(--gold-light); letter-spacing: 0.07em;
+  }
+  .es-soon-overlay-sub {
+    font-size: 9px; letter-spacing: 0.2em;
+    text-transform: uppercase; color: rgba(232,213,163,0.5);
+  }
+
+  /* Bottom toast notification */
+  .es-coming-toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: var(--white);
+    font-family: 'DM Sans', sans-serif; font-size: 13px;
+    padding: 13px 24px; border-radius: 8px;
+    border: 1px solid rgba(201,168,76,0.25);
+    box-shadow: 0 16px 48px rgba(14,12,10,0.28);
+    display: flex; align-items: center; gap: 10px;
+    animation: toastIn 0.3s cubic-bezier(0.175,0.885,0.32,1.275) both;
+    z-index: 9999; white-space: nowrap;
+    pointer-events: none;
+  }
+  .es-coming-toast strong { color: var(--gold-light); font-weight: 500; }
 
   /* ── PACKAGES ── */
   .es-pkg-card {
@@ -924,7 +1035,9 @@ const styles = `
   }
   .es-btn-ghost:hover { border-color: var(--gold); color: var(--ink); }
 
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes spin   { to { transform: rotate(360deg); } }
-  @keyframes popIn  { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  @keyframes fadeUp  { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes spin    { to { transform: rotate(360deg); } }
+  @keyframes popIn   { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  @keyframes tickHour { 0%,100% { transform: rotate(0deg); } 30% { transform: rotate(-14deg); } 70% { transform: rotate(14deg); } }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(12px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
 `;
