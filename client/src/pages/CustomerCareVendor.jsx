@@ -648,8 +648,8 @@ export default function CustomerCareVendor() {
         {/* ── STATS STRIP ── */}
         <div className={`vc-stats-strip ${statsVisible ? "revealed" : ""}`} ref={statsRef}>
           {[
-            { num: "850", suffix: "+", label: "Active Vendors", prefix: "" },
-            { num: "2.4", suffix: "Cr+", label: "Paid to Vendors", prefix: "₹" },
+            { num: "50", suffix: "+", label: "Active Vendors", prefix: "" },
+            { num: "2.4", suffix: "lakhs+", label: "Paid to Vendors", prefix: "₹" },
             { num: "24", suffix: "h", label: "Avg. Support Reply", prefix: "" },
             { num: "4.8", suffix: "★", label: "Vendor Satisfaction", prefix: "" },
           ].map((s, i) => (
