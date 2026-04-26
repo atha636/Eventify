@@ -435,17 +435,21 @@ export default function Home() {
               </h4>
               <ul className="hm-footer-list">
                 {[
-                  { label: "Home", href: "/" },
-                  { label: "Browse Vendors", href: "/vendors" },
-                  { label: "About Us", href: "#" },
-                  { label: "How It Works", href: "#" },
-                  { label: "Get Started", href: "/register" },
+                  { label: "Home", path: "/" },
+                  { label: "Browse Vendors", path: "/vendors" },
+                  { label: "About Us", path: "/about" },
+                  { label: "How It Works", path: "/" },
+                  { label: "Get Started", path: "/register" },
                 ].map((l) => (
                   <li key={l.label}>
-                    <a href={l.href} className="hm-footer-list-link">
+                    <span
+                      className="hm-footer-list-link"
+                      onClick={() => navigate(l.path)}
+                      style={{ cursor: 'pointer' }}
+                    >
                       <span className="hm-footer-list-arrow">›</span>
                       {l.label}
-                    </a>
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -467,10 +471,14 @@ export default function Home() {
                   { label: "🏛  Venues", cat: "venues" },
                 ].map((s) => (
                   <li key={s.cat}>
-                    <a href={`/vendors?cat=${s.cat}`} className="hm-footer-list-link">
+                    <span
+                      className="hm-footer-list-link"
+                      onClick={() => navigate(`/vendors?cat=${s.cat}`)}
+                      style={{ cursor: 'pointer' }}
+                    >
                       <span className="hm-footer-list-arrow">›</span>
                       {s.label}
-                    </a>
+                    </span>
                   </li>
                 ))}
               </ul>
