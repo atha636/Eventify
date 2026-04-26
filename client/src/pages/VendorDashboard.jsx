@@ -30,21 +30,50 @@ function fmtTime(date) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// TOAST NOTIFICATION (replaces ugly browser alert)
+// ─────────────────────────────────────────────────────────────
+function Toast({ message, type = "info", onDismiss }) {
+  useEffect(() => {
+    const t = setTimeout(onDismiss, 3500);
+    return () => clearTimeout(t);
+  }, [onDismiss]);
+
+  const icons = { info: "ℹ", success: "✓", error: "✕", warning: "⚠" };
+  const colors = {
+    info:    { color: "#c9a84c", bg: "rgba(201,168,76,0.08)",  border: "rgba(201,168,76,0.28)" },
+    success: { color: "#2d6a4f", bg: "rgba(45,106,79,0.08)",   border: "rgba(45,106,79,0.28)"  },
+    error:   { color: "#b85c5c", bg: "rgba(184,92,92,0.08)",   border: "rgba(184,92,92,0.28)"  },
+    warning: { color: "#c9a84c", bg: "rgba(201,168,76,0.08)",  border: "rgba(201,168,76,0.28)" },
+  };
+  const c = colors[type] || colors.info;
+
+  return (
+    <div className="toast-wrap">
+      <div className="toast" style={{ background: c.bg, border: `1px solid ${c.border}` }}>
+        <span className="toast-icon" style={{ color: c.color, background: `${c.color}18`, border: `1px solid ${c.color}33` }}>
+          {icons[type]}
+        </span>
+        <span className="toast-msg">{message}</span>
+        <button className="toast-close" onClick={onDismiss}>✕</button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 // AVAILABILITY CALENDAR MODAL
 // ─────────────────────────────────────────────────────────────
 function AvailabilityCalendar({ services, onClose }) {
-  // If vendor has multiple services, they pick one to manage
   const [selectedServiceId, setSelectedServiceId] = useState(
     services.length > 0 ? services[0]._id : null
   );
-  const [availability, setAvailability] = useState({}); // "YYYY-MM-DD" → true|false
+  const [availability, setAvailability] = useState({});
   const [viewYear,  setViewYear]  = useState(new Date().getFullYear());
-  const [viewMonth, setViewMonth] = useState(new Date().getMonth()); // 0-based
+  const [viewMonth, setViewMonth] = useState(new Date().getMonth());
   const [saving,    setSaving]    = useState(false);
   const [loading,   setLoading]   = useState(false);
   const [saved,     setSaved]     = useState(false);
 
-  // Fetch availability for selected service
   useEffect(() => {
     if (!selectedServiceId) return;
     setLoading(true);
@@ -62,7 +91,6 @@ function AvailabilityCalendar({ services, onClose }) {
   }, [selectedServiceId]);
 
   const toKey = (date) => {
-    // "YYYY-MM-DD" in local time
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, "0");
     const d = String(date.getDate()).padStart(2, "0");
@@ -72,17 +100,14 @@ function AvailabilityCalendar({ services, onClose }) {
   const today = toKey(new Date());
 
   const toggleDate = (key) => {
-    // Past dates: cannot change
     if (key < today) return;
     setAvailability((prev) => {
-      const current = prev[key]; // undefined → available (default), true → available, false → unavailable
+      const current = prev[key];
       if (current === false) {
-        // unavailable → remove entry (back to default: available)
         const next = { ...prev };
         delete next[key];
         return next;
       }
-      // available (true or undefined) → mark unavailable
       return { ...prev, [key]: false };
     });
     setSaved(false);
@@ -92,7 +117,6 @@ function AvailabilityCalendar({ services, onClose }) {
     if (!selectedServiceId) return;
     setSaving(true);
     try {
-      // Only send entries that are explicitly set
       const dates = Object.entries(availability).map(([date, available]) => ({ date, available }));
       await API.put(`/vendors/${selectedServiceId}/availability`, { dates });
       setSaved(true);
@@ -104,9 +128,8 @@ function AvailabilityCalendar({ services, onClose }) {
     }
   };
 
-  // Calendar grid helpers
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-  const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay(); // 0=Sun
+  const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
 
   const prevMonth = () => {
     if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
@@ -119,7 +142,6 @@ function AvailabilityCalendar({ services, onClose }) {
 
   const monthName = new Date(viewYear, viewMonth, 1).toLocaleString("en-IN", { month: "long" });
 
-  // Count stats for current view
   const unavailableThisMonth = Object.entries(availability).filter(([key, val]) => {
     return val === false && key.startsWith(`${viewYear}-${String(viewMonth + 1).padStart(2, "0")}`);
   }).length;
@@ -129,10 +151,8 @@ function AvailabilityCalendar({ services, onClose }) {
   return (
     <div className="ac-overlay" onClick={handleBackdrop}>
       <div className="ac-modal">
-        {/* ── CLOSE ── */}
         <button className="ac-close" onClick={onClose}>✕</button>
 
-        {/* ── HEADER ── */}
         <div className="ac-header">
           <div className="ac-header-icon">📅</div>
           <div>
@@ -141,7 +161,6 @@ function AvailabilityCalendar({ services, onClose }) {
           </div>
         </div>
 
-        {/* ── SERVICE SELECTOR (only shown if >1 service) ── */}
         {services.length > 1 && (
           <div className="ac-service-select-wrap">
             <label className="ac-label">Manage availability for</label>
@@ -157,7 +176,6 @@ function AvailabilityCalendar({ services, onClose }) {
           </div>
         )}
 
-        {/* ── LEGEND ── */}
         <div className="ac-legend">
           <div className="ac-legend-item">
             <span className="ac-legend-dot ac-dot-available" />
@@ -173,7 +191,6 @@ function AvailabilityCalendar({ services, onClose }) {
           </div>
         </div>
 
-        {/* ── INSTRUCTIONS ── */}
         <p className="ac-instruction">
           Click any <strong>future date</strong> to toggle between available and unavailable.
           Dates marked unavailable won't appear in user date-filtered searches.
@@ -187,25 +204,21 @@ function AvailabilityCalendar({ services, onClose }) {
           </div>
         ) : (
           <>
-            {/* ── MONTH NAV ── */}
             <div className="ac-month-nav">
               <button className="ac-nav-btn" onClick={prevMonth}>‹</button>
               <span className="ac-month-label">{monthName} {viewYear}</span>
               <button className="ac-nav-btn" onClick={nextMonth}>›</button>
             </div>
 
-            {/* ── DAY HEADERS ── */}
             <div className="ac-grid">
               {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d) => (
                 <div key={d} className="ac-day-header">{d}</div>
               ))}
 
-              {/* Empty cells before month start */}
               {[...Array(firstDayOfWeek)].map((_, i) => (
                 <div key={`empty-${i}`} className="ac-day-cell ac-empty" />
               ))}
 
-              {/* Day cells */}
               {[...Array(daysInMonth)].map((_, i) => {
                 const day = i + 1;
                 const key = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -214,10 +227,10 @@ function AvailabilityCalendar({ services, onClose }) {
                 const isUnavailable = availability[key] === false;
 
                 let cls = "ac-day-cell";
-                if (isPast)        cls += " ac-past";
+                if (isPast)             cls += " ac-past";
                 else if (isUnavailable) cls += " ac-unavailable";
-                else               cls += " ac-available";
-                if (isToday)       cls += " ac-today";
+                else                    cls += " ac-available";
+                if (isToday)            cls += " ac-today";
 
                 return (
                   <button
@@ -234,7 +247,6 @@ function AvailabilityCalendar({ services, onClose }) {
               })}
             </div>
 
-            {/* ── STATS ── */}
             {unavailableThisMonth > 0 && (
               <p className="ac-month-stat">
                 {unavailableThisMonth} day{unavailableThisMonth !== 1 ? "s" : ""} marked unavailable this month
@@ -243,7 +255,6 @@ function AvailabilityCalendar({ services, onClose }) {
           </>
         )}
 
-        {/* ── FOOTER ACTIONS ── */}
         <div className="ac-footer">
           <button className="ac-cancel-btn" onClick={onClose}>Cancel</button>
           <button
@@ -491,7 +502,13 @@ export default function VendorDashboard() {
   const [detailBooking,    setDetailBooking]    = useState(null);
   const [undoTarget,       setUndoTarget]       = useState(null);
   const [confirming,       setConfirming]       = useState(false);
-  const [showAvailCal,     setShowAvailCal]     = useState(false); // ← NEW
+  const [showAvailCal,     setShowAvailCal]     = useState(false);
+  // ── TOAST STATE (replaces browser alert) ──
+  const [toast,            setToast]            = useState(null); // { message, type }
+
+  const showToast = useCallback((message, type = "info") => {
+    setToast({ message, type });
+  }, []);
 
   const fetchBookings = async () => {
     const token = localStorage.getItem("token");
@@ -588,6 +605,15 @@ export default function VendorDashboard() {
       <div className="vd-root">
         <Navbar />
 
+        {/* ── TOAST ── */}
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onDismiss={() => setToast(null)}
+          />
+        )}
+
         {/* ── DATE CHANGE POPUP ── */}
         {popupBooking && (
           <DateChangePopup
@@ -636,14 +662,16 @@ export default function VendorDashboard() {
               <h1 className="vd-title">Dashboard</h1>
               <p className="vd-subtitle">Manage your bookings and services</p>
 
-              {/* ─── AVAILABILITY SECTION (NEW) ─── */}
+              {/* ─── AVAILABILITY SECTION ─── */}
               <div className="vd-avail-section">
                 <p className="vd-avail-text">Tell us about your availability</p>
                 <button
                   className="vd-avail-btn"
                   onClick={() => {
+                    if (loadingS) return;
                     if (services.length === 0) {
-                      alert("Add at least one service before setting availability.");
+                      // ✅ Styled toast instead of ugly browser alert
+                      showToast("Add at least one service before setting availability.", "warning");
                       return;
                     }
                     setShowAvailCal(true);
@@ -857,7 +885,56 @@ const styles = `
   .vd-body { width: 100%; max-width: 1200px; margin: 0 auto; padding: 48px 32px 80px; }
 
   /* ═══════════════════════════════════════════
-     AVAILABILITY CALENDAR BUTTON (NEW)
+     TOAST NOTIFICATION (replaces browser alert)
+  ═══════════════════════════════════════════ */
+  .toast-wrap {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    width: min(420px, 92vw);
+    animation: toastIn 0.32s cubic-bezier(0.34, 1.2, 0.64, 1) both;
+  }
+  .toast {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .toast-icon {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; flex-shrink: 0;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .toast-msg {
+    flex: 1;
+    font-size: 13.5px;
+    color: var(--ink);
+    line-height: 1.5;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .toast-close {
+    background: none; border: none; cursor: pointer;
+    font-size: 11px; color: var(--muted);
+    width: 24px; height: 24px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: background 0.2s, color 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .toast-close:hover { background: rgba(14,12,10,0.08); color: var(--ink); }
+
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(-12px) scale(0.95); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0)     scale(1);    }
+  }
+
+  /* ═══════════════════════════════════════════
+     AVAILABILITY CALENDAR BUTTON
   ═══════════════════════════════════════════ */
   .vd-avail-section {
     display: flex;
@@ -898,7 +975,7 @@ const styles = `
   .vd-avail-btn-icon { font-size: 1rem; line-height: 1; }
 
   /* ═══════════════════════════════════════════
-     AVAILABILITY CALENDAR MODAL (NEW)
+     AVAILABILITY CALENDAR MODAL
   ═══════════════════════════════════════════ */
   .ac-overlay {
     position: fixed; inset: 0;
@@ -990,7 +1067,6 @@ const styles = `
   }
   .ac-instruction strong { color: var(--ink); }
 
-  /* Month nav */
   .ac-month-nav {
     display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 12px;
@@ -1008,7 +1084,6 @@ const styles = `
     font-size: 1.15rem; font-weight: 600; color: var(--ink);
   }
 
-  /* Calendar grid */
   .ac-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -1033,8 +1108,6 @@ const styles = `
     min-height: 36px;
   }
   .ac-day-cell.ac-empty { background: none; border: none; cursor: default; }
-
-  /* Available days */
   .ac-day-cell.ac-available {
     background: rgba(45,106,79,0.07);
     border-color: rgba(45,106,79,0.2);
@@ -1044,8 +1117,6 @@ const styles = `
     border-color: rgba(184,92,92,0.35);
     transform: scale(1.06);
   }
-
-  /* Unavailable days */
   .ac-day-cell.ac-unavailable {
     background: rgba(184,92,92,0.1);
     border-color: rgba(184,92,92,0.35);
@@ -1055,15 +1126,11 @@ const styles = `
     border-color: rgba(45,106,79,0.3);
     transform: scale(1.06);
   }
-
-  /* Past days */
   .ac-day-cell.ac-past {
     background: rgba(122,114,101,0.06);
     border-color: transparent;
     cursor: not-allowed; opacity: 0.45;
   }
-
-  /* Today highlight */
   .ac-day-cell.ac-today .ac-day-num {
     background: var(--gold);
     color: var(--white);
@@ -1072,13 +1139,11 @@ const styles = `
     display: flex; align-items: center; justify-content: center;
     font-weight: 600; font-size: 11px;
   }
-
   .ac-day-num { font-size: 12px; color: var(--ink); line-height: 1; }
   .ac-unavail-dot {
     width: 4px; height: 4px; border-radius: 50%;
     background: #b85c5c; margin-top: 2px;
   }
-
   .ac-month-stat {
     font-size: 11.5px; color: var(--muted); text-align: center;
     margin-bottom: 8px;
@@ -1090,8 +1155,6 @@ const styles = `
     margin-left: 50%;
     transform: translateX(-50%);
   }
-
-  /* Loading skeleton */
   .ac-loading {
     display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 14px;
   }
@@ -1101,8 +1164,6 @@ const styles = `
     background-size: 200% 100%;
     animation: shimmer 1.4s ease infinite;
   }
-
-  /* Footer */
   .ac-footer {
     display: flex; gap: 10px; padding-top: 18px;
     border-top: 1px solid var(--border);
@@ -1137,7 +1198,6 @@ const styles = `
     animation: spin 0.7s linear infinite; display: inline-block;
   }
 
-  /* Responsive calendar */
   @media (max-width: 480px) {
     .ac-modal { padding: 24px 16px 20px; }
     .ac-day-cell { min-height: 30px; border-radius: 6px; }
@@ -1310,13 +1370,11 @@ const styles = `
   .vd-stat-value { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 600; color: var(--ink); line-height: 1; }
   .vd-stat-label { font-size: 11.5px; color: var(--muted); }
 
-  /* DCR ALERT */
   .vd-dcr-alert { display: flex; align-items: center; gap: 12px; background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.28); border-radius: 12px; padding: 14px 18px; margin-bottom: 32px; cursor: pointer; transition: background 0.2s; font-size: 13.5px; color: var(--ink); animation: fadeUp 0.4s ease both; }
   .vd-dcr-alert:hover { background: rgba(201,168,76,0.14); }
   .vd-dcr-alert-icon { font-size: 1.3rem; flex-shrink: 0; }
   .vd-dcr-alert-cta { margin-left: auto; color: var(--gold); font-weight: 500; font-size: 13px; white-space: nowrap; }
 
-  /* SECTIONS */
   .vd-section { margin-bottom: 56px; animation: fadeUp 0.5s ease 0.15s both; }
   .vd-section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
   .vd-section-title { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 600; color: var(--ink); margin-bottom: 3px; }
@@ -1332,7 +1390,6 @@ const styles = `
   .vd-svc-empty-title { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
   .vd-svc-empty-sub { font-size: 13px; color: var(--muted); }
 
-  /* TABS */
   .vd-tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
   .vd-tab { display: flex; align-items: center; gap: 7px; padding: 10px 18px; background: none; border: none; border-bottom: 2px solid transparent; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--muted); cursor: pointer; transition: all 0.2s; margin-bottom: -1px; text-transform: capitalize; }
   .vd-tab:hover { color: var(--ink); }
@@ -1340,7 +1397,6 @@ const styles = `
   .vd-tab-count { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 1px 8px; font-size: 11px; color: var(--muted); }
   .vd-tab.active .vd-tab-count { background: var(--ink); color: var(--white); border-color: var(--ink); }
 
-  /* BOOKING CARDS */
   .vd-bookings { display: flex; flex-direction: column; gap: 12px; }
   .vd-booking-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 22px 24px; display: flex; justify-content: space-between; align-items: center; gap: 20px; animation: fadeUp 0.45s ease both; transition: box-shadow 0.25s, border-color 0.25s, transform 0.2s; }
   .vd-booking-card:hover { box-shadow: 0 8px 32px rgba(14,12,10,0.09); border-color: rgba(201,168,76,0.4); transform: translateY(-1px); }
@@ -1372,7 +1428,6 @@ const styles = `
   .vd-dcr-pill-detail { font-weight: 400; color: var(--muted); }
   .vd-dcr-pill-cta { margin-left: auto; color: var(--gold); font-weight: 600; }
 
-  /* SPINNERS / SKELETONS / EMPTY */
   .vd-spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
   .vd-spinner-dark { border-color: rgba(184,92,92,0.3); border-top-color: #b85c5c; }
   .vd-loading { display: flex; flex-direction: column; gap: 12px; }
@@ -1383,7 +1438,6 @@ const styles = `
   .vd-empty h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
   .vd-empty p { font-size: 13.5px; color: var(--muted); }
 
-  /* RESPONSIVE */
   @media (max-width: 768px) {
     .vd-body { padding: 32px 16px 60px; }
     .vd-booking-card { flex-direction: column; align-items: flex-start; }
@@ -1399,6 +1453,7 @@ const styles = `
     .cu-modal { padding: 28px 20px 24px; }
     .cu-btns { flex-direction: column; }
     .vd-avail-section { flex-direction: column; align-items: flex-start; }
+    .toast-wrap { top: 70px; }
   }
 
   @keyframes fadeUp  { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }

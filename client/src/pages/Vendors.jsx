@@ -24,10 +24,10 @@ const SORT_OPTIONS = [
 ];
 
 // ─────────────────────────────────────────────
-// DATE PICKER MINI-CALENDAR
-// Opens inline below the "By Date" filter chip
+// DATE PICKER — rendered as a centered modal overlay on mobile,
+// inline popover on desktop. Fixes the clipping issue.
 // ─────────────────────────────────────────────
-function DatePickerPopover({ value, onChange, onClear, onClose }) {
+function DatePickerModal({ value, onChange, onClear, onClose }) {
   const [viewYear,  setViewYear]  = useState(value ? new Date(value).getFullYear() : new Date().getFullYear());
   const [viewMonth, setViewMonth] = useState(value ? new Date(value).getMonth()    : new Date().getMonth());
 
@@ -38,10 +38,10 @@ function DatePickerPopover({ value, onChange, onClear, onClose }) {
     return `${y}-${m}-${day}`;
   };
 
-  const today = toKey(new Date());
-  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const today        = toKey(new Date());
+  const daysInMonth  = new Date(viewYear, viewMonth + 1, 0).getDate();
   const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
-  const monthName = new Date(viewYear, viewMonth, 1).toLocaleString("en-IN", { month: "long" });
+  const monthName    = new Date(viewYear, viewMonth, 1).toLocaleString("en-IN", { month: "long" });
 
   const prevMonth = () => {
     if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1); }
@@ -54,47 +54,66 @@ function DatePickerPopover({ value, onChange, onClear, onClose }) {
 
   const handleDay = (day) => {
     const key = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    if (key < today) return; // don't allow past dates
+    if (key < today) return;
     onChange(key);
     onClose();
   };
 
+  // Close on backdrop click
+  const handleBackdrop = (e) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
   return (
-    <div className="dp-popover">
-      <div className="dp-nav">
-        <button className="dp-nav-btn" onClick={prevMonth}>‹</button>
-        <span className="dp-month-label">{monthName} {viewYear}</span>
-        <button className="dp-nav-btn" onClick={nextMonth}>›</button>
-      </div>
-      <div className="dp-grid">
-        {["Su","Mo","Tu","We","Th","Fr","Sa"].map((d) => (
-          <div key={d} className="dp-hdr">{d}</div>
-        ))}
-        {[...Array(firstDayOfWeek)].map((_, i) => (
-          <div key={`e${i}`} />
-        ))}
-        {[...Array(daysInMonth)].map((_, i) => {
-          const day = i + 1;
-          const key = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-          const isPast     = key < today;
-          const isSelected = key === value;
-          return (
-            <button
-              key={key}
-              className={`dp-day ${isPast ? "dp-past" : ""} ${isSelected ? "dp-selected" : ""}`}
-              onClick={() => handleDay(day)}
-              disabled={isPast}
-            >
-              {day}
+    <div className="dp-overlay" onClick={handleBackdrop}>
+      <div className="dp-modal">
+        {/* Close button */}
+        <button className="dp-x-btn" onClick={onClose}>✕</button>
+
+        <p className="dp-modal-title">Select a Date</p>
+
+        <div className="dp-nav">
+          <button className="dp-nav-btn" onClick={prevMonth}>‹</button>
+          <span className="dp-month-label">{monthName} {viewYear}</span>
+          <button className="dp-nav-btn" onClick={nextMonth}>›</button>
+        </div>
+
+        <div className="dp-grid">
+          {["Su","Mo","Tu","We","Th","Fr","Sa"].map((d) => (
+            <div key={d} className="dp-hdr">{d}</div>
+          ))}
+          {[...Array(firstDayOfWeek)].map((_, i) => (
+            <div key={`e${i}`} />
+          ))}
+          {[...Array(daysInMonth)].map((_, i) => {
+            const day  = i + 1;
+            const key  = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+            const isPast     = key < today;
+            const isToday    = key === today;
+            const isSelected = key === value;
+            return (
+              <button
+                key={key}
+                className={`dp-day ${isPast ? "dp-past" : ""} ${isSelected ? "dp-selected" : ""} ${isToday && !isSelected ? "dp-today" : ""}`}
+                onClick={() => handleDay(day)}
+                disabled={isPast}
+              >
+                {day}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="dp-footer">
+          {value ? (
+            <button className="dp-clear-btn" onClick={() => { onClear(); onClose(); }}>
+              ✕ Clear date filter
             </button>
-          );
-        })}
+          ) : (
+            <button className="dp-cancel-btn" onClick={onClose}>Cancel</button>
+          )}
+        </div>
       </div>
-      {value && (
-        <button className="dp-clear-btn" onClick={() => { onClear(); onClose(); }}>
-          ✕ Clear date filter
-        </button>
-      )}
     </div>
   );
 }
@@ -111,25 +130,13 @@ export default function Vendors() {
   const [layout,        setLayout]        = useState("grid");
   const [maxPrice,      setMaxPrice]      = useState("");
 
-  // ── DATE FILTER (NEW) ──
-  const [dateFilter,    setDateFilter]    = useState(""); // "YYYY-MM-DD"
+  // ── DATE FILTER ──
+  const [dateFilter,    setDateFilter]    = useState("");
   const [dateLoading,   setDateLoading]   = useState(false);
-  const [availVendors,  setAvailVendors]  = useState(null); // null = no date filter active
+  const [availVendors,  setAvailVendors]  = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const datePickerRef = useRef(null);
 
   const isNavigatingRef = useRef(false);
-
-  // Close date picker on outside click
-  useEffect(() => {
-    const handler = (e) => {
-      if (datePickerRef.current && !datePickerRef.current.contains(e.target)) {
-        setShowDatePicker(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
 
   // ── 1. Read URL params on mount ────────────────────────────────
   useEffect(() => {
@@ -159,7 +166,7 @@ export default function Vendors() {
       .finally(() => setLoading(false));
   }, []);
 
-  // ── 3. Fetch available vendors when dateFilter changes (NEW) ─
+  // ── 3. Fetch available vendors when dateFilter changes ───────
   useEffect(() => {
     if (!dateFilter) {
       setAvailVendors(null);
@@ -192,10 +199,8 @@ export default function Vendors() {
 
   // ── Client-side filter + sort ──────────────────────────────────
   const filtered = useMemo(() => {
-    // Base list: if date filter is active, use availVendors (from API)
-    // otherwise use the full vendor list
     let base = dateFilter && availVendors !== null ? availVendors : vendors;
-    let list = [...base];
+    let list  = [...base];
 
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -234,7 +239,6 @@ export default function Vendors() {
     setAvailVendors(null);
   };
 
-  // Format dateFilter for display
   const dateLabel = dateFilter
     ? new Date(dateFilter + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
     : null;
@@ -244,6 +248,16 @@ export default function Vendors() {
       <style>{styles}</style>
       <div className="vn-root">
         <Navbar />
+
+        {/* ── DATE PICKER MODAL (fixed overlay, no clipping) ── */}
+        {showDatePicker && (
+          <DatePickerModal
+            value={dateFilter}
+            onChange={(d) => setDateFilter(d)}
+            onClear={() => { setDateFilter(""); setAvailVendors(null); }}
+            onClose={() => setShowDatePicker(false)}
+          />
+        )}
 
         <div className="vn-hero">
           <div className="vn-hero-orb vn-orb1" />
@@ -303,30 +317,20 @@ export default function Vendors() {
           </div>
 
           <div className="vn-toolbar-right">
-            {/* ── DATE FILTER (NEW) ── */}
-            <div className="vn-date-wrap" ref={datePickerRef}>
-              <button
-                className={`vn-date-btn ${dateFilter ? "vn-date-active" : ""}`}
-                onClick={() => setShowDatePicker((v) => !v)}
-              >
-                <span className="vn-date-icon">📅</span>
-                {dateFilter ? dateLabel : "By Date"}
-                {dateFilter && (
-                  <span
-                    className="vn-date-clear"
-                    onClick={(e) => { e.stopPropagation(); setDateFilter(""); setAvailVendors(null); }}
-                  >✕</span>
-                )}
-              </button>
-              {showDatePicker && (
-                <DatePickerPopover
-                  value={dateFilter}
-                  onChange={(d) => { setDateFilter(d); }}
-                  onClear={() => { setDateFilter(""); setAvailVendors(null); }}
-                  onClose={() => setShowDatePicker(false)}
-                />
+            {/* ── DATE FILTER BUTTON ── */}
+            <button
+              className={`vn-date-btn ${dateFilter ? "vn-date-active" : ""}`}
+              onClick={() => setShowDatePicker(true)}
+            >
+              <span className="vn-date-icon">📅</span>
+              {dateFilter ? dateLabel : "By Date"}
+              {dateFilter && (
+                <span
+                  className="vn-date-clear-x"
+                  onClick={(e) => { e.stopPropagation(); setDateFilter(""); setAvailVendors(null); }}
+                >✕</span>
               )}
-            </div>
+            </button>
 
             <div className="vn-price-wrap">
               <span className="vn-price-label">Max ₹</span>
@@ -502,10 +506,7 @@ const styles = `
   .vn-clear-btn:hover { border-color: var(--gold); color: var(--gold); }
   .vn-toolbar-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
-  /* ─── DATE FILTER (NEW) ─── */
-  .vn-date-wrap {
-    position: relative;
-  }
+  /* ─── DATE FILTER BUTTON ─── */
   .vn-date-btn {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 8px 13px;
@@ -521,7 +522,7 @@ const styles = `
     color: var(--ink); font-weight: 500;
   }
   .vn-date-icon { font-size: 13px; line-height: 1; }
-  .vn-date-clear {
+  .vn-date-clear-x {
     display: inline-flex; align-items: center; justify-content: center;
     width: 18px; height: 18px; border-radius: 50%;
     background: rgba(122,114,101,0.15);
@@ -529,28 +530,54 @@ const styles = `
     cursor: pointer; transition: background 0.2s;
     margin-left: 2px;
   }
-  .vn-date-clear:hover { background: rgba(184,92,92,0.18); color: #b85c5c; }
+  .vn-date-clear-x:hover { background: rgba(184,92,92,0.18); color: #b85c5c; }
 
-  /* DATE PICKER POPOVER */
-  .dp-popover {
-    position: absolute; top: calc(100% + 6px); left: 0;
+  /* ─── DATE PICKER MODAL OVERLAY (fixes mobile clipping) ─── */
+  .dp-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(14,12,10,0.55);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1500;
+    padding: 20px;
+    animation: fadeIn 0.18s ease both;
+  }
+  .dp-modal {
+    position: relative;
     background: var(--white);
     border: 1px solid rgba(201,168,76,0.25);
-    border-radius: 14px;
-    padding: 16px;
-    box-shadow: 0 16px 48px rgba(0,0,0,0.16);
-    z-index: 100;
-    width: 260px;
-    animation: fadeUp 0.18s ease both;
+    border-radius: 20px;
+    padding: 28px 24px 22px;
+    width: min(320px, 96vw);
+    box-shadow: 0 24px 64px rgba(0,0,0,0.2);
+    animation: popupUp 0.28s cubic-bezier(0.34,1.2,0.64,1) both;
+  }
+  .dp-x-btn {
+    position: absolute; top: 12px; right: 12px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--surface); border: 1px solid var(--border);
+    font-size: 11px; color: var(--muted); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+  }
+  .dp-x-btn:hover { background: var(--ink); color: var(--white); border-color: var(--ink); }
+  .dp-modal-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem; font-weight: 600; color: var(--ink);
+    margin-bottom: 16px; text-align: center;
+    padding-right: 24px; /* clear the X btn */
   }
   .dp-nav {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
   }
   .dp-nav-btn {
-    width: 28px; height: 28px; border-radius: 7px;
+    width: 30px; height: 30px; border-radius: 8px;
     background: var(--surface); border: 1px solid var(--border);
-    font-size: 15px; color: var(--muted); cursor: pointer;
+    font-size: 16px; color: var(--muted); cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: all 0.2s; line-height: 1;
   }
@@ -560,40 +587,54 @@ const styles = `
     font-size: 1rem; font-weight: 600; color: var(--ink);
   }
   .dp-grid {
-    display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;
-    margin-bottom: 10px;
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;
+    margin-bottom: 14px;
   }
   .dp-hdr {
     text-align: center; font-size: 9px; font-weight: 600;
     letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--muted); padding: 4px 0;
+    color: var(--muted); padding: 5px 0;
   }
   .dp-day {
-    aspect-ratio: 1; border-radius: 7px; border: none;
+    aspect-ratio: 1; border-radius: 8px; border: none;
     background: none; font-family: 'DM Sans', sans-serif;
-    font-size: 11.5px; color: var(--ink); cursor: pointer;
+    font-size: 12px; color: var(--ink); cursor: pointer;
     transition: all 0.15s;
     display: flex; align-items: center; justify-content: center;
+    min-height: 32px;
   }
   .dp-day:hover:not(:disabled):not(.dp-selected) {
-    background: rgba(201,168,76,0.12);
-    color: var(--ink);
+    background: rgba(201,168,76,0.12); color: var(--ink);
   }
   .dp-day.dp-selected {
     background: var(--ink); color: var(--white); font-weight: 600;
   }
-  .dp-day.dp-past {
-    opacity: 0.3; cursor: not-allowed;
+  .dp-day.dp-today {
+    background: rgba(201,168,76,0.12);
+    color: var(--gold);
+    font-weight: 600;
+  }
+  .dp-day.dp-past { opacity: 0.28; cursor: not-allowed; }
+  .dp-footer {
+    border-top: 1px solid var(--border); padding-top: 14px;
   }
   .dp-clear-btn {
-    width: 100%; padding: 8px; border-radius: 8px;
+    width: 100%; padding: 10px; border-radius: 9px;
     border: 1px solid rgba(184,92,92,0.25);
     background: rgba(184,92,92,0.06);
-    color: #b85c5c; font-size: 12px;
+    color: #b85c5c; font-size: 13px;
     font-family: 'DM Sans', sans-serif; cursor: pointer;
     transition: all 0.2s;
   }
   .dp-clear-btn:hover { background: rgba(184,92,92,0.12); }
+  .dp-cancel-btn {
+    width: 100%; padding: 10px; border-radius: 9px;
+    border: 1px solid var(--border);
+    background: none; color: var(--muted);
+    font-size: 13px; font-family: 'DM Sans', sans-serif;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .dp-cancel-btn:hover { border-color: var(--gold); color: var(--ink); }
 
   /* DATE FILTER ACTIVE BANNER */
   .vn-date-banner {
@@ -664,12 +705,12 @@ const styles = `
     .vn-toolbar-right { width: 100%; }
     .vn-footer-cta { padding: 64px 20px; }
     .vn-layout-toggle { display: none; }
-    .dp-popover { left: auto; right: 0; width: 240px; }
     .vn-date-banner { padding: 10px 16px; }
   }
 
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes fadeUp  { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes popupUp { from { opacity: 0; transform: translateY(20px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
   @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @keyframes spin    { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 `;
