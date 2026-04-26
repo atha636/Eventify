@@ -1,6 +1,14 @@
 import API from "../services/api";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+
+// ── Portal wrapper ───────────────────────────────────────────────
+// Renders children into document.body, escaping any CSS transform
+// stacking context that would mis-position fixed-position modals.
+function Portal({ children }) {
+  return createPortal(children, document.body);
+}
 
 // ── Share Modal ──────────────────────────────────────────────────
 function ShareModal({ vendor, onClose }) {
@@ -98,7 +106,7 @@ function ShareModal({ vendor, onClose }) {
   };
 
   return (
-    <>
+    <Portal>
       <style>{shareModalStyles}</style>
       <div className="sm-backdrop" onClick={onClose} />
       <div className="sm-modal">
@@ -151,14 +159,14 @@ function ShareModal({ vendor, onClose }) {
 
         <p className="sm-note">Share this link anywhere — no app needed</p>
       </div>
-    </>
+    </Portal>
   );
 }
 
 // ── Delete Confirmation Modal ────────────────────────────────────
 function DeleteModal({ serviceName, onConfirm, onCancel, deleting }) {
   return (
-    <>
+    <Portal>
       <style>{modalStyles}</style>
       <div className="dm-backdrop" onClick={onCancel} />
       <div className="dm-modal">
@@ -184,14 +192,14 @@ function DeleteModal({ serviceName, onConfirm, onCancel, deleting }) {
           </button>
         </div>
       </div>
-    </>
+    </Portal>
   );
 }
 
 // ── Favourite Confirmation Modal ─────────────────────────────────
 function FavouriteModal({ vendor, onConfirm, onCancel, isLoggedIn }) {
   return (
-    <>
+    <Portal>
       <style>{modalStyles}</style>
       <div className="dm-backdrop" onClick={onCancel} />
       <div className="dm-modal">
@@ -223,21 +231,21 @@ function FavouriteModal({ vendor, onConfirm, onCancel, isLoggedIn }) {
           </button>
         </div>
       </div>
-    </>
+    </Portal>
   );
 }
 
 // ── Service Card ─────────────────────────────────────────────────
 export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
   const navigate = useNavigate();
-  const [imgError,      setImgError]      = useState(false);
-  const [favorited,     setFavorited]     = useState(false);
-  const [favLoading,    setFavLoading]    = useState(false);
-  const [showFavModal,  setShowFavModal]  = useState(false);
-  const [showDelModal,  setShowDelModal]  = useState(false);
-  const [showShareModal,setShowShareModal]= useState(false);
-  const [deleting,      setDeleting]      = useState(false);
-  const [showToast,     setShowToast]     = useState(false);
+  const [imgError,       setImgError]       = useState(false);
+  const [favorited,      setFavorited]      = useState(false);
+  const [favLoading,     setFavLoading]     = useState(false);
+  const [showFavModal,   setShowFavModal]   = useState(false);
+  const [showDelModal,   setShowDelModal]   = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [deleting,       setDeleting]       = useState(false);
+  const [showToast,      setShowToast]      = useState(false);
 
   const token      = localStorage.getItem("token");
   const user       = JSON.parse(localStorage.getItem("user") || "{}");
@@ -324,8 +332,9 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
   return (
     <>
       <style>{cardStyles}</style>
-      <style>{shareModalStyles}</style>
 
+      {/* ── Portalled modals — rendered into document.body, outside
+           any CSS transform stacking context ── */}
       {showFavModal && (
         <FavouriteModal
           vendor={vendor}
@@ -352,9 +361,12 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
       )}
 
       {showToast && (
-        <div className="sc-toast">
-          <span>♥</span> Saved to favourites!
-        </div>
+        <Portal>
+          <style>{cardStyles}</style>
+          <div className="sc-toast">
+            <span>♥</span> Saved to favourites!
+          </div>
+        </Portal>
       )}
 
       <div className="sc-card" onClick={goToDetail}>
@@ -523,11 +535,11 @@ const shareModalStyles = `
   .sm-backdrop {
     position: fixed; inset: 0;
     background: rgba(14,12,10,0.6); backdrop-filter: blur(6px);
-    z-index: 1000; animation: smFadeIn 0.18s ease both;
+    z-index: 9998; animation: smFadeIn 0.18s ease both;
   }
   .sm-modal {
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    z-index: 1001; background: #faf7f2;
+    z-index: 9999; background: #faf7f2;
     border: 1px solid rgba(201,168,76,0.25); border-radius: 20px;
     padding: 36px 32px 28px; width: min(440px, 92vw);
     box-shadow: 0 32px 80px rgba(14,12,10,0.22);
@@ -657,12 +669,12 @@ const modalStyles = `
   .dm-backdrop {
     position: fixed; inset: 0;
     background: rgba(14, 12, 10, 0.55);
-    backdrop-filter: blur(4px); z-index: 999;
+    backdrop-filter: blur(4px); z-index: 9998;
     animation: dmFadeIn 0.18s ease both;
   }
   .dm-modal {
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    z-index: 1000; background: #faf7f2;
+    z-index: 9999; background: #faf7f2;
     border: 1px solid rgba(201,168,76,0.2); border-radius: 16px;
     padding: 36px 32px 28px; width: min(420px, 90vw);
     text-align: center; box-shadow: 0 24px 64px rgba(14,12,10,0.18);
@@ -748,6 +760,9 @@ const cardStyles = `
     border-radius: 12px; overflow: hidden; cursor: pointer;
     transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
     display: flex; flex-direction: column;
+    /* IMPORTANT: do NOT add will-change: transform here — it would create
+       a stacking context that traps position:fixed children.
+       The Portal pattern already solves this. */
   }
   .sc-card:hover {
     transform: translateY(-5px);
@@ -758,10 +773,11 @@ const cardStyles = `
   .sc-img-wrap {
     position: relative; height: 210px; overflow: hidden;
     background: #e8e2d8; flex-shrink: 0;
+    border-radius: 12px 12px 0 0;
   }
   .sc-img-clickable { cursor: pointer; }
-  .sc-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; display: block; }
-  .sc-card:hover .sc-img { transform: scale(1.05); }
+  .sc-img { width: 100%; height: 100%; object-fit: cover; object-position: center; transition: transform 0.5s ease; display: block; }
+  .sc-card:hover .sc-img { transform: scale(1.02); }
   .sc-img-overlay {
     position: absolute; inset: 0;
     background: linear-gradient(to top, rgba(14,12,10,0.45) 0%, transparent 55%);
