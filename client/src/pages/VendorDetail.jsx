@@ -6,6 +6,180 @@ import BookingDetailsModal from "../components/BookingDetailsModal";
 import BookingWaitModal from "../components/BookingWaitModal";
 import Logo from "../components/Logo";
 
+// ── Share Modal ───────────────────────────────────────────────────────────────
+function ShareModal({ vendor, onClose }) {
+  const [copied, setCopied] = useState(false);
+  const shareUrl = `${window.location.origin}/vendor/${vendor._id}`;
+  const shareText = `Check out ${vendor.title} on Evencers — starting at ₹${Number(vendor.packages?.[0]?.price || 0).toLocaleString()}`;
+
+  const platforms = [
+    {
+      name: "WhatsApp",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
+      ),
+      color: "#25D366",
+      bg: "rgba(37,211,102,0.08)",
+      border: "rgba(37,211,102,0.22)",
+      href: `https://wa.me/?text=${encodeURIComponent(shareText + "\n" + shareUrl)}`,
+    },
+    {
+      name: "Instagram",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+        </svg>
+      ),
+      color: "#E1306C",
+      bg: "rgba(225,48,108,0.07)",
+      border: "rgba(225,48,108,0.18)",
+      href: null,
+      note: "Copies link",
+    },
+    {
+      name: "Twitter / X",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+        </svg>
+      ),
+      color: "#000000",
+      bg: "rgba(0,0,0,0.05)",
+      border: "rgba(0,0,0,0.12)",
+      href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`,
+    },
+    {
+      name: "Facebook",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+        </svg>
+      ),
+      color: "#1877F2",
+      bg: "rgba(24,119,242,0.07)",
+      border: "rgba(24,119,242,0.18)",
+      href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+    },
+    {
+      name: "Telegram",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+          <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+        </svg>
+      ),
+      color: "#26A5E4",
+      bg: "rgba(38,165,228,0.07)",
+      border: "rgba(38,165,228,0.18)",
+      href: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`,
+    },
+  ];
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+    } catch {
+      const el = document.createElement("textarea");
+      el.value = shareUrl;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+
+  const handlePlatformClick = (platform) => {
+    if (!platform.href) { handleCopy(); return; }
+    window.open(platform.href, "_blank", "noopener,noreferrer,width=620,height=520");
+  };
+
+  return (
+    <>
+      <style>{shareModalStyles}</style>
+      <div className="vsm-backdrop" onClick={onClose} />
+      <div className="vsm-modal">
+        <button className="vsm-close" onClick={onClose}>✕</button>
+
+        {/* Header */}
+        <div className="vsm-header">
+          <div className="vsm-header-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+              strokeLinecap="round" strokeLinejoin="round" width="22" height="22">
+              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/>
+              <circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+          </div>
+          <h3 className="vsm-title">Share this Service</h3>
+          <p className="vsm-subtitle">Spread the word about <strong>{vendor.title}</strong></p>
+        </div>
+
+        {/* Vendor preview strip */}
+        <div className="vsm-preview">
+          {vendor.images?.[0] && (
+            <img src={vendor.images[0]} alt={vendor.title} className="vsm-preview-img" />
+          )}
+          <div className="vsm-preview-info">
+            <span className="vsm-preview-title">{vendor.title}</span>
+            <span className="vsm-preview-loc">📍 {vendor.location}</span>
+            {vendor.packages?.[0]?.price && (
+              <span className="vsm-preview-price">
+                Starting at ₹{Number(vendor.packages[0].price).toLocaleString()}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Platforms */}
+        <p className="vsm-section-label">Share on</p>
+        <div className="vsm-platforms">
+          {platforms.map((p) => (
+            <button
+              key={p.name}
+              className="vsm-platform"
+              style={{ "--pc": p.color, "--pbg": p.bg, "--pborder": p.border }}
+              onClick={() => handlePlatformClick(p)}
+              title={p.note ? `${p.name} — ${p.note}` : `Share on ${p.name}`}
+            >
+              <span className="vsm-p-icon" style={{ color: p.color }}>{p.icon}</span>
+              <span className="vsm-p-name">{p.name}</span>
+              {p.note && <span className="vsm-p-note">{p.note}</span>}
+            </button>
+          ))}
+        </div>
+
+        {/* Copy link */}
+        <div className="vsm-copy">
+          <div className="vsm-copy-url">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+              strokeLinecap="round" strokeLinejoin="round" width="13" height="13" style={{flexShrink:0,color:"#c9a84c"}}>
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+            </svg>
+            <span className="vsm-copy-text">{shareUrl}</span>
+          </div>
+          <button
+            className={`vsm-copy-btn ${copied ? "copied" : ""}`}
+            onClick={handleCopy}
+          >
+            {copied ? (
+              <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                strokeLinecap="round" strokeLinejoin="round" width="13" height="13">
+                <polyline points="20 6 9 17 4 12"/></svg> Copied!</>
+            ) : "Copy Link"}
+          </button>
+        </div>
+
+        <p className="vsm-footer-note">Anyone with this link can view this service</p>
+      </div>
+    </>
+  );
+}
+
 // ── Custom Calendar ───────────────────────────────────────────────────────────
 function CustomDatePicker({ value, onChange, hasError }) {
   const [open, setOpen]             = useState(false);
@@ -16,43 +190,35 @@ function CustomDatePicker({ value, onChange, hasError }) {
   const ref     = useRef(null);
   const trigRef = useRef(null);
 
-  // Close on outside click
   useEffect(() => {
     const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Compute popup position so it never overflows the viewport
   useEffect(() => {
     if (!open || !trigRef.current) return;
     const rect   = trigRef.current.getBoundingClientRect();
     const popW   = Math.min(288, window.innerWidth - 24);
-    const popH   = 320; // approx popup height
+    const popH   = 320;
     const spaceBelow = window.innerHeight - rect.bottom - 8;
     const spaceAbove = rect.top - 8;
 
     let top, left;
-
-    // vertical: prefer below, else above
     if (spaceBelow >= popH || spaceBelow >= spaceAbove) {
       top = rect.bottom + window.scrollY + 6;
     } else {
       top = rect.top + window.scrollY - popH - 6;
     }
 
-    // horizontal: align left edge, clamp to screen
     left = rect.left + window.scrollX;
     const rightEdge = left + popW;
-    if (rightEdge > window.innerWidth - 12) {
-      left = window.innerWidth - popW - 12;
-    }
+    if (rightEdge > window.innerWidth - 12) left = window.innerWidth - popW - 12;
     if (left < 12) left = 12;
 
     setPopupStyle({ position: "fixed", top: rect.bottom + 6, left, width: popW,
       ...(spaceBelow < popH && spaceAbove > spaceBelow
-        ? { top: rect.top - popH - 6 }
-        : {}) });
+        ? { top: rect.top - popH - 6 } : {}) });
   }, [open]);
 
   const today   = new Date(); today.setHours(0,0,0,0);
@@ -133,7 +299,6 @@ function CustomDatePicker({ value, onChange, hasError }) {
 
       {open && (
         <div className="cdp-pop" style={popupStyle}>
-          {/* Header */}
           <div className="cdp-header">
             <button className="cdp-nav" onClick={prevMonth}>‹</button>
             <button className="cdp-month-btn" onClick={() => setShowYearGrid(g => !g)}>
@@ -204,6 +369,7 @@ export default function VendorDetail() {
   const [showLoginModal, setShowLoginModal]     = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showWaitModal, setShowWaitModal]       = useState(false);
+  const [showShareModal, setShowShareModal]     = useState(false);
 
   const navigate = useNavigate();
   const user    = JSON.parse(localStorage.getItem("user"));
@@ -279,6 +445,7 @@ export default function VendorDetail() {
   return (
     <>
       <style>{styles}</style>
+      <style>{shareModalStyles}</style>
       <Navbar />
 
       {showDetailsModal && pkg && (
@@ -293,6 +460,14 @@ export default function VendorDetail() {
         <BookingWaitModal
           vendor={vendor}
           onClose={() => { setShowWaitModal(false); navigate("/my-bookings"); }}
+        />
+      )}
+
+      {/* Share Modal */}
+      {showShareModal && vendor && (
+        <ShareModal
+          vendor={vendor}
+          onClose={() => setShowShareModal(false)}
         />
       )}
 
@@ -355,6 +530,22 @@ export default function VendorDetail() {
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
                 {vendor.packages?.length} {vendor.packages?.length === 1 ? "Package" : "Packages"}
               </span>
+
+              {/* ── Share Button in Hero ── */}
+              <button
+                className="vd-share-badge"
+                onClick={() => setShowShareModal(true)}
+                title="Share this service"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/>
+                  <circle cx="18" cy="19" r="3"/>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                </svg>
+                Share
+              </button>
             </div>
           </div>
         </div>
@@ -390,9 +581,25 @@ export default function VendorDetail() {
               <div className="vd-booking-panel">
                 <div className="vd-panel-header">
                   <h3 className="vd-panel-title">{pkg.name}</h3>
-                  <div className="vd-panel-price">
-                    <span className="vd-price-label">Starting at</span>
-                    <span className="vd-price-value">₹{pkg.price?.toLocaleString()}</span>
+                  <div className="vd-panel-right">
+                    <div className="vd-panel-price">
+                      <span className="vd-price-label">Starting at</span>
+                      <span className="vd-price-value">₹{pkg.price?.toLocaleString()}</span>
+                    </div>
+                    {/* Share button inside booking panel */}
+                    <button
+                      className="vd-panel-share-btn"
+                      onClick={() => setShowShareModal(true)}
+                      title="Share this service"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                        strokeLinecap="round" strokeLinejoin="round" width="15" height="15">
+                        <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/>
+                        <circle cx="18" cy="19" r="3"/>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                      </svg>
+                    </button>
                   </div>
                 </div>
 
@@ -431,7 +638,23 @@ export default function VendorDetail() {
                   )}
                 </button>
 
-                <p className="vd-note">No payment now · Vendor confirms first · Then pay securely</p>
+                {/* Share + Note row */}
+                <div className="vd-bottom-row">
+                  <p className="vd-note">No payment now · Vendor confirms first · Then pay securely</p>
+                  <button
+                    className="vd-share-text-btn"
+                    onClick={() => setShowShareModal(true)}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                      strokeLinecap="round" strokeLinejoin="round" width="12" height="12">
+                      <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/>
+                      <circle cx="18" cy="19" r="3"/>
+                      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                    </svg>
+                    Share
+                  </button>
+                </div>
               </div>
             )}
 
@@ -454,6 +677,141 @@ export default function VendorDetail() {
   );
 }
 
+// ── Share Modal CSS ───────────────────────────────────────────────────────────
+const shareModalStyles = `
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=DM+Sans:wght@400;500&display=swap');
+
+  .vsm-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(14,12,10,0.62); backdrop-filter: blur(7px);
+    z-index: 1100; animation: vsmFadeIn 0.18s ease both;
+  }
+  .vsm-modal {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    z-index: 1101; background: #faf7f2;
+    border: 1px solid rgba(201,168,76,0.28); border-radius: 22px;
+    padding: 40px 36px 32px; width: min(460px, 92vw);
+    box-shadow: 0 40px 100px rgba(14,12,10,0.24);
+    animation: vsmSlideUp 0.26s cubic-bezier(0.34,1.5,0.64,1) both;
+  }
+  .vsm-close {
+    position: absolute; top: 18px; right: 20px;
+    background: none; border: none; font-size: 13px; color: #a09890;
+    cursor: pointer; width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, color 0.15s;
+  }
+  .vsm-close:hover { background: rgba(14,12,10,0.07); color: #0e0c0a; }
+
+  .vsm-header { text-align: center; margin-bottom: 24px; }
+  .vsm-header-icon {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: linear-gradient(135deg,rgba(201,168,76,0.16),rgba(201,168,76,0.05));
+    border: 1.5px solid rgba(201,168,76,0.32);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px; color: #c9a84c;
+  }
+  .vsm-title {
+    font-family:'Cormorant Garamond',serif; font-size: 1.55rem;
+    font-weight: 600; color: #0e0c0a; margin: 0 0 7px;
+  }
+  .vsm-subtitle {
+    font-family:'DM Sans',sans-serif; font-size: 13px; color: #7a7265; margin: 0;
+  }
+  .vsm-subtitle strong { color: #0e0c0a; font-weight: 500; }
+
+  .vsm-preview {
+    display: flex; align-items: center; gap: 14px;
+    background: rgba(14,12,10,0.035); border: 1px solid rgba(201,168,76,0.16);
+    border-radius: 12px; padding: 12px 16px; margin-bottom: 22px;
+  }
+  .vsm-preview-img {
+    width: 56px; height: 56px; object-fit: cover; border-radius: 8px; flex-shrink: 0;
+    border: 1px solid rgba(201,168,76,0.22);
+  }
+  .vsm-preview-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .vsm-preview-title {
+    font-family:'Cormorant Garamond',serif; font-size: 1.05rem; font-weight: 600;
+    color: #0e0c0a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .vsm-preview-loc { font-size: 11.5px; color: #7a7265; }
+  .vsm-preview-price { font-size: 12px; color: #c9a84c; font-weight: 500; }
+
+  .vsm-section-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.18em;
+    text-transform: uppercase; color: #a09890; margin: 0 0 12px;
+  }
+
+  .vsm-platforms {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 9px; margin-bottom: 22px;
+  }
+  .vsm-platform {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 14px 6px 11px;
+    background: var(--pbg, rgba(14,12,10,0.04));
+    border: 1px solid var(--pborder, rgba(14,12,10,0.1));
+    border-radius: 12px; cursor: pointer;
+    transition: all 0.2s ease; position: relative;
+  }
+  .vsm-platform:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(14,12,10,0.1);
+    border-color: var(--pc); background: var(--pbg);
+  }
+  .vsm-p-icon { display: flex; align-items: center; justify-content: center; }
+  .vsm-p-name {
+    font-family:'DM Sans',sans-serif; font-size: 9.5px; font-weight: 500;
+    color: #7a7265; letter-spacing: 0.02em; text-align: center;
+    white-space: nowrap; overflow: hidden; width: 100%; text-overflow: ellipsis;
+  }
+  .vsm-p-note {
+    position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%);
+    font-size: 7.5px; color: #c9a84c; background: #faf7f2;
+    padding: 0 5px; white-space: nowrap; border-radius: 4px;
+  }
+
+  .vsm-copy {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(14,12,10,0.035); border: 1px solid rgba(201,168,76,0.22);
+    border-radius: 10px; padding: 5px 5px 5px 13px; margin-bottom: 16px;
+  }
+  .vsm-copy-url {
+    display: flex; align-items: center; gap: 7px;
+    flex: 1; min-width: 0;
+  }
+  .vsm-copy-text {
+    font-size: 11.5px; color: #7a7265; font-family:'DM Sans',sans-serif;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .vsm-copy-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 9px 18px; background: #0e0c0a; border: none; border-radius: 7px;
+    font-family:'DM Sans',sans-serif; font-size: 12px; font-weight: 500;
+    color: white; cursor: pointer; transition: all 0.22s; flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .vsm-copy-btn:hover { background: #c9a84c; color: #0e0c0a; }
+  .vsm-copy-btn.copied { background: #2d6a4f; }
+
+  .vsm-footer-note {
+    font-family:'DM Sans',sans-serif; font-size: 11px;
+    color: #b0a898; text-align: center; margin: 0; letter-spacing: 0.04em;
+  }
+
+  @keyframes vsmFadeIn  { from{opacity:0} to{opacity:1} }
+  @keyframes vsmSlideUp {
+    from { opacity:0; transform: translate(-50%,-46%); }
+    to   { opacity:1; transform: translate(-50%,-50%); }
+  }
+
+  @media (max-width:480px) {
+    .vsm-platforms { grid-template-columns: repeat(3,1fr); }
+    .vsm-modal { padding: 32px 20px 26px; }
+  }
+`;
+
+// ── Main Page CSS ─────────────────────────────────────────────────────────────
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap');
 
@@ -498,6 +856,21 @@ const styles = `
   .vd-badge:hover { background:rgba(201,168,76,0.2); border-color:var(--gold); }
   .vd-badge svg { flex-shrink:0; }
 
+  /* ── Share badge in hero ── */
+  .vd-share-badge {
+    display:inline-flex; align-items:center; gap:7px;
+    font-size:11px; font-weight:500; letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--white); border:1px solid rgba(255,255,255,0.4);
+    padding:6px 14px; border-radius:20px; backdrop-filter:blur(6px);
+    background:rgba(255,255,255,0.12); cursor:pointer;
+    transition:all 0.22s ease;
+  }
+  .vd-share-badge:hover {
+    background:rgba(201,168,76,0.25); border-color:var(--gold); color:var(--gold);
+    transform:translateY(-2px); box-shadow:0 6px 18px rgba(201,168,76,0.25);
+  }
+  .vd-share-badge svg { flex-shrink:0; }
+
   /* ── Body layout ── */
   .vd-body { display:grid; grid-template-columns:340px 1fr; gap:0; max-width:1200px; margin:0 auto; padding:48px 32px; align-items:start; }
   @media(max-width:900px){
@@ -529,11 +902,23 @@ const styles = `
   .vd-main { display:flex; flex-direction:column; gap:40px; }
 
   .vd-booking-panel { background:var(--white); border:1px solid var(--border); border-radius:12px; padding:36px; box-shadow:0 8px 40px rgba(14,12,10,0.06); animation:fadeUp 0.5s ease both; }
+
   .vd-panel-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; }
   .vd-panel-title { font-family:'Cormorant Garamond',serif; font-size:1.9rem; font-weight:400; margin:0; color:var(--ink); font-style:italic; }
+
+  /* Right side of panel header: price + share button */
+  .vd-panel-right { display:flex; align-items:flex-start; gap:10px; }
   .vd-panel-price { text-align:right; }
   .vd-price-label { display:block; font-size:11px; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:2px; }
   .vd-price-value { font-family:'Cormorant Garamond',serif; font-size:1.8rem; font-weight:600; color:var(--ink); }
+
+  .vd-panel-share-btn {
+    width:36px; height:36px; background:var(--surface); border:1px solid var(--border);
+    border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    color:var(--muted); transition:all 0.2s; flex-shrink:0; margin-top:4px;
+  }
+  .vd-panel-share-btn:hover { border-color:var(--gold); color:var(--gold); background:rgba(201,168,76,0.07); }
+
   .vd-panel-desc { font-size:13.5px; color:var(--muted); line-height:1.7; margin:0; padding-left:0; list-style:none; }
   .vd-divider { height:1px; background:var(--border); margin:24px 0; }
 
@@ -546,7 +931,18 @@ const styles = `
   .vd-book-btn:hover:not(:disabled) { background:var(--ink); color:var(--white); transform:translateY(-1px); box-shadow:0 8px 24px rgba(14,12,10,0.2); }
   .vd-book-btn.loading { opacity:0.7; pointer-events:none; }
   .vd-btn-spinner { width:14px; height:14px; border:2px solid rgba(255,255,255,0.3); border-top-color:white; border-radius:50%; animation:spin 0.7s linear infinite; display:inline-block; }
-  .vd-note { font-size:11.5px; color:var(--muted); text-align:center; margin:0; }
+
+  /* Bottom row: note + share text button */
+  .vd-bottom-row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .vd-note { font-size:11.5px; color:var(--muted); margin:0; flex:1; }
+  .vd-share-text-btn {
+    display:flex; align-items:center; gap:5px;
+    padding:6px 12px; background:none;
+    border:1px solid var(--border); border-radius:20px;
+    font-family:'DM Sans',sans-serif; font-size:11.5px; font-weight:500;
+    color:var(--muted); cursor:pointer; transition:all 0.2s; white-space:nowrap; flex-shrink:0;
+  }
+  .vd-share-text-btn:hover { border-color:var(--gold); color:var(--gold); background:rgba(201,168,76,0.06); }
 
   .vd-gallery-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px; margin-top:16px; }
   .vd-gallery-item { aspect-ratio:4/3; border-radius:6px; overflow:hidden; border:1px solid var(--border); }
@@ -557,109 +953,39 @@ const styles = `
   .vd-spinner { width:36px; height:36px; border:2px solid var(--border); border-top-color:var(--gold); border-radius:50%; animation:spin 0.9s linear infinite; }
 
   /* ═══════════════════════════════════════════
-     CUSTOM DATE PICKER — fixed-position popup
+     CUSTOM DATE PICKER
   ═══════════════════════════════════════════ */
   .cdp-root { position:relative; width:100%; }
-
-  /* Trigger button */
-  .cdp-trigger {
-    width:100%; display:flex; align-items:center; gap:9px;
-    border:1px solid var(--border); border-radius:6px;
-    padding:11px 14px; background:var(--surface);
-    font-family:'DM Sans',sans-serif; font-size:13px; color:var(--ink);
-    cursor:pointer; transition:border-color 0.2s, box-shadow 0.2s;
-    text-align:left;
-  }
-  .cdp-trigger:hover, .cdp-trigger.open {
-    border-color:var(--gold); box-shadow:0 0 0 3px rgba(201,168,76,0.08);
-  }
+  .cdp-trigger { width:100%; display:flex; align-items:center; gap:9px; border:1px solid var(--border); border-radius:6px; padding:11px 14px; background:var(--surface); font-family:'DM Sans',sans-serif; font-size:13px; color:var(--ink); cursor:pointer; transition:border-color 0.2s, box-shadow 0.2s; text-align:left; }
+  .cdp-trigger:hover, .cdp-trigger.open { border-color:var(--gold); box-shadow:0 0 0 3px rgba(201,168,76,0.08); }
   .cdp-trigger.error { border-color:var(--danger-border); background:var(--danger-bg); animation:shake 0.35s ease; }
   .cdp-icon  { font-size:14px; flex-shrink:0; line-height:1; }
   .cdp-val   { flex:1; font-size:13px; }
   .cdp-val.placeholder { color:var(--muted); }
   .cdp-arrow { font-size:9px; color:var(--muted); flex-shrink:0; }
-
-  /* Popup — now uses fixed positioning (set via JS) so it never clips */
-  .cdp-pop {
-    /* position/top/left/width set via inline style from JS */
-    z-index:9999;
-    background:var(--white);
-    border:1px solid rgba(201,168,76,0.22);
-    border-radius:12px; overflow:hidden;
-    box-shadow:0 12px 40px rgba(14,12,10,0.18);
-    animation:cdpDrop 0.18s cubic-bezier(0.34,1.3,0.64,1) both;
-  }
-
-  /* Header bar */
-  .cdp-header {
-    display:flex; align-items:center; justify-content:space-between;
-    background:var(--ink); padding:9px 10px;
-  }
-  .cdp-nav {
-    background:none; border:none; color:var(--gold); font-size:16px;
-    cursor:pointer; width:28px; height:28px; border-radius:4px;
-    display:flex; align-items:center; justify-content:center;
-    transition:background 0.15s; flex-shrink:0; line-height:1;
-  }
+  .cdp-pop { z-index:9999; background:var(--white); border:1px solid rgba(201,168,76,0.22); border-radius:12px; overflow:hidden; box-shadow:0 12px 40px rgba(14,12,10,0.18); animation:cdpDrop 0.18s cubic-bezier(0.34,1.3,0.64,1) both; }
+  .cdp-header { display:flex; align-items:center; justify-content:space-between; background:var(--ink); padding:9px 10px; }
+  .cdp-nav { background:none; border:none; color:var(--gold); font-size:16px; cursor:pointer; width:28px; height:28px; border-radius:4px; display:flex; align-items:center; justify-content:center; transition:background 0.15s; flex-shrink:0; line-height:1; }
   .cdp-nav:hover { background:rgba(201,168,76,0.15); }
-  .cdp-month-btn {
-    background:none; border:none; cursor:pointer;
-    font-family:'Cormorant Garamond',serif; font-size:0.95rem;
-    font-style:italic; color:var(--white); letter-spacing:0.04em;
-    padding:3px 8px; border-radius:4px;
-    display:flex; align-items:center; gap:5px; transition:background 0.15s;
-  }
+  .cdp-month-btn { background:none; border:none; cursor:pointer; font-family:'Cormorant Garamond',serif; font-size:0.95rem; font-style:italic; color:var(--white); letter-spacing:0.04em; padding:3px 8px; border-radius:4px; display:flex; align-items:center; gap:5px; transition:background 0.15s; }
   .cdp-month-btn:hover { background:rgba(201,168,76,0.15); }
   .cdp-chevron { font-size:8px; color:var(--gold); }
-
-  /* Day-name row */
-  .cdp-daynames {
-    display:grid; grid-template-columns:repeat(7,1fr);
-    background:#1a1714; padding:4px 8px 5px;
-  }
-  .cdp-daynames span {
-    font-size:9px; font-weight:600; letter-spacing:0.1em;
-    text-transform:uppercase; color:var(--gold); text-align:center; line-height:2;
-  }
-
-  /* Day cell grid */
-  .cdp-grid {
-    display:grid; grid-template-columns:repeat(7,1fr);
-    padding:5px 8px 8px; gap:1px;
-  }
-  .cdp-cell {
-    aspect-ratio:1; display:flex; align-items:center; justify-content:center;
-    font-size:11.5px; font-family:'DM Sans',sans-serif;
-    color:var(--ink); background:none; border:none; border-radius:50%;
-    cursor:pointer; transition:background 0.12s, color 0.12s, transform 0.1s; line-height:1;
-  }
+  .cdp-daynames { display:grid; grid-template-columns:repeat(7,1fr); background:#1a1714; padding:4px 8px 5px; }
+  .cdp-daynames span { font-size:9px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--gold); text-align:center; line-height:2; }
+  .cdp-grid { display:grid; grid-template-columns:repeat(7,1fr); padding:5px 8px 8px; gap:1px; }
+  .cdp-cell { aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:11.5px; font-family:'DM Sans',sans-serif; color:var(--ink); background:none; border:none; border-radius:50%; cursor:pointer; transition:background 0.12s, color 0.12s, transform 0.1s; line-height:1; }
   .cdp-cell:hover:not(.disabled):not(.other) { background:var(--cream); transform:scale(1.1); }
   .cdp-cell.other    { color:rgba(14,12,10,0.18); cursor:default; }
   .cdp-cell.disabled { color:rgba(14,12,10,0.18) !important; cursor:not-allowed; }
-  .cdp-cell.today:not(.selected) {
-    color:var(--gold); font-weight:600; box-shadow:inset 0 0 0 1px rgba(201,168,76,0.45);
-  }
-  .cdp-cell.selected {
-    background:var(--gold) !important; color:var(--ink) !important;
-    font-weight:700; box-shadow:0 2px 8px rgba(201,168,76,0.4);
-  }
-
-  /* Year picker */
+  .cdp-cell.today:not(.selected) { color:var(--gold); font-weight:600; box-shadow:inset 0 0 0 1px rgba(201,168,76,0.45); }
+  .cdp-cell.selected { background:var(--gold) !important; color:var(--ink) !important; font-weight:700; box-shadow:0 2px 8px rgba(201,168,76,0.4); }
   .cdp-year-grid { padding:10px 12px; }
   .cdp-yr-nav-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
   .cdp-yr-range { font-size:11px; color:var(--muted); letter-spacing:0.06em; }
-  .cdp-yr-nav {
-    background:none; border:none; color:var(--gold); font-size:14px;
-    cursor:pointer; width:26px; height:26px; border-radius:4px;
-    display:flex; align-items:center; justify-content:center; transition:background 0.15s;
-  }
+  .cdp-yr-nav { background:none; border:none; color:var(--gold); font-size:14px; cursor:pointer; width:26px; height:26px; border-radius:4px; display:flex; align-items:center; justify-content:center; transition:background 0.15s; }
   .cdp-yr-nav:hover { background:var(--surface); }
   .cdp-yr-cells { display:grid; grid-template-columns:repeat(4,1fr); gap:4px; }
-  .cdp-yr-cell {
-    padding:7px 0; background:none; border:1px solid transparent; border-radius:5px;
-    font-family:'DM Sans',sans-serif; font-size:12px; color:var(--ink);
-    cursor:pointer; text-align:center; transition:all 0.13s;
-  }
+  .cdp-yr-cell { padding:7px 0; background:none; border:1px solid transparent; border-radius:5px; font-family:'DM Sans',sans-serif; font-size:12px; color:var(--ink); cursor:pointer; text-align:center; transition:all 0.13s; }
   .cdp-yr-cell:hover  { background:var(--surface); border-color:var(--border); }
   .cdp-yr-cell.active { background:var(--ink); color:var(--white); border-color:var(--ink); }
 

@@ -1,6 +1,159 @@
 import API from "../services/api";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+
+// ── Share Modal ──────────────────────────────────────────────────
+function ShareModal({ vendor, onClose }) {
+  const [copied, setCopied] = useState(false);
+  const shareUrl = `${window.location.origin}/vendor/${vendor._id}`;
+  const shareText = `Check out ${vendor.title} on Evencers — starting at ₹${Number(vendor.packages?.[0]?.price || 0).toLocaleString()}`;
+
+  const platforms = [
+    {
+      name: "WhatsApp",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
+      ),
+      color: "#25D366",
+      bg: "rgba(37,211,102,0.1)",
+      border: "rgba(37,211,102,0.25)",
+      href: `https://wa.me/?text=${encodeURIComponent(shareText + "\n" + shareUrl)}`,
+    },
+    {
+      name: "Instagram",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+        </svg>
+      ),
+      color: "#E1306C",
+      bg: "rgba(225,48,108,0.08)",
+      border: "rgba(225,48,108,0.2)",
+      href: `https://www.instagram.com/`,
+      note: "Copy link to share",
+    },
+    {
+      name: "Twitter / X",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+        </svg>
+      ),
+      color: "#000000",
+      bg: "rgba(0,0,0,0.06)",
+      border: "rgba(0,0,0,0.15)",
+      href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`,
+    },
+    {
+      name: "Facebook",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+        </svg>
+      ),
+      color: "#1877F2",
+      bg: "rgba(24,119,242,0.08)",
+      border: "rgba(24,119,242,0.2)",
+      href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+    },
+    {
+      name: "Telegram",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+          <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+        </svg>
+      ),
+      color: "#26A5E4",
+      bg: "rgba(38,165,228,0.08)",
+      border: "rgba(38,165,228,0.2)",
+      href: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`,
+    },
+  ];
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      const el = document.createElement("textarea");
+      el.value = shareUrl;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handlePlatformClick = (platform) => {
+    if (platform.name === "Instagram") {
+      handleCopy();
+      return;
+    }
+    window.open(platform.href, "_blank", "noopener,noreferrer,width=600,height=500");
+  };
+
+  return (
+    <>
+      <style>{shareModalStyles}</style>
+      <div className="sm-backdrop" onClick={onClose} />
+      <div className="sm-modal">
+        <button className="sm-close" onClick={onClose}>✕</button>
+
+        <div className="sm-header">
+          <div className="sm-header-icon">↗</div>
+          <h3 className="sm-title">Share this Service</h3>
+          <p className="sm-subtitle">Let your friends discover <strong>{vendor.title}</strong></p>
+        </div>
+
+        {/* Preview card */}
+        <div className="sm-preview">
+          {vendor.images?.[0] && (
+            <img src={vendor.images[0]} alt={vendor.title} className="sm-preview-img" />
+          )}
+          <div className="sm-preview-info">
+            <span className="sm-preview-name">{vendor.title}</span>
+            <span className="sm-preview-loc">📍 {vendor.location}</span>
+          </div>
+        </div>
+
+        {/* Social platforms */}
+        <div className="sm-platforms">
+          {platforms.map((p) => (
+            <button
+              key={p.name}
+              className="sm-platform-btn"
+              style={{ "--p-color": p.color, "--p-bg": p.bg, "--p-border": p.border }}
+              onClick={() => handlePlatformClick(p)}
+              title={p.note || `Share on ${p.name}`}
+            >
+              <span className="sm-platform-icon" style={{ color: p.color }}>{p.icon}</span>
+              <span className="sm-platform-name">{p.name}</span>
+              {p.note && <span className="sm-platform-note">{p.note}</span>}
+            </button>
+          ))}
+        </div>
+
+        {/* Copy link */}
+        <div className="sm-copy-row">
+          <div className="sm-copy-url">
+            <span className="sm-copy-icon">🔗</span>
+            <span className="sm-copy-text">{shareUrl}</span>
+          </div>
+          <button className={`sm-copy-btn ${copied ? "copied" : ""}`} onClick={handleCopy}>
+            {copied ? "✓ Copied!" : "Copy"}
+          </button>
+        </div>
+
+        <p className="sm-note">Share this link anywhere — no app needed</p>
+      </div>
+    </>
+  );
+}
 
 // ── Delete Confirmation Modal ────────────────────────────────────
 function DeleteModal({ serviceName, onConfirm, onCancel, deleting }) {
@@ -77,13 +230,14 @@ function FavouriteModal({ vendor, onConfirm, onCancel, isLoggedIn }) {
 // ── Service Card ─────────────────────────────────────────────────
 export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
   const navigate = useNavigate();
-  const [imgError,     setImgError]     = useState(false);
-  const [favorited,    setFavorited]    = useState(false);
-  const [favLoading,   setFavLoading]   = useState(false);
-  const [showFavModal, setShowFavModal] = useState(false);
-  const [showDelModal, setShowDelModal] = useState(false);
-  const [deleting,     setDeleting]     = useState(false);
-  const [showToast,    setShowToast]    = useState(false);
+  const [imgError,      setImgError]      = useState(false);
+  const [favorited,     setFavorited]     = useState(false);
+  const [favLoading,    setFavLoading]    = useState(false);
+  const [showFavModal,  setShowFavModal]  = useState(false);
+  const [showDelModal,  setShowDelModal]  = useState(false);
+  const [showShareModal,setShowShareModal]= useState(false);
+  const [deleting,      setDeleting]      = useState(false);
+  const [showToast,     setShowToast]     = useState(false);
 
   const token      = localStorage.getItem("token");
   const user       = JSON.parse(localStorage.getItem("user") || "{}");
@@ -94,7 +248,6 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
   const packageCount  = Array.isArray(vendor.packages) ? vendor.packages.length : 0;
   const hasGallery    = vendor.images?.length > 0;
 
-  // ── Load initial favourite state from localStorage cache ─────
   useEffect(() => {
     if (!isLoggedIn) return;
     try {
@@ -103,58 +256,40 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
     } catch {}
   }, [vendor._id]);
 
-  // ── Heart button clicked → ALWAYS show popup first ───────────
   const handleHeartClick = (e) => {
     e.stopPropagation();
     e.preventDefault();
-
-    // Already saved → remove immediately without a confirm popup
-    if (favorited && isLoggedIn) {
-      toggleFavouriteAPI(true);
-      return;
-    }
-
-    // Not saved → show popup (save confirm OR login prompt)
+    if (favorited && isLoggedIn) { toggleFavouriteAPI(true); return; }
     setShowFavModal(true);
   };
 
-  // ── User clicked confirm inside the popup ────────────────────
   const handleFavConfirm = () => {
     setShowFavModal(false);
-
-    if (!isLoggedIn) {
-      navigate("/login");
-      return;
-    }
-
+    if (!isLoggedIn) { navigate("/login"); return; }
     toggleFavouriteAPI(false);
   };
 
-  // ── Actual API toggle ─────────────────────────────────────────
   const toggleFavouriteAPI = async (isRemoving) => {
     setFavLoading(true);
     const prev = favorited;
-    setFavorited(!prev); // optimistic update
+    setFavorited(!prev);
     try {
       const res = await API.post(`/favorites/${vendor._id}`);
       const ids = res.data.favorites || [];
       localStorage.setItem("favoriteIds", JSON.stringify(ids));
       setFavorited(res.data.favorited);
-
-      // Show toast only when adding
       if (!isRemoving) {
         setShowToast(true);
         setTimeout(() => setShowToast(false), 3000);
       }
     } catch (err) {
-      setFavorited(prev); // revert on error
+      setFavorited(prev);
       console.error(err);
     } finally {
       setFavLoading(false);
     }
   };
 
-  // ── Delete handlers ───────────────────────────────────────────
   const handleDeleteConfirm = async () => {
     setDeleting(true);
     try {
@@ -180,11 +315,17 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
     navigate(`/vendor/${vendor._id}`);
   };
 
+  const handleShareClick = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setShowShareModal(true);
+  };
+
   return (
     <>
       <style>{cardStyles}</style>
+      <style>{shareModalStyles}</style>
 
-      {/* ── Favourite popup ── */}
       {showFavModal && (
         <FavouriteModal
           vendor={vendor}
@@ -194,7 +335,6 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
         />
       )}
 
-      {/* ── Delete popup ── */}
       {showDelModal && (
         <DeleteModal
           serviceName={vendor.title}
@@ -204,7 +344,13 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
         />
       )}
 
-      {/* ── Success toast ── */}
+      {showShareModal && (
+        <ShareModal
+          vendor={vendor}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
+
       {showToast && (
         <div className="sc-toast">
           <span>♥</span> Saved to favourites!
@@ -239,24 +385,57 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
             </div>
           )}
 
-          {/* Favourite heart — shown for users only, hidden in vendor mode */}
+          {/* Top-right action buttons */}
           {!showDelete && (
-            <button
-              className={`sc-wishlist ${favorited ? "active" : ""} ${favLoading ? "loading" : ""}`}
-              onClick={handleHeartClick}
-              aria-label={favorited ? "Remove from favourites" : "Save to favourites"}
-              title={favorited ? "Remove from favourites" : "Save to favourites"}
-            >
-              {favLoading
-                ? <span className="sc-fav-spinner" />
-                : favorited ? "♥" : "♡"
-              }
-            </button>
+            <div className="sc-top-actions">
+              {/* Share button */}
+              <button
+                className="sc-share-btn"
+                onClick={handleShareClick}
+                aria-label="Share this service"
+                title="Share this service"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
+                  strokeLinecap="round" strokeLinejoin="round" width="14" height="14">
+                  <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/>
+                  <circle cx="18" cy="19" r="3"/>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                </svg>
+              </button>
+              {/* Heart button */}
+              <button
+                className={`sc-wishlist ${favorited ? "active" : ""} ${favLoading ? "loading" : ""}`}
+                onClick={handleHeartClick}
+                aria-label={favorited ? "Remove from favourites" : "Save to favourites"}
+                title={favorited ? "Remove from favourites" : "Save to favourites"}
+              >
+                {favLoading
+                  ? <span className="sc-fav-spinner" />
+                  : favorited ? "♥" : "♡"
+                }
+              </button>
+            </div>
           )}
 
-          {/* Vendor dashboard: Edit + Delete buttons */}
+          {/* Vendor dashboard: Edit + Delete + Share buttons */}
           {showDelete && (
             <div className="sc-vendor-actions">
+              <button
+                className="sc-share-pill"
+                onClick={handleShareClick}
+                aria-label="Share service"
+                title="Share service"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
+                  strokeLinecap="round" strokeLinejoin="round" width="11" height="11">
+                  <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/>
+                  <circle cx="18" cy="19" r="3"/>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                </svg>
+                Share
+              </button>
               <button
                 className="sc-edit-btn"
                 onClick={(e) => { e.stopPropagation(); navigate(`/edit-service/${vendor._id}`); }}
@@ -309,18 +488,167 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
                   : "Contact"}
               </span>
             </div>
-            <button
-              className="sc-btn"
-              onClick={(e) => { e.stopPropagation(); goToDetail(); }}
-            >
-              View →
-            </button>
+            <div className="sc-footer-actions">
+              <button
+                className="sc-share-inline"
+                onClick={handleShareClick}
+                title="Share"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
+                  strokeLinecap="round" strokeLinejoin="round" width="13" height="13">
+                  <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/>
+                  <circle cx="18" cy="19" r="3"/>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                </svg>
+              </button>
+              <button
+                className="sc-btn"
+                onClick={(e) => { e.stopPropagation(); goToDetail(); }}
+              >
+                View →
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </>
   );
 }
+
+// ── Share Modal CSS ───────────────────────────────────────────────
+const shareModalStyles = `
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=DM+Sans:wght@400;500&display=swap');
+
+  .sm-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(14,12,10,0.6); backdrop-filter: blur(6px);
+    z-index: 1000; animation: smFadeIn 0.18s ease both;
+  }
+  .sm-modal {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    z-index: 1001; background: #faf7f2;
+    border: 1px solid rgba(201,168,76,0.25); border-radius: 20px;
+    padding: 36px 32px 28px; width: min(440px, 92vw);
+    box-shadow: 0 32px 80px rgba(14,12,10,0.22);
+    animation: smSlideUp 0.26s cubic-bezier(0.34,1.5,0.64,1) both;
+  }
+
+  .sm-close {
+    position: absolute; top: 16px; right: 18px;
+    background: none; border: none; font-size: 14px; color: #7a7265;
+    cursor: pointer; width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, color 0.15s;
+  }
+  .sm-close:hover { background: rgba(14,12,10,0.06); color: #0e0c0a; }
+
+  .sm-header { text-align: center; margin-bottom: 24px; }
+  .sm-header-icon {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: linear-gradient(135deg, rgba(201,168,76,0.18), rgba(201,168,76,0.06));
+    border: 1.5px solid rgba(201,168,76,0.3);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 14px; font-size: 20px; color: #c9a84c;
+    font-weight: 300;
+  }
+  .sm-title {
+    font-family: 'Cormorant Garamond', serif; font-size: 1.45rem;
+    font-weight: 600; color: #0e0c0a; margin: 0 0 6px;
+  }
+  .sm-subtitle {
+    font-family: 'DM Sans', sans-serif; font-size: 13px; color: #7a7265;
+    margin: 0;
+  }
+  .sm-subtitle strong { color: #0e0c0a; font-weight: 500; }
+
+  /* Preview */
+  .sm-preview {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(14,12,10,0.04); border: 1px solid rgba(201,168,76,0.15);
+    border-radius: 10px; padding: 10px 14px; margin-bottom: 20px; overflow: hidden;
+  }
+  .sm-preview-img {
+    width: 48px; height: 48px; object-fit: cover; border-radius: 6px; flex-shrink: 0;
+    border: 1px solid rgba(201,168,76,0.2);
+  }
+  .sm-preview-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .sm-preview-name {
+    font-family: 'Cormorant Garamond', serif; font-size: 1rem;
+    font-weight: 600; color: #0e0c0a;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .sm-preview-loc { font-size: 11.5px; color: #7a7265; }
+
+  /* Platforms grid */
+  .sm-platforms {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 8px; margin-bottom: 20px;
+  }
+  .sm-platform-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    padding: 12px 6px 10px;
+    background: var(--p-bg, rgba(14,12,10,0.04));
+    border: 1px solid var(--p-border, rgba(14,12,10,0.1));
+    border-radius: 10px; cursor: pointer;
+    transition: all 0.2s ease; position: relative;
+  }
+  .sm-platform-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(14,12,10,0.1);
+    border-color: var(--p-color);
+    background: var(--p-bg);
+  }
+  .sm-platform-icon { display: flex; align-items: center; justify-content: center; line-height: 1; }
+  .sm-platform-name {
+    font-family: 'DM Sans', sans-serif; font-size: 9.5px;
+    font-weight: 500; color: #7a7265; white-space: nowrap;
+    letter-spacing: 0.02em;
+  }
+  .sm-platform-note {
+    font-size: 8px; color: #c9a84c; position: absolute;
+    bottom: -5px; left: 50%; transform: translateX(-50%);
+    white-space: nowrap; background: #faf7f2; padding: 0 4px;
+  }
+
+  /* Copy link */
+  .sm-copy-row {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(14,12,10,0.04); border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 8px; padding: 4px 4px 4px 12px; margin-bottom: 14px;
+  }
+  .sm-copy-icon { font-size: 13px; flex-shrink: 0; }
+  .sm-copy-text {
+    flex: 1; font-size: 11.5px; color: #7a7265;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .sm-copy-btn {
+    padding: 8px 16px; background: #0e0c0a; border: none; border-radius: 6px;
+    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
+    color: white; cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .sm-copy-btn:hover { background: #c9a84c; color: #0e0c0a; }
+  .sm-copy-btn.copied { background: #2d6a4f; }
+
+  .sm-note {
+    font-family: 'DM Sans', sans-serif; font-size: 11px;
+    color: #a09890; text-align: center; margin: 0;
+    letter-spacing: 0.04em;
+  }
+
+  @keyframes smFadeIn  { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes smSlideUp {
+    from { opacity: 0; transform: translate(-50%, -46%); }
+    to   { opacity: 1; transform: translate(-50%, -50%); }
+  }
+
+  @media (max-width: 480px) {
+    .sm-platforms { grid-template-columns: repeat(3, 1fr); }
+    .sm-modal { padding: 28px 20px 22px; }
+  }
+`;
 
 // ── Modal CSS ────────────────────────────────────────────────────
 const modalStyles = `
@@ -387,7 +715,6 @@ const modalStyles = `
   }
   .dm-confirm.loading { opacity: 0.7; pointer-events: none; }
 
-  /* Favourite confirm — dark/gold instead of red */
   .fav-confirm-btn { background: #0e0c0a !important; }
   .fav-confirm-btn:hover:not(:disabled) {
     background: #c9a84c !important; color: #0e0c0a !important;
@@ -453,13 +780,31 @@ const cardStyles = `
   .sc-img-wrap:hover .sc-gallery-hint { background: rgba(14,12,10,0.4); opacity: 1; }
   .sc-gallery-hint-icon { font-size: 1.1rem; }
 
+  /* Top-right actions: share + heart stacked */
+  .sc-top-actions {
+    position: absolute; top: 10px; right: 10px;
+    display: flex; flex-direction: column; gap: 6px; z-index: 3;
+  }
+
+  .sc-share-btn {
+    width: 34px; height: 34px;
+    background: rgba(255,255,255,0.92); backdrop-filter: blur(8px);
+    border: none; border-radius: 50%; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted); transition: all 0.22s;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+  .sc-share-btn:hover {
+    transform: scale(1.12); background: white; color: var(--gold);
+  }
+
   .sc-wishlist {
-    position: absolute; top: 12px; right: 12px; width: 34px; height: 34px;
+    width: 34px; height: 34px;
     background: rgba(255,255,255,0.92); backdrop-filter: blur(8px);
     border: none; border-radius: 50%; font-size: 16px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     color: var(--muted); transition: all 0.22s;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 2;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   }
   .sc-wishlist:hover { transform: scale(1.12); background: white; color: #c0445a; }
   .sc-wishlist.active { color: #c0445a; background: rgba(255,255,255,0.97); }
@@ -470,7 +815,21 @@ const cardStyles = `
     animation: scSpin 0.7s linear infinite; display: inline-block;
   }
 
-  .sc-vendor-actions { position: absolute; top: 10px; right: 10px; display: flex; gap: 6px; z-index: 3; }
+  .sc-vendor-actions { position: absolute; top: 10px; right: 10px; display: flex; gap: 6px; z-index: 3; align-items: center; }
+
+  .sc-share-pill {
+    display: flex; align-items: center; gap: 4px; padding: 5px 11px;
+    background: rgba(255,255,255,0.92); backdrop-filter: blur(8px);
+    border: 1px solid rgba(201,168,76,0.3); border-radius: 20px;
+    font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500;
+    color: var(--muted); cursor: pointer; transition: all 0.2s;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1); white-space: nowrap;
+  }
+  .sc-share-pill:hover {
+    background: white; border-color: var(--gold); color: var(--gold);
+    transform: translateY(-1px);
+  }
+
   .sc-edit-btn {
     display: flex; align-items: center; gap: 5px; padding: 5px 12px;
     background: rgba(255,255,255,0.92); backdrop-filter: blur(8px);
@@ -522,6 +881,21 @@ const cardStyles = `
   .sc-price-block { display: flex; flex-direction: column; gap: 1px; }
   .sc-price-label { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
   .sc-price { font-family: 'Cormorant Garamond', serif; font-size: 1.25rem; font-weight: 600; color: var(--ink); }
+
+  .sc-footer-actions { display: flex; align-items: center; gap: 8px; }
+
+  .sc-share-inline {
+    width: 34px; height: 34px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted); transition: all 0.2s; flex-shrink: 0;
+  }
+  .sc-share-inline:hover {
+    border-color: var(--gold); color: var(--gold);
+    background: rgba(201,168,76,0.06);
+  }
+
   .sc-btn {
     padding: 9px 20px; background: var(--ink); color: var(--white); border: none;
     border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 12.5px;
