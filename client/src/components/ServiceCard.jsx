@@ -627,19 +627,21 @@ const shareModalStyles = `
   .sm-copy-row {
     display: flex; align-items: center; gap: 8px;
     background: rgba(14,12,10,0.04); border: 1px solid rgba(201,168,76,0.2);
-    border-radius: 8px; padding: 4px 4px 4px 12px; margin-bottom: 14px;
+    border-radius: 8px; padding: 6px 6px 6px 12px; margin-bottom: 14px;
+    overflow: visible; min-width: 0;
   }
   .sm-copy-icon { font-size: 13px; flex-shrink: 0; }
   .sm-copy-text {
     flex: 1; font-size: 11.5px; color: #7a7265;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'DM Sans', sans-serif; min-width: 0;
   }
   .sm-copy-btn {
-    padding: 8px 16px; background: #0e0c0a; border: none; border-radius: 6px;
+    padding: 9px 18px; background: #0e0c0a; border: none; border-radius: 6px;
     font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
-    color: white; cursor: pointer; transition: all 0.2s; flex-shrink: 0;
-    white-space: nowrap;
+    color: white; cursor: pointer; transition: all 0.2s;
+    flex-shrink: 0; white-space: nowrap;
+    display: inline-flex; align-items: center; justify-content: center;
   }
   .sm-copy-btn:hover { background: #c9a84c; color: #0e0c0a; }
   .sm-copy-btn.copied { background: #2d6a4f; }
