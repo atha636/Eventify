@@ -153,7 +153,7 @@ function ShareModal({ vendor, onClose }) {
             <span className="sm-copy-text">{shareUrl}</span>
           </div>
           <button className={`sm-copy-btn ${copied ? "copied" : ""}`} onClick={handleCopy}>
-            {copied ? "✓ Copied!" : "Copy"}
+            {copied ? "✓ Copied!" : "🔗 Copy Link"}
           </button>
         </div>
 
@@ -625,10 +625,13 @@ const shareModalStyles = `
 
   /* Copy link */
   .sm-copy-row {
+    display: flex; flex-direction: column; gap: 8px;
+    margin-bottom: 14px;
+  }
+  .sm-copy-url {
     display: flex; align-items: center; gap: 8px;
     background: rgba(14,12,10,0.04); border: 1px solid rgba(201,168,76,0.2);
-    border-radius: 8px; padding: 6px 6px 6px 12px; margin-bottom: 14px;
-    overflow: visible; min-width: 0;
+    border-radius: 8px; padding: 10px 12px; min-width: 0;
   }
   .sm-copy-icon { font-size: 13px; flex-shrink: 0; }
   .sm-copy-text {
@@ -637,11 +640,10 @@ const shareModalStyles = `
     font-family: 'DM Sans', sans-serif; min-width: 0;
   }
   .sm-copy-btn {
-    padding: 9px 18px; background: #0e0c0a; border: none; border-radius: 6px;
-    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
+    width: 100%; padding: 11px; background: #0e0c0a; border: none; border-radius: 8px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
     color: white; cursor: pointer; transition: all 0.2s;
-    flex-shrink: 0; white-space: nowrap;
-    display: inline-flex; align-items: center; justify-content: center;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
   }
   .sm-copy-btn:hover { background: #c9a84c; color: #0e0c0a; }
   .sm-copy-btn.copied { background: #2d6a4f; }
