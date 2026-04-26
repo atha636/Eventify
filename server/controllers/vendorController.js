@@ -10,7 +10,6 @@ const {
 // ─────────────────────────────────────────────
 exports.getVendors = async (req, res) => {
   try {
-    // Only show services from verified vendors
     const approvedVendorIds = await User.find({ role: "vendor", isProfileVerified: "approved" }).select("_id");
     const ids = approvedVendorIds.map((v) => v._id);
     const vendors = await Vendor.find({ isApproved: true, vendorId: { $in: ids } });
@@ -55,7 +54,6 @@ exports.addService = async (req, res) => {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    // ── UPGRADE 3: Block unverified vendors ──────────────────────
     if (user.role === "vendor" && user.isProfileVerified !== "approved") {
       const statusMsg = {
         pending:  "Your vendor profile is still under review. You can add services once approved by the admin.",
@@ -66,7 +64,6 @@ exports.addService = async (req, res) => {
         verificationStatus: user.isProfileVerified,
       });
     }
-    // ─────────────────────────────────────────────────────────────
 
     const imageUrls = req.files.map((f) => f.path);
 
@@ -196,6 +193,112 @@ exports.deleteService = async (req, res) => {
 
     res.json({ message: "Service deleted successfully" });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ─────────────────────────────────────────────
+// GET /api/vendors/:id/availability
+// Returns the availability array for ONE vendor service.
+// Public — users call this to check if a vendor is free on a date.
+// ─────────────────────────────────────────────
+exports.getAvailability = async (req, res) => {
+  try {
+    const service = await Vendor.findById(req.params.id).select("availability");
+    if (!service) return res.status(404).json({ error: "Service not found" });
+    res.json(service.availability || []);
+  } catch (err) {
+    console.error("getAvailability ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ─────────────────────────────────────────────
+// PUT /api/vendors/:id/availability
+// Vendor sets their own availability calendar.
+// Body: { dates: [{ date: "YYYY-MM-DD", available: true|false }] }
+// This REPLACES the entire availability array (simpler, avoids duplication).
+// ─────────────────────────────────────────────
+exports.updateAvailability = async (req, res) => {
+  try {
+    if (!req.user?.id) return res.status(401).json({ error: "Unauthorized" });
+
+    const service = await Vendor.findById(req.params.id);
+    if (!service) return res.status(404).json({ error: "Service not found" });
+    if (service.vendorId.toString() !== req.user.id) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const { dates } = req.body;
+    if (!Array.isArray(dates)) {
+      return res.status(400).json({ error: "dates must be an array" });
+    }
+
+    // Validate and normalise — store only dates with available: false
+    // (Available is the default, so storing only unavailable saves space)
+    const normalised = dates
+      .filter((d) => d.date && typeof d.available === "boolean")
+      .map((d) => ({
+        date:      new Date(d.date),
+        available: d.available,
+      }))
+      .filter((d) => !isNaN(d.date.getTime()));
+
+    service.availability = normalised;
+    await service.save();
+
+    res.json({ message: "Availability updated", availability: service.availability });
+  } catch (err) {
+    console.error("updateAvailability ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ─────────────────────────────────────────────
+// GET /api/vendors/available?date=YYYY-MM-DD
+// Returns all APPROVED vendors that are NOT marked unavailable on that date.
+// Used by the Vendors page date-filter.
+// ─────────────────────────────────────────────
+exports.getAvailableOnDate = async (req, res) => {
+  try {
+    const { date } = req.query;
+    if (!date) return res.status(400).json({ error: "date query param required" });
+
+    const target = new Date(date);
+    if (isNaN(target.getTime())) return res.status(400).json({ error: "Invalid date" });
+
+    // Normalise to midnight UTC so the $elemMatch comparison is reliable
+    target.setUTCHours(0, 0, 0, 0);
+    const nextDay = new Date(target);
+    nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+
+    const approvedVendorIds = await User.find({ role: "vendor", isProfileVerified: "approved" }).select("_id");
+    const ids = approvedVendorIds.map((v) => v._id);
+
+    // Find vendors that have an explicit "unavailable" entry for this date
+    const unavailableServiceIds = await Vendor.find({
+      isApproved: true,
+      vendorId: { $in: ids },
+      availability: {
+        $elemMatch: {
+          date:      { $gte: target, $lt: nextDay },
+          available: false,
+        },
+      },
+    }).select("_id");
+
+    const unavailableIds = unavailableServiceIds.map((v) => v._id.toString());
+
+    // Return all approved vendors EXCEPT unavailable ones
+    const vendors = await Vendor.find({
+      isApproved: true,
+      vendorId:   { $in: ids },
+      _id:        { $nin: unavailableIds },
+    });
+
+    res.json(vendors);
+  } catch (err) {
+    console.error("getAvailableOnDate ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 };
