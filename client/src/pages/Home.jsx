@@ -134,6 +134,27 @@ export default function Home() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
 
+  // ✅ ADD THIS HERE
+  useEffect(() => {
+    document.title = "Evencers – India's Premier Event Planning Platform";
+
+    let meta = document.querySelector('meta[name="description"]');
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.name = "description";
+      document.head.appendChild(meta);
+    }
+
+    meta.setAttribute(
+      "content",
+      "Evencers connects you with verified vendors for weddings, birthdays, corporate events & more. Browse decoration, photography, catering, music, florals, and venues across India."
+    );
+
+    return () => {
+  document.title = "Evencers";
+};
+  }, []);
+
   const services = [
     { name: "Decor", type: "decor", emoji: "🎨", desc: "Transform any space into something magical", count: "10+ vendors", color: "#a78bfa" },
     { name: "Photography", type: "photography", emoji: "📸", desc: "Capture every moment, forever preserved", count: "15+ vendors", color: "#f59e0b" },
@@ -179,10 +200,18 @@ export default function Home() {
               India's Premier Event Platform
             </span>
             <h1 className="hm-hero-title">
-              Every great event<br />
-              <em>deserves </em>
-              <Typewriter words={["greatness.", "perfection.", "magic.", "a great team."]} />
-            </h1>
+  {/* Hidden static text for SEO */}
+  <span className="hm-sr-only">
+    India's Premier Event Planning Platform – Every great event deserves greatness
+  </span>
+
+  {/* Visible animated text */}
+  <span aria-hidden="true">
+    Every great event<br />
+    <em>deserves </em>
+    <Typewriter words={["greatness.", "perfection.", "magic.", "a great team."]} />
+  </span>
+</h1>
             <p className="hm-hero-sub">
               Discover verified vendors for decoration, photography, catering, and more —
               curated for your perfect occasion.
@@ -1276,4 +1305,17 @@ const styles = `
     .hm-orb, .hm-float-card, .hm-eyebrow-dot, .hm-cursor,
     .hm-footer-divider-diamond { animation: none; }
   }
+
+.hm-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
 `;
