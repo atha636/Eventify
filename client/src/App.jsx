@@ -17,6 +17,8 @@ import CustomerCareClient from "./pages/CustomerCareClient";
 import CustomerCareVendor from "./pages/CustomerCareVendor";
 import PaymentSuccess     from "./pages/PaymentSuccess";
 import AboutUs            from "./pages/AboutUs";
+import Blogs              from "./pages/Blogs";
+import BlogDetail         from "./pages/BlogDetail";
 
 // ── Resource pages ──────────────────────────────────────────────────
 import VendorHandbook   from "./pages/resources/VendorHandbook";
@@ -42,13 +44,15 @@ export default function App() {
         <Route path="/vendor/:id/gallery"      element={<ServiceGallery />} />
         <Route path="/vendors"                 element={<Vendors />} />
         <Route path="/about"                   element={<AboutUs />} />
-
+        <Route path="/blog"                    element={<Blogs />} />
+        <Route path="/blog/:slug"              element={<BlogDetail />} />
 
         {/* ── Vendor ── */}
         <Route path="/vendor-dashboard"        element={<VendorDashboard />} />
         <Route path="/add-service"             element={<AddService />} />
         <Route path="/edit-service/:id"        element={<EditService />} />
         <Route path="/services"                element={<Vendors />} />
+
         {/* ── User ── */}
         <Route path="/my-bookings"             element={<UserDashboard />} />
         <Route path="/favourites"              element={<Favorites />} />
@@ -62,7 +66,7 @@ export default function App() {
         <Route path="/resources/photo-guidelines"  element={<PhotoGuidelines />} />
         <Route path="/resources/pricing-strategy"  element={<PricingStrategy />} />
         <Route path="/resources/dashboard-guide"   element={<DashboardGuide />} />
-        <Route path="/payment-success/:bookingId" element={<PaymentSuccess />} />
+        <Route path="/payment-success/:bookingId"  element={<PaymentSuccess />} />
 
         {/* ── Admin ── */}
         <Route path="/admin/login"  element={<AdminLogin />} />

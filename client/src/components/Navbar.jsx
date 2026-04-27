@@ -106,16 +106,17 @@ export default function Navbar() {
 
           {/* LOGO */}
           <div className="nb-logo" onClick={handleLogoClick}>
-            <img src={logo} className="nb-logo-img" />
+            <img src={logo} className="nb-logo-img" alt="Evencers logo" />
             <span className="nb-logo-text">EVENCERS</span>
           </div>
 
           {/* DESKTOP LINKS */}
           <div className="nb-links">
-            <Link to="/" className={`nb-link ${isActive("/") ? "nb-link-active" : ""}`}>Home</Link>
+            <Link to="/"               className={`nb-link ${isActive("/") ? "nb-link-active" : ""}`}>Home</Link>
             <Link to="/category/decor" className={`nb-link ${location.pathname.startsWith("/category") ? "nb-link-active" : ""}`}>Services</Link>
-            <Link to="/vendors" className={`nb-link ${isActive("/vendors") ? "nb-link-active" : ""}`}>Vendors</Link>
-            <Link to="/about" className={`nb-link ${isActive("/about") ? "nb-link-active" : ""}`}>About Us</Link>
+            <Link to="/vendors"        className={`nb-link ${isActive("/vendors") ? "nb-link-active" : ""}`}>Vendors</Link>
+            <Link to="/blog"           className={`nb-link ${isActive("/blog") ? "nb-link-active" : ""}`}>Blog</Link>
+            <Link to="/about"          className={`nb-link ${isActive("/about") ? "nb-link-active" : ""}`}>About Us</Link>
           </div>
 
           {/* ACTIONS */}
@@ -156,7 +157,7 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <Link to="/login" className="nb-ghost-btn">Sign In</Link>
+                <Link to="/login"    className="nb-ghost-btn">Sign In</Link>
                 <Link to="/register" className="nb-solid-btn">Get Started</Link>
               </>
             )}
@@ -175,10 +176,11 @@ export default function Navbar() {
         {/* MOBILE MENU */}
         <div className={`nb-mobile-menu ${menuOpen ? "open" : ""} ${isTransparent ? "nb-mobile-dark" : ""}`}>
           <div className="nb-mobile-links">
-            <Link to="/" className="nb-mobile-link">Home</Link>
+            <Link to="/"               className="nb-mobile-link">Home</Link>
             <Link to="/category/decor" className="nb-mobile-link">Services</Link>
-            <Link to="/vendors" className="nb-mobile-link">Vendors</Link>
-            <Link to="/about" className="nb-mobile-link">About Us</Link>
+            <Link to="/vendors"        className="nb-mobile-link">Vendors</Link>
+            <Link to="/blog"           className="nb-mobile-link">Blog</Link>
+            <Link to="/about"          className="nb-mobile-link">About Us</Link>
           </div>
           <div className="nb-mobile-divider" />
           <div className="nb-mobile-actions">
@@ -201,7 +203,7 @@ export default function Navbar() {
                 {/* ── USER MOBILE ── */}
                 {isUser && (
                   <>
-                    <Link to="/favourites" className="nb-mobile-link">♡ My Favourites</Link>
+                    <Link to="/favourites"  className="nb-mobile-link">♡ My Favourites</Link>
                     <Link to="/my-bookings" className="nb-mobile-link">My Bookings</Link>
                     <button
                       className="nb-mobile-link"
@@ -221,7 +223,6 @@ export default function Navbar() {
                   👤 {user?.name || "My Profile"}
                 </button>
 
-                {/* ── FIX: Show confirmation modal instead of direct logout ── */}
                 <button
                   className="nb-mobile-link nb-mobile-logout"
                   onClick={() => { setMenuOpen(false); setShowLogoutConfirm(true); }}
@@ -231,7 +232,7 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <Link to="/login" className="nb-mobile-link">Sign In</Link>
+                <Link to="/login"    className="nb-mobile-link">Sign In</Link>
                 <Link to="/register" className="nb-mobile-cta">Get Started →</Link>
               </>
             )}
@@ -255,7 +256,7 @@ export default function Navbar() {
         />
       )}
 
-      {/* ── LOGOUT CONFIRMATION MODAL (shared for both mobile & desktop) ── */}
+      {/* ── LOGOUT CONFIRMATION MODAL ── */}
       {showLogoutConfirm && (
         <>
           <div className="lc-overlay" onClick={() => !logoutLoading && setShowLogoutConfirm(false)} />
@@ -361,7 +362,7 @@ const styles = `
   .nb-logo:hover .nb-logo-mark { transform:rotate(45deg) scale(1.1); color:var(--gold)!important; }
   .nb-logo-text { font-family:'Cormorant Garamond',serif; font-size:1.35rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; transition:color 0.3s; }
 
-  .nb-links { display:flex; align-items:center; gap:32px; }
+  .nb-links { display:flex; align-items:center; gap:28px; }
   .nb-link { text-decoration:none; font-size:12.5px; font-weight:400; letter-spacing:0.06em; text-transform:uppercase; transition:color 0.2s; position:relative; padding-bottom:3px; }
   .nb-link::after { content:''; position:absolute; bottom:-1px; left:0; width:0; height:1px; background:var(--gold); transition:width 0.28s cubic-bezier(0.4,0,0.2,1); }
   .nb-link:hover::after,.nb-link-active::after { width:100%; }
@@ -397,7 +398,7 @@ const styles = `
   .nb-burger.open span:nth-child(3) { width:22px; transform:translateY(-6.5px) rotate(-45deg); }
 
   .nb-mobile-menu { display:none; flex-direction:column; overflow:hidden; max-height:0; transition:max-height 0.38s cubic-bezier(0.4,0,0.2,1); background:var(--white); border-top:1px solid var(--border); }
-  .nb-mobile-menu.open { max-height:600px; }
+  .nb-mobile-menu.open { max-height:640px; }
   .nb-mobile-menu.nb-mobile-dark { background:rgba(11,9,7,0.97); backdrop-filter:blur(16px); border-top:1px solid rgba(201,168,76,0.12); }
   .nb-mobile-menu.nb-mobile-dark .nb-mobile-link { color:rgba(245,240,232,0.75); }
   .nb-mobile-menu.nb-mobile-dark .nb-mobile-link:hover { color:var(--gold); background:rgba(201,168,76,0.06); }
