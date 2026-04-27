@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { ALL_POSTS } from "../data/blog";
+import Logo from "../components/Logo";
 
 // ── SEO ──
 function useSEO(post) {
@@ -373,7 +374,10 @@ export default function BlogDetail() {
 
             {/* ── FOOTER ── */}
             <footer className="bd-footer" role="contentinfo">
-              <div className="bd-footer-logo">EVENCERS</div>
+              <div className="bd-footer-logo">
+  <Logo />
+  EVENCERS
+</div>
               <p className="bd-footer-tagline">India's trusted event vendor platform</p>
               <p className="bd-footer-copy">© 2025 Evencers. Crafted with care in India.</p>
               <nav className="bd-footer-links" aria-label="Footer navigation">
