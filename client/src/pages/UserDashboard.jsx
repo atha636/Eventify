@@ -3,6 +3,44 @@ import API from "../services/api";
 import Navbar from "../components/Navbar";
 import PaymentModal from "../components/PaymentModal";
 import Logo from "../components/Logo";
+
+// ── SEO Head Manager ──────────────────────────────────────────
+function SEOHead({ title, description, canonical }) {
+  useEffect(() => {
+    document.title = title;
+    let desc = document.querySelector('meta[name="description"]');
+    if (!desc) { desc = document.createElement("meta"); desc.name = "description"; document.head.appendChild(desc); }
+    desc.content = description;
+
+    let og = document.querySelector('meta[property="og:title"]');
+    if (!og) { og = document.createElement("meta"); og.setAttribute("property","og:title"); document.head.appendChild(og); }
+    og.content = title;
+
+    let ogDesc = document.querySelector('meta[property="og:description"]');
+    if (!ogDesc) { ogDesc = document.createElement("meta"); ogDesc.setAttribute("property","og:description"); document.head.appendChild(ogDesc); }
+    ogDesc.content = description;
+
+    let ogType = document.querySelector('meta[property="og:type"]');
+    if (!ogType) { ogType = document.createElement("meta"); ogType.setAttribute("property","og:type"); document.head.appendChild(ogType); }
+    ogType.content = "website";
+
+    let tw = document.querySelector('meta[name="twitter:card"]');
+    if (!tw) { tw = document.createElement("meta"); tw.name = "twitter:card"; document.head.appendChild(tw); }
+    tw.content = "summary_large_image";
+
+    let robots = document.querySelector('meta[name="robots"]');
+    if (!robots) { robots = document.createElement("meta"); robots.name = "robots"; document.head.appendChild(robots); }
+    robots.content = "noindex, nofollow"; // dashboard pages shouldn't be indexed
+
+    let link = document.querySelector('link[rel="canonical"]');
+    if (!link) { link = document.createElement("link"); link.rel = "canonical"; document.head.appendChild(link); }
+    link.href = canonical || window.location.href;
+
+    return () => { document.title = "EventPro"; };
+  }, [title, description, canonical]);
+  return null;
+}
+
 const STATUS_META = {
   pending:   { label: "Pending",   color: "#c9a84c", bg: "rgba(201,168,76,0.08)",  border: "rgba(201,168,76,0.25)",  icon: "◷" },
   approved:  { label: "Confirmed", color: "#3a8a62", bg: "rgba(58,138,98,0.08)",   border: "rgba(58,138,98,0.25)",   icon: "✓" },
@@ -70,11 +108,8 @@ export default function UserDashboard() {
 
   const openDcr = (booking) => {
     setDcrTarget(booking);
-    setDcrDate("");
-    setDcrAddress("");
-    setDcrReason("");
-    setDcrError("");
-    setDcrSuccess("");
+    setDcrDate(""); setDcrAddress(""); setDcrReason("");
+    setDcrError(""); setDcrSuccess("");
   };
   const closeDcr = () => { if (dcrLoading) return; setDcrTarget(null); setDcrError(""); setDcrSuccess(""); };
 
@@ -86,9 +121,8 @@ export default function UserDashboard() {
     setDcrLoading(true); setDcrError("");
     try {
       const payload = { reason: dcrReason };
-      if (dcrDate)          payload.requestedDate    = dcrDate;
+      if (dcrDate)           payload.requestedDate    = dcrDate;
       if (dcrAddress.trim()) payload.requestedAddress = dcrAddress.trim();
-
       const res = await API.post(`/bookings/${dcrTarget._id}/date-change`, payload);
       setBookings((prev) => prev.map((b) => b._id === dcrTarget._id ? res.data.booking : b));
       setDcrSuccess("Request sent! Please wait for the vendor to review your changes.");
@@ -116,8 +150,24 @@ export default function UserDashboard() {
 
   return (
     <>
+      <SEOHead
+        title="My Bookings — Client Portal | EventPro"
+        description="Manage and track all your event bookings. View confirmed, pending, and declined reservations, request date changes, and complete payments."
+        canonical={typeof window !== "undefined" ? window.location.href : ""}
+      />
       <style>{styles}</style>
-      <div className="ud-root">
+
+      {/* Structured data for breadcrumb */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": "/" },
+          { "@type": "ListItem", "position": 2, "name": "My Bookings", "item": "/dashboard" }
+        ]
+      })}} />
+
+      <div className="ud-root" role="main">
         <Navbar />
 
         {paymentTarget && (
@@ -131,18 +181,19 @@ export default function UserDashboard() {
 
         {/* ── CANCEL MODAL ── */}
         {cancelTarget && (
-          <div className="ud-overlay" onClick={() => { if (!cancelling) { setCancelTarget(null); setCancelError(""); } }}>
+          <div className="ud-overlay" role="dialog" aria-modal="true" aria-labelledby="cancel-modal-title"
+            onClick={() => { if (!cancelling) { setCancelTarget(null); setCancelError(""); } }}>
             <div className="ud-modal" onClick={(e) => e.stopPropagation()}>
-              <div className="ud-modal-icon-wrap ud-modal-danger"><span>🗑</span></div>
-              <h3 className="ud-modal-title">Cancel Booking?</h3>
+              <div className="ud-modal-icon-wrap ud-modal-danger" aria-hidden="true"><span>🗑</span></div>
+              <h3 id="cancel-modal-title" className="ud-modal-title">Cancel Booking?</h3>
               <p className="ud-modal-body">
                 You are about to cancel your booking with <strong>{getVendorName(cancelTarget)}</strong> on <strong>{fmt(cancelTarget.date)}</strong>. This action cannot be undone.
               </p>
-              {cancelError && <p className="ud-modal-err">⚠ {cancelError}</p>}
+              {cancelError && <p className="ud-modal-err" role="alert">⚠ {cancelError}</p>}
               <div className="ud-modal-btns">
-                <button className="ud-mbtn ud-mbtn-ghost"  onClick={() => { setCancelTarget(null); setCancelError(""); }} disabled={cancelling}>Keep Booking</button>
+                <button className="ud-mbtn ud-mbtn-ghost" onClick={() => { setCancelTarget(null); setCancelError(""); }} disabled={cancelling}>Keep Booking</button>
                 <button className="ud-mbtn ud-mbtn-danger" onClick={handleCancel} disabled={cancelling}>
-                  {cancelling ? <><span className="ud-spinner" /> Cancelling…</> : "Yes, Cancel"}
+                  {cancelling ? <><span className="ud-spinner" aria-hidden="true" /> Cancelling…</> : "Yes, Cancel"}
                 </button>
               </div>
             </div>
@@ -151,10 +202,10 @@ export default function UserDashboard() {
 
         {/* ── Date + Address Change Modal ── */}
         {dcrTarget && (
-          <div className="ud-overlay" onClick={closeDcr}>
+          <div className="ud-overlay" role="dialog" aria-modal="true" aria-labelledby="dcr-modal-title" onClick={closeDcr}>
             <div className="ud-modal ud-modal-wide" onClick={(e) => e.stopPropagation()}>
-              <div className="ud-modal-icon-wrap ud-modal-gold"><span>📅</span></div>
-              <h3 className="ud-modal-title">Request Changes</h3>
+              <div className="ud-modal-icon-wrap ud-modal-gold" aria-hidden="true"><span>📅</span></div>
+              <h3 id="dcr-modal-title" className="ud-modal-title">Request Changes</h3>
               <p className="ud-modal-body">
                 Current date: <strong>{fmt(dcrTarget.date)}</strong><br />
                 Current address: <strong>{dcrTarget.userDetails?.address || "—"}</strong><br />
@@ -162,8 +213,8 @@ export default function UserDashboard() {
               </p>
 
               {dcrSuccess ? (
-                <div className="ud-dcr-success">
-                  <div className="ud-dcr-wait-icon">⏳</div>
+                <div className="ud-dcr-success" role="status">
+                  <div className="ud-dcr-wait-icon" aria-hidden="true">⏳</div>
                   <p className="ud-dcr-wait-title">Request Sent!</p>
                   <p className="ud-dcr-wait-body">
                     Please wait for the vendor to review your changes.
@@ -174,33 +225,24 @@ export default function UserDashboard() {
               ) : (
                 <>
                   <p className="ud-dcr-hint">Fill in what you'd like to change. You can update the date, address, or both.</p>
-
                   <div className="ud-field">
-                    <label className="ud-label">New Preferred Date <span className="ud-optional">(leave blank to keep current)</span></label>
-                    <input type="date" className="ud-input" min={todayStr} value={dcrDate} onChange={(e) => { setDcrDate(e.target.value); setDcrError(""); }} />
+                    <label className="ud-label" htmlFor="dcr-date">New Preferred Date <span className="ud-optional">(leave blank to keep current)</span></label>
+                    <input id="dcr-date" type="date" className="ud-input" min={todayStr} value={dcrDate} onChange={(e) => { setDcrDate(e.target.value); setDcrError(""); }} />
                   </div>
-
                   <div className="ud-field">
-                    <label className="ud-label">New Address <span className="ud-optional">(leave blank to keep current)</span></label>
-                    <textarea
-                      className="ud-textarea"
-                      rows={2}
-                      placeholder="e.g. 123 Main St, New Delhi 110001"
-                      value={dcrAddress}
-                      onChange={(e) => { setDcrAddress(e.target.value); setDcrError(""); }}
-                    />
+                    <label className="ud-label" htmlFor="dcr-address">New Address <span className="ud-optional">(leave blank to keep current)</span></label>
+                    <textarea id="dcr-address" className="ud-textarea" rows={2} placeholder="e.g. 123 Main St, New Delhi 110001"
+                      value={dcrAddress} onChange={(e) => { setDcrAddress(e.target.value); setDcrError(""); }} />
                   </div>
-
                   <div className="ud-field">
-                    <label className="ud-label">Reason <span className="ud-optional">(optional)</span></label>
-                    <textarea className="ud-textarea" rows={2} placeholder="e.g. Family emergency, venue changed…" value={dcrReason} onChange={(e) => setDcrReason(e.target.value)} />
+                    <label className="ud-label" htmlFor="dcr-reason">Reason <span className="ud-optional">(optional)</span></label>
+                    <textarea id="dcr-reason" className="ud-textarea" rows={2} placeholder="e.g. Family emergency, venue changed…" value={dcrReason} onChange={(e) => setDcrReason(e.target.value)} />
                   </div>
-
-                  {dcrError && <p className="ud-modal-err">⚠ {dcrError}</p>}
+                  {dcrError && <p className="ud-modal-err" role="alert">⚠ {dcrError}</p>}
                   <div className="ud-modal-btns">
-                    <button className="ud-mbtn ud-mbtn-ghost" onClick={closeDcr}       disabled={dcrLoading}>Cancel</button>
-                    <button className="ud-mbtn ud-mbtn-gold"  onClick={handleDcrSubmit} disabled={dcrLoading}>
-                      {dcrLoading ? <><span className="ud-spinner" /> Sending…</> : "Send Request →"}
+                    <button className="ud-mbtn ud-mbtn-ghost" onClick={closeDcr} disabled={dcrLoading}>Cancel</button>
+                    <button className="ud-mbtn ud-mbtn-gold" onClick={handleDcrSubmit} disabled={dcrLoading}>
+                      {dcrLoading ? <><span className="ud-spinner" aria-hidden="true" /> Sending…</> : "Send Request →"}
                     </button>
                   </div>
                 </>
@@ -210,71 +252,101 @@ export default function UserDashboard() {
         )}
 
         {/* ── HERO ── */}
-        <div className="ud-hero">
-          <div className="ud-hero-orb ud-orb1" />
-          <div className="ud-hero-orb ud-orb2" />
+        <header className="ud-hero" role="banner">
+          <div className="ud-hero-orb ud-orb1" aria-hidden="true" />
+          <div className="ud-hero-orb ud-orb2" aria-hidden="true" />
+          <div className="ud-hero-orb ud-orb3" aria-hidden="true" />
           <div className="ud-hero-inner">
             <div className="ud-eyebrow">
-              
+              <span className="ud-eyebrow-dot" aria-hidden="true" />
               <span>Client Portal</span>
             </div>
             <h1 className="ud-hero-title">My Bookings</h1>
-            <p className="ud-hero-sub">Track and manage all your event reservations</p>
-            <a href="/vendors" className="ud-hero-btn">Browse Services →</a>
+            <p className="ud-hero-sub">Track and manage all your event reservations in one place</p>
+            <a href="/vendors" className="ud-hero-btn" aria-label="Browse available event services">
+              <span>Explore Services</span>
+              <span className="ud-hero-btn-arrow" aria-hidden="true">→</span>
+            </a>
           </div>
-          <div className="ud-hero-pills">
-            <div className="ud-pill"><span className="ud-pill-val">{counts.all}</span><span className="ud-pill-label">Total</span></div>
-            <div className="ud-pill ud-pill-gold"><span className="ud-pill-val">{counts.pending}</span><span className="ud-pill-label">Pending</span></div>
-            <div className="ud-pill ud-pill-green"><span className="ud-pill-val">{counts.approved}</span><span className="ud-pill-label">Confirmed</span></div>
+          <div className="ud-hero-pills" aria-label="Booking summary">
+            <div className="ud-pill" aria-label={`${counts.all} total bookings`}>
+              <span className="ud-pill-val">{counts.all}</span>
+              <span className="ud-pill-label">Total</span>
+            </div>
+            <div className="ud-pill ud-pill-gold" aria-label={`${counts.pending} pending bookings`}>
+              <span className="ud-pill-val">{counts.pending}</span>
+              <span className="ud-pill-label">Pending</span>
+            </div>
+            <div className="ud-pill ud-pill-green" aria-label={`${counts.approved} confirmed bookings`}>
+              <span className="ud-pill-val">{counts.approved}</span>
+              <span className="ud-pill-label">Confirmed</span>
+            </div>
           </div>
-        </div>
+          <div className="ud-hero-wave" aria-hidden="true">
+            <svg viewBox="0 0 1440 60" preserveAspectRatio="none"><path d="M0,60 C360,0 1080,60 1440,20 L1440,60 Z" fill="#f5f0e8"/></svg>
+          </div>
+        </header>
 
         <div className="ud-body">
           {/* STATS */}
-          <div className="ud-stats">
+          <section className="ud-stats" aria-label="Booking statistics">
             {[
-              { label: "Total Bookings", value: counts.all,      icon: "◈", color: "var(--ink)", accent: "rgba(14,12,10,0.06)"   },
+              { label: "Total Bookings", value: counts.all,      icon: "◈", color: "var(--ink)", accent: "rgba(14,12,10,0.05)"   },
               { label: "Pending",        value: counts.pending,  icon: "◷", color: "#c9a84c",    accent: "rgba(201,168,76,0.08)" },
               { label: "Confirmed",      value: counts.approved, icon: "◎", color: "#3a8a62",    accent: "rgba(58,138,98,0.08)"  },
               { label: "Declined",       value: counts.rejected, icon: "◌", color: "#b85c5c",    accent: "rgba(184,92,92,0.08)"  },
             ].map((s, i) => (
-              <div key={s.label} className="ud-stat" style={{ animationDelay: `${i * 0.07}s` }}>
-                <div className="ud-stat-icon-wrap" style={{ background: s.accent }}>
+              <article key={s.label} className="ud-stat" style={{ animationDelay: `${i * 0.07}s` }}
+                aria-label={`${s.label}: ${s.value}`}>
+                <div className="ud-stat-icon-wrap" style={{ background: s.accent }} aria-hidden="true">
                   <span className="ud-stat-icon" style={{ color: s.color }}>{s.icon}</span>
                 </div>
                 <div>
                   <div className="ud-stat-val" style={{ color: s.color }}>{s.value}</div>
                   <div className="ud-stat-label">{s.label}</div>
                 </div>
-              </div>
+              </article>
             ))}
-          </div>
+          </section>
 
           {/* FILTER TABS */}
-          <div className="ud-tabs-wrap">
-            <div className="ud-tabs">
-              {[{ key: "all", label: "All Bookings" }, { key: "pending", label: "Pending" }, { key: "approved", label: "Confirmed" }, { key: "rejected", label: "Declined" }].map((t) => (
-                <button key={t.key} className={`ud-tab ${filter === t.key ? "active" : ""}`} onClick={() => setFilter(t.key)}>
+          <nav className="ud-tabs-wrap" aria-label="Filter bookings by status">
+            <div className="ud-tabs" role="tablist">
+              {[
+                { key: "all",      label: "All Bookings" },
+                { key: "pending",  label: "Pending"      },
+                { key: "approved", label: "Confirmed"    },
+                { key: "rejected", label: "Declined"     },
+              ].map((t) => (
+                <button key={t.key} role="tab" aria-selected={filter === t.key}
+                  className={`ud-tab ${filter === t.key ? "active" : ""}`}
+                  onClick={() => setFilter(t.key)}>
                   {t.label}
-                  <span className="ud-tab-pill">{counts[t.key]}</span>
+                  <span className="ud-tab-pill" aria-label={`${counts[t.key]} bookings`}>{counts[t.key]}</span>
                 </button>
               ))}
             </div>
-          </div>
+          </nav>
 
           {/* BOOKING LIST */}
           {loading ? (
-            <div className="ud-skeletons">{[...Array(3)].map((_, i) => <div key={i} className="ud-skeleton" style={{ animationDelay: `${i * 0.1}s` }} />)}</div>
+            <div className="ud-skeletons" aria-busy="true" aria-label="Loading bookings">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="ud-skeleton" style={{ animationDelay: `${i * 0.1}s` }} />
+              ))}
+            </div>
           ) : filtered.length === 0 ? (
-            <div className="ud-empty">
-              <div className="ud-empty-orb" />
-              <span className="ud-empty-icon">{filter === "all" ? "🗓" : filter === "pending" ? "◷" : filter === "approved" ? "✓" : "✕"}</span>
-              <h3>{filter === "all" ? "No bookings yet" : `No ${filter === "approved" ? "confirmed" : filter} bookings`}</h3>
+            <section className="ud-empty" aria-live="polite">
+              <div className="ud-empty-orb" aria-hidden="true" />
+              <span className="ud-empty-icon" aria-hidden="true">
+                {filter === "all" ? "🗓" : filter === "pending" ? "◷" : filter === "approved" ? "✓" : "✕"}
+              </span>
+              <h2>{filter === "all" ? "No bookings yet" : `No ${filter === "approved" ? "confirmed" : filter} bookings`}</h2>
               <p>{filter === "all" ? "Start exploring vendors and book your perfect event experience." : `You don't have any ${filter === "approved" ? "confirmed" : filter} bookings right now.`}</p>
               {filter === "all" && <a href="/vendors" className="ud-empty-cta">Explore Vendors →</a>}
-            </div>
+            </section>
           ) : (
-            <div className="ud-list">
+            <section className="ud-list" aria-label={`${filtered.length} booking${filtered.length !== 1 ? "s" : ""}`} aria-live="polite">
               {filtered.map((b, i) => {
                 const meta            = STATUS_META[b.status] || STATUS_META.pending;
                 const isPending       = b.status === "pending";
@@ -286,12 +358,14 @@ export default function UserDashboard() {
                 const canRequestChange = (isPending || isApproved) && !hasPendingDcr;
 
                 return (
-                  <div key={b._id} className="ud-card" style={{ animationDelay: `${i * 0.06}s` }}>
-                    <div className="ud-card-bar" style={{ background: meta.color }} />
+                  <article key={b._id} className="ud-card" style={{ animationDelay: `${i * 0.06}s` }}
+                    aria-label={`Booking with ${getVendorName(b)}, status: ${meta.label}`}
+                    itemScope itemType="https://schema.org/Reservation">
+                    <div className="ud-card-bar" style={{ background: meta.color }} aria-hidden="true" />
 
-                    <div className="ud-avatar">
+                    <div className="ud-avatar" aria-hidden="true">
                       {b.vendorId?.images?.[0]
-                        ? <img src={b.vendorId.images[0]} alt="" />
+                        ? <img src={b.vendorId.images[0]} alt={`${getVendorName(b)} logo`} loading="lazy" />
                         : <span>{getInitial(b)}</span>
                       }
                     </div>
@@ -299,60 +373,64 @@ export default function UserDashboard() {
                     <div className="ud-card-content">
                       <div className="ud-card-top">
                         <div>
-                          <h3 className="ud-vname">{getVendorName(b)}</h3>
+                          <h3 className="ud-vname" itemProp="name">{getVendorName(b)}</h3>
                           <p className="ud-stype">
-                            <span className="ud-stype-dot">◈</span>
-                            {getServiceType(b)}
-                            {b.vendorId?.location && <span className="ud-loc"> · {b.vendorId.location}</span>}
+                            <span className="ud-stype-dot" aria-hidden="true">◈</span>
+                            <span itemProp="description">{getServiceType(b)}</span>
+                            {b.vendorId?.location && <span className="ud-loc" itemProp="location"> · {b.vendorId.location}</span>}
                           </p>
                         </div>
-                        <span className="ud-badge ud-badge-desk" style={{ color: meta.color, background: meta.bg, border: `1px solid ${meta.border}` }}>
-                          <span>{meta.icon}</span> {meta.label}
+                        <span className="ud-badge ud-badge-desk" style={{ color: meta.color, background: meta.bg, border: `1px solid ${meta.border}` }}
+                          aria-label={`Status: ${meta.label}`}>
+                          <span aria-hidden="true">{meta.icon}</span> {meta.label}
                         </span>
                       </div>
 
                       {/* Date + chips */}
-                      <div className="ud-date-row">
-                        <div className="ud-date-chip"><span className="ud-date-icon">🗓</span><span>{fmt(b.date)}</span></div>
-                        {b.packageName  && <div className="ud-date-chip"><span className="ud-date-icon">📦</span><span>{b.packageName}</span></div>}
-                        {b.packagePrice && <div className="ud-date-chip"><span className="ud-date-icon">₹</span><span>{b.packagePrice.toLocaleString()}</span></div>}
+                      <div className="ud-date-row" itemProp="reservationFor" itemScope itemType="https://schema.org/Event">
+                        <div className="ud-date-chip">
+                          <span className="ud-date-icon" aria-hidden="true">🗓</span>
+                          <time dateTime={new Date(b.date).toISOString().split("T")[0]} itemProp="startDate">{fmt(b.date)}</time>
+                        </div>
+                        {b.packageName  && <div className="ud-date-chip"><span className="ud-date-icon" aria-hidden="true">📦</span><span>{b.packageName}</span></div>}
+                        {b.packagePrice && <div className="ud-date-chip"><span className="ud-date-icon" aria-hidden="true">₹</span><span itemProp="price">{b.packagePrice.toLocaleString()}</span></div>}
                       </div>
 
                       {/* Pay Now */}
                       {needsPayment && (
-                        <div className="ud-pay-banner">
+                        <div className="ud-pay-banner" role="alert">
                           <div className="ud-pay-banner-left">
-                            <span className="ud-pay-icon">🎉</span>
+                            <span className="ud-pay-icon" aria-hidden="true">🎉</span>
                             <div>
                               <p className="ud-pay-title">Vendor confirmed your booking!</p>
                               <p className="ud-pay-sub">Complete payment to lock in your slot</p>
                             </div>
                           </div>
-                          <button className="ud-pay-btn" onClick={() => setPaymentTarget(b)}>
+                          <button className="ud-pay-btn" onClick={() => setPaymentTarget(b)}
+                            aria-label={`Pay ₹${b.packagePrice?.toLocaleString()} for ${getVendorName(b)}`}>
                             Pay ₹{b.packagePrice?.toLocaleString()} →
                           </button>
                         </div>
                       )}
 
                       {isApproved && b.paymentStatus === "paid" && (
-                        <div className="ud-paid-badge"><span>✓</span> Payment Complete</div>
+                        <div className="ud-paid-badge" role="status"><span aria-hidden="true">✓</span> Payment Complete</div>
                       )}
 
                       {hasPendingDcr && (
-                        <div className="ud-waiting-banner">
-                          <span className="ud-waiting-icon">⏳</span>
+                        <div className="ud-waiting-banner" role="status">
+                          <span className="ud-waiting-icon" aria-hidden="true">⏳</span>
                           <div>
                             <p className="ud-waiting-title">Waiting for vendor to respond</p>
                             <p className="ud-waiting-sub">
                               Your change request is under review.
-                              {dcr.requestedDate   && ` New date: ${fmt(dcr.requestedDate)}.`}
+                              {dcr.requestedDate    && ` New date: ${fmt(dcr.requestedDate)}.`}
                               {dcr.requestedAddress && ` New address: ${dcr.requestedAddress}.`}
                             </p>
                           </div>
                         </div>
                       )}
 
-                      {/* DCR result banner (approved / rejected) */}
                       {hasDcr && !hasPendingDcr && (
                         <div className="ud-dcr-banner" style={{ color: DCR_META[dcr.status]?.color || "#c9a84c", background: DCR_META[dcr.status]?.bg, border: `1px solid ${DCR_META[dcr.status]?.border}` }}>
                           <span className="ud-dcr-label">
@@ -368,27 +446,53 @@ export default function UserDashboard() {
                       {/* Actions */}
                       <div className="ud-actions">
                         <span className="ud-badge ud-badge-mob" style={{ color: meta.color, background: meta.bg, border: `1px solid ${meta.border}` }}>
-                          <span>{meta.icon}</span> {meta.label}
+                          <span aria-hidden="true">{meta.icon}</span> {meta.label}
                         </span>
                         <div className="ud-action-btns">
-                          {b.vendorId?._id && <a href={`/vendor/${b.vendorId._id}`} className="ud-btn ud-btn-ghost">View →</a>}
+                          {b.vendorId?._id && (
+                            <a href={`/vendor/${b.vendorId._id}`} className="ud-btn ud-btn-ghost"
+                              aria-label={`View ${getVendorName(b)} profile`}>View →</a>
+                          )}
                           {canRequestChange && (
-                            <button className="ud-btn ud-btn-date" onClick={() => openDcr(b)}>
+                            <button className="ud-btn ud-btn-date" onClick={() => openDcr(b)}
+                              aria-label={`Request date or address change for ${getVendorName(b)}`}>
                               📅 Change Date / Address
                             </button>
                           )}
                           {isPending && (
-                            <button className="ud-btn ud-btn-cancel" onClick={() => { setCancelError(""); setCancelTarget(b); }}>Cancel</button>
+                            <button className="ud-btn ud-btn-cancel"
+                              onClick={() => { setCancelError(""); setCancelTarget(b); }}
+                              aria-label={`Cancel booking with ${getVendorName(b)}`}>Cancel</button>
                           )}
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </article>
                 );
               })}
-            </div>
+            </section>
           )}
         </div>
+
+        {/* Footer trust bar */}
+        <footer className="ud-trust-bar" aria-label="Security and support information">
+          <div className="ud-trust-inner">
+            <div className="ud-trust-item">
+              <span aria-hidden="true">🔒</span>
+              <span>Secure & Encrypted Payments</span>
+            </div>
+            <div className="ud-trust-divider" aria-hidden="true" />
+            <div className="ud-trust-item">
+              <span aria-hidden="true">📞</span>
+              <span>24/7 Customer Support</span>
+            </div>
+            <div className="ud-trust-divider" aria-hidden="true" />
+            <div className="ud-trust-item">
+              <span aria-hidden="true">✓</span>
+              <span>Verified Vendors Only</span>
+            </div>
+          </div>
+        </footer>
       </div>
     </>
   );
@@ -402,30 +506,33 @@ const styles = `
     --gold-glow:rgba(201,168,76,0.15);--muted:#7a7265;--border:rgba(201,168,76,0.18);
     --surface:#faf7f2;--white:#ffffff;--danger:#a93226;
     --danger-bg:rgba(169,50,38,0.06);--danger-border:rgba(169,50,38,0.22);
+    --radius-sm:8px;--radius-md:14px;--radius-lg:20px;
+    --shadow-sm:0 2px 8px rgba(14,12,10,0.06);
+    --shadow-md:0 8px 28px rgba(14,12,10,0.09);
+    --shadow-lg:0 20px 60px rgba(14,12,10,0.14);
+    --transition:all 0.22s ease;
   }
   .ud-root{font-family:'DM Sans',sans-serif;background:var(--cream);min-height:100vh;color:var(--ink)}
 
-  /* ── OVERLAY: flex column so modal can scroll ── */
+  /* ── MODAL OVERLAY ── */
   .ud-overlay{
     position:fixed;inset:0;
-    background:rgba(10,8,6,0.6);backdrop-filter:blur(5px);
+    background:rgba(10,8,6,0.65);backdrop-filter:blur(6px);
     display:flex;align-items:flex-start;justify-content:center;
     z-index:1000;animation:fadeIn 0.2s ease both;
-    padding:20px;
-    overflow-y:auto;           /* overlay itself scrolls on tiny screens */
+    padding:20px;overflow-y:auto;
   }
-
-  /* ── MODAL: scrollable inner box, capped height ── */
   .ud-modal{
-    background:var(--white);border:1px solid var(--border);border-radius:18px;
+    background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);
     padding:36px 32px 30px;width:100%;max-width:420px;text-align:center;
     animation:modalUp 0.28s cubic-bezier(0.34,1.2,0.64,1) both;
-    box-shadow:0 32px 80px rgba(0,0,0,0.18);
-    /* key fix: allow the modal itself to scroll when taller than viewport */
-    max-height:calc(100vh - 40px);
-    overflow-y:auto;
-    margin:auto;               /* keeps it centred when shorter than viewport */
+    box-shadow:var(--shadow-lg);
+    max-height:calc(100vh - 40px);overflow-y:auto;margin:auto;
+    scrollbar-width:thin;scrollbar-color:var(--border) transparent;
   }
+  .ud-modal::-webkit-scrollbar{width:5px}
+  .ud-modal::-webkit-scrollbar-track{background:transparent;margin:16px 0}
+  .ud-modal::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#e8d5a3,#c9a84c);border-radius:3px}
   .ud-modal-wide{max-width:500px;text-align:left}
 
   .ud-modal-icon-wrap{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin:0 auto 18px}
@@ -434,9 +541,9 @@ const styles = `
   .ud-modal-title{font-family:'Cormorant Garamond',serif;font-size:1.7rem;font-weight:400;font-style:italic;color:var(--ink);margin-bottom:10px;text-align:center}
   .ud-modal-body{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px;text-align:center}
   .ud-modal-body strong{color:var(--ink);font-weight:500}
-  .ud-modal-err{font-size:12.5px;color:var(--danger);background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:8px;padding:9px 13px;text-align:left;margin-bottom:14px}
+  .ud-modal-err{font-size:12.5px;color:var(--danger);background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--radius-sm);padding:9px 13px;text-align:left;margin-bottom:14px}
   .ud-modal-btns{display:flex;gap:10px}
-  .ud-mbtn{flex:1;padding:13px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.22s ease;display:flex;align-items:center;justify-content:center;gap:7px;border:none}
+  .ud-mbtn{flex:1;padding:13px 16px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:var(--transition);display:flex;align-items:center;justify-content:center;gap:7px;border:none}
   .ud-mbtn:disabled{opacity:0.55;cursor:not-allowed}
   .ud-mbtn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
   .ud-mbtn-ghost:hover:not(:disabled){border-color:var(--muted);color:var(--ink);background:var(--surface)}
@@ -447,165 +554,233 @@ const styles = `
   .ud-spinner{width:13px;height:13px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);border-top-color:white;animation:spin 0.7s linear infinite;display:inline-block;flex-shrink:0}
   .ud-field{text-align:left;margin-bottom:14px}
   .ud-label{display:block;font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
-  .ud-req{color:var(--danger)}.ud-optional{color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;font-size:11px}
-  .ud-input,.ud-textarea{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--ink);background:var(--surface);outline:none;transition:border-color 0.2s,box-shadow 0.2s}
+  .ud-optional{color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;font-size:11px}
+  .ud-input,.ud-textarea{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--ink);background:var(--surface);outline:none;transition:border-color 0.2s,box-shadow 0.2s}
   .ud-input:focus,.ud-textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,0.12)}
   .ud-textarea{resize:vertical;min-height:72px}
-  .ud-dcr-hint{font-size:12.5px;color:var(--muted);margin-bottom:16px;line-height:1.55;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px}
-
+  .ud-dcr-hint{font-size:12.5px;color:var(--muted);margin-bottom:16px;line-height:1.55;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px}
   .ud-dcr-success{background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:12px;padding:24px;text-align:center}
   .ud-dcr-wait-icon{font-size:2.2rem;margin-bottom:12px}
   .ud-dcr-wait-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;color:var(--ink);margin-bottom:8px}
   .ud-dcr-wait-body{font-size:13px;color:var(--muted);line-height:1.65}
-
   .ud-waiting-banner{display:flex;align-items:flex-start;gap:10px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.25);border-radius:10px;padding:12px 14px;margin-bottom:10px}
   .ud-waiting-icon{font-size:1.3rem;flex-shrink:0;margin-top:1px}
   .ud-waiting-title{font-size:13px;font-weight:500;color:var(--ink);margin:0 0 3px}
   .ud-waiting-sub{font-size:12px;color:var(--muted);line-height:1.5;margin:0}
 
-  .ud-hero{position:relative;overflow:hidden;background:var(--ink);padding:96px 32px 56px;text-align:center}
+  /* ── HERO ── */
+  .ud-hero{
+    position:relative;overflow:hidden;
+    background:linear-gradient(160deg,#0e0c0a 0%,#1a1610 55%,#12100d 100%);
+    padding:100px 32px 80px;text-align:center;
+  }
+  .ud-hero::before{
+    content:'';position:absolute;inset:0;
+    background:radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201,168,76,0.07) 0%, transparent 70%);
+    pointer-events:none;
+  }
   .ud-hero-orb{position:absolute;border-radius:50%;filter:blur(100px);opacity:0.12;pointer-events:none}
-  .ud-orb1{width:500px;height:500px;background:var(--gold);top:-200px;left:-80px}
-  .ud-orb2{width:300px;height:300px;background:#7b5ea7;bottom:-80px;right:-60px}
+  .ud-orb1{width:600px;height:600px;background:var(--gold);top:-250px;left:-120px}
+  .ud-orb2{width:350px;height:350px;background:#7b5ea7;bottom:-100px;right:-80px}
+  .ud-orb3{width:200px;height:200px;background:#4a7c9e;top:50%;right:10%;opacity:0.08}
   .ud-hero-inner{position:relative;z-index:2;animation:fadeUp 0.55s ease both}
-  .ud-eyebrow {
-  display: flex;
-  flex-direction: column;   /* 👈 MAIN FIX */
-  align-items: center;
-  gap: 6px;
-  text-align: center;
-
-  font-size: 10.5px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--gold);
-  margin-bottom: 14px;
-  font-weight: 400;
-}
-  .ud-eyebrow img,
-.ud-eyebrow svg {
-  width: 26px;
-  height: 26px;
-}
-  .ud-hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(2.4rem,5vw,3.4rem);font-weight:300;color:var(--white);margin-bottom:10px;letter-spacing:0.02em;line-height:1.1}
-  .ud-hero-sub{font-size:13.5px;color:rgba(245,240,232,0.45);margin-bottom:28px;font-weight:300}
-  .ud-hero-btn{display:inline-block;padding:12px 28px;background:var(--gold);color:var(--ink);text-decoration:none;border-radius:7px;font-size:13px;font-weight:500;letter-spacing:0.04em;transition:all 0.22s ease}
-  .ud-hero-btn:hover{background:var(--gold-light);transform:translateY(-2px);box-shadow:0 8px 24px rgba(201,168,76,0.3)}
-  .ud-hero-pills{position:relative;z-index:2;display:flex;justify-content:center;gap:10px;margin-top:32px;flex-wrap:wrap}
-  .ud-pill{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:40px;padding:8px 18px;backdrop-filter:blur(8px);animation:fadeUp 0.5s ease 0.2s both}
-  .ud-pill-val{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;color:var(--white);line-height:1}
+  .ud-eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:10.5px;letter-spacing:0.22em;text-transform:uppercase;
+    color:var(--gold);margin-bottom:16px;font-weight:400;
+  }
+  .ud-eyebrow-dot{
+    width:5px;height:5px;border-radius:50%;background:var(--gold);
+    display:inline-block;animation:pulse 2s ease infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.7)}}
+  .ud-hero-title{
+    font-family:'Cormorant Garamond',serif;
+    font-size:clamp(2.6rem,5vw,3.8rem);font-weight:300;
+    color:var(--white);margin-bottom:12px;letter-spacing:0.02em;line-height:1.1;
+  }
+  .ud-hero-sub{font-size:14px;color:rgba(245,240,232,0.45);margin-bottom:32px;font-weight:300;max-width:400px;margin-left:auto;margin-right:auto;line-height:1.6}
+  .ud-hero-btn{
+    display:inline-flex;align-items:center;gap:10px;
+    padding:13px 32px;background:var(--gold);color:var(--ink);
+    text-decoration:none;border-radius:var(--radius-sm);
+    font-size:13px;font-weight:500;letter-spacing:0.04em;transition:var(--transition);
+    box-shadow:0 4px 20px rgba(201,168,76,0.3);
+  }
+  .ud-hero-btn:hover{background:var(--gold-light);transform:translateY(-2px);box-shadow:0 8px 28px rgba(201,168,76,0.4)}
+  .ud-hero-btn-arrow{transition:transform 0.2s}
+  .ud-hero-btn:hover .ud-hero-btn-arrow{transform:translateX(4px)}
+  .ud-hero-pills{position:relative;z-index:2;display:flex;justify-content:center;gap:12px;margin-top:36px;flex-wrap:wrap}
+  .ud-pill{
+    display:flex;align-items:center;gap:10px;
+    background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+    border-radius:40px;padding:10px 20px;backdrop-filter:blur(10px);
+    animation:fadeUp 0.5s ease 0.2s both;transition:var(--transition);
+  }
+  .ud-pill:hover{background:rgba(255,255,255,0.1);transform:translateY(-1px)}
+  .ud-pill-val{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:var(--white);line-height:1}
   .ud-pill-label{font-size:11px;color:rgba(245,240,232,0.5);letter-spacing:0.08em}
-  .ud-pill-gold{border-color:rgba(201,168,76,0.3);background:rgba(201,168,76,0.08)}.ud-pill-gold .ud-pill-val{color:var(--gold)}
-  .ud-pill-green{border-color:rgba(58,138,98,0.3);background:rgba(58,138,98,0.08)}.ud-pill-green .ud-pill-val{color:#5fb889}
-  .ud-body{max-width:900px;margin:0 auto;padding:44px 28px 88px}
-  .ud-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:32px}
+  .ud-pill-gold{border-color:rgba(201,168,76,0.3);background:rgba(201,168,76,0.08)}
+  .ud-pill-gold .ud-pill-val{color:var(--gold)}
+  .ud-pill-green{border-color:rgba(58,138,98,0.3);background:rgba(58,138,98,0.08)}
+  .ud-pill-green .ud-pill-val{color:#5fb889}
+  .ud-hero-wave{position:absolute;bottom:0;left:0;right:0;z-index:1;line-height:0}
+  .ud-hero-wave svg{width:100%;height:60px;display:block}
+
+  /* ── BODY ── */
+  .ud-body{max-width:920px;margin:0 auto;padding:48px 28px 96px}
+
+  /* ── STATS ── */
+  .ud-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:36px}
   @media(max-width:680px){.ud-stats{grid-template-columns:repeat(2,1fr)}}
-  .ud-stat{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:18px 16px;display:flex;align-items:center;gap:14px;animation:fadeUp 0.5s ease both;transition:transform 0.22s,box-shadow 0.22s}
-  .ud-stat:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,0.07)}
-  .ud-stat-icon-wrap{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .ud-stat{
+    background:var(--white);border:1px solid var(--border);border-radius:var(--radius-md);
+    padding:20px 18px;display:flex;align-items:center;gap:14px;
+    animation:fadeUp 0.5s ease both;transition:transform 0.22s,box-shadow 0.22s,border-color 0.22s;
+  }
+  .ud-stat:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:rgba(201,168,76,0.3)}
+  .ud-stat-icon-wrap{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .ud-stat-icon{font-size:1.15rem}
   .ud-stat-val{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;line-height:1;margin-bottom:2px}
   .ud-stat-label{font-size:11px;color:var(--muted);letter-spacing:0.04em}
+
+  /* ── TABS ── */
   .ud-tabs-wrap{margin-bottom:24px;border-bottom:1px solid var(--border)}
   .ud-tabs{display:flex;gap:2px;flex-wrap:wrap}
-  .ud-tab{display:flex;align-items:center;gap:8px;padding:11px 18px;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--muted);cursor:pointer;transition:color 0.2s,border-color 0.2s;white-space:nowrap}
+  .ud-tab{
+    display:flex;align-items:center;gap:8px;padding:11px 18px;
+    background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;
+    font-family:'DM Sans',sans-serif;font-size:13px;color:var(--muted);
+    cursor:pointer;transition:color 0.2s,border-color 0.2s;white-space:nowrap;
+  }
   .ud-tab:hover{color:var(--ink)}
   .ud-tab.active{color:var(--ink);border-bottom-color:var(--gold);font-weight:500}
   .ud-tab-pill{font-size:10.5px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:1px 7px;color:var(--muted)}
   .ud-tab.active .ud-tab-pill{background:var(--ink);color:var(--white);border-color:var(--ink)}
+
+  /* ── CARDS ── */
   .ud-list{display:flex;flex-direction:column;gap:14px}
-  .ud-card{position:relative;overflow:hidden;background:var(--white);border:1px solid var(--border);border-radius:14px;padding:22px 24px 20px 36px;display:flex;align-items:flex-start;gap:16px;animation:fadeUp 0.45s ease both;transition:box-shadow 0.25s,border-color 0.25s,transform 0.25s}
-  .ud-card:hover{box-shadow:0 12px 40px rgba(14,12,10,0.08);border-color:rgba(201,168,76,0.32);transform:translateY(-2px)}
-  .ud-card-bar{position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:14px 0 0 14px;opacity:0.7}
-  .ud-avatar{width:54px;height:54px;border-radius:12px;background:var(--ink);border:1px solid var(--border);overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .ud-card{
+    position:relative;overflow:hidden;background:var(--white);border:1px solid var(--border);
+    border-radius:var(--radius-md);padding:24px 26px 22px 38px;
+    display:flex;align-items:flex-start;gap:18px;
+    animation:fadeUp 0.45s ease both;transition:box-shadow 0.25s,border-color 0.25s,transform 0.25s;
+  }
+  .ud-card:hover{box-shadow:var(--shadow-md);border-color:rgba(201,168,76,0.32);transform:translateY(-2px)}
+  .ud-card-bar{position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:var(--radius-md) 0 0 var(--radius-md);opacity:0.7}
+  .ud-avatar{
+    width:56px;height:56px;border-radius:12px;
+    background:var(--ink);border:1px solid var(--border);
+    overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    box-shadow:var(--shadow-sm);
+  }
   .ud-avatar img{width:100%;height:100%;object-fit:cover}
   .ud-avatar span{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;color:var(--gold)}
   .ud-card-content{flex:1;min-width:0}
   .ud-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px}
-  .ud-vname{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;color:var(--ink);margin-bottom:4px;line-height:1.2}
+  .ud-vname{font-family:'Cormorant Garamond',serif;font-size:1.22rem;font-weight:600;color:var(--ink);margin-bottom:4px;line-height:1.2}
   .ud-stype{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;flex-wrap:wrap;text-transform:capitalize}
-  .ud-stype-dot{color:var(--gold);font-size:9px}.ud-loc{color:#9e9690}
+  .ud-stype-dot{color:var(--gold);font-size:9px}
+  .ud-loc{color:#9e9690}
   .ud-date-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-  .ud-date-chip{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:4px 11px;white-space:nowrap}
+  .ud-date-chip{
+    display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);
+    background:var(--surface);border:1px solid var(--border);border-radius:20px;
+    padding:4px 12px;white-space:nowrap;transition:var(--transition);
+  }
+  .ud-date-chip:hover{border-color:rgba(201,168,76,0.35);color:var(--ink)}
   .ud-date-icon{font-size:11px}
-  .ud-pay-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;background:linear-gradient(135deg,rgba(201,168,76,0.1),rgba(201,168,76,0.05));border:1px solid rgba(201,168,76,0.35);border-radius:12px;padding:12px 14px;margin-bottom:12px;animation:fadeUp 0.4s ease both}
+
+  /* ── PAY BANNER ── */
+  .ud-pay-banner{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    background:linear-gradient(135deg,rgba(201,168,76,0.1),rgba(201,168,76,0.04));
+    border:1px solid rgba(201,168,76,0.35);border-radius:12px;
+    padding:14px 16px;margin-bottom:12px;animation:fadeUp 0.4s ease both;
+  }
   .ud-pay-banner-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
   .ud-pay-icon{font-size:1.3rem;flex-shrink:0}
   .ud-pay-title{font-size:13px;font-weight:500;color:var(--ink);margin:0 0 2px}
   .ud-pay-sub{font-size:11.5px;color:var(--muted);margin:0}
-  .ud-pay-btn{padding:10px 18px;background:var(--gold);border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--ink);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all 0.22s;animation:payPulse 2.5s ease infinite}
+  .ud-pay-btn{
+    padding:10px 20px;background:var(--gold);border:none;border-radius:var(--radius-sm);
+    font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--ink);
+    cursor:pointer;white-space:nowrap;flex-shrink:0;transition:var(--transition);
+    animation:payPulse 2.5s ease infinite;
+  }
   .ud-pay-btn:hover{background:var(--ink);color:var(--white);transform:translateY(-1px);box-shadow:0 6px 18px rgba(14,12,10,0.2);animation:none}
   .ud-paid-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#3a8a62;font-weight:500;background:rgba(58,138,98,0.08);border:1px solid rgba(58,138,98,0.2);border-radius:20px;padding:4px 12px;margin-bottom:10px}
-  .ud-dcr-banner{display:flex;align-items:center;gap:10px;border-radius:8px;padding:7px 12px;margin-bottom:10px;font-size:12px;font-weight:500;flex-wrap:wrap}
-  .ud-dcr-label{flex:1}.ud-dcr-date{font-weight:400;opacity:0.85}
+  .ud-dcr-banner{display:flex;align-items:center;gap:10px;border-radius:var(--radius-sm);padding:8px 12px;margin-bottom:10px;font-size:12px;font-weight:500;flex-wrap:wrap}
+  .ud-dcr-label{flex:1}
+  .ud-dcr-date{font-weight:400;opacity:0.85}
+
+  /* ── ACTIONS ── */
   .ud-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
   .ud-action-btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .ud-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;letter-spacing:0.06em;padding:5px 12px;border-radius:20px;white-space:nowrap}
-  .ud-badge-desk{display:inline-flex}.ud-badge-mob{display:none}
-  .ud-btn{font-size:12px;font-family:'DM Sans',sans-serif;font-weight:500;padding:7px 15px;border-radius:7px;cursor:pointer;transition:all 0.2s ease;white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;gap:5px;border:none}
-  .ud-btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}.ud-btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
-  .ud-btn-date{background:rgba(201,168,76,0.08);color:#a07b28;border:1px solid rgba(201,168,76,0.3)}.ud-btn-date:hover{background:rgba(201,168,76,0.15);border-color:var(--gold);color:var(--ink);transform:translateY(-1px);box-shadow:0 4px 14px rgba(201,168,76,0.2)}
-  .ud-btn-cancel{background:transparent;color:var(--danger);border:1px solid var(--danger-border)}.ud-btn-cancel:hover{background:var(--danger-bg);border-color:var(--danger)}
+  .ud-badge-desk{display:inline-flex}
+  .ud-badge-mob{display:none}
+  .ud-btn{font-size:12px;font-family:'DM Sans',sans-serif;font-weight:500;padding:7px 16px;border-radius:7px;cursor:pointer;transition:var(--transition);white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;gap:5px;border:none}
+  .ud-btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+  .ud-btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+  .ud-btn-date{background:rgba(201,168,76,0.08);color:#a07b28;border:1px solid rgba(201,168,76,0.3)}
+  .ud-btn-date:hover{background:rgba(201,168,76,0.15);border-color:var(--gold);color:var(--ink);transform:translateY(-1px);box-shadow:0 4px 14px rgba(201,168,76,0.2)}
+  .ud-btn-cancel{background:transparent;color:var(--danger);border:1px solid var(--danger-border)}
+  .ud-btn-cancel:hover{background:var(--danger-bg);border-color:var(--danger)}
+
+  /* ── SKELETON ── */
   .ud-skeletons{display:flex;flex-direction:column;gap:14px}
-  .ud-skeleton{height:110px;border-radius:14px;background:linear-gradient(90deg,#ede8e0 25%,#e5dfd4 50%,#ede8e0 75%);background-size:200% 100%;animation:shimmer 1.4s ease infinite}
-  .ud-empty{position:relative;text-align:center;padding:88px 20px;animation:fadeUp 0.5s ease both;overflow:hidden}
+  .ud-skeleton{height:120px;border-radius:var(--radius-md);background:linear-gradient(90deg,#ede8e0 25%,#e5dfd4 50%,#ede8e0 75%);background-size:200% 100%;animation:shimmer 1.4s ease infinite}
+
+  /* ── EMPTY STATE ── */
+  .ud-empty{position:relative;text-align:center;padding:96px 20px;animation:fadeUp 0.5s ease both;overflow:hidden}
   .ud-empty-orb{position:absolute;width:400px;height:400px;background:var(--gold);border-radius:50%;filter:blur(120px);opacity:0.04;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
-  .ud-empty-icon{display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:50%;background:var(--white);border:1px solid var(--border);font-size:1.8rem;margin-bottom:20px}
-  .ud-empty h3{font-family:'Cormorant Garamond',serif;font-size:1.7rem;font-weight:400;color:var(--ink);margin-bottom:10px}
-  .ud-empty p{font-size:13.5px;color:var(--muted);line-height:1.65;max-width:360px;margin:0 auto 24px}
-  .ud-empty-cta{display:inline-block;padding:13px 30px;background:var(--ink);color:var(--white);text-decoration:none;border-radius:8px;font-size:13px;font-weight:500;transition:all 0.22s}
-  .ud-empty-cta:hover{background:var(--gold);color:var(--ink)}
-  @media(max-width:600px){
-    .ud-hero{padding:88px 20px 44px}.ud-body{padding:28px 16px 64px}.ud-card{padding-left:28px}
-    .ud-badge-desk{display:none}.ud-badge-mob{display:inline-flex}
-    .ud-card-top{flex-wrap:wrap}.ud-modal{padding:28px 20px 24px}
-    .ud-modal-btns{flex-direction:column}
-    .ud-pay-banner{flex-direction:column;align-items:flex-start}.ud-pay-btn{width:100%}
+  .ud-empty-icon{display:inline-flex;align-items:center;justify-content:center;width:76px;height:76px;border-radius:50%;background:var(--white);border:1px solid var(--border);font-size:1.9rem;margin-bottom:22px;box-shadow:var(--shadow-sm)}
+  .ud-empty h2{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:400;color:var(--ink);margin-bottom:10px}
+  .ud-empty p{font-size:13.5px;color:var(--muted);line-height:1.65;max-width:360px;margin:0 auto 26px}
+  .ud-empty-cta{display:inline-block;padding:13px 32px;background:var(--ink);color:var(--white);text-decoration:none;border-radius:var(--radius-sm);font-size:13px;font-weight:500;transition:var(--transition);box-shadow:var(--shadow-sm)}
+  .ud-empty-cta:hover{background:var(--gold);color:var(--ink);box-shadow:0 6px 20px rgba(201,168,76,0.3)}
+
+  /* ── TRUST BAR ── */
+  .ud-trust-bar{
+    background:var(--white);border-top:1px solid var(--border);
+    padding:20px 32px;
   }
-  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  .ud-trust-inner{
+    max-width:920px;margin:0 auto;
+    display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap;
+  }
+  .ud-trust-item{
+    display:flex;align-items:center;gap:8px;
+    font-size:12px;color:var(--muted);padding:8px 28px;
+  }
+  .ud-trust-item span:first-child{font-size:14px}
+  .ud-trust-divider{width:1px;height:20px;background:var(--border)}
+  @media(max-width:600px){
+    .ud-trust-divider{display:none}
+    .ud-trust-item{padding:6px 14px}
+  }
+
+  /* ── RESPONSIVE ── */
+  @media(max-width:600px){
+    .ud-hero{padding:90px 20px 60px}
+    .ud-body{padding:28px 16px 64px}
+    .ud-card{padding-left:28px}
+    .ud-badge-desk{display:none}
+    .ud-badge-mob{display:inline-flex}
+    .ud-card-top{flex-wrap:wrap}
+    .ud-modal{padding:28px 20px 24px}
+    .ud-modal-btns{flex-direction:column}
+    .ud-pay-banner{flex-direction:column;align-items:flex-start}
+    .ud-pay-btn{width:100%}
+    .ud-stats{gap:10px}
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
   @keyframes fadeIn{from{opacity:0}to{opacity:1}}
   @keyframes modalUp{from{opacity:0;transform:translateY(28px) scale(0.96)}to{opacity:1;transform:translateY(0) scale(1)}}
   @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
   @keyframes spin{to{transform:rotate(360deg)}}
-  @keyframes payPulse{0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0.4)}50%{box-shadow:0 0 0 5px rgba(201,168,76,0)}}
-
-/* ===== GOLD SCROLLBAR (USER DASHBOARD MODAL) ===== */
-.ud-modal::-webkit-scrollbar {
-  width: 6px;
-}
-
-.ud-modal::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.ud-modal::-webkit-scrollbar-thumb {
-  background: linear-gradient(
-    180deg,
-    #e8d5a3,
-    #c9a84c
-  );
-  border-radius: 10px;
-  border: 1px solid rgba(201,168,76,0.3);
-}
-
-.ud-modal::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(
-    180deg,
-    #f5e6b5,
-    #d4af37
-  );
-}
-  .ud-modal::-webkit-scrollbar {
-  width: 5px;
-}
-
-.ud-modal::-webkit-scrollbar-track {
-  background: transparent;
-  margin: 16px 0;
-}
-
-.ud-modal::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #e8d5a3, #c9a84c);
-  border-radius: 3px;
-}
+  @keyframes payPulse{0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0.4)}50%{box-shadow:0 0 0 6px rgba(201,168,76,0)}}
 `;
