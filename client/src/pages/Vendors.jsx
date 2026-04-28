@@ -450,7 +450,7 @@ export default function Vendors() {
             </div>
             <h2 className="vn-footer-title">List your services on Evencers</h2>
             <p className="vn-footer-sub">
-              Join 850+ vendors and connect with thousands of clients planning their perfect event.
+              Join 20+ vendors and connect with thousands of clients planning their perfect event.
             </p>
             <a href="/register" className="vn-footer-btn">Become a Vendor →</a>
           </div>

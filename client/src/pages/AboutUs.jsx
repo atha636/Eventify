@@ -13,7 +13,7 @@ function useSEO() {
       el.setAttribute("content", val);
     };
     setMeta('meta[name="description"]','name=description',
-      "Learn about Evencers — how we're making event planning effortless across India. Our story, values, team and mission to connect clients with 850+ verified vendors.");
+      "Learn about Evencers — how we're making event planning effortless across India. Our story, values, team and mission to connect clients with 20+ verified vendors.");
   }, []);
 }
 
