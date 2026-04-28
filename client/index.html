@@ -3,28 +3,32 @@
   <head>
     <meta charset="UTF-8" />
 
-    <!-- FAVICONS (Google + browser optimized) -->
-    <link rel="shortcut icon" href="https://evencers.com/favicon.ico" />
-    <link rel="icon" type="image/x-icon" href="https://evencers.com/favicon.ico" />
-    <link rel="icon" type="image/png" sizes="48x48" href="https://evencers.com/favicon-48x48.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="https://evencers.com/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="https://evencers.com/favicon-16x16.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="https://evencers.com/apple-touch-icon.png" />
-    <link rel="manifest" href="https://evencers.com/site.webmanifest" />
+    <!-- FAVICONS (CORS SAFE - RELATIVE PATHS) -->
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+    <!-- ✅ FIXED MANIFEST -->
+    <link rel="manifest" href="/site.webmanifest" />
 
     <!-- SEO -->
     <meta name="description" content="Evencers helps you find verified event vendors for weddings, birthdays, and corporate events across India. Book photographers, decorators, and more.">
     <meta name="keywords" content="event planning, wedding vendors, decorators, photographers, catering India">
     <meta name="author" content="Evencers">
-    <link rel="canonical" href="https://evencers.com" />
 
-    <!-- OPEN GRAPH (Facebook / LinkedIn) -->
+    <!-- ✅ FIXED CANONICAL -->
+    <link rel="canonical" href="https://www.evencers.com" />
+
+    <!-- OPEN GRAPH -->
     <meta property="og:title" content="Evencers - India's Premier Event Platform">
     <meta property="og:description" content="Find verified vendors for your perfect event.">
-    <meta property="og:image" content="https://evencers.com/logo-new.png">
+    <meta property="og:image" content="https://www.evencers.com/logo-new.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:url" content="https://evencers.com">
+    <meta property="og:url" content="https://www.evencers.com">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Evencers">
 
@@ -32,16 +36,16 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Evencers - India's Premier Event Platform">
     <meta name="twitter:description" content="Find the best event vendors in India.">
-    <meta name="twitter:image" content="https://evencers.com/logo-new.png">
+    <meta name="twitter:image" content="https://www.evencers.com/logo-new.png">
 
-    <!-- STRUCTURED DATA (CRITICAL FOR GOOGLE LOGO) -->
+    <!-- STRUCTURED DATA -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Organization",
       "name": "Evencers",
-      "url": "https://evencers.com",
-      "logo": "https://evencers.com/logo-new.png",
+      "url": "https://www.evencers.com",
+      "logo": "https://www.evencers.com/logo-new.png",
       "sameAs": [
         "https://www.instagram.com/evencers",
         "https://www.facebook.com/evencers"
@@ -58,6 +62,7 @@
     <!-- Razorpay -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   </head>
+
   <body style="margin:0; padding:0; overflow-x:hidden; background:#0e0c0a;">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
