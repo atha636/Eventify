@@ -413,7 +413,7 @@ export default function Home() {
           {/* ── TOP BAND: brand tagline ── */}
           <div className={`hm-footer-topband hm-reveal ${footerVisible ? "hm-revealed" : ""}`}>
             <div className="hm-footer-topband-inner">
-              <span className="hm-footer-topband-label">Crafting Extraordinary Moments Since 2023</span>
+              <span className="hm-footer-topband-label">Crafting Extraordinary Moments Since 2026</span>
               <div className="hm-footer-topband-line" />
             </div>
           </div>
