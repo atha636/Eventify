@@ -134,48 +134,42 @@ export default function Home() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
 
-  // ✅ ADD THIS HERE
   useEffect(() => {
     document.title = "Evencers – India's Premier Event Planning Platform";
-
     let meta = document.querySelector('meta[name="description"]');
     if (!meta) {
       meta = document.createElement("meta");
       meta.name = "description";
       document.head.appendChild(meta);
     }
-
     meta.setAttribute(
       "content",
       "Evencers connects you with verified vendors for weddings, birthdays, corporate events & more. Browse decoration, photography, catering, music, florals, and venues across India."
     );
-
-    return () => {
-  document.title = "Evencers";
-};
+    return () => { document.title = "Evencers"; };
   }, []);
 
   const services = [
-    { name: "Decor", type: "decor", emoji: "🎨", desc: "Transform any space into something magical", count: "10+ vendors", color: "#a78bfa" },
-    { name: "Photography", type: "photography", emoji: "📸", desc: "Capture every moment, forever preserved", count: "15+ vendors", color: "#f59e0b" },
-    { name: "Catering", type: "catering", emoji: "🍽", desc: "Exquisite menus crafted for your occasion", count: "loading..", color: "#34d399" },
-    { name: "Music & DJ", type: "music", emoji: "🎵", desc: "Set the perfect mood for your celebration", count: "loading..", color: "#f87171" },
-    { name: "Florals", type: "florals", emoji: "💐", desc: "Blooms that breathe life into every event", count: "loading..", color: "#fb7185" },
-    { name: "Venues", type: "venues", emoji: "🏛", desc: "Iconic spaces for unforgettable gatherings", count: "loading..", color: "#38bdf8" },
+    { name: "Decor",       type: "decor",       emoji: "🎨", desc: "Transform any space into something magical",        count: "10+ vendors",  color: "#a78bfa" },
+    { name: "Photography", type: "photography", emoji: "📸", desc: "Capture every moment, forever preserved",           count: "15+ vendors",  color: "#f59e0b" },
+    { name: "Catering",    type: "catering",    emoji: "🍽", desc: "Exquisite menus crafted for your occasion",         count: "loading..",    color: "#34d399" },
+    { name: "Music & DJ",  type: "music",       emoji: "🎵", desc: "Set the perfect mood for your celebration",         count: "loading..",    color: "#f87171" },
+    { name: "Florals",     type: "florals",     emoji: "💐", desc: "Blooms that breathe life into every event",         count: "loading..",    color: "#fb7185" },
+    { name: "Venues",      type: "venues",      emoji: "🏛", desc: "Iconic spaces for unforgettable gatherings",        count: "loading..",    color: "#38bdf8" },
   ];
 
   const testimonials = [
-    { name: "Priya S.", event: "Wedding · Delhi", text: "Found our photographer and decorator within an hour. Absolutely seamless experience.", avatar: "P" },
-    { name: "Rohan M.", event: "Corporate · Delhi", text: "The vendor quality is exceptional. Our product launch was a massive success.", avatar: "R" },
-    { name: "Ananya K.", event: "Birthday · Chandigarh", text: "I was overwhelmed planning alone. Evencers made it feel effortless and fun.", avatar: "A" },
+    { name: "Priya S.",   event: "Wedding · Delhi",       text: "Found our photographer and decorator within an hour. Absolutely seamless experience.", avatar: "P" },
+    { name: "Rohan M.",   event: "Corporate · Delhi",     text: "The vendor quality is exceptional. Our product launch was a massive success.",         avatar: "R" },
+    { name: "Ananya K.",  event: "Birthday · Chandigarh", text: "I was overwhelmed planning alone. Evencers made it feel effortless and fun.",           avatar: "A" },
   ];
 
   const [servicesRef, servicesVisible] = useReveal();
-  const [howRef, howVisible] = useReveal();
-  const [testRef, testVisible] = useReveal();
-  const [ctaRef, ctaVisible] = useReveal();
-  const [footerRef, footerVisible] = useReveal(0.05);
-  const [searchVal, setSearchVal] = useState("");
+  const [howRef,      howVisible]      = useReveal();
+  const [testRef,     testVisible]     = useReveal();
+  const [ctaRef,      ctaVisible]      = useReveal();
+  const [footerRef,   footerVisible]   = useReveal(0.05);
+  const [searchVal,   setSearchVal]    = useState("");
 
   return (
     <>
@@ -200,18 +194,17 @@ export default function Home() {
               India's Premier Event Platform
             </span>
             <h1 className="hm-hero-title">
-  {/* Hidden static text for SEO */}
-  <span className="hm-sr-only">
-    India's Premier Event Planning Platform – Every great event deserves greatness
-  </span>
-
-  {/* Visible animated text */}
-  <span aria-hidden="true">
-    Every great event<br />
-    <em>deserves </em>
-    <Typewriter words={["greatness.", "perfection.", "magic.", "a great team."]} />
-  </span>
-</h1>
+              {/* Hidden static text for SEO */}
+              <span className="hm-sr-only">
+                India's Premier Event Planning Platform – Every great event deserves greatness
+              </span>
+              {/* Visible animated text */}
+              <span aria-hidden="true">
+                Every great event<br />
+                <em>deserves </em>
+                <Typewriter words={["greatness.", "perfection.", "magic.", "a great team."]} />
+              </span>
+            </h1>
             <p className="hm-hero-sub">
               Discover verified vendors for decoration, photography, catering, and more —
               curated for your perfect occasion.
@@ -244,15 +237,16 @@ export default function Home() {
 
             <div className="hm-hero-pills">
               {[
-                { label: "Weddings", cat: "decor" },
-                { label: "Birthdays", cat: "catering" },
-                { label: "Corporate", cat: "venues" },
-                { label: "Anniversaries", cat: "photography" },
+                { label: "Weddings",     cat: "decor"       },
+                { label: "Birthdays",    cat: "catering"    },
+                { label: "Corporate",    cat: "venues"      },
+                { label: "Anniversaries",cat: "photography" },
               ].map((t) => (
                 <span
                   key={t.label}
                   className="hm-pill"
-                  onClick={() => navigate(`/vendors?cat=${t.cat}`)}
+                  // ✅ Pills also go to category page
+                  onClick={() => navigate(`/category/${t.cat}`)}
                 >
                   {t.label}
                 </span>
@@ -281,10 +275,10 @@ export default function Home() {
 
           <div className="hm-hero-stats">
             {[
-              { num: "100", suffix: "+", label: "Happy Clients" },
-              { num: "20", suffix: "+", label: "Vendors" },
-              { num: "2", suffix: "+", label: "Cities" },
-              { num: "4", suffix: ".9★", label: "Rating" },
+              { num: "100", suffix: "+",   label: "Happy Clients" },
+              { num: "20",  suffix: "+",   label: "Vendors"       },
+              { num: "2",   suffix: "+",   label: "Cities"        },
+              { num: "4",   suffix: ".9★", label: "Rating"        },
             ].map((s, i) => (
               <div key={i} className="hm-hero-stat">
                 <span className="hm-stat-num">
@@ -299,7 +293,7 @@ export default function Home() {
         {/* ── SERVICES ── */}
         <section className="hm-section" ref={servicesRef}>
           <div className={`hm-section-header hm-reveal ${servicesVisible ? "hm-revealed" : ""}`}>
-            <p className="hm-eyebrow"> What we offer</p>
+            <p className="hm-eyebrow">What we offer</p>
             <h2 className="hm-section-title">Browse by Service</h2>
             <p className="hm-section-sub">Hand-picked professionals for every kind of celebration</p>
           </div>
@@ -309,8 +303,13 @@ export default function Home() {
               <div
                 key={s.type}
                 className={`hm-service-card hm-reveal ${servicesVisible ? "hm-revealed" : ""}`}
-                onClick={() => navigate(`/vendors?cat=${s.type}`)}
+                // ✅ THIS IS THE FIX — was /vendors?cat= now /category/:type
+                onClick={() => navigate(`/category/${s.type}`)}
                 style={{ transitionDelay: `${i * 0.07}s`, "--card-accent": s.color }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === "Enter" && navigate(`/category/${s.type}`)}
+                aria-label={`Browse ${s.name} vendors`}
               >
                 <div className="hm-service-glow" style={{ background: s.color }} />
                 <div className="hm-service-emoji">{s.emoji}</div>
@@ -331,14 +330,14 @@ export default function Home() {
         <section className="hm-how" ref={howRef}>
           <div className="hm-how-inner">
             <div className={`hm-section-header hm-reveal ${howVisible ? "hm-revealed" : ""}`}>
-              <p className="hm-eyebrow" style={{ color: "var(--gold-light)" }}> Simple process</p>
+              <p className="hm-eyebrow" style={{ color: "var(--gold-light)" }}>Simple process</p>
               <h2 className="hm-section-title" style={{ color: "var(--cream)" }}>How Evencers works</h2>
             </div>
             <div className="hm-steps">
               {[
-                { n: "01", title: "Browse & Filter", desc: "Explore hundreds of verified vendors across categories and locations.", icon: "🔍" },
-                { n: "02", title: "Choose a Package", desc: "Compare packages, pricing, and reviews to find your perfect match.", icon: "💎" },
-                { n: "03", title: "Book Instantly", desc: "Confirm your date with a single click. No back-and-forth emails.", icon: "⚡" },
+                { n: "01", title: "Browse & Filter",  desc: "Explore hundreds of verified vendors across categories and locations.", icon: "🔍" },
+                { n: "02", title: "Choose a Package", desc: "Compare packages, pricing, and reviews to find your perfect match.",    icon: "💎" },
+                { n: "03", title: "Book Instantly",   desc: "Confirm your date with a single click. No back-and-forth emails.",      icon: "⚡" },
               ].map((step, i) => (
                 <div
                   key={step.n}
@@ -387,7 +386,7 @@ export default function Home() {
           <div className="hm-cta-orb hm-cta-orb1" />
           <div className="hm-cta-orb hm-cta-orb2" />
           <div className={`hm-cta-inner hm-reveal ${ctaVisible ? "hm-revealed" : ""}`}>
-            <p className="hm-eyebrow" style={{ color: "var(--gold)" }}> Ready to begin?</p>
+            <p className="hm-eyebrow" style={{ color: "var(--gold)" }}>Ready to begin?</p>
             <h2 className="hm-cta-title">Your dream event starts here.</h2>
             <p className="hm-cta-sub">Join over 120 clients who planned their perfect day with Evencers.</p>
             <div className="hm-cta-btns">
@@ -402,15 +401,11 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ══════════════════════════════════════════
-            ── FOOTER (UPGRADED) ──
-        ══════════════════════════════════════════ */}
+        {/* ── FOOTER ── */}
         <footer className="hm-footer" ref={footerRef}>
-          {/* Ambient glow orbs */}
           <div className="hm-footer-orb hm-footer-orb1" />
           <div className="hm-footer-orb hm-footer-orb2" />
 
-          {/* ── TOP BAND: brand tagline ── */}
           <div className={`hm-footer-topband hm-reveal ${footerVisible ? "hm-revealed" : ""}`}>
             <div className="hm-footer-topband-inner">
               <span className="hm-footer-topband-label">Crafting Extraordinary Moments Since 2026</span>
@@ -418,7 +413,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ── MAIN GRID ── */}
           <div className={`hm-footer-grid hm-reveal ${footerVisible ? "hm-revealed" : ""}`} style={{ transitionDelay: "0.1s" }}>
 
             {/* COL 1 — Brand */}
@@ -430,14 +424,8 @@ export default function Home() {
               <p className="hm-footer-brand-desc">
                 India's premier event planning platform, connecting you with the finest vendors for every celebration — weddings, corporate events, birthdays & more.
               </p>
-              {/* Social icons */}
               <div className="hm-footer-socials">
-                <a
-                  href="https://wa.me/917023017517?text=Hello%20Evencers%20Support"
-                  target="_blank" rel="noreferrer"
-                  className="hm-social-btn"
-                  aria-label="WhatsApp"
-                >
+                <a href="https://wa.me/917023017517?text=Hello%20Evencers%20Support" target="_blank" rel="noreferrer" className="hm-social-btn" aria-label="WhatsApp">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                   </svg>
@@ -464,17 +452,17 @@ export default function Home() {
               </h4>
               <ul className="hm-footer-list">
                 {[
-                  { label: "Home", path: "/" },
-                  { label: "Browse Vendors", path: "/vendors" },
-                  { label: "About Us", path: "/about" },
-                  { label: "How It Works", path: "/" },
-                  { label: "Get Started", path: "/register" },
+                  { label: "Home",           path: "/"         },
+                  { label: "Browse Vendors", path: "/vendors"  },
+                  { label: "About Us",       path: "/about"    },
+                  { label: "How It Works",   path: "/vendors#how-it-works" },
+                  { label: "Get Started",    path: "/register" },
                 ].map((l) => (
                   <li key={l.label}>
                     <span
                       className="hm-footer-list-link"
                       onClick={() => navigate(l.path)}
-                      style={{ cursor: 'pointer' }}
+                      style={{ cursor: "pointer" }}
                     >
                       <span className="hm-footer-list-arrow">›</span>
                       {l.label}
@@ -492,18 +480,19 @@ export default function Home() {
               </h4>
               <ul className="hm-footer-list">
                 {[
-                  { label: "🎨  Decoration", cat: "decor" },
-                  { label: "📸  Photography", cat: "photography" },
-                  { label: "🍽  Catering", cat: "catering" },
-                  { label: "🎵  Music & DJ", cat: "music" },
-                  { label: "💐  Florals", cat: "florals" },
-                  { label: "🏛  Venues", cat: "venues" },
+                  { label: "🎨  Decoration", cat: "decor"       },
+                  { label: "📸  Photography",cat: "photography" },
+                  { label: "🍽  Catering",   cat: "catering"    },
+                  { label: "🎵  Music & DJ", cat: "music"       },
+                  { label: "💐  Florals",    cat: "florals"     },
+                  { label: "🏛  Venues",     cat: "venues"      },
                 ].map((s) => (
                   <li key={s.cat}>
                     <span
                       className="hm-footer-list-link"
-                      onClick={() => navigate(`/vendors?cat=${s.cat}`)}
-                      style={{ cursor: 'pointer' }}
+                      // ✅ Footer service links also go to category page
+                      onClick={() => navigate(`/category/${s.cat}`)}
+                      style={{ cursor: "pointer" }}
                     >
                       <span className="hm-footer-list-arrow">›</span>
                       {s.label}
@@ -513,14 +502,12 @@ export default function Home() {
               </ul>
             </div>
 
-            {/* COL 4 — Contact & Address */}
+            {/* COL 4 — Contact */}
             <div className="hm-footer-col">
               <h4 className="hm-footer-col-title">
                 <span className="hm-footer-col-title-line" />
                 Get In Touch
               </h4>
-
-              {/* Address card */}
               <div className="hm-footer-address-card">
                 <div className="hm-footer-address-pin">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -537,7 +524,6 @@ export default function Home() {
                   </address>
                 </div>
               </div>
-
               <ul className="hm-footer-contact-list">
                 <li>
                   <a href="mailto:admineventify2005@gmail.com" className="hm-footer-contact-item">
@@ -552,11 +538,7 @@ export default function Home() {
                   </a>
                 </li>
                 <li>
-                  <a
-                    href="https://wa.me/917023017517?text=Hello%20Evencers%20Support"
-                    target="_blank" rel="noreferrer"
-                    className="hm-footer-contact-item"
-                  >
+                  <a href="https://wa.me/917023017517?text=Hello%20Evencers%20Support" target="_blank" rel="noreferrer" className="hm-footer-contact-item">
                     <span className="hm-footer-contact-icon">💬</span>
                     <span>WhatsApp Support</span>
                   </a>
@@ -569,14 +551,12 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ── DIVIDER ── */}
           <div className={`hm-footer-divider hm-reveal ${footerVisible ? "hm-revealed" : ""}`} style={{ transitionDelay: "0.22s" }}>
             <div className="hm-footer-divider-line" />
             <div className="hm-footer-divider-diamond">◆</div>
             <div className="hm-footer-divider-line" />
           </div>
 
-          {/* ── BOTTOM BAR ── */}
           <div className={`hm-footer-bottom hm-reveal ${footerVisible ? "hm-revealed" : ""}`} style={{ transitionDelay: "0.3s" }}>
             <p className="hm-footer-copy">
               © 2025 <span style={{ color: "var(--gold)" }}>Evencers</span>. Crafted with <span className="hm-footer-heart">♥</span> in India.
@@ -1042,36 +1022,22 @@ const styles = `
     .hm-cta-secondary:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-2px); }
   }
 
-  /* ══════════════════════════════════════
-     ── FOOTER (UPGRADED) ──
-  ══════════════════════════════════════ */
+  /* ── FOOTER ── */
   .hm-footer {
     background: #080604;
     border-top: 1px solid rgba(201,168,76,0.12);
-    position: relative;
-    overflow: hidden;
-    padding: 0 0 0;
+    position: relative; overflow: hidden; padding: 0;
   }
-
-  /* ambient glow orbs in footer */
   .hm-footer-orb {
     position: absolute; border-radius: 50%;
     filter: blur(110px); pointer-events: none; z-index: 0;
   }
-  .hm-footer-orb1 {
-    width: 500px; height: 300px; background: var(--gold); opacity: 0.04;
-    top: 0; left: -100px;
-  }
-  .hm-footer-orb2 {
-    width: 360px; height: 360px; background: #7b5ea7; opacity: 0.04;
-    bottom: 0; right: -80px;
-  }
+  .hm-footer-orb1 { width: 500px; height: 300px; background: var(--gold); opacity: 0.04; top: 0; left: -100px; }
+  .hm-footer-orb2 { width: 360px; height: 360px; background: #7b5ea7; opacity: 0.04; bottom: 0; right: -80px; }
 
-  /* ── TOP BAND ── */
   .hm-footer-topband {
     border-bottom: 1px solid rgba(201,168,76,0.08);
-    padding: 18px 48px;
-    position: relative; z-index: 1;
+    padding: 18px 48px; position: relative; z-index: 1;
   }
   .hm-footer-topband-inner {
     max-width: 1180px; margin: 0 auto;
@@ -1086,53 +1052,35 @@ const styles = `
     background: linear-gradient(90deg, rgba(201,168,76,0.2), transparent);
   }
 
-  /* ── MAIN GRID ── */
   .hm-footer-grid {
     max-width: 1180px; margin: 0 auto;
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1.6fr;
-    gap: 48px 40px;
-    padding: 56px 48px 48px;
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1.6fr;
+    gap: 48px 40px; padding: 56px 48px 48px;
     position: relative; z-index: 1;
   }
   @media (max-width: 1024px) {
-    .hm-footer-grid {
-      grid-template-columns: 1fr 1fr;
-      gap: 40px 32px;
-      padding: 48px 32px 40px;
-    }
+    .hm-footer-grid { grid-template-columns: 1fr 1fr; gap: 40px 32px; padding: 48px 32px 40px; }
     .hm-footer-col-brand { grid-column: 1 / -1; }
   }
   @media (max-width: 560px) {
-    .hm-footer-grid {
-      grid-template-columns: 1fr;
-      padding: 40px 20px 32px;
-      gap: 36px;
-    }
+    .hm-footer-grid { grid-template-columns: 1fr; padding: 40px 20px 32px; gap: 36px; }
     .hm-footer-col-brand { grid-column: auto; }
     .hm-footer-topband { padding: 16px 20px; }
   }
 
-  /* ── BRAND COL ── */
-  .hm-footer-logo-wrap {
-    display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
-  }
+  .hm-footer-logo-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
   .hm-footer-logo-text {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 1.15rem; font-weight: 600; color: var(--gold);
-    letter-spacing: 0.22em;
+    font-size: 1.15rem; font-weight: 600; color: var(--gold); letter-spacing: 0.22em;
   }
   .hm-footer-brand-desc {
     font-size: 12.5px; color: rgba(122,114,101,0.7); line-height: 1.85;
     max-width: 320px; margin-bottom: 22px;
   }
-
-  /* social icons */
   .hm-footer-socials { display: flex; gap: 10px; }
   .hm-social-btn {
     width: 36px; height: 36px; border-radius: 10px;
-    background: rgba(201,168,76,0.06);
-    border: 1px solid rgba(201,168,76,0.15);
+    background: rgba(201,168,76,0.06); border: 1px solid rgba(201,168,76,0.15);
     color: rgba(201,168,76,0.55);
     display: flex; align-items: center; justify-content: center;
     text-decoration: none;
@@ -1140,16 +1088,10 @@ const styles = `
     -webkit-tap-highlight-color: transparent;
   }
   @media (hover: hover) {
-    .hm-social-btn:hover {
-      background: rgba(201,168,76,0.14);
-      border-color: var(--gold);
-      color: var(--gold);
-      transform: translateY(-3px);
-    }
+    .hm-social-btn:hover { background: rgba(201,168,76,0.14); border-color: var(--gold); color: var(--gold); transform: translateY(-3px); }
   }
   .hm-social-btn:active { transform: scale(0.95); }
 
-  /* ── COL TITLE ── */
   .hm-footer-col-title {
     font-family: 'Cormorant Garamond', serif;
     font-size: 0.95rem; font-weight: 600; color: var(--gold-light);
@@ -1160,38 +1102,26 @@ const styles = `
     display: inline-block; width: 18px; height: 1px;
     background: var(--gold); opacity: 0.5; flex-shrink: 0;
   }
-
-  /* ── LIST ── */
-  .hm-footer-list {
-    list-style: none; display: flex; flex-direction: column; gap: 10px;
-  }
+  .hm-footer-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
   .hm-footer-list-link {
     font-size: 12.5px; color: rgba(122,114,101,0.7); text-decoration: none;
     display: flex; align-items: center; gap: 7px;
     transition: color 0.2s, gap 0.2s;
     -webkit-tap-highlight-color: transparent;
   }
-  .hm-footer-list-arrow {
-    color: rgba(201,168,76,0.3); font-size: 14px; transition: color 0.2s;
-    flex-shrink: 0;
-  }
+  .hm-footer-list-arrow { color: rgba(201,168,76,0.3); font-size: 14px; transition: color 0.2s; flex-shrink: 0; }
   @media (hover: hover) {
     .hm-footer-list-link:hover { color: var(--gold-light); gap: 10px; }
     .hm-footer-list-link:hover .hm-footer-list-arrow { color: var(--gold); }
   }
 
-  /* ── ADDRESS CARD ── */
   .hm-footer-address-card {
     display: flex; gap: 12px; align-items: flex-start;
-    background: rgba(201,168,76,0.04);
-    border: 1px solid rgba(201,168,76,0.1);
-    border-radius: 10px; padding: 14px 16px;
-    margin-bottom: 18px;
+    background: rgba(201,168,76,0.04); border: 1px solid rgba(201,168,76,0.1);
+    border-radius: 10px; padding: 14px 16px; margin-bottom: 18px;
     transition: border-color 0.3s;
   }
-  @media (hover: hover) {
-    .hm-footer-address-card:hover { border-color: rgba(201,168,76,0.25); }
-  }
+  @media (hover: hover) { .hm-footer-address-card:hover { border-color: rgba(201,168,76,0.25); } }
   .hm-footer-address-pin {
     width: 28px; height: 28px; border-radius: 8px;
     background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.2);
@@ -1199,41 +1129,28 @@ const styles = `
     color: var(--gold); flex-shrink: 0; margin-top: 2px;
   }
   .hm-footer-address-label {
-    display: block; font-size: 9px; letter-spacing: 0.18em;
-    text-transform: uppercase; color: var(--gold);
-    opacity: 0.7; margin-bottom: 5px;
+    display: block; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--gold); opacity: 0.7; margin-bottom: 5px;
   }
-  .hm-footer-address-text {
-    font-size: 12.5px; color: rgba(245,240,232,0.55); line-height: 1.75;
-    font-style: normal;
-  }
+  .hm-footer-address-text { font-size: 12.5px; color: rgba(245,240,232,0.55); line-height: 1.75; font-style: normal; }
 
-  /* ── CONTACT LIST ── */
-  .hm-footer-contact-list {
-    list-style: none; display: flex; flex-direction: column; gap: 11px;
-  }
+  .hm-footer-contact-list { list-style: none; display: flex; flex-direction: column; gap: 11px; }
   .hm-footer-contact-item {
     display: flex; align-items: center; gap: 9px;
     font-size: 12.5px; color: rgba(122,114,101,0.7); text-decoration: none;
-    transition: color 0.2s;
-    -webkit-tap-highlight-color: transparent;
+    transition: color 0.2s; -webkit-tap-highlight-color: transparent;
   }
-  @media (hover: hover) {
-    .hm-footer-contact-item:hover { color: var(--gold-light); }
-  }
+  @media (hover: hover) { .hm-footer-contact-item:hover { color: var(--gold-light); } }
   .hm-footer-contact-icon { font-size: 13px; flex-shrink: 0; }
   .hm-footer-hours-item {
     display: flex; align-items: center; gap: 9px;
     font-size: 11.5px; color: rgba(122,114,101,0.45);
-    padding-top: 6px; border-top: 1px solid rgba(201,168,76,0.07);
-    margin-top: 2px;
+    padding-top: 6px; border-top: 1px solid rgba(201,168,76,0.07); margin-top: 2px;
   }
 
-  /* ── DIVIDER ── */
   .hm-footer-divider {
     display: flex; align-items: center; gap: 14px;
-    max-width: 1180px; margin: 0 auto;
-    padding: 0 48px;
+    max-width: 1180px; margin: 0 auto; padding: 0 48px;
     position: relative; z-index: 1;
   }
   @media (max-width: 560px) { .hm-footer-divider { padding: 0 20px; } }
@@ -1251,36 +1168,26 @@ const styles = `
     100% { transform: rotate(360deg) scale(1); }
   }
 
-  /* ── BOTTOM BAR ── */
   .hm-footer-bottom {
     max-width: 1180px; margin: 0 auto;
     display: flex; align-items: center; justify-content: space-between;
-    flex-wrap: wrap; gap: 12px;
-    padding: 20px 48px 32px;
+    flex-wrap: wrap; gap: 12px; padding: 20px 48px 32px;
     position: relative; z-index: 1;
   }
   @media (max-width: 560px) {
-    .hm-footer-bottom {
-      flex-direction: column; align-items: center;
-      text-align: center; padding: 16px 20px 28px;
-    }
+    .hm-footer-bottom { flex-direction: column; align-items: center; text-align: center; padding: 16px 20px 28px; }
   }
   .hm-footer-copy { font-size: 11.5px; color: rgba(122,114,101,0.45); }
   .hm-footer-heart { color: #e05252; }
-  .hm-footer-bottom-links {
-    display: flex; gap: 20px; flex-wrap: wrap; justify-content: flex-end;
-  }
+  .hm-footer-bottom-links { display: flex; gap: 20px; flex-wrap: wrap; justify-content: flex-end; }
   @media (max-width: 560px) { .hm-footer-bottom-links { justify-content: center; } }
   .hm-footer-bottom-link {
     font-size: 11px; color: rgba(122,114,101,0.38); text-decoration: none;
-    letter-spacing: 0.04em; transition: color 0.2s;
-    -webkit-tap-highlight-color: transparent;
+    letter-spacing: 0.04em; transition: color 0.2s; -webkit-tap-highlight-color: transparent;
   }
-  @media (hover: hover) {
-    .hm-footer-bottom-link:hover { color: rgba(201,168,76,0.6); }
-  }
+  @media (hover: hover) { .hm-footer-bottom-link:hover { color: rgba(201,168,76,0.6); } }
 
-  /* ── MOBILE OVERRIDES ── */
+  /* ── MOBILE ── */
   @media (max-width: 480px) {
     .hm-hero { padding: 76px 16px 0; }
     .hm-hero-sub { font-size: 13.5px; }
@@ -1299,23 +1206,15 @@ const styles = `
     .hm-cta-primary, .hm-cta-secondary { width: 100%; max-width: 300px; justify-content: center; }
   }
 
-  /* ── Reduced motion ── */
   @media (prefers-reduced-motion: reduce) {
     .hm-reveal { transition: none; }
     .hm-orb, .hm-float-card, .hm-eyebrow-dot, .hm-cursor,
     .hm-footer-divider-diamond { animation: none; }
   }
 
-.hm-sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0,0,0,0);
-  white-space: nowrap;
-  border: 0;
-}
-
+  .hm-sr-only {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
 `;
