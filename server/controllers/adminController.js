@@ -127,7 +127,7 @@ exports.updateUserRole = async (req, res) => {
 // ─────────────────────────────────────────
 exports.getServices = async (req, res) => {
   try {
-    const services = await Vendor.find().populate("vendorId", "name email").sort({ createdAt: -1 });
+    const services = await Vendor.find().populate("vendorId", "name email isVendorVerified").sort({ createdAt: -1 });
     res.json(services);
   } catch (err) {
     res.status(500).json({ msg: "Server error" });
@@ -163,14 +163,9 @@ exports.toggleServiceApproval = async (req, res) => {
   }
 };
 
-// ═══════════════════════════════════════════════════════════════
-// CHANGE 1 ── ADMIN SERVICE MANAGEMENT
-// ═══════════════════════════════════════════════════════════════
-
 // ─────────────────────────────────────────
 // SERVICES — EDIT TITLE (admin)
 // PUT /api/admin/services/:id/title
-// body: { title: "New Title" }
 // ─────────────────────────────────────────
 exports.editServiceTitle = async (req, res) => {
   const { title } = req.body;
@@ -186,7 +181,6 @@ exports.editServiceTitle = async (req, res) => {
 
     if (!service) return res.status(404).json({ msg: "Service not found" });
 
-    // Notify vendor about the title change
     setImmediate(async () => {
       try {
         const vendorUser = service.vendorId;
@@ -221,7 +215,6 @@ exports.editServiceTitle = async (req, res) => {
 // ─────────────────────────────────────────
 // SERVICES — DELETE SINGLE IMAGE (admin)
 // DELETE /api/admin/services/:id/images
-// body: { imageUrl: "https://..." }
 // ─────────────────────────────────────────
 exports.deleteServiceImage = async (req, res) => {
   const { imageUrl } = req.body;
@@ -235,7 +228,6 @@ exports.deleteServiceImage = async (req, res) => {
       return res.status(404).json({ msg: "Image not found in this service" });
     }
 
-    // Must keep at least 1 image
     if (service.images.length <= 1) {
       return res.status(400).json({ msg: "Cannot delete the last image. A service must have at least one image." });
     }
@@ -243,7 +235,6 @@ exports.deleteServiceImage = async (req, res) => {
     service.images = service.images.filter((img) => img !== imageUrl);
     await service.save();
 
-    // Notify vendor about image removal
     setImmediate(async () => {
       try {
         const vendorUser = service.vendorId;
@@ -260,7 +251,7 @@ exports.deleteServiceImage = async (req, res) => {
           await sendEmail({
             to:      vendorUser.email,
             subject: "Service Image Removed ⚠️",
-            text:    `Hello ${vendorUser.name},\n\nAdmin has removed an image from your service "${service.title}".\n\nYour service now has ${service.images.length} image(s). If you have questions, please contact support.\n\n- Evencers Team`,
+            text:    `Hello ${vendorUser.name},\n\nAdmin has removed an image from your service "${service.title}".\n\nYour service now has ${service.images.length} image(s).\n\n- Evencers Team`,
           }).catch(() => {});
         }
       } catch (e) {
@@ -330,8 +321,6 @@ exports.deleteBooking = async (req, res) => {
 // VENDOR PROFILE VERIFICATION
 // ═══════════════════════════════════════════════════════════════
 
-// GET all vendors pending verification
-// GET /api/admin/vendor-verifications
 exports.getPendingVendors = async (req, res) => {
   try {
     const { status = "pending" } = req.query;
@@ -349,13 +338,6 @@ exports.getPendingVendors = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────
-// APPROVE or REJECT a vendor profile
-// PUT /api/admin/vendor-verifications/:id
-// body: { action: "approve" | "reject", reason?: "..." }
-//
-// CHANGE 1: On approve → also notifies vendor "service will be live soon"
-// ─────────────────────────────────────────
 exports.verifyVendorProfile = async (req, res) => {
   const { action, reason } = req.body;
 
@@ -373,10 +355,8 @@ exports.verifyVendorProfile = async (req, res) => {
     vendor.profileRejectionReason = approved ? "" : (reason || "");
     await vendor.save();
 
-    // ── Background: email + in-app notification ──
     setImmediate(async () => {
       try {
-        // Send verification result email (existing helper)
         await sendVendorVerificationResult({
           vendorEmail: vendor.email,
           vendorName:  vendor.name,
@@ -385,7 +365,6 @@ exports.verifyVendorProfile = async (req, res) => {
         }).catch((e) => console.error("Verification email error (non-fatal):", e.message));
 
         if (approved) {
-          // ── CHANGE 1: "Your service will be live very soon" in-app notification ──
           await Notification.create({
             userId:    vendor._id,
             type:      "service_live_soon",
@@ -394,7 +373,6 @@ exports.verifyVendorProfile = async (req, res) => {
             bookingId: null,
           });
 
-          // Also send a warm welcome email with next steps
           await sendEmail({
             to:      vendor.email,
             subject: "✅ Profile Approved — Your Services Go Live on Evencers!",
@@ -402,7 +380,6 @@ exports.verifyVendorProfile = async (req, res) => {
           }).catch(() => {});
 
         } else {
-          // Rejection in-app notification
           await Notification.create({
             userId:    vendor._id,
             type:      "profile_rejected",
@@ -427,6 +404,78 @@ exports.verifyVendorProfile = async (req, res) => {
     });
   } catch (err) {
     console.error("VERIFY VENDOR ERROR:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// VENDOR BADGE VERIFICATION
+// Separate from profile verification — this is the trust badge
+// that appears on service cards and vendor detail pages.
+//
+// PUT /api/admin/vendor-verifications/:id/badge
+// ═══════════════════════════════════════════════════════════════
+exports.toggleVendorVerified = async (req, res) => {
+  try {
+    const vendor = await User.findById(req.params.id);
+    if (!vendor) return res.status(404).json({ msg: "Vendor not found" });
+    if (vendor.role !== "vendor") return res.status(400).json({ msg: "User is not a vendor" });
+
+    // Only approved vendors can receive the badge
+    if (!vendor.isVendorVerified && vendor.isProfileVerified !== "approved") {
+      return res.status(400).json({ msg: "Vendor profile must be approved before awarding the verified badge." });
+    }
+
+    vendor.isVendorVerified = !vendor.isVendorVerified;
+    await vendor.save();
+
+    // Background: notify vendor
+    setImmediate(async () => {
+      try {
+        if (vendor.isVendorVerified) {
+          await Notification.create({
+            userId:    vendor._id,
+            type:      "vendor_verified",
+            title:     "🏅 You've been Verified!",
+            message:   "Congratulations! Your vendor profile has received a Verified badge from Evencers admin. This badge will now appear on all your service listings and boost customer trust.",
+            bookingId: null,
+          });
+          await sendEmail({
+            to:      vendor.email,
+            subject: "🏅 You're now a Verified Vendor on Evencers!",
+            text:    `Hello ${vendor.name},\n\nGreat news! Our admin team has awarded your profile the Evencers Verified badge.\n\nThis badge will appear on all your service cards and boost customer trust.\n\nKeep delivering excellent service!\n\n- Evencers Team`,
+          }).catch(() => {});
+        } else {
+          await Notification.create({
+            userId:    vendor._id,
+            type:      "vendor_unverified",
+            title:     "Verified Badge Removed",
+            message:   "Your Evencers Verified badge has been removed by admin. Please contact support if you have questions.",
+            bookingId: null,
+          });
+          await sendEmail({
+            to:      vendor.email,
+            subject: "Verified Badge Removed — Evencers",
+            text:    `Hello ${vendor.name},\n\nYour Evencers Verified badge has been removed by our admin team.\n\nIf you believe this is a mistake, please contact support.\n\n- Evencers Team`,
+          }).catch(() => {});
+        }
+      } catch (e) {
+        console.error("toggleVendorVerified notification error:", e.message);
+      }
+    });
+
+    res.json({
+      msg: `Vendor ${vendor.isVendorVerified ? "verified badge awarded" : "verified badge removed"} successfully`,
+      vendor: {
+        _id:               vendor._id,
+        name:              vendor.name,
+        email:             vendor.email,
+        isVendorVerified:  vendor.isVendorVerified,
+        isProfileVerified: vendor.isProfileVerified,
+      },
+    });
+  } catch (err) {
+    console.error("TOGGLE VENDOR VERIFIED ERROR:", err);
     res.status(500).json({ msg: "Server error" });
   }
 };

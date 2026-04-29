@@ -45,6 +45,17 @@ const userSchema = new mongoose.Schema({
   },
   // ──────────────────────────────────────────────────────────────────
 
+  // ── Vendor Trust Badge ────────────────────────────────────────────
+  // true = admin has awarded this vendor the "Verified" badge
+  // This is separate from isProfileVerified (profile approval).
+  // isProfileVerified = "can this vendor operate on the platform?"
+  // isVendorVerified  = "has admin given this vendor a trust badge?"
+  isVendorVerified: {
+    type: Boolean,
+    default: false,
+  },
+  // ──────────────────────────────────────────────────────────────────
+
   // ── Favorites ─────────────────────────────────────────────────────
   favorites: [{
     type: mongoose.Schema.Types.ObjectId,

@@ -12,13 +12,14 @@ const {
   getServices,
   deleteService,
   toggleServiceApproval,
-  editServiceTitle,       // ← CHANGE 1
-  deleteServiceImage,     // ← CHANGE 1
+  editServiceTitle,
+  deleteServiceImage,
   getBookings,
   updateBookingStatus,
   deleteBooking,
   getPendingVendors,
   verifyVendorProfile,
+  toggleVendorVerified,       // ← NEW: trust badge toggle
 } = require("../controllers/adminController");
 
 // ── Auth (public) ────────────────────────────────────────────────
@@ -34,15 +35,11 @@ router.delete("/users/:id",      adminAuth, deleteUser);
 router.put   ("/users/:id/role", adminAuth, updateUserRole);
 
 // ── Services ─────────────────────────────────────────────────────
-router.get   ("/services",                   adminAuth, getServices);
-router.delete("/services/:id",               adminAuth, deleteService);
-router.put   ("/services/:id/toggle",        adminAuth, toggleServiceApproval);
-
-// ── CHANGE 1: Title edit & image delete by admin ─────────────────
-// PUT  /api/admin/services/:id/title    { title }
-// DELETE /api/admin/services/:id/images { imageUrl }
-router.put   ("/services/:id/title",         adminAuth, editServiceTitle);
-router.delete("/services/:id/images",        adminAuth, deleteServiceImage);
+router.get   ("/services",            adminAuth, getServices);
+router.delete("/services/:id",        adminAuth, deleteService);
+router.put   ("/services/:id/toggle", adminAuth, toggleServiceApproval);
+router.put   ("/services/:id/title",  adminAuth, editServiceTitle);
+router.delete("/services/:id/images", adminAuth, deleteServiceImage);
 
 // ── Bookings ─────────────────────────────────────────────────────
 router.get   ("/bookings",     adminAuth, getBookings);
@@ -51,8 +48,10 @@ router.delete("/bookings/:id", adminAuth, deleteBooking);
 
 // ── Vendor Profile Verification ──────────────────────────────────
 // GET  /api/admin/vendor-verifications?status=pending|approved|rejected|all
-// PUT  /api/admin/vendor-verifications/:id  { action: "approve"|"reject", reason? }
-router.get("/vendor-verifications",     adminAuth, getPendingVendors);
-router.put("/vendor-verifications/:id", adminAuth, verifyVendorProfile);
+// PUT  /api/admin/vendor-verifications/:id          { action: "approve"|"reject", reason? }
+// PUT  /api/admin/vendor-verifications/:id/badge    (toggle trust badge)
+router.get("/vendor-verifications",           adminAuth, getPendingVendors);
+router.put("/vendor-verifications/:id",       adminAuth, verifyVendorProfile);
+router.put("/vendor-verifications/:id/badge", adminAuth, toggleVendorVerified);
 
 module.exports = router;

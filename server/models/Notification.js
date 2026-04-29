@@ -9,27 +9,28 @@ const notificationSchema = new mongoose.Schema({
   },
 
   type: {
-    type: String,
-    enum: [
-      // ── Booking flow ─────────────────────────────────────────
-      "booking_received",       // vendor: new booking from user
-      "booking_approved",       // user:   vendor approved
-      "booking_rejected",       // user:   vendor rejected
-      "payment_pending",        // user:   pay now to confirm
-      "payment_done",           // vendor: user paid
+  type: String,
+  enum: [
+  "booking_received",
+  "booking_approved",
+  "booking_rejected",
+  "payment_pending",
+  "payment_done",
 
-      // ── CHANGE 1: Service management ────────────────────────
-      "service_updated",        // vendor: admin edited title / removed image
-      "service_live_soon",      // vendor: profile approved → services going live
-      "profile_rejected",       // vendor: profile rejected by admin
+  "service_updated",
+  "service_live_soon",
+  "profile_rejected",
 
-      // ── CHANGE 2: Date + Address change flow ─────────────────
-      "date_change_requested",  // vendor: user wants to change date/address
-      "date_change_approved",   // user:   vendor approved the change
-      "date_change_rejected",   // user:   vendor rejected the change
-    ],
-    required: true,
-  },
+  "date_change_requested",
+  "date_change_approved",
+  "date_change_rejected",
+
+  // ✅ ADD THESE TWO
+  "vendor_verified",
+  "vendor_unverified"
+],
+  required: true,
+},
 
   title:   { type: String, required: true },
   message: { type: String, required: true },

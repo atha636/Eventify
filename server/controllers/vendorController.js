@@ -12,7 +12,9 @@ exports.getVendors = async (req, res) => {
   try {
     const approvedVendorIds = await User.find({ role: "vendor", isProfileVerified: "approved" }).select("_id");
     const ids = approvedVendorIds.map((v) => v._id);
-    const vendors = await Vendor.find({ isApproved: true, vendorId: { $in: ids } });
+    const vendors = await Vendor
+      .find({ isApproved: true, vendorId: { $in: ids } })
+      .populate("vendorId", "isVendorVerified"); // ← FIX: sends isVendorVerified to frontend
     res.json(vendors);
   } catch (err) {
     console.error("getVendors ERROR:", err);
@@ -28,11 +30,13 @@ exports.getByType = async (req, res) => {
     const type = req.params.type?.toLowerCase().trim();
     const approvedVendorIds = await User.find({ role: "vendor", isProfileVerified: "approved" }).select("_id");
     const ids = approvedVendorIds.map((v) => v._id);
-    const vendors = await Vendor.find({
-      serviceType: { $regex: new RegExp(`^${type}$`, "i") },
-      isApproved:  true,
-      vendorId:    { $in: ids },
-    });
+    const vendors = await Vendor
+      .find({
+        serviceType: { $regex: new RegExp(`^${type}$`, "i") },
+        isApproved:  true,
+        vendorId:    { $in: ids },
+      })
+      .populate("vendorId", "isVendorVerified"); // ← FIX: sends isVendorVerified to frontend
     res.json(vendors);
   } catch (err) {
     console.error("getByType ERROR:", err);
@@ -199,8 +203,6 @@ exports.deleteService = async (req, res) => {
 
 // ─────────────────────────────────────────────
 // GET /api/vendors/:id/availability
-// Returns the availability array for ONE vendor service.
-// Public — users call this to check if a vendor is free on a date.
 // ─────────────────────────────────────────────
 exports.getAvailability = async (req, res) => {
   try {
@@ -215,9 +217,6 @@ exports.getAvailability = async (req, res) => {
 
 // ─────────────────────────────────────────────
 // PUT /api/vendors/:id/availability
-// Vendor sets their own availability calendar.
-// Body: { dates: [{ date: "YYYY-MM-DD", available: true|false }] }
-// This REPLACES the entire availability array (simpler, avoids duplication).
 // ─────────────────────────────────────────────
 exports.updateAvailability = async (req, res) => {
   try {
@@ -234,8 +233,6 @@ exports.updateAvailability = async (req, res) => {
       return res.status(400).json({ error: "dates must be an array" });
     }
 
-    // Validate and normalise — store only dates with available: false
-    // (Available is the default, so storing only unavailable saves space)
     const normalised = dates
       .filter((d) => d.date && typeof d.available === "boolean")
       .map((d) => ({
@@ -256,8 +253,6 @@ exports.updateAvailability = async (req, res) => {
 
 // ─────────────────────────────────────────────
 // GET /api/vendors/available?date=YYYY-MM-DD
-// Returns all APPROVED vendors that are NOT marked unavailable on that date.
-// Used by the Vendors page date-filter.
 // ─────────────────────────────────────────────
 exports.getAvailableOnDate = async (req, res) => {
   try {
@@ -267,7 +262,6 @@ exports.getAvailableOnDate = async (req, res) => {
     const target = new Date(date);
     if (isNaN(target.getTime())) return res.status(400).json({ error: "Invalid date" });
 
-    // Normalise to midnight UTC so the $elemMatch comparison is reliable
     target.setUTCHours(0, 0, 0, 0);
     const nextDay = new Date(target);
     nextDay.setUTCDate(nextDay.getUTCDate() + 1);
@@ -275,7 +269,6 @@ exports.getAvailableOnDate = async (req, res) => {
     const approvedVendorIds = await User.find({ role: "vendor", isProfileVerified: "approved" }).select("_id");
     const ids = approvedVendorIds.map((v) => v._id);
 
-    // Find vendors that have an explicit "unavailable" entry for this date
     const unavailableServiceIds = await Vendor.find({
       isApproved: true,
       vendorId: { $in: ids },
@@ -289,13 +282,13 @@ exports.getAvailableOnDate = async (req, res) => {
 
     const unavailableIds = unavailableServiceIds.map((v) => v._id.toString());
 
-    // Return all approved vendors EXCEPT unavailable ones
-    const vendors = await Vendor.find({
-      isApproved: true,
-      vendorId:   { $in: ids },
-      _id:        { $nin: unavailableIds },
-    });
-
+    const vendors = await Vendor
+      .find({
+        isApproved: true,
+        vendorId:   { $in: ids },
+        _id:        { $nin: unavailableIds },
+      })
+      .populate("vendorId", "isVendorVerified"); // ← FIX: sends isVendorVerified to frontend
     res.json(vendors);
   } catch (err) {
     console.error("getAvailableOnDate ERROR:", err);

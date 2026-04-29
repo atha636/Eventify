@@ -54,6 +54,18 @@ function StatusBadge({ status }) {
   return <span className="ad-badge" style={{ background: c.bg, color: c.color }}>{label.charAt(0).toUpperCase() + label.slice(1)}</span>;
 }
 
+// ── Verified Badge pill — shown next to vendor name when isVendorVerified===true
+function VerifiedBadge() {
+  return (
+    <span className="ad-verified-pill" title="Verified vendor">
+      <svg width="9" height="9" viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0 }}>
+        <path d="M10.5 3L4.5 9L1.5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+      Verified
+    </span>
+  );
+}
+
 function ConfirmDialog({ message, onConfirm, onCancel, loading }) {
   return (
     <div className="ad-overlay">
@@ -102,14 +114,12 @@ function RejectModal({ vendor, onConfirm, onCancel, loading }) {
   );
 }
 
-// ══════════════════════════════════════════════════════════════
-// CHANGE 1 — Service Detail Modal (images + title edit)
-// ══════════════════════════════════════════════════════════════
+// ── Service Detail Modal ─────────────────────────────────────────
 function ServiceDetailModal({ service, onClose, onTitleUpdated, onImageDeleted, showToast }) {
   const [editingTitle, setEditingTitle] = useState(false);
   const [newTitle,     setNewTitle]     = useState(service.title || "");
   const [savingTitle,  setSavingTitle]  = useState(false);
-  const [deletingImg,  setDeletingImg]  = useState(null); // url of image being deleted
+  const [deletingImg,  setDeletingImg]  = useState(null);
 
   const saveTitle = async () => {
     if (!newTitle.trim()) return;
@@ -142,13 +152,11 @@ function ServiceDetailModal({ service, onClose, onTitleUpdated, onImageDeleted, 
   return (
     <div className="ad-overlay" onClick={onClose}>
       <div className="ad-svc-modal" onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
         <div className="ad-svc-modal-header">
           <h2 className="ad-svc-modal-title">Manage Service</h2>
           <button className="ad-svc-modal-close" onClick={onClose}>✕</button>
         </div>
 
-        {/* Title editor */}
         <div className="ad-svc-field">
           <label className="ad-svc-field-label">Service Title</label>
           {editingTitle ? (
@@ -171,7 +179,6 @@ function ServiceDetailModal({ service, onClose, onTitleUpdated, onImageDeleted, 
           )}
         </div>
 
-        {/* Image manager */}
         <div className="ad-svc-field">
           <label className="ad-svc-field-label">Images ({service.images?.length || 0})</label>
           {(!service.images || service.images.length === 0) ? (
@@ -201,7 +208,6 @@ function ServiceDetailModal({ service, onClose, onTitleUpdated, onImageDeleted, 
           )}
         </div>
 
-        {/* Info row */}
         <div className="ad-svc-info-row">
           <span><strong>Type:</strong> {service.serviceType}</span>
           <span><strong>Vendor:</strong> {service.vendorId?.name || service.vendorName || "—"}</span>
@@ -226,7 +232,7 @@ export default function AdminDashboard() {
   const [vendorFilter,    setVendorFilter]    = useState("pending");
   const [sidebarOpen,     setSidebarOpen]     = useState(false);
   const [rejectTarget,    setRejectTarget]    = useState(null);
-  const [svcDetailTarget, setSvcDetailTarget] = useState(null); // CHANGE 1
+  const [svcDetailTarget, setSvcDetailTarget] = useState(null);
 
   const [loadingTab,    setLoadingTab]    = useState(false);
   const [loadingStats,  setLoadingStats]  = useState(false);
@@ -243,14 +249,14 @@ export default function AdminDashboard() {
     setTimeout(() => setToast({ msg: "", type: "info" }), 3500);
   }, []);
 
-  const fetchStats    = useCallback(async () => {
+  const fetchStats = useCallback(async () => {
     setLoadingStats(true);
     try { const r = await API.get("/admin/stats"); setStats(r.data); }
     catch (err) { showToast(err?.response?.data?.msg || "Failed to load stats.", "error"); }
     finally { setLoadingStats(false); }
   }, [showToast]);
 
-  const fetchUsers    = useCallback(async () => {
+  const fetchUsers = useCallback(async () => {
     setLoadingTab(true);
     try { const r = await API.get("/admin/users"); setUsers(r.data); }
     catch (err) { showToast(err?.response?.data?.msg || "Failed.", "error"); }
@@ -346,7 +352,7 @@ export default function AdminDashboard() {
     setActionTarget(id + "approve");
     try {
       await API.put(`/admin/vendor-verifications/${id}`, { action: "approve" });
-      setPendingVendors((v) => v.filter((x) => x._id !== id));
+      setPendingVendors((v) => v.map((x) => x._id === id ? { ...x, isProfileVerified: "approved" } : x));
       showToast("Vendor approved! Email sent.", "success");
       fetchStats();
     }
@@ -358,7 +364,7 @@ export default function AdminDashboard() {
     setLoadingAction(true);
     try {
       await API.put(`/admin/vendor-verifications/${id}`, { action: "reject", reason });
-      setPendingVendors((v) => v.filter((x) => x._id !== id));
+      setPendingVendors((v) => v.map((x) => x._id === id ? { ...x, isProfileVerified: "rejected", profileRejectionReason: reason } : x));
       setRejectTarget(null);
       showToast("Vendor rejected. Email sent.", "success");
     }
@@ -366,7 +372,26 @@ export default function AdminDashboard() {
     finally { setLoadingAction(false); }
   };
 
-  // ── CHANGE 1: Callbacks from ServiceDetailModal ──────────────────
+  // ── NEW: Toggle verified badge ────────────────────────────────────
+  const toggleVendorBadge = async (id) => {
+    setActionTarget(id + "badge");
+    try {
+      const r = await API.put(`/admin/vendor-verifications/${id}/badge`);
+      setPendingVendors((v) =>
+        v.map((x) => x._id === id ? { ...x, isVendorVerified: r.data.vendor.isVendorVerified } : x)
+      );
+      showToast(
+        r.data.vendor.isVendorVerified
+          ? "✓ Verified badge awarded! Vendor notified."
+          : "Badge removed. Vendor notified.",
+        "success"
+      );
+    }
+    catch (err) { showToast(err?.response?.data?.msg || "Failed.", "error"); }
+    finally { setActionTarget(null); }
+  };
+
+  // ── Service modal callbacks ───────────────────────────────────────
   const handleTitleUpdated = (serviceId, newTitle) => {
     setServices((s) => s.map((x) => x._id === serviceId ? { ...x, title: newTitle } : x));
     if (svcDetailTarget?._id === serviceId) setSvcDetailTarget((prev) => ({ ...prev, title: newTitle }));
@@ -397,7 +422,7 @@ export default function AdminDashboard() {
 
         <aside className={`ad-sidebar ${sidebarOpen ? "ad-sidebar-open" : ""}`}>
           <div className="ad-sidebar-top">
-            <div className="ad-logo"> <Logo /> Evencers</div>
+            <div className="ad-logo"><Logo /> Evencers</div>
             <div className="ad-admin-tag">Admin Panel</div>
             <div className="ad-admin-name">{admin.name}</div>
           </div>
@@ -435,7 +460,7 @@ export default function AdminDashboard() {
                 <>
                   <div className="ad-stats-grid">
                     <StatCard icon="👥"  label="Total Users"      value={stats?.totalUsers} />
-                    <StatCard icon="🏷️" label="Total Services"    value={stats?.totalVendors} />
+                    <StatCard icon="🏷️" label="Total Services"   value={stats?.totalVendors} />
                     <StatCard icon="📋"  label="Bookings"          value={stats?.totalBookings} />
                     <StatCard icon="⏳"  label="Pending Bookings"  value={stats?.pendingBookings} />
                     <StatCard icon="✓"   label="Vendors to Review" value={stats?.pendingVendors} badge={stats?.pendingVendors} />
@@ -489,6 +514,15 @@ export default function AdminDashboard() {
           {/* ══ VENDOR VERIFICATIONS ══ */}
           {tab === "vendors" && (
             <div className="ad-content">
+              {/* Legend explaining the two verification concepts */}
+              <div className="ad-info-banner">
+                <span className="ad-info-icon">ℹ</span>
+                <span>
+                  <strong>Profile Approval</strong> — lets vendor operate on the platform.&nbsp;&nbsp;
+                  <strong>Verified Badge</strong> — trust badge shown on service cards (only for approved vendors).
+                </span>
+              </div>
+
               <div className="ad-filter-tabs">
                 {["pending", "approved", "rejected", "all"].map((f) => (
                   <button key={f} className={`ad-filter-tab ${vendorFilter === f ? "active" : ""}`} onClick={() => setVendorFilter(f)}>
@@ -505,46 +539,144 @@ export default function AdminDashboard() {
               ) : (
                 <>
                   <div className="ad-section-meta">{pendingVendors.length} vendor{pendingVendors.length !== 1 ? "s" : ""}</div>
+
+                  {/* ── DESKTOP TABLE ── */}
                   <div className="ad-table-wrap ad-desktop-only">
                     <table className="ad-table">
-                      <thead><tr><th>Vendor</th><th>Email</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
+                      <thead>
+                        <tr>
+                          <th>Vendor</th>
+                          <th>Email</th>
+                          <th>Joined</th>
+                          <th>Profile Status</th>
+                          <th>Badge</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
                       <tbody>
                         {pendingVendors.map((v) => (
                           <tr key={v._id}>
-                            <td><div className="ad-cell-name">{v.name}</div></td>
+                            {/* Name + verified pill */}
+                            <td>
+                              <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                                <div className="ad-cell-name">{v.name}</div>
+                                {v.isVendorVerified && <VerifiedBadge />}
+                              </div>
+                            </td>
                             <td className="ad-cell-muted">{v.email}</td>
                             <td className="ad-cell-muted">{new Date(v.createdAt).toLocaleDateString("en-IN")}</td>
+
+                            {/* Profile approval status */}
                             <td>
                               <StatusBadge status={v.isProfileVerified} />
-                              {v.profileRejectionReason && <div style={{ fontSize: 11, color: "#b85c5c", marginTop: 3 }}>{v.profileRejectionReason.slice(0, 40)}{v.profileRejectionReason.length > 40 ? "…" : ""}</div>}
-                            </td>
-                            <td>
-                              {v.isProfileVerified === "pending" && (
-                                <div className="ad-actions-cell">
-                                  <button className="ad-action-btn ad-action-ok"     onClick={() => approveVendor(v._id)} disabled={actionTarget === v._id + "approve"}>{actionTarget === v._id + "approve" ? "…" : "✓ Approve"}</button>
-                                  <button className="ad-action-btn ad-action-danger" onClick={() => setRejectTarget(v)}>✕ Reject</button>
+                              {v.profileRejectionReason && (
+                                <div style={{ fontSize: 11, color: "#b85c5c", marginTop: 3 }}>
+                                  {v.profileRejectionReason.slice(0, 40)}{v.profileRejectionReason.length > 40 ? "…" : ""}
                                 </div>
                               )}
-                              {v.isProfileVerified !== "pending" && <span style={{ fontSize: 12, color: "var(--muted)" }}>—</span>}
+                            </td>
+
+                            {/* Verified badge status */}
+                            <td>
+                              {v.isVendorVerified ? (
+                                <span className="ad-badge-verified-on">🏅 Verified</span>
+                              ) : (
+                                <span className="ad-badge-verified-off">Not verified</span>
+                              )}
+                            </td>
+
+                            {/* Actions */}
+                            <td>
+                              <div className="ad-actions-cell">
+                                {/* Profile approval buttons (only when pending) */}
+                                {v.isProfileVerified === "pending" && (
+                                  <>
+                                    <button
+                                      className="ad-action-btn ad-action-ok"
+                                      onClick={() => approveVendor(v._id)}
+                                      disabled={actionTarget === v._id + "approve"}
+                                    >
+                                      {actionTarget === v._id + "approve" ? "…" : "✓ Approve"}
+                                    </button>
+                                    <button
+                                      className="ad-action-btn ad-action-danger"
+                                      onClick={() => setRejectTarget(v)}
+                                    >
+                                      ✕ Reject
+                                    </button>
+                                  </>
+                                )}
+
+                                {/* Badge toggle — only for approved vendors */}
+                                {v.isProfileVerified === "approved" && (
+                                  <button
+                                    className={`ad-action-btn ${v.isVendorVerified ? "ad-action-badge-remove" : "ad-action-badge-add"}`}
+                                    onClick={() => toggleVendorBadge(v._id)}
+                                    disabled={actionTarget === v._id + "badge"}
+                                    title={v.isVendorVerified ? "Remove verified badge" : "Award verified badge"}
+                                  >
+                                    {actionTarget === v._id + "badge"
+                                      ? "…"
+                                      : v.isVendorVerified
+                                        ? "🏅 Remove Badge"
+                                        : "🏅 Give Badge"}
+                                  </button>
+                                )}
+
+                                {v.isProfileVerified === "rejected" && (
+                                  <span style={{ fontSize: 12, color: "var(--muted)" }}>—</span>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
+
+                  {/* ── MOBILE CARDS ── */}
                   <div className="ad-mobile-only">
                     {pendingVendors.map((v) => (
                       <MobileCard key={v._id}>
-                        <MobileRow label="Name"><span className="ad-cell-name">{v.name}</span></MobileRow>
+                        <MobileRow label="Name">
+                          <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <span className="ad-cell-name">{v.name}</span>
+                            {v.isVendorVerified && <VerifiedBadge />}
+                          </span>
+                        </MobileRow>
                         <MobileRow label="Email"><span style={{ fontSize: 11, color: "var(--muted)" }}>{v.email}</span></MobileRow>
                         <MobileRow label="Joined">{new Date(v.createdAt).toLocaleDateString("en-IN")}</MobileRow>
-                        <MobileRow label="Status"><StatusBadge status={v.isProfileVerified} /></MobileRow>
-                        {v.isProfileVerified === "pending" && (
-                          <div className="ad-mobile-actions">
-                            <button className="ad-action-btn ad-action-ok"     style={{ flex: 1 }} onClick={() => approveVendor(v._id)} disabled={actionTarget === v._id + "approve"}>{actionTarget === v._id + "approve" ? "…" : "✓ Approve"}</button>
-                            <button className="ad-action-btn ad-action-danger" style={{ flex: 1 }} onClick={() => setRejectTarget(v)}>✕ Reject</button>
-                          </div>
-                        )}
+                        <MobileRow label="Profile"><StatusBadge status={v.isProfileVerified} /></MobileRow>
+                        <MobileRow label="Badge">
+                          {v.isVendorVerified
+                            ? <span className="ad-badge-verified-on">🏅 Verified</span>
+                            : <span className="ad-badge-verified-off">Not verified</span>}
+                        </MobileRow>
+
+                        <div className="ad-mobile-actions" style={{ flexWrap: "wrap" }}>
+                          {v.isProfileVerified === "pending" && (
+                            <>
+                              <button className="ad-action-btn ad-action-ok" style={{ flex: 1 }} onClick={() => approveVendor(v._id)} disabled={actionTarget === v._id + "approve"}>
+                                {actionTarget === v._id + "approve" ? "…" : "✓ Approve"}
+                              </button>
+                              <button className="ad-action-btn ad-action-danger" style={{ flex: 1 }} onClick={() => setRejectTarget(v)}>
+                                ✕ Reject
+                              </button>
+                            </>
+                          )}
+                          {v.isProfileVerified === "approved" && (
+                            <button
+                              className={`ad-action-btn ${v.isVendorVerified ? "ad-action-badge-remove" : "ad-action-badge-add"}`}
+                              style={{ flex: 1 }}
+                              onClick={() => toggleVendorBadge(v._id)}
+                              disabled={actionTarget === v._id + "badge"}
+                            >
+                              {actionTarget === v._id + "badge"
+                                ? "…"
+                                : v.isVendorVerified ? "🏅 Remove Badge" : "🏅 Give Badge"}
+                            </button>
+                          )}
+                        </div>
                       </MobileCard>
                     ))}
                   </div>
@@ -603,7 +735,7 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* ══ SERVICES ══ — CHANGE 1: "Manage" button opens detail modal */}
+          {/* ══ SERVICES ══ */}
           {tab === "services" && (
             <div className="ad-content">
               {loadingTab ? <Spinner /> : (
@@ -620,11 +752,16 @@ export default function AdminDashboard() {
                               {s.images?.length > 0 && <div className="ad-cell-sub">{s.images.length} image{s.images.length !== 1 ? "s" : ""}</div>}
                             </td>
                             <td className="ad-cell-type">{s.serviceType}</td>
-                            <td><div className="ad-cell-name">{s.vendorId?.name || s.vendorName || "—"}</div><div className="ad-cell-sub">{s.vendorId?.email}</div></td>
+                            <td>
+                              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                <div className="ad-cell-name">{s.vendorId?.name || s.vendorName || "—"}</div>
+                                {s.vendorId?.isVendorVerified && <VerifiedBadge />}
+                              </div>
+                              <div className="ad-cell-sub">{s.vendorId?.email}</div>
+                            </td>
                             <td className="ad-cell-muted">{s.location}</td>
                             <td><StatusBadge status={s.isApproved} /></td>
                             <td className="ad-actions-cell">
-                              {/* CHANGE 1: Manage button */}
                               <button className="ad-action-btn ad-action-manage" onClick={() => setSvcDetailTarget(s)}>✎ Manage</button>
                               <button className={`ad-action-btn ${s.isApproved ? "ad-action-warn" : "ad-action-ok"}`} onClick={() => toggleApproval(s._id)} disabled={actionTarget === s._id + "toggle"}>
                                 {actionTarget === s._id + "toggle" ? "…" : s.isApproved ? "Suspend" : "Approve"}
@@ -641,7 +778,12 @@ export default function AdminDashboard() {
                       <MobileCard key={s._id}>
                         <MobileRow label="Title"><span className="ad-cell-name">{s.title}</span></MobileRow>
                         <MobileRow label="Type"><span className="ad-cell-type">{s.serviceType}</span></MobileRow>
-                        <MobileRow label="Vendor">{s.vendorId?.name || s.vendorName || "—"}</MobileRow>
+                        <MobileRow label="Vendor">
+                          <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                            {s.vendorId?.name || s.vendorName || "—"}
+                            {s.vendorId?.isVendorVerified && <VerifiedBadge />}
+                          </span>
+                        </MobileRow>
                         <MobileRow label="Status"><StatusBadge status={s.isApproved} /></MobileRow>
                         <div className="ad-mobile-actions" style={{ flexWrap: "wrap" }}>
                           <button className="ad-action-btn ad-action-manage" style={{ flex: 1 }} onClick={() => setSvcDetailTarget(s)}>✎ Manage</button>
@@ -734,7 +876,6 @@ export default function AdminDashboard() {
         />
       )}
 
-      {/* CHANGE 1: Service Detail Modal */}
       {svcDetailTarget && (
         <ServiceDetailModal
           service={svcDetailTarget}
@@ -787,6 +928,12 @@ const styles = `
   .ad-mobile-logout { display: none; background: none; border: none; font-size: 18px; cursor: pointer; color: #b85c5c; padding: 6px 10px; border-radius: 6px; }
   .ad-content { padding: 28px 32px 32px; }
   .ad-section-meta { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+
+  /* ── Info banner ── */
+  .ad-info-banner { display: flex; align-items: flex-start; gap: 10px; background: rgba(60,100,200,0.06); border: 1px solid rgba(60,100,200,0.15); border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; font-size: 12.5px; color: var(--muted); line-height: 1.6; }
+  .ad-info-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; color: #5577cc; }
+  .ad-info-banner strong { color: var(--ink); }
+
   .ad-alert-banner { display: flex; align-items: center; gap: 10px; background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.25); border-radius: 10px; padding: 12px 16px; margin-bottom: 24px; cursor: pointer; transition: background 0.2s; font-size: 13.5px; color: var(--ink); }
   .ad-alert-banner:hover { background: rgba(201,168,76,0.14); }
   .ad-alert-link { margin-left: auto; color: var(--gold); font-weight: 500; font-size: 13px; }
@@ -819,6 +966,14 @@ const styles = `
   .ad-cell-muted { color: var(--muted); }
   .ad-cell-type { text-transform: capitalize; color: var(--gold); font-size: 12px; }
   .ad-badge { font-size: 10px; padding: 3px 10px; border-radius: 20px; font-weight: 500; letter-spacing: 0.05em; white-space: nowrap; }
+
+  /* ── Verified pill (inline next to vendor name) ── */
+  .ad-verified-pill { display: inline-flex; align-items: center; gap: 3px; font-size: 9.5px; font-weight: 600; letter-spacing: 0.06em; color: #1a6b3a; background: rgba(34,139,70,0.1); border: 1px solid rgba(34,139,70,0.3); padding: 2px 7px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+
+  /* ── Badge status cells ── */
+  .ad-badge-verified-on  { font-size: 11px; font-weight: 500; color: #1a6b3a; background: rgba(34,139,70,0.08); border: 1px solid rgba(34,139,70,0.2); padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+  .ad-badge-verified-off { font-size: 11px; color: var(--muted); background: rgba(130,130,130,0.07); border: 1px solid rgba(130,130,130,0.15); padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+
   .ad-role-select, .ad-status-select { font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; cursor: pointer; outline: none; }
   .ad-role-select:focus, .ad-status-select:focus { border-color: var(--gold); }
   .ad-role-select:disabled, .ad-status-select:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -835,6 +990,13 @@ const styles = `
   .ad-action-ghost:hover:not(:disabled) { border-color: var(--muted); color: var(--ink); }
   .ad-action-manage { background: rgba(201,168,76,0.1); color: #8a6f1e; border: 1px solid rgba(201,168,76,0.25); }
   .ad-action-manage:hover:not(:disabled) { background: var(--gold); color: var(--ink); }
+
+  /* ── Badge action buttons ── */
+  .ad-action-badge-add    { background: rgba(34,139,70,0.08); color: #1a6b3a; border: 1px solid rgba(34,139,70,0.25); }
+  .ad-action-badge-add:hover:not(:disabled)    { background: #1a6b3a; color: white; }
+  .ad-action-badge-remove { background: rgba(130,130,130,0.08); color: var(--muted); border: 1px solid rgba(130,130,130,0.2); }
+  .ad-action-badge-remove:hover:not(:disabled) { background: var(--muted); color: white; }
+
   .ad-mobile-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 10px; }
   .ad-mobile-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid rgba(201,168,76,0.06); }
   .ad-mobile-row:last-of-type { border-bottom: none; }
@@ -842,12 +1004,8 @@ const styles = `
   .ad-mobile-value { font-size: 13px; color: var(--ink); text-align: right; }
   .ad-mobile-actions { display: flex; gap: 8px; margin-top: 12px; }
 
-  /* ── CHANGE 1: Service Detail Modal styles ── */
-  .ad-svc-modal {
-    background: var(--white); border: 1px solid var(--border); border-radius: 16px;
-    padding: 28px; width: min(640px, 95vw); max-height: 90vh; overflow-y: auto;
-    animation: slideUp 0.28s cubic-bezier(0.34,1.1,0.64,1) both;
-  }
+  /* ── Service Detail Modal ── */
+  .ad-svc-modal { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 28px; width: min(640px, 95vw); max-height: 90vh; overflow-y: auto; animation: slideUp 0.28s cubic-bezier(0.34,1.1,0.64,1) both; }
   .ad-svc-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
   .ad-svc-modal-title { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 600; color: var(--ink); }
   .ad-svc-modal-close { background: none; border: 1px solid var(--border); border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 13px; color: var(--muted); display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
@@ -862,13 +1020,7 @@ const styles = `
   .ad-svc-images-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
   .ad-svc-img-wrap { position: relative; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); aspect-ratio: 4/3; }
   .ad-svc-img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .ad-svc-img-delete {
-    position: absolute; bottom: 6px; right: 6px;
-    background: rgba(184,92,92,0.9); border: none; border-radius: 6px;
-    color: white; font-size: 13px; padding: 4px 8px; cursor: pointer;
-    transition: all 0.2s; backdrop-filter: blur(4px);
-    opacity: 0; transition: opacity 0.2s;
-  }
+  .ad-svc-img-delete { position: absolute; bottom: 6px; right: 6px; background: rgba(184,92,92,0.9); border: none; border-radius: 6px; color: white; font-size: 13px; padding: 4px 8px; cursor: pointer; opacity: 0; transition: opacity 0.2s; backdrop-filter: blur(4px); }
   .ad-svc-img-wrap:hover .ad-svc-img-delete { opacity: 1; }
   .ad-svc-img-delete:disabled { background: rgba(130,130,130,0.7); cursor: not-allowed; }
   .ad-svc-img-last-badge { position: absolute; top: 6px; left: 6px; background: rgba(201,168,76,0.9); color: #0e0c0a; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
