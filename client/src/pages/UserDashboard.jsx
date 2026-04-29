@@ -11,31 +11,24 @@ function SEOHead({ title, description, canonical }) {
     let desc = document.querySelector('meta[name="description"]');
     if (!desc) { desc = document.createElement("meta"); desc.name = "description"; document.head.appendChild(desc); }
     desc.content = description;
-
     let og = document.querySelector('meta[property="og:title"]');
     if (!og) { og = document.createElement("meta"); og.setAttribute("property","og:title"); document.head.appendChild(og); }
     og.content = title;
-
     let ogDesc = document.querySelector('meta[property="og:description"]');
     if (!ogDesc) { ogDesc = document.createElement("meta"); ogDesc.setAttribute("property","og:description"); document.head.appendChild(ogDesc); }
     ogDesc.content = description;
-
     let ogType = document.querySelector('meta[property="og:type"]');
     if (!ogType) { ogType = document.createElement("meta"); ogType.setAttribute("property","og:type"); document.head.appendChild(ogType); }
     ogType.content = "website";
-
     let tw = document.querySelector('meta[name="twitter:card"]');
     if (!tw) { tw = document.createElement("meta"); tw.name = "twitter:card"; document.head.appendChild(tw); }
     tw.content = "summary_large_image";
-
     let robots = document.querySelector('meta[name="robots"]');
     if (!robots) { robots = document.createElement("meta"); robots.name = "robots"; document.head.appendChild(robots); }
-    robots.content = "noindex, nofollow"; // dashboard pages shouldn't be indexed
-
+    robots.content = "noindex, nofollow";
     let link = document.querySelector('link[rel="canonical"]');
     if (!link) { link = document.createElement("link"); link.rel = "canonical"; document.head.appendChild(link); }
     link.href = canonical || window.location.href;
-
     return () => { document.title = "EventPro"; };
   }, [title, description, canonical]);
   return null;
@@ -60,6 +53,276 @@ function fmt(date) {
   });
 }
 
+// ── Booking Detail Drawer ──────────────────────────────────────
+function BookingDetailDrawer({ booking, onClose, onPay, onCancel, onRequestChange }) {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (booking) {
+      document.body.style.overflow = "hidden";
+      requestAnimationFrame(() => setVisible(true));
+    } else {
+      setVisible(false);
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [booking]);
+
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === "Escape") handleClose(); };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, []);
+
+  const handleClose = () => {
+    setVisible(false);
+    setTimeout(onClose, 320);
+  };
+
+  if (!booking) return null;
+
+  const b = booking;
+  const meta = STATUS_META[b.status] || STATUS_META.pending;
+  const isPending    = b.status === "pending";
+  const isApproved   = b.status === "approved";
+  const needsPayment = isApproved && b.paymentStatus !== "paid";
+  const dcr          = b.dateChangeRequest;
+  const hasPendingDcr   = dcr?.status === "pending";
+  const hasDcr          = dcr && dcr.status !== "none" && dcr.requestedDate;
+  const canRequestChange = (isPending || isApproved) && !hasPendingDcr;
+
+  const getVendorName  = () => b.vendorId?.title || `Vendor #${b.vendorId?.toString()?.slice(-5) || "—"}`;
+  const getServiceType = () => b.vendorId?.serviceType || "Service";
+  const getInitial     = () => b.vendorId?.title?.charAt(0)?.toUpperCase() || "V";
+
+  const details = [
+    { icon: "🗓", label: "Event Date",    value: fmt(b.date) },
+    { icon: "📦", label: "Package",       value: b.packageName  || "—" },
+    { icon: "₹",  label: "Package Price", value: b.packagePrice ? `₹${b.packagePrice.toLocaleString()}` : "—" },
+    { icon: "📍", label: "Address",       value: b.userDetails?.address || "—" },
+    { icon: "👤", label: "Name",          value: b.userDetails?.name    || "—" },
+    { icon: "📞", label: "Phone",         value: b.userDetails?.phone   || "—" },
+    { icon: "✉️", label: "Email",         value: b.userDetails?.email   || "—" },
+    { icon: "💳", label: "Payment",       value: b.paymentStatus === "paid" ? "Paid ✓" : "Pending" },
+    { icon: "🔖", label: "Booking ID",    value: b._id ? `#${b._id.slice(-8).toUpperCase()}` : "—" },
+  ].filter(d => d.value && d.value !== "—");
+
+  return (
+    <>
+      <div
+        className={`bdd-backdrop ${visible ? "bdd-backdrop--in" : ""}`}
+        onClick={handleClose}
+        aria-hidden="true"
+      />
+      <aside
+        className={`bdd-drawer ${visible ? "bdd-drawer--in" : ""}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Booking details for ${getVendorName()}`}
+      >
+        {/* Drawer Header */}
+        <div className="bdd-header">
+          <div className="bdd-header-bg" aria-hidden="true" />
+          <button className="bdd-close" onClick={handleClose} aria-label="Close details">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M2 2l14 14M16 2L2 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </button>
+
+          <div className="bdd-vendor-hero">
+            <div className="bdd-avatar-lg" aria-hidden="true">
+              {b.vendorId?.images?.[0]
+                ? <img src={b.vendorId.images[0]} alt={getVendorName()} loading="lazy" />
+                : <span>{getInitial()}</span>
+              }
+            </div>
+            <div className="bdd-vendor-info">
+              <div className="bdd-eyebrow">Booking Details</div>
+              <h2 className="bdd-vname">{getVendorName()}</h2>
+              <p className="bdd-stype">
+                <span className="bdd-dot" aria-hidden="true">◈</span>
+                {getServiceType()}
+                {b.vendorId?.location && <span className="bdd-loc"> · {b.vendorId.location}</span>}
+              </p>
+            </div>
+          </div>
+
+          <div
+            className="bdd-status-pill"
+            style={{ color: meta.color, background: meta.bg, border: `1px solid ${meta.border}` }}
+          >
+            <span>{meta.icon}</span> {meta.label}
+          </div>
+        </div>
+
+        {/* Scrollable body */}
+        <div className="bdd-body">
+
+          {/* Pay Now Banner */}
+          {needsPayment && (
+            <div className="bdd-pay-banner" role="alert">
+              <div className="bdd-pay-left">
+                <span className="bdd-pay-icon" aria-hidden="true">🎉</span>
+                <div>
+                  <p className="bdd-pay-title">Vendor confirmed your booking!</p>
+                  <p className="bdd-pay-sub">Complete payment to lock in your slot</p>
+                </div>
+              </div>
+              <button
+                className="bdd-pay-btn"
+                onClick={() => { onPay(b); handleClose(); }}
+                aria-label={`Pay ₹${b.packagePrice?.toLocaleString()}`}
+              >
+                Pay ₹{b.packagePrice?.toLocaleString()} →
+              </button>
+            </div>
+          )}
+
+          {/* Paid badge */}
+          {isApproved && b.paymentStatus === "paid" && (
+            <div className="bdd-paid-badge" role="status">
+              <span aria-hidden="true">✓</span> Payment Complete
+            </div>
+          )}
+
+          {/* Waiting for DCR */}
+          {hasPendingDcr && (
+            <div className="bdd-waiting-banner" role="status">
+              <span aria-hidden="true">⏳</span>
+              <div>
+                <p className="bdd-waiting-title">Waiting for vendor to respond</p>
+                <p className="bdd-waiting-sub">
+                  Your change request is under review.
+                  {dcr.requestedDate    && ` New date: ${fmt(dcr.requestedDate)}.`}
+                  {dcr.requestedAddress && ` New address: ${dcr.requestedAddress}.`}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* DCR result */}
+          {hasDcr && !hasPendingDcr && (
+            <div className="bdd-dcr-banner" style={{ color: DCR_META[dcr.status]?.color, background: DCR_META[dcr.status]?.bg, border: `1px solid ${DCR_META[dcr.status]?.border}` }}>
+              <span>{dcr.status === "approved" ? "✓ " : dcr.status === "rejected" ? "✕ " : ""}{DCR_META[dcr.status]?.label}</span>
+              {dcr.requestedDate    && <span className="bdd-dcr-chip">📅 {fmt(dcr.requestedDate)}</span>}
+              {dcr.requestedAddress && <span className="bdd-dcr-chip">📍 {dcr.requestedAddress}</span>}
+            </div>
+          )}
+
+          {/* Details Grid */}
+          <div className="bdd-section">
+            <h3 className="bdd-section-title">
+              <span className="bdd-section-line" aria-hidden="true" />
+              Booking Information
+            </h3>
+            <div className="bdd-details-grid">
+              {details.map((d, i) => (
+                <div key={i} className="bdd-detail-item" style={{ animationDelay: `${0.05 + i * 0.04}s` }}>
+                  <div className="bdd-detail-icon" aria-hidden="true">{d.icon}</div>
+                  <div>
+                    <div className="bdd-detail-label">{d.label}</div>
+                    <div className="bdd-detail-val"
+                      style={d.label === "Payment" && b.paymentStatus === "paid" ? { color: "#3a8a62", fontWeight: 500 } : {}}>
+                      {d.value}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Vendor Info */}
+          {(b.vendorId?.description || b.vendorId?.rating) && (
+            <div className="bdd-section">
+              <h3 className="bdd-section-title">
+                <span className="bdd-section-line" aria-hidden="true" />
+                About the Vendor
+              </h3>
+              {b.vendorId?.rating && (
+                <div className="bdd-rating">
+                  {[1,2,3,4,5].map(s => (
+                    <span key={s} className="bdd-star" style={{ color: s <= Math.round(b.vendorId.rating) ? "#c9a84c" : "#d4cfc8" }} aria-hidden="true">★</span>
+                  ))}
+                  <span className="bdd-rating-val">{b.vendorId.rating.toFixed(1)}</span>
+                </div>
+              )}
+              {b.vendorId?.description && (
+                <p className="bdd-vendor-desc">{b.vendorId.description}</p>
+              )}
+            </div>
+          )}
+
+          {/* Timeline */}
+          <div className="bdd-section">
+            <h3 className="bdd-section-title">
+              <span className="bdd-section-line" aria-hidden="true" />
+              Booking Timeline
+            </h3>
+            <div className="bdd-timeline">
+              <div className="bdd-tl-item bdd-tl-done">
+                <div className="bdd-tl-dot" aria-hidden="true"><span>✓</span></div>
+                <div>
+                  <p className="bdd-tl-label">Booking Submitted</p>
+                  <p className="bdd-tl-sub">{b.createdAt ? fmt(b.createdAt) : "Date not available"}</p>
+                </div>
+              </div>
+              <div className={`bdd-tl-item ${b.status !== "pending" ? "bdd-tl-done" : "bdd-tl-active"}`}>
+                <div className="bdd-tl-dot" aria-hidden="true">
+                  <span>{b.status === "approved" ? "✓" : b.status === "rejected" ? "✕" : "◷"}</span>
+                </div>
+                <div>
+                  <p className="bdd-tl-label">Vendor Review</p>
+                  <p className="bdd-tl-sub">{b.status === "pending" ? "Awaiting vendor response" : b.status === "approved" ? "Confirmed by vendor" : "Declined by vendor"}</p>
+                </div>
+              </div>
+              <div className={`bdd-tl-item ${b.paymentStatus === "paid" ? "bdd-tl-done" : needsPayment ? "bdd-tl-active" : "bdd-tl-pending"}`}>
+                <div className="bdd-tl-dot" aria-hidden="true">
+                  <span>{b.paymentStatus === "paid" ? "✓" : "₹"}</span>
+                </div>
+                <div>
+                  <p className="bdd-tl-label">Payment</p>
+                  <p className="bdd-tl-sub">{b.paymentStatus === "paid" ? "Payment complete" : needsPayment ? "Payment required" : "Pending confirmation"}</p>
+                </div>
+              </div>
+              <div className={`bdd-tl-item ${b.paymentStatus === "paid" ? "bdd-tl-active" : "bdd-tl-pending"}`}>
+                <div className="bdd-tl-dot" aria-hidden="true"><span>🎉</span></div>
+                <div>
+                  <p className="bdd-tl-label">Event Day</p>
+                  <p className="bdd-tl-sub">{fmt(b.date)}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="bdd-footer">
+          {b.vendorId?._id && (
+            <a href={`/vendor/${b.vendorId._id}`} className="bdd-foot-btn bdd-foot-ghost"
+              aria-label={`View ${getVendorName()} profile`}>
+              View Vendor →
+            </a>
+          )}
+          {canRequestChange && (
+            <button className="bdd-foot-btn bdd-foot-gold"
+              onClick={() => { onRequestChange(b); handleClose(); }}
+              aria-label="Request date or address change">
+              📅 Change Date / Address
+            </button>
+          )}
+          {isPending && (
+            <button className="bdd-foot-btn bdd-foot-danger"
+              onClick={() => { onCancel(b); handleClose(); }}
+              aria-label="Cancel this booking">
+              Cancel Booking
+            </button>
+          )}
+        </div>
+      </aside>
+    </>
+  );
+}
+
 export default function UserDashboard() {
   const [bookings, setBookings]   = useState([]);
   const [loading,  setLoading]    = useState(true);
@@ -77,7 +340,8 @@ export default function UserDashboard() {
   const [dcrError,    setDcrError]    = useState("");
   const [dcrSuccess,  setDcrSuccess]  = useState("");
 
-  const [paymentTarget, setPaymentTarget] = useState(null);
+  const [paymentTarget,  setPaymentTarget]  = useState(null);
+  const [detailBooking,  setDetailBooking]  = useState(null);
 
   const fetchBookings = async () => {
     try {
@@ -157,7 +421,6 @@ export default function UserDashboard() {
       />
       <style>{styles}</style>
 
-      {/* Structured data for breadcrumb */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
@@ -169,6 +432,15 @@ export default function UserDashboard() {
 
       <div className="ud-root" role="main">
         <Navbar />
+
+        {/* ── BOOKING DETAIL DRAWER ── */}
+        <BookingDetailDrawer
+          booking={detailBooking}
+          onClose={() => setDetailBooking(null)}
+          onPay={(b) => setPaymentTarget(b)}
+          onCancel={(b) => { setCancelError(""); setCancelTarget(b); }}
+          onRequestChange={(b) => openDcr(b)}
+        />
 
         {paymentTarget && (
           <PaymentModal
@@ -358,10 +630,21 @@ export default function UserDashboard() {
                 const canRequestChange = (isPending || isApproved) && !hasPendingDcr;
 
                 return (
-                  <article key={b._id} className="ud-card" style={{ animationDelay: `${i * 0.06}s` }}
-                    aria-label={`Booking with ${getVendorName(b)}, status: ${meta.label}`}
-                    itemScope itemType="https://schema.org/Reservation">
+                  <article
+                    key={b._id}
+                    className="ud-card"
+                    style={{ animationDelay: `${i * 0.06}s` }}
+                    aria-label={`Booking with ${getVendorName(b)}, status: ${meta.label}. Click to view details.`}
+                    itemScope itemType="https://schema.org/Reservation"
+                    onClick={() => setDetailBooking(b)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setDetailBooking(b); } }}
+                  >
                     <div className="ud-card-bar" style={{ background: meta.color }} aria-hidden="true" />
+
+                    {/* "View Details" hint badge */}
+                    <div className="ud-card-peek" aria-hidden="true">Details →</div>
 
                     <div className="ud-avatar" aria-hidden="true">
                       {b.vendorId?.images?.[0]
@@ -398,7 +681,7 @@ export default function UserDashboard() {
 
                       {/* Pay Now */}
                       {needsPayment && (
-                        <div className="ud-pay-banner" role="alert">
+                        <div className="ud-pay-banner" role="alert" onClick={(e) => e.stopPropagation()}>
                           <div className="ud-pay-banner-left">
                             <span className="ud-pay-icon" aria-hidden="true">🎉</span>
                             <div>
@@ -406,7 +689,7 @@ export default function UserDashboard() {
                               <p className="ud-pay-sub">Complete payment to lock in your slot</p>
                             </div>
                           </div>
-                          <button className="ud-pay-btn" onClick={() => setPaymentTarget(b)}
+                          <button className="ud-pay-btn" onClick={(e) => { e.stopPropagation(); setPaymentTarget(b); }}
                             aria-label={`Pay ₹${b.packagePrice?.toLocaleString()} for ${getVendorName(b)}`}>
                             Pay ₹{b.packagePrice?.toLocaleString()} →
                           </button>
@@ -444,24 +727,25 @@ export default function UserDashboard() {
                       )}
 
                       {/* Actions */}
-                      <div className="ud-actions">
+                      <div className="ud-actions" onClick={(e) => e.stopPropagation()}>
                         <span className="ud-badge ud-badge-mob" style={{ color: meta.color, background: meta.bg, border: `1px solid ${meta.border}` }}>
                           <span aria-hidden="true">{meta.icon}</span> {meta.label}
                         </span>
                         <div className="ud-action-btns">
                           {b.vendorId?._id && (
                             <a href={`/vendor/${b.vendorId._id}`} className="ud-btn ud-btn-ghost"
-                              aria-label={`View ${getVendorName(b)} profile`}>View →</a>
+                              aria-label={`View ${getVendorName(b)} profile`}
+                              onClick={(e) => e.stopPropagation()}>View →</a>
                           )}
                           {canRequestChange && (
-                            <button className="ud-btn ud-btn-date" onClick={() => openDcr(b)}
+                            <button className="ud-btn ud-btn-date" onClick={(e) => { e.stopPropagation(); openDcr(b); }}
                               aria-label={`Request date or address change for ${getVendorName(b)}`}>
                               📅 Change Date / Address
                             </button>
                           )}
                           {isPending && (
                             <button className="ud-btn ud-btn-cancel"
-                              onClick={() => { setCancelError(""); setCancelTarget(b); }}
+                              onClick={(e) => { e.stopPropagation(); setCancelError(""); setCancelTarget(b); }}
                               aria-label={`Cancel booking with ${getVendorName(b)}`}>Cancel</button>
                           )}
                         </div>
@@ -534,7 +818,6 @@ const styles = `
   .ud-modal::-webkit-scrollbar-track{background:transparent;margin:16px 0}
   .ud-modal::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#e8d5a3,#c9a84c);border-radius:3px}
   .ud-modal-wide{max-width:500px;text-align:left}
-
   .ud-modal-icon-wrap{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin:0 auto 18px}
   .ud-modal-danger{background:rgba(169,50,38,0.08);border:1px solid rgba(169,50,38,0.18)}
   .ud-modal-gold{background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.25);margin:0 auto 18px}
@@ -567,6 +850,182 @@ const styles = `
   .ud-waiting-icon{font-size:1.3rem;flex-shrink:0;margin-top:1px}
   .ud-waiting-title{font-size:13px;font-weight:500;color:var(--ink);margin:0 0 3px}
   .ud-waiting-sub{font-size:12px;color:var(--muted);line-height:1.5;margin:0}
+
+  /* ── BOOKING DETAIL DRAWER ── */
+  .bdd-backdrop{
+    position:fixed;inset:0;
+    background:rgba(10,8,6,0);backdrop-filter:blur(0px);
+    z-index:900;pointer-events:none;
+    transition:background 0.32s ease, backdrop-filter 0.32s ease;
+  }
+  .bdd-backdrop--in{
+    background:rgba(10,8,6,0.6);backdrop-filter:blur(5px);pointer-events:auto;
+  }
+  .bdd-drawer{
+    position:fixed;top:0;right:0;bottom:0;
+    width:min(480px, 100vw);
+    background:var(--white);
+    border-left:1px solid var(--border);
+    box-shadow:-20px 0 60px rgba(14,12,10,0.18);
+    z-index:950;
+    display:flex;flex-direction:column;
+    transform:translateX(100%);
+    transition:transform 0.32s cubic-bezier(0.32,0.72,0,1);
+    will-change:transform;
+  }
+  .bdd-drawer--in{
+    transform:translateX(0);
+  }
+
+  /* Drawer Header */
+  .bdd-header{
+    position:relative;overflow:hidden;
+    background:linear-gradient(160deg,#0e0c0a 0%,#1a1610 60%,#14110d 100%);
+    padding:28px 24px 24px;
+    flex-shrink:0;
+  }
+  .bdd-header-bg{
+    position:absolute;inset:0;
+    background:radial-gradient(ellipse 80% 60% at 60% 0%,rgba(201,168,76,0.1) 0%,transparent 70%);
+    pointer-events:none;
+  }
+  .bdd-close{
+    position:absolute;top:16px;right:16px;
+    width:36px;height:36px;border-radius:50%;
+    background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);
+    color:rgba(245,240,232,0.7);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:background 0.2s,color 0.2s,transform 0.2s;z-index:2;
+  }
+  .bdd-close:hover{background:rgba(255,255,255,0.16);color:white;transform:scale(1.08)}
+  .bdd-vendor-hero{position:relative;z-index:1;display:flex;align-items:center;gap:16px;margin-bottom:18px}
+  .bdd-avatar-lg{
+    width:68px;height:68px;border-radius:16px;
+    background:linear-gradient(135deg,#1e1b15,#2a2419);
+    border:1px solid rgba(201,168,76,0.3);
+    overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    box-shadow:0 6px 24px rgba(0,0,0,0.4);
+  }
+  .bdd-avatar-lg img{width:100%;height:100%;object-fit:cover}
+  .bdd-avatar-lg span{font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:600;color:var(--gold)}
+  .bdd-vendor-info{flex:1;min-width:0}
+  .bdd-eyebrow{font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:5px;opacity:0.8}
+  .bdd-vname{font-family:'Cormorant Garamond',serif;font-size:1.45rem;font-weight:600;color:white;line-height:1.2;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bdd-stype{font-size:11.5px;color:rgba(245,240,232,0.5);display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+  .bdd-dot{color:var(--gold);font-size:8px}
+  .bdd-loc{color:rgba(245,240,232,0.35)}
+  .bdd-status-pill{
+    position:relative;z-index:1;
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:11.5px;font-weight:500;letter-spacing:0.06em;
+    padding:6px 14px;border-radius:20px;
+  }
+
+  /* Drawer Scrollable Body */
+  .bdd-body{
+    flex:1;overflow-y:auto;padding:0;
+    scrollbar-width:thin;scrollbar-color:var(--border) transparent;
+  }
+  .bdd-body::-webkit-scrollbar{width:4px}
+  .bdd-body::-webkit-scrollbar-track{background:transparent}
+  .bdd-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+  .bdd-pay-banner{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    background:linear-gradient(135deg,rgba(201,168,76,0.1),rgba(201,168,76,0.04));
+    border-bottom:1px solid rgba(201,168,76,0.25);
+    padding:16px 24px;
+    animation:fadeUp 0.3s ease both;
+  }
+  .bdd-pay-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+  .bdd-pay-icon{font-size:1.4rem;flex-shrink:0}
+  .bdd-pay-title{font-size:13px;font-weight:500;color:var(--ink);margin:0 0 2px}
+  .bdd-pay-sub{font-size:11.5px;color:var(--muted);margin:0}
+  .bdd-pay-btn{
+    padding:10px 18px;background:var(--gold);border:none;border-radius:var(--radius-sm);
+    font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;color:var(--ink);
+    cursor:pointer;white-space:nowrap;flex-shrink:0;transition:var(--transition);
+    animation:payPulse 2.5s ease infinite;
+  }
+  .bdd-pay-btn:hover{background:var(--ink);color:white;animation:none;transform:translateY(-1px)}
+  .bdd-paid-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#3a8a62;font-weight:500;background:rgba(58,138,98,0.08);border-bottom:1px solid rgba(58,138,98,0.2);padding:12px 24px;width:100%}
+  .bdd-waiting-banner{display:flex;align-items:flex-start;gap:10px;background:rgba(201,168,76,0.05);border-bottom:1px solid rgba(201,168,76,0.2);padding:14px 24px;font-size:13px}
+  .bdd-waiting-title{font-weight:500;color:var(--ink);margin:0 0 3px}
+  .bdd-waiting-sub{font-size:12px;color:var(--muted);line-height:1.5;margin:0}
+  .bdd-dcr-banner{display:flex;align-items:center;gap:10px;padding:12px 24px;border-bottom:1px solid;font-size:12.5px;font-weight:500;flex-wrap:wrap}
+  .bdd-dcr-chip{font-weight:400;opacity:0.85;font-size:12px}
+
+  .bdd-section{padding:22px 24px;border-bottom:1px solid var(--border)}
+  .bdd-section:last-child{border-bottom:none}
+  .bdd-section-title{
+    display:flex;align-items:center;gap:10px;
+    font-size:10px;letter-spacing:0.18em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:16px;font-weight:500;
+  }
+  .bdd-section-line{flex:none;width:20px;height:1px;background:var(--gold);opacity:0.6}
+
+  .bdd-details-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:380px){.bdd-details-grid{grid-template-columns:1fr}}
+  .bdd-detail-item{
+    display:flex;align-items:flex-start;gap:10px;
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:10px;padding:12px 13px;
+    animation:fadeUp 0.3s ease both;
+    transition:border-color 0.2s,transform 0.2s;
+  }
+  .bdd-detail-item:hover{border-color:rgba(201,168,76,0.3);transform:translateY(-1px)}
+  .bdd-detail-icon{font-size:1.1rem;flex-shrink:0;margin-top:1px;line-height:1}
+  .bdd-detail-label{font-size:10px;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;font-weight:500}
+  .bdd-detail-val{font-size:13px;color:var(--ink);font-weight:400;word-break:break-word;line-height:1.4}
+
+  .bdd-rating{display:flex;align-items:center;gap:3px;margin-bottom:10px}
+  .bdd-star{font-size:1rem}
+  .bdd-rating-val{font-size:13px;color:var(--muted);margin-left:6px;font-weight:500}
+  .bdd-vendor-desc{font-size:13px;color:var(--muted);line-height:1.65}
+
+  /* Timeline */
+  .bdd-timeline{display:flex;flex-direction:column;gap:0}
+  .bdd-tl-item{display:flex;align-items:flex-start;gap:14px;padding-bottom:18px;position:relative}
+  .bdd-tl-item:not(:last-child)::before{
+    content:'';position:absolute;left:15px;top:32px;bottom:0;
+    width:1px;background:var(--border);z-index:0;
+  }
+  .bdd-tl-dot{
+    width:32px;height:32px;border-radius:50%;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:600;position:relative;z-index:1;
+    border:2px solid var(--border);background:var(--surface);color:var(--muted);
+    transition:var(--transition);
+  }
+  .bdd-tl-done .bdd-tl-dot{background:var(--ink);border-color:var(--ink);color:white}
+  .bdd-tl-active .bdd-tl-dot{background:rgba(201,168,76,0.15);border-color:var(--gold);color:var(--gold)}
+  .bdd-tl-pending .bdd-tl-dot{background:var(--surface);border-color:var(--border);color:var(--muted);opacity:0.5}
+  .bdd-tl-label{font-size:13px;font-weight:500;color:var(--ink);margin-bottom:2px}
+  .bdd-tl-done .bdd-tl-label{color:var(--ink)}
+  .bdd-tl-pending .bdd-tl-label{color:var(--muted);opacity:0.6}
+  .bdd-tl-sub{font-size:11.5px;color:var(--muted);line-height:1.4}
+
+  /* Drawer Footer */
+  .bdd-footer{
+    flex-shrink:0;padding:16px 24px;
+    border-top:1px solid var(--border);
+    background:var(--surface);
+    display:flex;gap:10px;flex-wrap:wrap;
+  }
+  .bdd-foot-btn{
+    flex:1;min-width:120px;
+    padding:12px 16px;border-radius:var(--radius-sm);
+    font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;
+    cursor:pointer;transition:var(--transition);
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    text-decoration:none;border:none;white-space:nowrap;
+  }
+  .bdd-foot-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+  .bdd-foot-ghost:hover{border-color:var(--gold);color:var(--gold)}
+  .bdd-foot-gold{background:var(--gold);color:var(--ink)}
+  .bdd-foot-gold:hover{background:#b8942f;transform:translateY(-1px);box-shadow:0 6px 18px rgba(201,168,76,0.3)}
+  .bdd-foot-danger{background:transparent;color:var(--danger);border:1px solid var(--danger-border)}
+  .bdd-foot-danger:hover{background:var(--danger-bg);border-color:var(--danger)}
 
   /* ── HERO ── */
   .ud-hero{
@@ -665,9 +1124,26 @@ const styles = `
     border-radius:var(--radius-md);padding:24px 26px 22px 38px;
     display:flex;align-items:flex-start;gap:18px;
     animation:fadeUp 0.45s ease both;transition:box-shadow 0.25s,border-color 0.25s,transform 0.25s;
+    cursor:pointer;
   }
   .ud-card:hover{box-shadow:var(--shadow-md);border-color:rgba(201,168,76,0.32);transform:translateY(-2px)}
+  .ud-card:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
   .ud-card-bar{position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:var(--radius-md) 0 0 var(--radius-md);opacity:0.7}
+
+  /* "Details →" peek badge */
+  .ud-card-peek{
+    position:absolute;top:14px;right:14px;
+    font-size:10.5px;letter-spacing:0.08em;
+    color:var(--gold);background:rgba(201,168,76,0.08);
+    border:1px solid rgba(201,168,76,0.2);border-radius:20px;
+    padding:3px 10px;opacity:0;
+    transition:opacity 0.2s,transform 0.2s;
+    transform:translateX(4px);
+    pointer-events:none;
+    z-index:2;
+  }
+  .ud-card:hover .ud-card-peek{opacity:1;transform:translateX(0)}
+
   .ud-avatar{
     width:56px;height:56px;border-radius:12px;
     background:var(--ink);border:1px solid var(--border);
@@ -774,6 +1250,17 @@ const styles = `
     .ud-pay-banner{flex-direction:column;align-items:flex-start}
     .ud-pay-btn{width:100%}
     .ud-stats{gap:10px}
+    .bdd-footer{padding:14px 16px}
+    .bdd-foot-btn{min-width:100px;font-size:12px;padding:11px 12px}
+    .bdd-header{padding:22px 16px 20px}
+    .bdd-section{padding:18px 16px}
+    .bdd-details-grid{grid-template-columns:1fr 1fr}
+    .bdd-pay-banner{flex-direction:column;align-items:flex-start;padding:14px 16px}
+    .bdd-pay-btn{width:100%}
+    .bdd-paid-badge,.bdd-waiting-banner,.bdd-dcr-banner{padding:12px 16px}
+  }
+  @media(max-width:360px){
+    .bdd-details-grid{grid-template-columns:1fr}
   }
 
   /* ── ANIMATIONS ── */
