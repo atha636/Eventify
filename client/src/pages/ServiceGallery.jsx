@@ -202,7 +202,7 @@ useEffect(() => {
         <div className="sg-hero-content">
           <button className="sg-back" onClick={() => navigate(`/vendor/${id}`)}>← Back to Service</button>
           <div>
-            <p className="sg-hero-eyebrow"><Logo /> Portfolio Gallery</p>
+            <p className="sg-hero-eyebrow">Portfolio Gallery</p>
             <h1 className="sg-hero-title">{vendor.title}</h1>
             <div className="sg-hero-meta">
               <span className="sg-hero-loc">📍 {vendor.location}</span>
