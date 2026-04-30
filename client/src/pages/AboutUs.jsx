@@ -93,17 +93,17 @@ export default function AboutUs() {
   ];
 
   const team = [
-    { initial: "A", name: "Akarsh Gupta",         role: "founder & CEO",        desc: "Passionate about making luxury events accessible to everyone in India.",       gradient: "135deg, #c9a84c 0%, #e8d5a3 100%" },
-    { initial: "A", name: "Akarsh Gupta",         role: "Head of Vendor Relations", desc: "Bridging the gap between talented vendors and clients who deserve them.",       gradient: "135deg, #a78bfa 0%, #c4b5fd 100%" },
-    { initial: "A", name: "Atharv Patidar", role: "Co-founder & CTO",                      desc: "Building the infrastructure that makes seamless bookings possible at scale.",   gradient: "135deg, #34d399 0%, #6ee7b7 100%" },
-    { initial: "A", name: "Atharv Patidar", role: "Head of Design",           desc: "Ensuring every touchpoint feels as beautiful as the events we support.",        gradient: "135deg, #f87171 0%, #fca5a5 100%" },
+    { initial: "A", name: "Akarsh Gupta",   role: "founder & CEO",            desc: "Passionate about making luxury events accessible to everyone in India.",     gradient: "135deg, #c9a84c 0%, #e8d5a3 100%" },
+    { initial: "A", name: "Akarsh Gupta",   role: "Head of Vendor Relations",  desc: "Bridging the gap between talented vendors and clients who deserve them.",   gradient: "135deg, #a78bfa 0%, #c4b5fd 100%" },
+    { initial: "A", name: "Atharv Patidar", role: "Co-founder & CTO",          desc: "Building the infrastructure that makes seamless bookings possible at scale.", gradient: "135deg, #34d399 0%, #6ee7b7 100%" },
+    { initial: "A", name: "Atharv Patidar", role: "Head of Design",            desc: "Ensuring every touchpoint feels as beautiful as the events we support.",    gradient: "135deg, #f87171 0%, #fca5a5 100%" },
   ];
 
   const timeline = [
-    { year: "2025", title: "The Frustration", desc: "Our founders tried planning a Delhi corporate event. Three weeks. Dozens of calls. Mediocre results. The idea was born." },
+    { year: "2025",       title: "The Frustration",  desc: "Our founders tried planning a Delhi corporate event. Three weeks. Dozens of calls. Mediocre results. The idea was born." },
     { year: "Early 2026", title: "First 10 Vendors", desc: "We manually onboarded 10 Delhi vendors we personally trusted. First client booked within 48 hours." },
-    { year: "Mid 2027", title: "Expanding Cities", desc: "Mumbai. Bangalore. Hyderabad. We hit 1500 verified vendors and 1,0000 happy clients." },
-    { year: "2028", title: "All of India", desc: "50+ cities. 10,000+ vendors. 1,20000+ clients. And we're just getting started." },
+    { year: "Mid 2027",   title: "Expanding Cities", desc: "Mumbai. Bangalore. Hyderabad. We hit 1500 verified vendors and 1,0000 happy clients." },
+    { year: "2028",       title: "All of India",     desc: "50+ cities. 10,000+ vendors. 1,20000+ clients. And we're just getting started." },
   ];
 
   return (
@@ -122,7 +122,6 @@ export default function AboutUs() {
             <div className="au-grid-lines" />
           </div>
 
-          {/* Large decorative number */}
           <div className="au-hero-bg-text" aria-hidden="true">ABOUT</div>
 
           <div className="au-hero-inner">
@@ -150,7 +149,6 @@ export default function AboutUs() {
             </div>
           </div>
 
-          {/* Floating stat cards */}
           <div className="au-hero-floats" aria-hidden="true">
             <div className="au-float-card au-fc-a">
               <span className="au-fc-num">100+</span>
@@ -166,7 +164,6 @@ export default function AboutUs() {
             </div>
           </div>
 
-          {/* Scroll indicator */}
           <div className="au-scroll-hint" aria-hidden="true">
             <span className="au-scroll-line" />
             <span className="au-scroll-label">scroll</span>
@@ -180,10 +177,10 @@ export default function AboutUs() {
         <section className="au-stats-section" ref={statsRef} aria-label="Platform statistics">
           <div className="au-stats-grid">
             {[
-              { num: "100", suffix: "+",  label: "Happy Clients",    sub: "across India",       icon: "👥" },
-              { num: "20", suffix: "+",  label: "Verified Vendors",  sub: "manually screened",  icon: "✓" },
-              { num: "2", suffix: "+",   label: "Cities",            sub: "and growing fast",   icon: "📍" },
-              { num: "4", suffix: ".9★",  label: "Average Rating",    sub: "from real clients",  icon: "★" },
+              { num: "100", suffix: "+",   label: "Happy Clients",   sub: "across India",      icon: "👥" },
+              { num: "20",  suffix: "+",   label: "Verified Vendors", sub: "manually screened", icon: "✓" },
+              { num: "2",   suffix: "+",   label: "Cities",           sub: "and growing fast",  icon: "📍" },
+              { num: "4",   suffix: ".9★", label: "Average Rating",   sub: "from real clients", icon: "★" },
             ].map((s, i) => (
               <div
                 key={i}
@@ -201,7 +198,7 @@ export default function AboutUs() {
           </div>
         </section>
 
-        {/* ── MISSION — editorial split ── */}
+        {/* ── MISSION ── */}
         <section className="au-mission" ref={missionRef} aria-labelledby="mission-heading">
           <div className="au-mission-inner">
             <div className={`au-mission-text au-reveal ${missionVisible ? "au-revealed" : ""}`}>
@@ -341,9 +338,9 @@ export default function AboutUs() {
             </div>
             <div className={`au-vendor-stats au-reveal ${vendorVisible ? "au-revealed" : ""}`} style={{ transitionDelay: "0.2s" }}>
               {[
-                { num: "20", suffix: "+",  label: "Active Vendors",      icon: "🏪" },
-                { num: "94",  suffix: "%",  label: "Vendor Satisfaction",  icon: "💛" },
-                { num: "48",  suffix: "hr", label: "Avg. First Booking",   icon: "⚡" },
+                { num: "20",  suffix: "+",   label: "Active Vendors",     icon: "🏪" },
+                { num: "94",  suffix: "%",   label: "Vendor Satisfaction", icon: "💛" },
+                { num: "48",  suffix: "hr",  label: "Avg. First Booking",  icon: "⚡" },
               ].map((s, i) => (
                 <div key={i} className="au-vendor-stat">
                   <span className="au-vs-icon" aria-hidden="true">{s.icon}</span>
@@ -453,6 +450,9 @@ const styles = `
     --border: rgba(201,168,76,0.2);
     --surface: #faf7f2;
     --white: #ffffff;
+
+    /* ─── Timeline column width — change ONE variable to fix everywhere ─── */
+    --tl-year-w: 150px;
   }
 
   .au-root {
@@ -513,7 +513,6 @@ const styles = `
     opacity: 0.5;
   }
 
-  /* Large background word */
   .au-hero-bg-text {
     position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%);
     font-family: 'Cormorant Garamond', serif;
@@ -568,7 +567,6 @@ const styles = `
     animation: auHeroIn 0.85s 0.26s cubic-bezier(.22,1,.36,1) both;
   }
 
-  /* ── Floating stat cards ── */
   .au-hero-floats {
     position: absolute; inset: 0; pointer-events: none; z-index: 2;
   }
@@ -592,7 +590,6 @@ const styles = `
   @keyframes auFloat3 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
   @media (max-width: 900px) { .au-hero-floats { display: none; } }
 
-  /* Scroll hint */
   .au-scroll-hint {
     position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
     display: flex; flex-direction: column; align-items: center; gap: 8px;
@@ -642,7 +639,7 @@ const styles = `
   /* ── MARQUEE ── */
   .au-marquee-wrap {
     overflow: hidden; background: var(--gold);
-    padding: 11px 0; border-top: none; border-bottom: none;
+    padding: 11px 0;
   }
   .au-marquee-track {
     display: flex; gap: 0;
@@ -749,7 +746,6 @@ const styles = `
     .au-badge:hover { border-color: var(--gold); box-shadow: 0 4px 14px rgba(201,168,76,0.12); }
   }
 
-  /* Orbital visual */
   .au-mission-visual {
     position: relative; height: 380px; display: flex;
     align-items: center; justify-content: center;
@@ -796,7 +792,9 @@ const styles = `
     .au-mv-center { width: 110px; height: 110px; }
   }
 
-  /* ── TIMELINE ── */
+  /* ══════════════════════════════════════════════
+     TIMELINE — fixed year column
+  ══════════════════════════════════════════════ */
   .au-timeline-section {
     background: var(--ink); padding: 84px 20px;
     position: relative; overflow: hidden;
@@ -811,28 +809,47 @@ const styles = `
     position: relative; margin-top: 52px;
     display: flex; flex-direction: column; gap: 0;
   }
+
+  /*
+   * The vertical line and dot are anchored to --tl-year-w.
+   * Changing that one variable fixes everything at once.
+   */
   .au-timeline-line {
-    position: absolute; left: 110px; top: 0; bottom: 0; width: 1px;
+    position: absolute;
+    left: var(--tl-year-w);      /* was hardcoded 110px */
+    top: 0; bottom: 0; width: 1px;
     background: linear-gradient(to bottom, transparent, rgba(201,168,76,0.3) 10%, rgba(201,168,76,0.3) 90%, transparent);
   }
+
   .au-timeline-item {
-    display: grid; grid-template-columns: 110px 1fr;
+    display: grid;
+    grid-template-columns: var(--tl-year-w) 1fr;  /* was hardcoded 110px */
     gap: 0 28px; padding: 0 0 44px; position: relative; align-items: start;
   }
   .au-timeline-item:last-child { padding-bottom: 0; }
+
   .au-tl-dot {
-    position: absolute; left: 103px; top: 5px;
+    position: absolute;
+    /* centre the dot on the line: line is at --tl-year-w, dot is 15px wide */
+    left: calc(var(--tl-year-w) - 7px);  /* was hardcoded 103px */
+    top: 5px;
     width: 15px; height: 15px; border-radius: 50%;
     background: var(--gold); border: 3px solid var(--ink);
     box-shadow: 0 0 0 1px rgba(201,168,76,0.4), 0 0 16px rgba(201,168,76,0.3);
     z-index: 2;
   }
+
   .au-tl-year {
     font-family: 'Cormorant Garamond', serif;
     font-size: 1rem; font-weight: 500; color: var(--gold);
-    text-align: right; padding-right: 0; line-height: 1.4;
-    padding-top: 2px;
+    text-align: right;
+    /* pull the text slightly left of the dot so it never overlaps */
+    padding-right: 20px;
+    line-height: 1.4; padding-top: 2px;
+    /* prevent wrapping on desktop for "Early 2026" etc. */
+    white-space: nowrap;
   }
+
   .au-tl-content { padding-left: 14px; }
   .au-tl-title {
     font-family: 'Cormorant Garamond', serif;
@@ -840,11 +857,18 @@ const styles = `
   }
   .au-tl-desc { font-size: 13.5px; color: rgba(245,240,232,0.48); line-height: 1.75; }
 
+  /* Mobile: collapse to single-column stacked layout */
   @media (max-width: 560px) {
     .au-timeline-line { left: 14px; }
     .au-tl-dot { left: 7px; }
-    .au-timeline-item { grid-template-columns: 1fr; padding-left: 36px; }
-    .au-tl-year { text-align: left; font-size: 0.85rem; padding-left: 0; }
+    .au-timeline-item {
+      grid-template-columns: 1fr;
+      padding-left: 36px;
+    }
+    .au-tl-year {
+      text-align: left; font-size: 0.85rem;
+      padding-right: 0; white-space: normal;
+    }
     .au-tl-content { padding-left: 0; }
   }
 
@@ -1077,5 +1101,4 @@ const styles = `
     .au-ring1, .au-ring2, .au-team-avatar-ring { animation: none; }
     .au-scroll-line { animation: none; }
   }
-    
 `;
