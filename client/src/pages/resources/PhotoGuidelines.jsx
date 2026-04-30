@@ -75,7 +75,7 @@ export default function PhotoGuidelines() {
           </div>
           <div className="pg-hero-inner">
             <button className="pg-back" onClick={() => navigate(-1)}>← Back</button>
-            <span className="pg-eyebrow"><Logo /> Vendor Resources</span>
+            <span className="pg-eyebrow"> Vendor Resources</span>
             <div className="pg-icon-wrap">📸</div>
             <h1 className="pg-title">Photo Guidelines</h1>
             <p className="pg-subtitle">
