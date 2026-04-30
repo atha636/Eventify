@@ -19,6 +19,7 @@ import PaymentSuccess     from "./pages/PaymentSuccess";
 import AboutUs            from "./pages/AboutUs";
 import Blogs              from "./pages/Blogs";
 import BlogDetail         from "./pages/BlogDetail";
+import CookieConsent      from "./components/CookieConsent";
 
 // ── Resource pages ──────────────────────────────────────────────────
 import VendorHandbook   from "./pages/resources/VendorHandbook";
@@ -72,6 +73,7 @@ export default function App() {
         <Route path="/admin/login"  element={<AdminLogin />} />
         <Route path="/admin"        element={<AdminDashboard />} />
       </Routes>
+      <CookieConsent />
     </BrowserRouter>
   );
 }
