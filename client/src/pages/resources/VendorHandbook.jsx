@@ -61,7 +61,7 @@ export default function VendorHandbook() {
           </div>
           <div className="res-hero-inner">
             <button className="res-back" onClick={() => navigate(-1)}>← Back</button>
-            <span className="res-eyebrow"><Logo /> Vendor Resources</span>
+            <span className="res-eyebrow"> Vendor Resources</span>
             <div className="res-icon-wrap">📖</div>
             <h1 className="res-title">Vendor Handbook</h1>
             <p className="res-subtitle">
@@ -101,7 +101,10 @@ export default function VendorHandbook() {
             ))}
 
             <div className="res-cta-card">
-              <p className="res-cta-label"><Logo /> Ready to list?</p>
+              <div className="res-cta-header">
+  <Logo className="res-cta-logo" />
+  <span>Ready to list?</span>
+</div>
               <h3 className="res-cta-title">Start building your profile today.</h3>
               <button className="res-cta-btn" onClick={() => navigate("/vendor-dashboard")}>
                 Go to Dashboard →
@@ -161,4 +164,21 @@ const styles = `
   .res-cta-title { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; font-weight: 300; color: var(--white); margin-bottom: 24px; }
   .res-cta-btn { padding: 13px 28px; background: var(--gold); color: var(--ink); border: none; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.25s; }
   .res-cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(201,168,76,0.35); }
+  .res-cta-header {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* center horizontally */
+  gap: 10px;
+  margin-bottom: 12px;
+  color: var(--gold);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.res-cta-logo {
+  width: 28px;   /* control size */
+  height: 28px;
+  object-fit: contain;
+}
 `;
