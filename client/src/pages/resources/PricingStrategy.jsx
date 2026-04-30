@@ -50,7 +50,7 @@ export default function PricingStrategy() {
           </div>
           <div className="ps-hero-inner">
             <button className="ps-back" onClick={() => navigate(-1)}>← Back</button>
-            <span className="ps-eyebrow"><Logo /> Vendor Resources</span>
+            <span className="ps-eyebrow"> Vendor Resources</span>
             <div className="ps-icon-wrap">💡</div>
             <h1 className="ps-title">Pricing Strategy</h1>
             <p className="ps-subtitle">

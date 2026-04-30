@@ -185,7 +185,7 @@ const BOT_RESPONSES = [
   },
   {
     match: ["password", "forgot password", "reset", "login issue"],
-    reply: `Forgot your password? No worries!\n\n1️⃣ Go to the **Login** page\n2️⃣ Click **Forgot Password**\n3️⃣ Enter your registered email\n4️⃣ You'll receive a 6-digit OTP\n5️⃣ Enter the OTP and set a new password\n\nIf you're still having trouble, email us at **adminevencers2005@gmail.com** 📧`,
+    reply: `Forgot your password? No worries!\n\n1️⃣ Go to the **Login** page\n2️⃣ Click **Forgot Password**\n3️⃣ Enter your registered email\n4️⃣ You'll receive a 6-digit OTP\n5️⃣ Enter the OTP and set a new password\n\nIf you're still having trouble, email us at **admineventify2005@gmail.com** 📧`,
   },
   {
     match: ["vendor", "find vendor", "browse", "explore", "search vendor"],
@@ -193,7 +193,7 @@ const BOT_RESPONSES = [
   },
   {
     match: ["invoice", "receipt", "bill", "gst"],
-    reply: `Yes, you get a GST-compliant invoice for every booking! 📄\n\n✅ It's emailed to you automatically after payment\n✅ You can also download it anytime from **My Bookings → View Details**\n\nFor any invoice issues, contact us at **adminevencers2005@gmail.com**`,
+    reply: `Yes, you get a GST-compliant invoice for every booking! 📄\n\n✅ It's emailed to you automatically after payment\n✅ You can also download it anytime from **My Bookings → View Details**\n\nFor any invoice issues, contact us at **admineventify2005@gmail.com**`,
   },
   {
     match: ["hello", "hi", "hey", "hii", "namaste"],
@@ -201,11 +201,11 @@ const BOT_RESPONSES = [
   },
   {
     match: ["thank", "thanks", "thankyou", "great", "awesome", "perfect"],
-    reply: `You're welcome! 😊 Happy to help.\n\nIf you have any more questions, just ask. Have a wonderful event ahead! 🎉\n\nYou can also reach our team at **adminevencers2005@gmail.com** or call **+91 70230 17517** for urgent help.`,
+    reply: `You're welcome! 😊 Happy to help.\n\nIf you have any more questions, just ask. Have a wonderful event ahead! 🎉\n\nYou can also reach our team at **admineventify2005@gmail.com** or call **+91 70230 17517** for urgent help.`,
   },
   {
     match: ["contact", "email", "phone", "call", "reach", "support team"],
-    reply: `Here's how to reach our support team:\n\n📧 **Email:** adminevencers2005@gmail.com\n📞 **Phone:** +91 70230 17517\n🕐 **Hours:** Mon–Sat, 10 AM – 7 PM IST\n\nFor fastest response, email us with your booking ID and we'll get back within 24 hours! 💬`,
+    reply: `Here's how to reach our support team:\n\n📧 **Email:** admineventify2005@gmail.com\n📞 **Phone:** +91 70230 17517\n🕐 **Hours:** Mon–Sat, 10 AM – 7 PM IST\n\nFor fastest response, email us with your booking ID and we'll get back within 24 hours! 💬`,
   },
   // Catch-all "help" last so it won't swallow real queries
   {
@@ -221,7 +221,7 @@ function getBotReply(input) {
       return item.reply;
     }
   }
-  return `I'm not sure about that specific query, but I'm happy to help! 🤔\n\nYou can:\n• Try rephrasing your question\n• Browse the FAQs below\n• Email us at **adminevencers2005@gmail.com**\n• Call **+91 70230 17517** (Mon–Sat, 10–7 PM)\n\nOur team typically responds within 24 hours!`;
+  return `I'm not sure about that specific query, but I'm happy to help! 🤔\n\nYou can:\n• Try rephrasing your question\n• Browse the FAQs below\n• Email us at **admineventify2005@gmail.com**\n• Call **+91 70230 17517** (Mon–Sat, 10–7 PM)\n\nOur team typically responds within 24 hours!`;
 }
 
 function formatMsg(text) {
@@ -503,7 +503,7 @@ export default function CustomerCareClient() {
             {
               icon: "✉",
               title: "Email Support",
-              desc: "adminevencers2005@gmail.com",
+              desc: "admineventify2005@gmail.com",
               sub: "Reply within 24 hours",
             },
             {
@@ -636,7 +636,7 @@ export default function CustomerCareClient() {
             className="cc-cta-btn"
             onClick={() =>
               (window.location.href =
-                "mailto:adminevencers2005@gmail.com")
+                "mailto:admineventify2005@gmail.com")
             }
           >
             Contact Support →

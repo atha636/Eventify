@@ -102,7 +102,7 @@ const vendorFAQs = [
       },
       {
         q: "How do I contact Evencers vendor support?",
-        a: "Vendor support is available via email at adminevencers2005@gmail.com or by calling +91 70230 17517 (Mon–Sat, 10 AM – 7 PM IST). You can also use the 'Contact Support' button in your Dashboard.",
+        a: "Vendor support is available via email at admineventify2005@gmail.com or by calling +91 70230 17517 (Mon–Sat, 10 AM – 7 PM IST). You can also use the 'Contact Support' button in your Dashboard.",
       },
       {
         q: "Can my account be suspended? What are the reasons?",
@@ -121,9 +121,9 @@ const CONTACT_CHANNELS = [
       </svg>
     ),
     label: "Email Support",
-    value: "adminevencers2005@gmail.com",
+    value: "admineventify2005@gmail.com",
     sub: "We reply within 24 hours",
-    action: () => (window.location.href = "mailto:adminevencers2005@gmail.com"),
+    action: () => (window.location.href = "mailto:admineventify2005@gmail.com"),
     cta: "Send Email",
     accent: "#c9a84c",
   },
@@ -179,8 +179,6 @@ const VENDOR_QUICK_CHIPS = [
   "Client raised complaint",
 ];
 
-// FIX: Updated match arrays to include the exact chip text phrases
-// and more flexible keyword fragments so nothing falls through to the fallback.
 const VENDOR_BOT_RESPONSES = [
   {
     match: [
@@ -251,7 +249,7 @@ const VENDOR_BOT_RESPONSES = [
       "client complaint",
       "review issue",
     ],
-    reply: `If a client raises a complaint:\n\n1️⃣ You'll be **notified immediately** by email\n2️⃣ You have **48 hours** to provide your response and evidence\n3️⃣ Our support team reviews both sides fairly\n4️⃣ Resolution is communicated to both parties within **72 hours**\n\nFor urgent disputes, email us at **adminevencers2005@gmail.com** with your booking ID 📧`,
+    reply: `If a client raises a complaint:\n\n1️⃣ You'll be **notified immediately** by email\n2️⃣ You have **48 hours** to provide your response and evidence\n3️⃣ Our support team reviews both sides fairly\n4️⃣ Resolution is communicated to both parties within **72 hours**\n\nFor urgent disputes, email us at **admineventify2005@gmail.com** with your booking ID 📧`,
   },
   {
     match: ["cancel", "cancellation", "cancel booking"],
@@ -267,7 +265,7 @@ const VENDOR_BOT_RESPONSES = [
   },
   {
     match: ["suspend", "banned", "account suspend", "suspended"],
-    reply: `Accounts may be temporarily suspended for:\n\n❌ Repeated cancellations without notice\n⬇️ Ratings dropping below **3.0**\n🚫 Verified fraudulent activity\n📜 Violation of vendor terms of service\n\nIf you believe your suspension is incorrect, email us at **adminevencers2005@gmail.com** with your account details. We review all cases within 48 hours.`,
+    reply: `Accounts may be temporarily suspended for:\n\n❌ Repeated cancellations without notice\n⬇️ Ratings dropping below **3.0**\n🚫 Verified fraudulent activity\n📜 Violation of vendor terms of service\n\nIf you believe your suspension is incorrect, email us at **admineventify2005@gmail.com** with your account details. We review all cases within 48 hours.`,
   },
   {
     match: ["hello", "hi", "hey", "hii", "namaste"],
@@ -275,13 +273,12 @@ const VENDOR_BOT_RESPONSES = [
   },
   {
     match: ["thank", "thanks", "thankyou", "great", "perfect", "awesome"],
-    reply: `You're welcome! 😊 Happy to help you grow your business on Evencers.\n\nFor anything else, our vendor support team is available:\n📧 **adminevencers2005@gmail.com**\n📞 **+91 70230 17517** (Mon–Sat, 10–7 PM)\n\nWishing you lots of bookings! 🎉`,
+    reply: `You're welcome! 😊 Happy to help you grow your business on Evencers.\n\nFor anything else, our vendor support team is available:\n📧 **admineventify2005@gmail.com**\n📞 **+91 70230 17517** (Mon–Sat, 10–7 PM)\n\nWishing you lots of bookings! 🎉`,
   },
   {
     match: ["contact", "email", "phone", "call", "reach", "support"],
-    reply: `Here's how to reach our vendor support team:\n\n📧 **Email:** adminevencers2005@gmail.com\n📞 **Phone:** +91 70230 17517\n💬 **WhatsApp:** +91 70230 17517\n🕐 **Hours:** Mon–Sat, 10 AM – 7 PM IST\n\nFor fastest response, include your **vendor ID** and **booking ID** in your message!`,
+    reply: `Here's how to reach our vendor support team:\n\n📧 **Email:** admineventify2005@gmail.com\n📞 **Phone:** +91 70230 17517\n💬 **WhatsApp:** +91 70230 17517\n🕐 **Hours:** Mon–Sat, 10 AM – 7 PM IST\n\nFor fastest response, include your **vendor ID** and **booking ID** in your message!`,
   },
-  // Catch-all "help" separately so it doesn't swallow other queries
   {
     match: ["help"],
     reply: `Hello, Partner! 👋 I'm **Nova**, your Evencers vendor support assistant.\n\nI'm here to help you with:\n🚀 Getting started & listing services\n📅 Managing bookings & clients\n💰 Payments & earnings\n⭐ Growing your profile visibility\n\nWhat can I help you with today?`,
@@ -295,7 +292,7 @@ function getVendorBotReply(input) {
       return item.reply;
     }
   }
-  return `I'm not sure about that specific query, but I'm happy to help! 🤔\n\nYou can:\n• Try rephrasing your question\n• Browse the FAQs below\n• Email us at **adminevencers2005@gmail.com**\n• Call **+91 70230 17517** (Mon–Sat, 10–7 PM)\n\nOur vendor support team typically responds within 24 hours!`;
+  return `I'm not sure about that specific query, but I'm happy to help! 🤔\n\nYou can:\n• Try rephrasing your question\n• Browse the FAQs below\n• Email us at **admineventify2005@gmail.com**\n• Call **+91 70230 17517** (Mon–Sat, 10–7 PM)\n\nOur vendor support team typically responds within 24 hours!`;
 }
 
 function formatMsg(text) {
@@ -665,10 +662,7 @@ export default function CustomerCareVendor() {
         {/* ── CONTACT CHANNELS ── */}
         <div className={`vc-contact-section ${contactVisible ? "revealed" : ""}`} ref={contactRef}>
           <div className="vc-contact-header">
-            <div className="vc-eyebrow-dark vc-eyebrow-wrap">
-              <Logo />
-              <span>Reach Us Directly</span>
-            </div>
+            <span className="vc-section-eyebrow">Reach Us Directly</span>
             <h2 className="vc-section-title">Get in Touch</h2>
             <p className="vc-section-sub">Multiple ways to connect with our dedicated vendor success team</p>
           </div>
@@ -708,7 +702,7 @@ export default function CustomerCareVendor() {
                     className={`vc-copy-btn ${copiedIndex === i ? "copied" : ""}`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleCopy(i === 0 ? "adminevencers2005@gmail.com" : "+917023017517", i);
+                      handleCopy(i === 0 ? "admineventify2005@gmail.com" : "+917023017517", i);
                     }}
                     aria-label="Copy to clipboard"
                     title={copiedIndex === i ? "Copied!" : "Copy"}
@@ -749,10 +743,7 @@ export default function CustomerCareVendor() {
         {/* ── FAQ SECTION ── */}
         <div className={`vc-faq-section ${faqVisible ? "revealed" : ""}`} id="vc-faq" ref={faqRef}>
           <div className="vc-faq-header">
-            <div className="vc-eyebrow-dark vc-eyebrow-wrap">
-              <Logo />
-              <span>Vendor FAQ</span>
-            </div>
+            <span className="vc-section-eyebrow">Vendor FAQ</span>
             <h2 className="vc-section-title">Partner Questions</h2>
             <p className="vc-section-sub">Answers to the most common questions from our vendor partners</p>
           </div>
@@ -781,9 +772,9 @@ export default function CustomerCareVendor() {
 
                   <div className="vc-sidebar-contact">
                     <p className="vc-sidebar-contact-title">Need direct help?</p>
-                    <a href="mailto:adminevencers2005@gmail.com" className="vc-sidebar-link">
+                    <a href="mailto:admineventify2005@gmail.com" className="vc-sidebar-link">
                       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="11" height="11"><rect x="1" y="3" width="14" height="10" rx="1.5" /><polyline points="1,3 8,9 15,3" /></svg>
-                      adminevencers2005@gmail.com
+                      admineventify2005@gmail.com
                     </a>
                     <a href="tel:+917023017517" className="vc-sidebar-link">
                       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="11" height="11"><path d="M15 11.3v2A1.33 1.33 0 0 1 13.67 14.6 13.19 13.19 0 0 1 7.74 12.6a13 13 0 0 1-4-4 13.19 13.19 0 0 1-2-5.93A1.33 1.33 0 0 1 3.07 1.33h2A1.33 1.33 0 0 1 6.4 2.49c.085.64.24 1.27.47 1.87a1.33 1.33 0 0 1-.3 1.4l-.85.85A10.67 10.67 0 0 0 9.72 10.6l.85-.85a1.33 1.33 0 0 1 1.4-.3c.6.23 1.23.387 1.87.47A1.33 1.33 0 0 1 15 11.3z" /></svg>
@@ -828,10 +819,7 @@ export default function CustomerCareVendor() {
         {/* ── RESOURCES ── */}
         <div className={`vc-resources ${resVisible ? "revealed" : ""}`} ref={resRef}>
           <div className="vc-res-header">
-            <div className="vc-eyebrow-dark vc-eyebrow-wrap">
-              <Logo />
-              <span>Vendor Resources</span>
-            </div>
+            <span className="vc-section-eyebrow">Vendor Resources</span>
             <h2 className="vc-section-title">Helpful Guides</h2>
             <p className="vc-section-sub">Curated resources to help you get the most out of Evencers</p>
           </div>
@@ -864,10 +852,7 @@ export default function CustomerCareVendor() {
         {/* ── ESCALATION TIMELINE ── */}
         <div className={`vc-timeline-section ${tlVisible ? "revealed" : ""}`} ref={tlRef}>
           <div className="vc-timeline-header">
-            <div className="vc-eyebrow-dark vc-eyebrow-wrap">
-              <Logo />
-              <span>Our Support Promise</span>
-            </div>
+            <span className="vc-section-eyebrow vc-section-eyebrow--light">Our Support Promise</span>
             <h2 className="vc-section-title" style={{ color: "var(--cream)" }}>What to Expect</h2>
           </div>
           <div className="vc-timeline">
@@ -900,18 +885,15 @@ export default function CustomerCareVendor() {
           <div className="vc-cta-orb vc-cta-orb2" />
           <div className="vc-noise" style={{ opacity: 0.03 }} />
           <div className="vc-cta-inner">
-            <div className="vc-eyebrow-dark vc-eyebrow-wrap">
-              <Logo />
-              <span>We're Here For You</span>
-            </div>
+            <span className="vc-section-eyebrow vc-section-eyebrow--light">We're Here For You</span>
             <h3 className="vc-cta-title">Still have questions?</h3>
             <p className="vc-cta-sub">
               Our dedicated vendor success team is available Mon–Sat, 10 AM – 7 PM IST.
               Reach us by email, phone, or WhatsApp — we always respond.
             </p>
             <div className="vc-cta-contact-row">
-              <a href="mailto:adminevencers2005@gmail.com" className="vc-cta-contact-pill">
-                <span>✉</span>adminevencers2005@gmail.com
+              <a href="mailto:admineventify2005@gmail.com" className="vc-cta-contact-pill">
+                <span>✉</span>admineventify2005@gmail.com
               </a>
               <a href="tel:+917023017517" className="vc-cta-contact-pill">
                 <span>📞</span>+91 70230 17517
@@ -921,7 +903,7 @@ export default function CustomerCareVendor() {
               </a>
             </div>
             <div className="vc-cta-btns">
-              <button className="vc-cta-primary" onClick={() => (window.location.href = "mailto:adminevencers2005@gmail.com")}>
+              <button className="vc-cta-primary" onClick={() => (window.location.href = "mailto:admineventify2005@gmail.com")}>
                 Email Vendor Support
               </button>
               <a href="/vendor-dashboard" className="vc-cta-secondary">Go to Dashboard →</a>
@@ -931,10 +913,13 @@ export default function CustomerCareVendor() {
 
         {/* ── FOOTER ── */}
         <footer className="vc-footer">
-          <div className="vc-footer-logo"><Logo />Evencers</div>
+          <div className="vc-footer-logo">
+            <Logo />
+            <span>Evencers</span>
+          </div>
           <p className="vc-footer-copy">© 2025 Evencers. Crafted with care in India.</p>
           <div className="vc-footer-contact">
-            <a href="mailto:adminevencers2005@gmail.com" className="vc-footer-link">adminevencers2005@gmail.com</a>
+            <a href="mailto:admineventify2005@gmail.com" className="vc-footer-link">admineventify2005@gmail.com</a>
             <span className="vc-footer-sep">·</span>
             <a href="tel:+917023017517" className="vc-footer-link">+91 70230 17517</a>
           </div>
@@ -959,6 +944,19 @@ const styles = `
   :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 4px; }
 
   .vc-noise { position: absolute; inset: 0; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E"); opacity: 0.055; mix-blend-mode: overlay; }
+
+  /* ── Section eyebrow — replaces the old logo+text combo ── */
+  .vc-section-eyebrow {
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+  .vc-section-eyebrow--light {
+    color: rgba(201,168,76,0.7);
+  }
 
   /* HERO */
   .vc-hero { position: relative; overflow: hidden; background: var(--ink); padding: 120px 32px 80px; display: flex; align-items: center; justify-content: center; }
@@ -1018,7 +1016,6 @@ const styles = `
   .vc-contact-header { text-align: center; margin-bottom: 44px; }
   .vc-section-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.8rem, 3vw, 2.5rem); font-weight: 300; color: var(--ink); margin-bottom: 8px; }
   .vc-section-sub { font-size: 13.5px; color: var(--muted); line-height: 1.6; }
-  .vc-eyebrow-dark { display: block; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
 
   .vc-contact-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 28px; }
   @media (max-width: 900px) { .vc-contact-grid { grid-template-columns: repeat(2,1fr); } }
@@ -1150,17 +1147,15 @@ const styles = `
   .vc-cta-secondary { padding: 14px 32px; background: transparent; color: var(--cream); border: 1px solid rgba(245,240,232,0.22); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; text-decoration: none; display: inline-flex; align-items: center; transition: all 0.25s; }
   .vc-cta-secondary:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-2px); }
 
-  /* FOOTER */
+  /* FOOTER — Logo lives here, its only home */
   .vc-footer { background: #0a0806; padding: 32px; text-align: center; border-top: 1px solid rgba(201,168,76,0.1); display: flex; flex-direction: column; gap: 10px; align-items: center; }
-  .vc-footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600; color: var(--gold); letter-spacing: 0.2em; text-transform: uppercase; }
+  .vc-footer-logo { display: flex; align-items: center; gap: 10px; font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600; color: var(--gold); letter-spacing: 0.2em; text-transform: uppercase; }
+  .vc-footer-logo img, .vc-footer-logo svg { width: 26px; height: 26px; }
   .vc-footer-copy { font-size: 12px; color: rgba(122,114,101,0.5); }
   .vc-footer-contact { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
   .vc-footer-link { font-size: 12px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
   .vc-footer-link:hover { color: var(--gold); }
   .vc-footer-sep { color: var(--border); }
-
-  .vc-eyebrow-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
-  .vc-eyebrow-wrap img, .vc-eyebrow-wrap svg { width: 26px; height: 26px; }
 
   @keyframes fadeUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -1205,14 +1200,12 @@ const styles = `
   .vc-chat-fab-ring { position: absolute; inset: -6px; border-radius: 50%; border: 2px solid rgba(201,168,76,0.35); animation: fabRing 2.5s ease-in-out infinite; }
   @keyframes fabRing { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(1.55); opacity: 0; } }
 
-  /* ── FIX: Chat window — no clipping on any screen size ── */
   .vc-chat-window {
     position: fixed;
     bottom: 100px;
     right: 28px;
     z-index: 8999;
     width: 370px;
-    /* prevent the window from ever going off-screen left */
     max-width: calc(100vw - 20px);
     max-height: 560px;
     background: var(--white);
@@ -1230,7 +1223,6 @@ const styles = `
   }
   .vc-chat-window.show { transform: scale(1) translateY(0); opacity: 1; pointer-events: auto; }
 
-  /* Mobile: snap to safe edges */
   @media (max-width: 480px) {
     .vc-chat-window {
       right: 12px;

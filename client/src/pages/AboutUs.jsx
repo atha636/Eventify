@@ -1077,4 +1077,5 @@ const styles = `
     .au-ring1, .au-ring2, .au-team-avatar-ring { animation: none; }
     .au-scroll-line { animation: none; }
   }
+    
 `;

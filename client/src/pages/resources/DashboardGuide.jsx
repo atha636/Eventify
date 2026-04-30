@@ -62,7 +62,7 @@ export default function DashboardGuide() {
           </div>
           <div className="dg-hero-inner">
             <button className="dg-back" onClick={() => navigate(-1)}>← Back</button>
-            <span className="dg-eyebrow"><Logo /> Vendor Resources</span>
+            <span className="dg-eyebrow"> Vendor Resources</span>
             <div className="dg-icon-wrap">📊</div>
             <h1 className="dg-title">Dashboard Guide</h1>
             <p className="dg-subtitle">
@@ -103,7 +103,10 @@ export default function DashboardGuide() {
           ))}
 
           <div className="dg-support">
-            <p className="dg-support-eyebrow"><Logo /> Need help?</p>
+            <div className="dg-support-header">
+  <Logo className="dg-support-logo" />
+  <span>Need help?</span>
+</div>
             <h3 className="dg-support-title">Can't find what you're looking for?</h3>
             <p className="dg-support-text">Our support team is available 7 days a week via the Help button on your dashboard.</p>
             <button className="dg-support-btn" onClick={() => navigate("/customer-care/vendor")}>
@@ -160,4 +163,22 @@ const styles = `
   .dg-support-text { font-size: 14px; color: var(--muted); margin-bottom: 28px; }
   .dg-support-btn { padding: 13px 28px; background: var(--gold); color: var(--ink); border: none; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.25s; }
   .dg-support-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(201,168,76,0.35); }
+  .dg-support-header {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* centers everything */
+  gap: 10px;
+  margin-bottom: 12px;
+
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.dg-support-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
 `;
