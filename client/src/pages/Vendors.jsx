@@ -378,9 +378,51 @@ function ComingSoonState({ category, onClear }) {
   );
 }
 
+// ─── ROLE DETECTION HOOK ─────────────────────────────────────────
+// Reads the logged-in user's role from localStorage.
+// Adjust the key name / field to match your auth system if needed.
+function useUserRole() {
+  const [role, setRole] = useState(null);
+
+  useEffect(() => {
+    try {
+      // ── Option A: user object stored as JSON ──────────────────
+      // e.g. localStorage.setItem('user', JSON.stringify({ role: 'vendor' }))
+      const stored = localStorage.getItem("user");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Support both { role } and { user: { role } } shapes
+        const r = parsed?.role ?? parsed?.user?.role ?? null;
+        if (r) { setRole(r); return; }
+      }
+
+      // ── Option B: role stored directly as a plain string ──────
+      // e.g. localStorage.setItem('role', 'vendor')
+      const direct = localStorage.getItem("role");
+      if (direct) { setRole(direct); return; }
+
+      // ── Option C: token payload (JWT) ─────────────────────────
+      const token = localStorage.getItem("token");
+      if (token) {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        if (payload?.role) { setRole(payload.role); return; }
+      }
+    } catch {
+      // If anything fails, treat as a regular user (client)
+    }
+    setRole("user");
+  }, []);
+
+  return role;
+}
+
 export default function Vendors() {
   const location = useLocation();
   const navigate = useNavigate();
+
+  // ── Role: 'vendor' hides the Secure Pay card ─────────────────
+  const userRole = useUserRole();
+  const isVendor = userRole === "vendor";
 
   const [vendors,        setVendors]        = useState([]);
   const [loading,        setLoading]        = useState(true);
@@ -393,7 +435,7 @@ export default function Vendors() {
   const [dateLoading,    setDateLoading]    = useState(false);
   const [availVendors,   setAvailVendors]   = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showPayModal,   setShowPayModal]   = useState(false);   // ← NEW
+  const [showPayModal,   setShowPayModal]   = useState(false);
   const [searchFocused,  setSearchFocused]  = useState(false);
   const [heroVisible,    setHeroVisible]    = useState(false);
 
@@ -500,8 +542,8 @@ export default function Vendors() {
           />
         )}
 
-        {/* ── PAYMENT MODAL (NEW) ── */}
-        {showPayModal && (
+        {/* ── PAYMENT MODAL — only shown to clients (not vendors) ── */}
+        {showPayModal && !isVendor && (
           <PaymentModal onClose={() => setShowPayModal(false)} />
         )}
 
@@ -539,19 +581,21 @@ export default function Vendors() {
             </div>
           </div>
 
-          {/* ── FLOATING CARD 4 — Payment Flow (always visible, clickable) ── */}
-          <button
-            className="vn-float-card vn-fc-left vn-fc-4"
-            onClick={() => setShowPayModal(true)}
-            aria-label="View Evencers payment plan — tap to see details"
-          >
-            <span className="vn-fc-icon">🔐</span>
-            <div className="vn-fc-text">
-              <span className="vn-fc-val">Secure Pay</span>
-              <span className="vn-fc-label">30 · 50 · 20 Plan</span>
-            </div>
-            <span className="vn-fc4-tap" aria-hidden="true">tap ↗</span>
-          </button>
+          {/* ── FLOATING CARD 4 — Payment Flow (clients only, hidden for vendors) ── */}
+          {!isVendor && (
+            <button
+              className="vn-float-card vn-fc-left vn-fc-4"
+              onClick={() => setShowPayModal(true)}
+              aria-label="View Evencers payment plan — tap to see details"
+            >
+              <span className="vn-fc-icon">🔐</span>
+              <div className="vn-fc-text">
+                <span className="vn-fc-val">Secure Pay</span>
+                <span className="vn-fc-label">30 · 50 · 20 Plan</span>
+              </div>
+              <span className="vn-fc4-tap" aria-hidden="true">tap ↗</span>
+            </button>
+          )}
 
           <div className="vn-hero-inner">
             <div className="vn-eyebrow">
@@ -613,19 +657,21 @@ export default function Vendors() {
               ))}
             </div>
 
-            {/* ── Mobile-only payment card pill (renders inside hero-inner on small screens) ── */}
-            <button
-              className="vn-fc4-mobile-pill"
-              onClick={() => setShowPayModal(true)}
-              aria-label="View Evencers payment plan"
-            >
-              <span className="vn-fc4-pill-icon">🔐</span>
-              <div className="vn-fc4-pill-text">
-                <span className="vn-fc4-pill-val">Secure Pay Plan</span>
-                <span className="vn-fc4-pill-sub">30% · 50% · 20% — tap to see how</span>
-              </div>
-              <span className="vn-fc4-pill-arrow">↗</span>
-            </button>
+            {/* ── Mobile-only payment card pill — clients only, hidden for vendors ── */}
+            {!isVendor && (
+              <button
+                className="vn-fc4-mobile-pill"
+                onClick={() => setShowPayModal(true)}
+                aria-label="View Evencers payment plan"
+              >
+                <span className="vn-fc4-pill-icon">🔐</span>
+                <div className="vn-fc4-pill-text">
+                  <span className="vn-fc4-pill-val">Secure Pay Plan</span>
+                  <span className="vn-fc4-pill-sub">30% · 50% · 20% — tap to see how</span>
+                </div>
+                <span className="vn-fc4-pill-arrow">↗</span>
+              </button>
+            )}
 
           </div>
         </header>
@@ -1082,22 +1128,15 @@ const styles = `
   }
 
   /* ────────────────────────────────────────────────────────────
-     4TH FLOATING CARD — PAYMENT (desktop: absolute, always visible)
+     4TH FLOATING CARD — PAYMENT (desktop: absolute, clients only)
   ─────────────────────────────────────────────────────────────── */
   .vn-fc-4 {
-    /* desktop positioning — left side below card 1 */
     top: 62%;
     animation: floatCard4 5.8s ease-in-out infinite 2.4s;
-
-    /* override pointer-events so it's clickable */
     pointer-events: all;
     cursor: pointer;
-
-    /* slightly enhanced border for call-to-action feel */
     border-color: rgba(201,168,76,0.32);
     background: rgba(255,255,255,0.07);
-
-    /* transition for hover */
     transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
     text-decoration: none;
     font-family: 'DM Sans', sans-serif;
@@ -1117,7 +1156,6 @@ const styles = `
     letter-spacing: 0.08em;
   }
 
-  /* small "tap" cue badge on the 4th card */
   .vn-fc4-tap {
     position: absolute;
     top: -8px; right: -4px;
@@ -1140,7 +1178,6 @@ const styles = `
     transform: translateY(0);
   }
 
-  /* Subtle pulse ring on the 4th card to draw attention */
   .vn-fc-4::after {
     content: '';
     position: absolute; inset: -3px;
@@ -1162,7 +1199,6 @@ const styles = `
 
   /* ── Mobile-only pill version of the payment card ── */
   .vn-fc4-mobile-pill {
-    /* hidden on desktop — shown on mobile only */
     display: none;
     width: 100%;
     max-width: 400px;
@@ -1743,7 +1779,6 @@ const styles = `
   .pm-modal::-webkit-scrollbar-track { background: transparent; }
   .pm-modal::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.2); border-radius: 4px; }
 
-  /* Subtle inner glow */
   .pm-modal::before {
     content: '';
     position: absolute; inset: 0;
@@ -1768,7 +1803,6 @@ const styles = `
     color: var(--gold-light);
   }
 
-  /* Header */
   .pm-eyebrow {
     display: inline-flex; align-items: center; gap: 8px;
     font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase;
@@ -1788,7 +1822,6 @@ const styles = `
     max-width: 380px; margin-left: auto; margin-right: auto;
   }
 
-  /* ── Progress Bar ── */
   .pm-bar-wrap { margin-bottom: 32px; }
   .pm-bar {
     display: flex; height: 10px; border-radius: 10px;
@@ -1810,7 +1843,6 @@ const styles = `
     color: rgba(245,240,232,0.28); padding: 0 2px;
   }
 
-  /* ── Payment Steps ── */
   .pm-steps {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -1863,7 +1895,6 @@ const styles = `
     line-height: 1.65;
   }
 
-  /* Arrow between steps */
   .pm-step-arrow {
     position: absolute;
     top: 50%; right: -18px;
@@ -1876,7 +1907,6 @@ const styles = `
     z-index: 2; pointer-events: none;
   }
 
-  /* ── Escrow Note ── */
   .pm-note {
     display: flex; align-items: flex-start; gap: 12px;
     background: rgba(201,168,76,0.05);
@@ -1889,7 +1919,6 @@ const styles = `
   .pm-note strong { color: rgba(245,240,232,0.7); font-weight: 500; }
   .pm-note-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
 
-  /* ── CTA button ── */
   .pm-cta {
     display: inline-block; padding: 13px 40px;
     background: var(--gold); color: var(--ink);
@@ -2073,15 +2102,9 @@ const styles = `
 
   /* ─── RESPONSIVE ────────────────────────────── */
   @media (max-width: 1024px) {
-    /* Hide the 3 original cards on tablet/mobile */
     .vn-float-card:not(.vn-fc-4) { display: none; }
-
-    /* Keep the 4th card HIDDEN on tablet (we use the pill inside hero-inner instead) */
     .vn-fc-4 { display: none; }
-
-    /* Show the mobile pill version */
     .vn-fc4-mobile-pill { display: flex; }
-
     .vn-why-grid { grid-template-columns: repeat(2, 1fr); }
   }
   @media (max-width: 960px) {
@@ -2105,13 +2128,9 @@ const styles = `
     .vn-cs-email { text-align: center; }
     .vn-cs-btn { width: 100%; border-radius: 0 0 9px 9px; }
 
-    /* Payment modal responsive */
     .pm-modal { padding: 36px 20px 28px; border-radius: 20px; }
     .pm-steps { grid-template-columns: 1fr; gap: 10px; }
-    .pm-step-arrow {
-      /* On mobile, remove side arrows (steps stack vertically) */
-      display: none;
-    }
+    .pm-step-arrow { display: none; }
     .pm-step { padding: 18px 16px; text-align: left; }
     .pm-step-pct { font-size: 2rem; }
     .pm-bar-labels span { font-size: 8px; }
