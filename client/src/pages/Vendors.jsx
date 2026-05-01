@@ -102,7 +102,7 @@ function PaymentModal({ onClose }) {
     {
       n: "01",
       icon: "📋",
-      pct: "30%",
+      pct: "25%",
       label: "At Booking",
       desc: "Paid when you confirm your vendor. Locks your date and secures the agreement instantly.",
       color: "#c9a84c",
@@ -118,7 +118,7 @@ function PaymentModal({ onClose }) {
     {
       n: "03",
       icon: "✅",
-      pct: "20%",
+      pct: "25%",
       label: "After Success",
       desc: "Final payment released only after you confirm the event was completed to your satisfaction.",
       color: "#7a5e1c",
