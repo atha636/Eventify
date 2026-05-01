@@ -407,7 +407,7 @@ export default function Blogs() {
               <em>tips in your inbox.</em>
             </h2>
             <p className="bl-nl-sub">
-              Join 3,000+ planners, couples and vendors who get our weekly digest —
+              Join 30+ planners, couples and vendors who get our weekly digest —
               trends, checklists, real stories and exclusive Evencers offers.
             </p>
             <form className="bl-nl-form" onSubmit={(e) => e.preventDefault()}>
@@ -432,7 +432,7 @@ export default function Blogs() {
   EVENCERS
 </div>
           <p className="bl-footer-tagline">India's trusted event vendor platform</p>
-          <p className="bl-footer-copy">© 2025 Evencers. Crafted with care in India.</p>
+          <p className="bl-footer-copy">© 2026 Evencers. Crafted with care in India.</p>
           <nav className="bl-footer-links" aria-label="Footer navigation">
             {["Home", "Vendors", "Blog", "About", "Privacy", "Contact"].map((l) => (
               <a key={l} href="#" className="bl-footer-link">{l}</a>
