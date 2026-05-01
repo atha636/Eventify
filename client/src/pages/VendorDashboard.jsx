@@ -694,40 +694,6 @@ function BookingSearchBar({ value, onChange }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// REVENUE SUMMARY BAR (new feature)
-// ─────────────────────────────────────────────────────────────
-function RevenueSummary({ bookings }) {
-  const totalRevenue  = bookings
-    .filter((b) => b.paymentStatus === "paid")
-    .reduce((sum, b) => sum + (b.packagePrice || 0), 0);
-  const pendingRevenue = bookings
-    .filter((b) => b.status === "approved" && b.paymentStatus === "pending")
-    .reduce((sum, b) => sum + (b.packagePrice || 0), 0);
-
-  if (totalRevenue === 0 && pendingRevenue === 0) return null;
-
-  return (
-    <div className="vd-revenue-bar" role="region" aria-label="Revenue summary">
-      {totalRevenue > 0 && (
-        <div className="vd-revenue-item">
-          <span className="vd-revenue-label">Revenue Collected</span>
-          <span className="vd-revenue-value vd-revenue-green">₹{totalRevenue.toLocaleString()}</span>
-        </div>
-      )}
-      {pendingRevenue > 0 && (
-        <>
-          <div className="vd-revenue-divider" aria-hidden="true" />
-          <div className="vd-revenue-item">
-            <span className="vd-revenue-label">Pending Collection</span>
-            <span className="vd-revenue-value vd-revenue-gold">₹{pendingRevenue.toLocaleString()}</span>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
 // LEGAL MODAL (Privacy / Terms / Help)
 // ─────────────────────────────────────────────────────────────
 const LEGAL_CONTENT = {
@@ -1173,9 +1139,6 @@ export default function VendorDashboard() {
               ))}
             </div>
           </section>
-
-          {/* ── REVENUE SUMMARY ── */}
-          <RevenueSummary bookings={bookings} />
 
           {/* ── DCR ALERT ── */}
           {pendingDcrCount > 0 && (
@@ -1853,7 +1816,6 @@ const styles = `
     font-family: 'Cormorant Garamond', serif;
     font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 300;
     color: var(--ink); line-height: 1.1; margin-bottom: 6px;
-    /* subtle text shadow for depth */
     text-shadow: 0 1px 0 rgba(255,255,255,0.6);
   }
   .vd-subtitle { font-size: 13.5px; color: var(--muted); }
@@ -1895,30 +1857,12 @@ const styles = `
     background: var(--white); border: 1px solid var(--border); border-radius: 14px;
     padding: 22px 20px; display: flex; flex-direction: column; gap: 6px;
     transition: box-shadow 0.2s, transform 0.2s;
-    /* subtle inner top highlight */
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), var(--shadow-sm);
   }
   .vd-stat-card:hover { box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), var(--shadow-md); transform: translateY(-2px); }
   .vd-stat-icon { font-size: 1.4rem; }
   .vd-stat-value { font-family: 'Cormorant Garamond', serif; font-size: 2.4rem; font-weight: 600; line-height: 1; transition: color 0.2s; }
   .vd-stat-label { font-size: 11.5px; color: var(--muted); }
-
-  /* ═══════════════════════════════════════════
-     REVENUE SUMMARY
-  ═══════════════════════════════════════════ */
-  .vd-revenue-bar {
-    display: flex; align-items: center; gap: 0;
-    background: var(--white); border: 1px solid var(--border); border-radius: 12px;
-    padding: 14px 24px; margin-bottom: 28px;
-    box-shadow: var(--shadow-sm);
-    animation: fadeUp 0.5s ease 0.15s both;
-  }
-  .vd-revenue-item { display: flex; flex-direction: column; gap: 4px; }
-  .vd-revenue-label { font-size: 10.5px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
-  .vd-revenue-value { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 600; }
-  .vd-revenue-green { color: var(--green); }
-  .vd-revenue-gold  { color: var(--gold); }
-  .vd-revenue-divider { width: 1px; height: 36px; background: var(--border); margin: 0 28px; flex-shrink: 0; }
 
   /* ═══════════════════════════════════════════
      DCR ALERT
@@ -2018,7 +1962,6 @@ const styles = `
   .vd-booking-card:hover { box-shadow: var(--shadow-md); border-color: rgba(201,168,76,0.4); transform: translateY(-1px); }
   .vd-booking-card-dcr { border-color: rgba(201,168,76,0.4) !important; box-shadow: 0 0 0 2px rgba(201,168,76,0.12) !important; }
 
-  /* Card main button – occupies left portion */
   .vd-booking-card-btn {
     flex: 1; background: none; border: none; text-align: left;
     cursor: pointer; padding: 22px 20px 22px 24px;
@@ -2215,8 +2158,6 @@ const styles = `
     .vd-booking-right { width: 100%; justify-content: flex-start; border-left: none; border-top: 1px solid rgba(201,168,76,0.1); padding: 14px 16px; }
     .vd-header { flex-direction: column; align-items: flex-start; }
     .vd-avail-section { flex-direction: column; align-items: flex-start; }
-    .vd-revenue-bar { flex-direction: column; align-items: flex-start; gap: 12px; }
-    .vd-revenue-divider { width: 100%; height: 1px; margin: 0; }
     .vd-footer-bar { padding: 16px; flex-direction: column; align-items: flex-start; }
     .toast-wrap { top: 70px; }
   }
