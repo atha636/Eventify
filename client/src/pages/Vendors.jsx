@@ -149,22 +149,22 @@ function PaymentModal({ onClose }) {
         {/* Visual bar */}
         <div className="pm-bar-wrap" aria-hidden="true">
           <div className="pm-bar">
-            <div className="pm-bar-seg pm-bar-30" style={{ width: "30%" }}>
-              <span>30%</span>
+            <div className="pm-bar-seg pm-bar-30" style={{ width: "25%" }}>
+              <span>25%</span>
             </div>
             <div className="pm-bar-gap" />
             <div className="pm-bar-seg pm-bar-50" style={{ width: "50%" }}>
               <span>50%</span>
             </div>
             <div className="pm-bar-gap" />
-            <div className="pm-bar-seg pm-bar-20" style={{ width: "20%" }}>
-              <span>20%</span>
+            <div className="pm-bar-seg pm-bar-20" style={{ width: "25%" }}>
+              <span>25%</span>
             </div>
           </div>
           <div className="pm-bar-labels">
-            <span style={{ width: "30%" }}>Booking</span>
+            <span style={{ width: "25%" }}>Booking</span>
             <span style={{ width: "50%", textAlign: "center" }}>Event Day</span>
-            <span style={{ width: "20%", textAlign: "right" }}>After</span>
+            <span style={{ width: "25%", textAlign: "right" }}>After</span>
           </div>
         </div>
 
@@ -591,7 +591,7 @@ export default function Vendors() {
               <span className="vn-fc-icon">🔐</span>
               <div className="vn-fc-text">
                 <span className="vn-fc-val">Secure Pay</span>
-                <span className="vn-fc-label">30 · 50 · 20 Plan</span>
+                <span className="vn-fc-label">25 · 50 · 25 Plan</span>
               </div>
               <span className="vn-fc4-tap" aria-hidden="true">tap ↗</span>
             </button>
@@ -667,7 +667,7 @@ export default function Vendors() {
                 <span className="vn-fc4-pill-icon">🔐</span>
                 <div className="vn-fc4-pill-text">
                   <span className="vn-fc4-pill-val">Secure Pay Plan</span>
-                  <span className="vn-fc4-pill-sub">30% · 50% · 20% — tap to see how</span>
+                  <span className="vn-fc4-pill-sub">25% · 50% · 25% — tap to see how</span>
                 </div>
                 <span className="vn-fc4-pill-arrow">↗</span>
               </button>
