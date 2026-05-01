@@ -90,12 +90,120 @@ const TRUST_STATS = [
   { value: "2+",   label: "Cities Covered"    },
 ];
 
-// Floating hero card data (like the About page style in image 3)
-const HERO_CARDS = [
-  { icon: "🏆", title: "Best Platform 2026", sub: "Evencers Award", side: "right", top: "22%" },
-  { icon: "👥", title: "100+ Happy Clients",  sub: "& counting",    side: "left",  top: "30%" },
-  { icon: "⭐", title: "4.9★ Average Rating", sub: "Verified Reviews", side: "right", top: "58%" },
-];
+// ─── PAYMENT MODAL ───────────────────────────────────────────────
+function PaymentModal({ onClose }) {
+  // Trap focus inside modal
+  useEffect(() => {
+    const prev = document.activeElement;
+    return () => prev?.focus();
+  }, []);
+
+  const steps = [
+    {
+      n: "01",
+      icon: "📋",
+      pct: "30%",
+      label: "At Booking",
+      desc: "Paid when you confirm your vendor. Locks your date and secures the agreement instantly.",
+      color: "#c9a84c",
+    },
+    {
+      n: "02",
+      icon: "📅",
+      pct: "50%",
+      label: "On Event Day",
+      desc: "Released to the vendor on the morning of your event — when everything is in place.",
+      color: "#a07c2e",
+    },
+    {
+      n: "03",
+      icon: "✅",
+      pct: "20%",
+      label: "After Success",
+      desc: "Final payment released only after you confirm the event was completed to your satisfaction.",
+      color: "#7a5e1c",
+    },
+  ];
+
+  return (
+    <div
+      className="pm-overlay"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Payment structure details"
+    >
+      <div className="pm-modal">
+        <button className="pm-x-btn" onClick={onClose} aria-label="Close payment details">✕</button>
+
+        {/* Header */}
+        <div className="pm-eyebrow">
+          <span className="pm-eyebrow-icon">🔐</span>
+          Evencers Secure Pay
+        </div>
+        <h2 className="pm-title">Simple 3-Step <em>Payment Flow</em></h2>
+        <p className="pm-sub">
+          Your money stays protected at every stage. We hold it in escrow and release it only when you're happy.
+        </p>
+
+        {/* Visual bar */}
+        <div className="pm-bar-wrap" aria-hidden="true">
+          <div className="pm-bar">
+            <div className="pm-bar-seg pm-bar-30" style={{ width: "30%" }}>
+              <span>30%</span>
+            </div>
+            <div className="pm-bar-gap" />
+            <div className="pm-bar-seg pm-bar-50" style={{ width: "50%" }}>
+              <span>50%</span>
+            </div>
+            <div className="pm-bar-gap" />
+            <div className="pm-bar-seg pm-bar-20" style={{ width: "20%" }}>
+              <span>20%</span>
+            </div>
+          </div>
+          <div className="pm-bar-labels">
+            <span style={{ width: "30%" }}>Booking</span>
+            <span style={{ width: "50%", textAlign: "center" }}>Event Day</span>
+            <span style={{ width: "20%", textAlign: "right" }}>After</span>
+          </div>
+        </div>
+
+        {/* Steps */}
+        <div className="pm-steps">
+          {steps.map((s, i) => (
+            <div key={s.n} className={`pm-step pm-step--${i}`}>
+              <div className="pm-step-header">
+                <span className="pm-step-num">{s.n}</span>
+                <span className="pm-step-icon">{s.icon}</span>
+              </div>
+              <div className="pm-step-pct" style={{ color: s.color }}>{s.pct}</div>
+              <div className="pm-step-label">{s.label}</div>
+              <p className="pm-step-desc">{s.desc}</p>
+              {i < 2 && (
+                <div className="pm-step-arrow" aria-hidden="true">↓</div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Escrow note */}
+        <div className="pm-note" role="note">
+          <span className="pm-note-icon" aria-hidden="true">🛡️</span>
+          <div>
+            <strong>Protected by Evencers Escrow</strong>
+            <br />
+            All payments are held securely and released to vendors only after you confirm satisfaction — no chasing, no disputes.
+          </div>
+        </div>
+
+        {/* CTA */}
+        <button className="pm-cta" onClick={onClose}>
+          Got it, thanks! →
+        </button>
+      </div>
+    </div>
+  );
+}
 
 // ─────────────────────────────────────────────
 // DATE PICKER MODAL
@@ -285,6 +393,7 @@ export default function Vendors() {
   const [dateLoading,    setDateLoading]    = useState(false);
   const [availVendors,   setAvailVendors]   = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showPayModal,   setShowPayModal]   = useState(false);   // ← NEW
   const [searchFocused,  setSearchFocused]  = useState(false);
   const [heroVisible,    setHeroVisible]    = useState(false);
 
@@ -391,6 +500,11 @@ export default function Vendors() {
           />
         )}
 
+        {/* ── PAYMENT MODAL (NEW) ── */}
+        {showPayModal && (
+          <PaymentModal onClose={() => setShowPayModal(false)} />
+        )}
+
         {/* ── HERO ── */}
         <header className={`vn-hero ${heroVisible ? "vn-hero--visible" : ""}`} role="banner">
           <div className="vn-hero-grain" aria-hidden="true" />
@@ -398,7 +512,7 @@ export default function Vendors() {
           <div className="vn-hero-orb vn-orb2" aria-hidden="true" />
           <div className="vn-hero-orb vn-orb3" aria-hidden="true" />
 
-          {/* Floating cards — left side */}
+          {/* Floating card 1 — left: Happy Clients */}
           <div className="vn-float-card vn-fc-left vn-fc-1" aria-hidden="true">
             <span className="vn-fc-icon">👥</span>
             <div className="vn-fc-text">
@@ -407,7 +521,7 @@ export default function Vendors() {
             </div>
           </div>
 
-          {/* Floating cards — right side */}
+          {/* Floating card 2 — right: Best Platform */}
           <div className="vn-float-card vn-fc-right vn-fc-2" aria-hidden="true">
             <span className="vn-fc-icon">🏆</span>
             <div className="vn-fc-text">
@@ -416,6 +530,7 @@ export default function Vendors() {
             </div>
           </div>
 
+          {/* Floating card 3 — right: Rating */}
           <div className="vn-float-card vn-fc-right vn-fc-3" aria-hidden="true">
             <span className="vn-fc-icon">⭐</span>
             <div className="vn-fc-text">
@@ -423,6 +538,20 @@ export default function Vendors() {
               <span className="vn-fc-label">Avg. Rating</span>
             </div>
           </div>
+
+          {/* ── FLOATING CARD 4 — Payment Flow (always visible, clickable) ── */}
+          <button
+            className="vn-float-card vn-fc-left vn-fc-4"
+            onClick={() => setShowPayModal(true)}
+            aria-label="View Evencers payment plan — tap to see details"
+          >
+            <span className="vn-fc-icon">🔐</span>
+            <div className="vn-fc-text">
+              <span className="vn-fc-val">Secure Pay</span>
+              <span className="vn-fc-label">30 · 50 · 20 Plan</span>
+            </div>
+            <span className="vn-fc4-tap" aria-hidden="true">tap ↗</span>
+          </button>
 
           <div className="vn-hero-inner">
             <div className="vn-eyebrow">
@@ -483,6 +612,21 @@ export default function Vendors() {
                 </div>
               ))}
             </div>
+
+            {/* ── Mobile-only payment card pill (renders inside hero-inner on small screens) ── */}
+            <button
+              className="vn-fc4-mobile-pill"
+              onClick={() => setShowPayModal(true)}
+              aria-label="View Evencers payment plan"
+            >
+              <span className="vn-fc4-pill-icon">🔐</span>
+              <div className="vn-fc4-pill-text">
+                <span className="vn-fc4-pill-val">Secure Pay Plan</span>
+                <span className="vn-fc4-pill-sub">30% · 50% · 20% — tap to see how</span>
+              </div>
+              <span className="vn-fc4-pill-arrow">↗</span>
+            </button>
+
           </div>
         </header>
 
@@ -911,9 +1055,6 @@ const styles = `
   .vn-fc-1 { top: 28%; animation: floatCard1 5s ease-in-out infinite; }
   .vn-fc-2 { top: 22%; animation: floatCard2 6s ease-in-out infinite 0.8s; }
   .vn-fc-3 { top: 58%; animation: floatCard3 5.5s ease-in-out infinite 1.6s; }
-  .vn-float-card.vn-fc-left  { animation-name: floatCard1; }
-  .vn-float-card.vn-fc-right.vn-fc-2 { animation-name: floatCard2; }
-  .vn-float-card.vn-fc-right.vn-fc-3 { animation-name: floatCard3; }
 
   .vn-fc-icon { font-size: 1.4rem; line-height: 1; flex-shrink: 0; }
   .vn-fc-text { display: flex; flex-direction: column; gap: 2px; }
@@ -938,6 +1079,135 @@ const styles = `
   @keyframes floatCard3 {
     0%, 100% { transform: translateY(0px) rotate(-0.5deg); }
     50%       { transform: translateY(-12px) rotate(-0.5deg); }
+  }
+
+  /* ────────────────────────────────────────────────────────────
+     4TH FLOATING CARD — PAYMENT (desktop: absolute, always visible)
+  ─────────────────────────────────────────────────────────────── */
+  .vn-fc-4 {
+    /* desktop positioning — left side below card 1 */
+    top: 62%;
+    animation: floatCard4 5.8s ease-in-out infinite 2.4s;
+
+    /* override pointer-events so it's clickable */
+    pointer-events: all;
+    cursor: pointer;
+
+    /* slightly enhanced border for call-to-action feel */
+    border-color: rgba(201,168,76,0.32);
+    background: rgba(255,255,255,0.07);
+
+    /* transition for hover */
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+    text-decoration: none;
+    font-family: 'DM Sans', sans-serif;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .vn-fc-4:hover {
+    border-color: var(--gold);
+    box-shadow: 0 12px 40px rgba(201,168,76,0.25), inset 0 1px 0 rgba(255,255,255,0.12);
+    transform: translateY(-4px) rotate(-1deg) !important;
+  }
+  .vn-fc-4 .vn-fc-val {
+    color: var(--gold);
+  }
+  .vn-fc-4 .vn-fc-label {
+    color: rgba(201,168,76,0.55);
+    letter-spacing: 0.08em;
+  }
+
+  /* small "tap" cue badge on the 4th card */
+  .vn-fc4-tap {
+    position: absolute;
+    top: -8px; right: -4px;
+    font-size: 8.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--gold);
+    background: var(--ink);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 20px;
+    padding: 2px 7px;
+    white-space: nowrap;
+    font-weight: 500;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .vn-fc-4:hover .vn-fc4-tap {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Subtle pulse ring on the 4th card to draw attention */
+  .vn-fc-4::after {
+    content: '';
+    position: absolute; inset: -3px;
+    border-radius: 17px;
+    border: 1px solid rgba(201,168,76,0.18);
+    animation: ringPulse 3s ease-in-out infinite 3s;
+    pointer-events: none;
+  }
+
+  @keyframes floatCard4 {
+    0%, 100% { transform: translateY(0px) rotate(-1.2deg); }
+    50%       { transform: translateY(-9px) rotate(-1.2deg); }
+  }
+  @keyframes ringPulse {
+    0%,100% { opacity: 0; transform: scale(1); }
+    30%     { opacity: 1; }
+    60%     { opacity: 0; transform: scale(1.08); }
+  }
+
+  /* ── Mobile-only pill version of the payment card ── */
+  .vn-fc4-mobile-pill {
+    /* hidden on desktop — shown on mobile only */
+    display: none;
+    width: 100%;
+    max-width: 400px;
+    margin: 22px auto 0;
+    align-items: center;
+    gap: 12px;
+    background: rgba(201,168,76,0.08);
+    border: 1px solid rgba(201,168,76,0.28);
+    border-radius: 14px;
+    padding: 14px 16px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    text-align: left;
+    transition: background 0.22s, border-color 0.22s, transform 0.18s;
+    -webkit-appearance: none;
+    appearance: none;
+    position: relative;
+    overflow: hidden;
+  }
+  .vn-fc4-mobile-pill::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(201,168,76,0.06) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .vn-fc4-mobile-pill:active { transform: scale(0.98); }
+  .vn-fc4-pill-icon { font-size: 1.5rem; flex-shrink: 0; line-height: 1; }
+  .vn-fc4-pill-text { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+  .vn-fc4-pill-val {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem; font-weight: 600;
+    color: var(--gold-light); line-height: 1.1;
+  }
+  .vn-fc4-pill-sub {
+    font-size: 11px; color: rgba(245,240,232,0.42);
+    letter-spacing: 0.03em;
+  }
+  .vn-fc4-pill-arrow {
+    font-size: 14px; color: var(--gold);
+    opacity: 0.7; flex-shrink: 0;
+    transition: transform 0.2s, opacity 0.2s;
+  }
+  .vn-fc4-mobile-pill:hover .vn-fc4-pill-arrow {
+    transform: translate(2px, -2px);
+    opacity: 1;
   }
 
   .vn-hero-inner {
@@ -1086,7 +1356,6 @@ const styles = `
     color: var(--muted); border-radius: 20px;
     padding: 1px 6px; font-weight: 400; line-height: 1.4;
   }
-  /* Coming soon badge on category pill */
   .vn-cat-soon-badge {
     font-size: 9px; background: rgba(201,168,76,0.12);
     color: var(--gold); border: 1px solid rgba(201,168,76,0.25);
@@ -1135,7 +1404,6 @@ const styles = `
   .vn-clear-btn:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
   .vn-toolbar-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
-  /* Date button */
   .vn-date-btn {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 8px 14px;
@@ -1160,7 +1428,6 @@ const styles = `
   }
   .vn-date-clear-x:hover { background: var(--red-soft); color: var(--red); }
 
-  /* Price / sort */
   .vn-price-wrap {
     display: flex; align-items: center; gap: 8px;
     border: 1px solid var(--border); border-radius: 8px;
@@ -1255,7 +1522,6 @@ const styles = `
   .vn-grid.list { display: flex; flex-direction: column; gap: 12px; }
   .vn-card-wrap { animation: fadeUp 0.42s cubic-bezier(0.4,0,0.2,1) both; }
 
-  /* Skeletons */
   .vn-skeleton {
     height: 278px; border-radius: 14px;
     background: linear-gradient(90deg, #ede8e0 25%, #e5ddd3 50%, #ede8e0 75%);
@@ -1280,9 +1546,7 @@ const styles = `
     pointer-events: none;
   }
   .vn-cs-icon {
-    font-size: 3.2rem;
-    display: block;
-    margin-bottom: 20px;
+    font-size: 3.2rem; display: block; margin-bottom: 20px;
     animation: floatY 3.5s ease-in-out infinite;
     filter: drop-shadow(0 8px 24px rgba(201,168,76,0.3));
   }
@@ -1293,15 +1557,12 @@ const styles = `
     letter-spacing: 0.22em; text-transform: uppercase;
     padding: 6px 16px; border-radius: 20px;
     border: 1px solid rgba(201,168,76,0.3);
-    margin-bottom: 20px;
-    position: relative;
+    margin-bottom: 20px; position: relative;
   }
   .vn-cs-badge::before {
-    content: '';
-    display: inline-block;
+    content: ''; display: inline-block;
     width: 6px; height: 6px; border-radius: 50%;
-    background: var(--gold);
-    animation: pulse 1.5s ease infinite;
+    background: var(--gold); animation: pulse 1.5s ease infinite;
   }
   .vn-cs-title {
     font-family: 'Cormorant Garamond', serif;
@@ -1315,15 +1576,11 @@ const styles = `
     margin-left: auto; margin-right: auto;
   }
   .vn-cs-sub strong { color: var(--ink); font-weight: 500; }
-
-  /* Notify email input */
   .vn-cs-notify {
-    display: flex; align-items: center; gap: 0;
+    display: flex; align-items: center;
     max-width: 400px; margin: 0 auto 24px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-    background: var(--white);
+    border: 1px solid var(--border); border-radius: 10px;
+    overflow: hidden; background: var(--white);
     box-shadow: 0 4px 20px rgba(14,12,10,0.06);
     transition: border-color 0.2s, box-shadow 0.2s;
   }
@@ -1339,31 +1596,25 @@ const styles = `
   }
   .vn-cs-email::placeholder { color: #bbb4a8; }
   .vn-cs-btn {
-    padding: 13px 20px;
-    background: var(--ink); color: var(--white);
+    padding: 13px 20px; background: var(--ink); color: var(--white);
     border: none; cursor: pointer;
     font-family: 'DM Sans', sans-serif; font-size: 13px;
     font-weight: 500; white-space: nowrap;
-    transition: background 0.22s;
-    flex-shrink: 0;
+    transition: background 0.22s; flex-shrink: 0;
   }
   .vn-cs-btn:hover { background: var(--gold); color: var(--ink); }
-
   .vn-cs-back {
     display: inline-flex; align-items: center; gap: 6px;
     font-size: 12.5px; color: var(--muted);
     background: none; border: 1px solid var(--border);
     border-radius: 20px; padding: 7px 18px;
     cursor: pointer; margin-bottom: 28px;
-    font-family: 'DM Sans', sans-serif;
-    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif; transition: all 0.2s;
   }
   .vn-cs-back:hover { border-color: var(--gold); color: var(--ink); background: var(--gold-dim); }
-
   .vn-cs-eta {
     display: inline-flex; align-items: center; gap: 8px;
-    font-size: 11px; color: var(--muted-light);
-    letter-spacing: 0.05em;
+    font-size: 11px; color: var(--muted-light); letter-spacing: 0.05em;
   }
   .vn-cs-eta-dot {
     width: 6px; height: 6px; border-radius: 50%;
@@ -1456,6 +1707,202 @@ const styles = `
   }
   .vn-why-card-desc {
     font-size: 12.5px; color: var(--muted); line-height: 1.65;
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+     PAYMENT MODAL
+  ───────────────────────────────────────────────────────────── */
+  .pm-overlay {
+    position: fixed; inset: 0;
+    background: rgba(14,12,10,0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1500; padding: 20px;
+    animation: fadeIn 0.2s ease both;
+  }
+  .pm-modal {
+    position: relative;
+    background: var(--ink-soft);
+    border: 1px solid rgba(201,168,76,0.22);
+    border-radius: 24px;
+    padding: 44px 38px 36px;
+    width: min(640px, 96vw);
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow:
+      0 48px 120px rgba(0,0,0,0.55),
+      0 0 0 1px rgba(255,255,255,0.04),
+      inset 0 1px 0 rgba(255,255,255,0.06);
+    animation: popupUp 0.34s cubic-bezier(0.34,1.2,0.64,1) both;
+    text-align: center;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(201,168,76,0.2) transparent;
+  }
+  .pm-modal::-webkit-scrollbar { width: 4px; }
+  .pm-modal::-webkit-scrollbar-track { background: transparent; }
+  .pm-modal::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.2); border-radius: 4px; }
+
+  /* Subtle inner glow */
+  .pm-modal::before {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: 24px;
+    background: radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.07) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .pm-x-btn {
+    position: absolute; top: 18px; right: 18px;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(201,168,76,0.2);
+    font-size: 11px; color: rgba(245,240,232,0.45);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.22s; font-family: 'DM Sans', sans-serif;
+    z-index: 1;
+  }
+  .pm-x-btn:hover {
+    background: rgba(201,168,76,0.14);
+    border-color: var(--gold);
+    color: var(--gold-light);
+  }
+
+  /* Header */
+  .pm-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase;
+    color: var(--gold); font-weight: 400; margin-bottom: 14px;
+  }
+  .pm-eyebrow-icon { font-size: 14px; }
+  .pm-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.7rem, 3.2vw, 2.2rem);
+    font-weight: 300; color: var(--cream);
+    margin-bottom: 10px; letter-spacing: 0.01em; line-height: 1.15;
+  }
+  .pm-title em { font-style: italic; color: var(--gold-light); font-weight: 300; }
+  .pm-sub {
+    font-size: 13px; color: rgba(245,240,232,0.38);
+    line-height: 1.65; margin-bottom: 30px;
+    max-width: 380px; margin-left: auto; margin-right: auto;
+  }
+
+  /* ── Progress Bar ── */
+  .pm-bar-wrap { margin-bottom: 32px; }
+  .pm-bar {
+    display: flex; height: 10px; border-radius: 10px;
+    overflow: hidden; gap: 3px; margin-bottom: 8px;
+  }
+  .pm-bar-seg {
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 6px; font-size: 8px; font-weight: 700;
+    letter-spacing: 0.04em; color: rgba(14,12,10,0.65);
+    transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+    overflow: hidden;
+  }
+  .pm-bar-30 { background: linear-gradient(90deg, #e8c96a, #c9a84c); }
+  .pm-bar-50 { background: linear-gradient(90deg, #b8942e, #c9a84c); }
+  .pm-bar-20 { background: linear-gradient(90deg, #7a5e1c, #a07c2e); }
+  .pm-bar-labels {
+    display: flex; justify-content: space-between;
+    font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: rgba(245,240,232,0.28); padding: 0 2px;
+  }
+
+  /* ── Payment Steps ── */
+  .pm-steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+    position: relative;
+  }
+  .pm-step {
+    text-align: center;
+    padding: 22px 14px 20px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(201,168,76,0.1);
+    border-radius: 16px;
+    position: relative;
+    transition: background 0.25s, border-color 0.25s, transform 0.22s;
+  }
+  .pm-step:hover {
+    background: rgba(201,168,76,0.06);
+    border-color: rgba(201,168,76,0.22);
+    transform: translateY(-3px);
+  }
+  .pm-step--1 {
+    background: rgba(201,168,76,0.055);
+    border-color: rgba(201,168,76,0.18);
+  }
+
+  .pm-step-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .pm-step-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem; font-weight: 300;
+    color: rgba(201,168,76,0.22); line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .pm-step-icon { font-size: 1.25rem; line-height: 1; }
+  .pm-step-pct {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.4rem; font-weight: 600; line-height: 1;
+    margin-bottom: 6px; letter-spacing: -0.02em;
+  }
+  .pm-step-label {
+    font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(245,240,232,0.55); font-weight: 500;
+    margin-bottom: 10px;
+  }
+  .pm-step-desc {
+    font-size: 11.5px; color: rgba(245,240,232,0.32);
+    line-height: 1.65;
+  }
+
+  /* Arrow between steps */
+  .pm-step-arrow {
+    position: absolute;
+    top: 50%; right: -18px;
+    transform: translateY(-50%);
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--ink-soft);
+    border: 1px solid rgba(201,168,76,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: rgba(201,168,76,0.5);
+    z-index: 2; pointer-events: none;
+  }
+
+  /* ── Escrow Note ── */
+  .pm-note {
+    display: flex; align-items: flex-start; gap: 12px;
+    background: rgba(201,168,76,0.05);
+    border: 1px solid rgba(201,168,76,0.14);
+    border-radius: 12px; padding: 16px 18px;
+    font-size: 12.5px; color: rgba(245,240,232,0.4);
+    text-align: left; line-height: 1.65;
+    margin-bottom: 24px;
+  }
+  .pm-note strong { color: rgba(245,240,232,0.7); font-weight: 500; }
+  .pm-note-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+
+  /* ── CTA button ── */
+  .pm-cta {
+    display: inline-block; padding: 13px 40px;
+    background: var(--gold); color: var(--ink);
+    border: none; border-radius: 8px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px;
+    font-weight: 500; cursor: pointer; letter-spacing: 0.02em;
+    transition: background 0.22s, transform 0.18s, box-shadow 0.22s;
+    box-shadow: 0 4px 20px rgba(201,168,76,0.25);
+  }
+  .pm-cta:hover {
+    background: var(--gold-light);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(201,168,76,0.35);
   }
 
   /* ─── DATE PICKER ───────────────────────────── */
@@ -1626,8 +2073,16 @@ const styles = `
 
   /* ─── RESPONSIVE ────────────────────────────── */
   @media (max-width: 1024px) {
+    /* Hide the 3 original cards on tablet/mobile */
+    .vn-float-card:not(.vn-fc-4) { display: none; }
+
+    /* Keep the 4th card HIDDEN on tablet (we use the pill inside hero-inner instead) */
+    .vn-fc-4 { display: none; }
+
+    /* Show the mobile pill version */
+    .vn-fc4-mobile-pill { display: flex; }
+
     .vn-why-grid { grid-template-columns: repeat(2, 1fr); }
-    .vn-float-card { display: none; }
   }
   @media (max-width: 960px) {
     .vn-grid.grid { grid-template-columns: repeat(2, 1fr); }
@@ -1649,6 +2104,17 @@ const styles = `
     .vn-cs-notify { flex-direction: column; border-radius: 10px; }
     .vn-cs-email { text-align: center; }
     .vn-cs-btn { width: 100%; border-radius: 0 0 9px 9px; }
+
+    /* Payment modal responsive */
+    .pm-modal { padding: 36px 20px 28px; border-radius: 20px; }
+    .pm-steps { grid-template-columns: 1fr; gap: 10px; }
+    .pm-step-arrow {
+      /* On mobile, remove side arrows (steps stack vertically) */
+      display: none;
+    }
+    .pm-step { padding: 18px 16px; text-align: left; }
+    .pm-step-pct { font-size: 2rem; }
+    .pm-bar-labels span { font-size: 8px; }
   }
 
   /* ─── KEYFRAMES ─────────────────────────────── */
@@ -1660,7 +2126,7 @@ const styles = `
     from { opacity: 0; } to { opacity: 1; }
   }
   @keyframes popupUp {
-    from { opacity: 0; transform: translateY(22px) scale(0.95); }
+    from { opacity: 0; transform: translateY(24px) scale(0.95); }
     to   { opacity: 1; transform: translateY(0)    scale(1);    }
   }
   @keyframes shimmer {
@@ -1690,15 +2156,11 @@ const styles = `
   .vn-hiw-label {
     text-align: center; font-size: 10px;
     letter-spacing: 0.24em; text-transform: uppercase;
-    color: rgba(201,168,76,0.55); margin-bottom: 22px;
-    font-weight: 400;
+    color: rgba(201,168,76,0.55); margin-bottom: 22px; font-weight: 400;
   }
   .vn-hiw-steps {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0;
-    margin-bottom: 60px;
-    position: relative;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 0; margin-bottom: 60px; position: relative;
   }
   .vn-hiw-card {
     padding: 28px 22px 28px;
@@ -1719,50 +2181,37 @@ const styles = `
   .vn-hiw-num {
     font-family: 'Cormorant Garamond', serif;
     font-size: 2.8rem; font-weight: 300; line-height: 1;
-    color: rgba(201,168,76,0.18); margin-bottom: 10px;
-    letter-spacing: -0.02em;
+    color: rgba(201,168,76,0.18); margin-bottom: 10px; letter-spacing: -0.02em;
   }
   .vn-hiw-num--vendor { color: rgba(122,114,101,0.2); }
   .vn-hiw-icon { font-size: 1.5rem; display: block; margin-bottom: 12px; }
   .vn-hiw-title {
     font-family: 'Cormorant Garamond', serif;
     font-size: 1.05rem; font-weight: 600;
-    color: var(--cream); margin-bottom: 10px;
-    letter-spacing: 0.01em;
+    color: var(--cream); margin-bottom: 10px; letter-spacing: 0.01em;
   }
   .vn-hiw-desc {
-    font-size: 12.5px; color: rgba(245,240,232,0.42);
-    line-height: 1.68;
+    font-size: 12.5px; color: rgba(245,240,232,0.42); line-height: 1.68;
   }
   .vn-hiw-arrow {
     position: absolute; right: -14px; top: 36px;
     width: 28px; height: 28px; border-radius: 50%;
-    background: var(--ink);
-    border: 1px solid rgba(201,168,76,0.2);
+    background: var(--ink); border: 1px solid rgba(201,168,76,0.2);
     display: flex; align-items: center; justify-content: center;
-    font-size: 13px; color: var(--gold); z-index: 2;
-    pointer-events: none;
+    font-size: 13px; color: var(--gold); z-index: 2; pointer-events: none;
   }
-
   .vn-hiw-divider {
-    display: flex; align-items: center; gap: 16px;
-    margin: 0 0 36px;
+    display: flex; align-items: center; gap: 16px; margin: 0 0 36px;
   }
-  .vn-hiw-divider::before,
-  .vn-hiw-divider::after {
-    content: ''; flex: 1;
-    height: 1px; background: rgba(201,168,76,0.1);
+  .vn-hiw-divider::before, .vn-hiw-divider::after {
+    content: ''; flex: 1; height: 1px; background: rgba(201,168,76,0.1);
   }
   .vn-hiw-divider-label {
-    font-size: 11px; letter-spacing: 0.16em;
-    text-transform: uppercase;
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
     color: rgba(201,168,76,0.4); white-space: nowrap;
   }
-
-  /* FAQ */
   .vn-hiw-faq {
-    margin-top: 64px;
-    border-top: 1px solid rgba(201,168,76,0.1);
+    margin-top: 64px; border-top: 1px solid rgba(201,168,76,0.1);
     padding-top: 52px;
   }
   .vn-hiw-faq-header { text-align: center; margin-bottom: 36px; }
@@ -1772,21 +2221,16 @@ const styles = `
     color: var(--cream); letter-spacing: 0.01em;
   }
   .vn-hiw-faq-grid {
-    display: grid; grid-template-columns: repeat(2, 1fr);
-    gap: 0 32px;
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 32px;
   }
-  .vn-faq-item {
-    border-bottom: 1px solid rgba(201,168,76,0.08);
-    overflow: hidden;
-  }
+  .vn-faq-item { border-bottom: 1px solid rgba(201,168,76,0.08); overflow: hidden; }
   .vn-faq-q {
     width: 100%; background: none; border: none;
     display: flex; align-items: flex-start; justify-content: space-between;
     gap: 16px; padding: 18px 0;
     font-family: 'DM Sans', sans-serif; font-size: 13.5px;
     color: rgba(245,240,232,0.75); font-weight: 400;
-    cursor: pointer; text-align: left;
-    transition: color 0.2s; line-height: 1.5;
+    cursor: pointer; text-align: left; transition: color 0.2s; line-height: 1.5;
   }
   .vn-faq-q:hover { color: var(--cream); }
   .vn-faq-item.open .vn-faq-q { color: var(--gold-light); }
@@ -1794,8 +2238,7 @@ const styles = `
     flex-shrink: 0; width: 22px; height: 22px;
     border: 1px solid rgba(201,168,76,0.2); border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 14px; color: var(--gold); margin-top: 1px;
-    transition: background 0.2s;
+    font-size: 14px; color: var(--gold); margin-top: 1px; transition: background 0.2s;
   }
   .vn-faq-item.open .vn-faq-chevron { background: rgba(201,168,76,0.1); }
   .vn-faq-a {
@@ -1804,7 +2247,6 @@ const styles = `
     animation: fadeUp 0.2s ease both;
   }
 
-  /* How it works responsive */
   @media (max-width: 900px) {
     .vn-hiw-steps { grid-template-columns: repeat(2, 1fr); }
     .vn-hiw-card { border-right: 1px solid rgba(201,168,76,0.1); }
