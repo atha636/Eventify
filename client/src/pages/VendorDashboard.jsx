@@ -723,7 +723,7 @@ const LEGAL_CONTENT = {
       },
       {
         heading: "Contact",
-        body: "For privacy-related queries, reach us at privacy@vendorportal.com.",
+        body: "For privacy-related queries, reach us at admineventify2005@gmail.com.",
       },
     ],
   },
@@ -783,11 +783,11 @@ const LEGAL_CONTENT = {
       },
       {
         heading: "Payment Issues",
-        body: "If a payment shows as 'Failed', ask the client to retry from their booking page. For disputes, contact support@vendorportal.com with the booking reference.",
+        body: "If a payment shows as 'Failed', ask the client to retry from their booking page. For disputes, contact admineventify2005@gmail.com with the booking reference.",
       },
       {
         heading: "Contact Support",
-        body: "Email us at support@vendorportal.com or use the live chat icon in the bottom-right corner. We typically respond within 2 business hours.",
+        body: "Email us at admineventify2005@gmail.com or use the live chat icon in the bottom-right corner. We typically respond within 2 business hours.",
       },
     ],
   },
