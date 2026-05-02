@@ -360,7 +360,7 @@ export default function UserDashboard() {
     if (!cancelTarget) return;
     setCancelling(true); setCancelError("");
     try {
-      await API.put(`/bookings/cancel/${cancelTarget._id}`, {});
+      await API.delete(`/bookings/${cancelTarget._id}`);
       setBookings((prev) => prev.filter((b) => b._id !== cancelTarget._id));
       setCancelTarget(null);
     } catch {
@@ -387,7 +387,7 @@ export default function UserDashboard() {
       const payload = { reason: dcrReason };
       if (dcrDate)           payload.requestedDate    = dcrDate;
       if (dcrAddress.trim()) payload.requestedAddress = dcrAddress.trim();
-      const res = await API.post(`/bookings/${dcrTarget._id}/date-change`, payload);
+      const res = await API.post(`/bookings/${dcrTarget._id}/change-request`, payload);
       setBookings((prev) => prev.map((b) => b._id === dcrTarget._id ? res.data.booking : b));
       setDcrSuccess("Request sent! Please wait for the vendor to review your changes.");
     } catch (err) {

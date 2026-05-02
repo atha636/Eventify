@@ -14,7 +14,7 @@ const connectDB      = require("./config/db");
 
 dotenv.config();
 connectDB();
-
+require("./utils/installmentScheduler");
 const app = express();
 const isDev = process.env.NODE_ENV !== "production";
 

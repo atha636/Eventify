@@ -920,7 +920,7 @@ export default function VendorDashboard() {
     const token = localStorage.getItem("token");
     setUpdating(id + status);
     try {
-      await API.put(`/bookings/${id}`, { status }, {
+      await API.put(`/bookings/${id}/status`, { status }, {
         headers: { Authorization: `Bearer ${token}` },
       });
       await fetchBookings();
@@ -958,7 +958,7 @@ export default function VendorDashboard() {
     if (!popupBooking) return;
     setResponding("approve");
     try {
-      await API.put(`/bookings/${popupBooking._id}/date-change`, { action: "approve" });
+      await API.put(`/bookings/${popupBooking._id}/change-request`, { action: "approved" });
       setPopupBooking(null);
       await fetchBookings();
       showToast("Change request approved.", "success");
@@ -970,7 +970,7 @@ export default function VendorDashboard() {
     if (!popupBooking) return;
     setResponding("reject");
     try {
-      await API.put(`/bookings/${popupBooking._id}/date-change`, { action: "reject" });
+      await API.put(`/bookings/${popupBooking._id}/change-request`, { action: "rejected" });
       setPopupBooking(null);
       await fetchBookings();
       showToast("Change request declined.", "info");

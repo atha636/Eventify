@@ -3,14 +3,25 @@ import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 import PaymentModal from "./PaymentModal";
 
-
+// ── All notification types that exist in your Notification model ──
 const TYPE_META = {
-  booking_received: { icon: "📋", color: "#c9a84c",  bg: "rgba(201,168,76,0.08)"  },
-  booking_approved: { icon: "✓",  color: "#3a8a62",  bg: "rgba(58,138,98,0.08)"   },
-  booking_rejected: { icon: "✕",  color: "#b85c5c",  bg: "rgba(184,92,92,0.08)"   },
-  payment_pending:  { icon: "💳", color: "#c9a84c",  bg: "rgba(201,168,76,0.08)"  },
-  payment_done:     { icon: "₹",  color: "#3a8a62",  bg: "rgba(58,138,98,0.08)"   },
+  booking_received:      { icon: "📋", color: "#c9a84c", bg: "rgba(201,168,76,0.08)"  },
+  booking_approved:      { icon: "✓",  color: "#3a8a62", bg: "rgba(58,138,98,0.08)"   },
+  booking_rejected:      { icon: "✕",  color: "#b85c5c", bg: "rgba(184,92,92,0.08)"   },
+  payment_pending:       { icon: "💳", color: "#c9a84c", bg: "rgba(201,168,76,0.08)"  },
+  payment_done:          { icon: "₹",  color: "#3a8a62", bg: "rgba(58,138,98,0.08)"   },
+  service_updated:       { icon: "🔧", color: "#7a7265", bg: "rgba(122,114,101,0.08)" },
+  service_live_soon:     { icon: "🚀", color: "#c9a84c", bg: "rgba(201,168,76,0.08)"  },
+  profile_rejected:      { icon: "⚠",  color: "#b85c5c", bg: "rgba(184,92,92,0.08)"   },
+  date_change_requested: { icon: "📅", color: "#c9a84c", bg: "rgba(201,168,76,0.08)"  },
+  date_change_approved:  { icon: "✓",  color: "#3a8a62", bg: "rgba(58,138,98,0.08)"   },
+  date_change_rejected:  { icon: "✕",  color: "#b85c5c", bg: "rgba(184,92,92,0.08)"   },
+  vendor_verified:       { icon: "🏅", color: "#3a8a62", bg: "rgba(58,138,98,0.08)"   },
+  vendor_unverified:     { icon: "⚠",  color: "#b85c5c", bg: "rgba(184,92,92,0.08)"   },
 };
+
+// Fallback for any future types not yet listed above
+const DEFAULT_META = { icon: "🔔", color: "#c9a84c", bg: "rgba(201,168,76,0.08)" };
 
 function timeAgo(dateStr) {
   const diff = (Date.now() - new Date(dateStr)) / 1000;
@@ -22,14 +33,14 @@ function timeAgo(dateStr) {
 
 export default function NotificationPanel({ onClose, onUnreadChange }) {
   const [notifications, setNotifications] = useState([]);
-  const [unread, setUnread]               = useState(0);
-  const [loading, setLoading]             = useState(true);
-  const [paymentTarget, setPaymentTarget] = useState(null);
+  const [unread,        setUnread]         = useState(0);
+  const [loading,       setLoading]        = useState(true);
+  const [paymentTarget, setPaymentTarget]  = useState(null);
   const panelRef = useRef(null);
   const navigate = useNavigate();
 
-  // ── Get current user role from localStorage ──────────────────────
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  // ── Get current user role from localStorage ──────────────────
+  const user     = JSON.parse(localStorage.getItem("user") || "{}");
   const isVendor = user?.role === "vendor";
 
   // Close on outside click
@@ -37,17 +48,22 @@ export default function NotificationPanel({ onClose, onUnreadChange }) {
     const handler = (e) => {
       if (panelRef.current && !panelRef.current.contains(e.target)) onClose();
     };
-    setTimeout(() => document.addEventListener("mousedown", handler), 100);
-    return () => document.removeEventListener("mousedown", handler);
+    // Small delay so the click that opened the panel doesn't close it immediately
+    const t = setTimeout(() => document.addEventListener("mousedown", handler), 100);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener("mousedown", handler);
+    };
   }, [onClose]);
 
   // Fetch notifications
   const fetchNotifs = async () => {
     try {
       const res = await API.get("/notifications");
-      setNotifications(res.data.notifications);
-      setUnread(res.data.unreadCount);
-      onUnreadChange?.(res.data.unreadCount);
+      setNotifications(res.data.notifications || []);
+      const count = res.data.unreadCount || 0;
+      setUnread(count);
+      onUnreadChange?.(count);
     } catch (err) {
       console.error("Notif fetch error:", err);
     } finally {
@@ -57,28 +73,30 @@ export default function NotificationPanel({ onClose, onUnreadChange }) {
 
   useEffect(() => { fetchNotifs(); }, []);
 
-  // Mark all read on open
+  // Mark all read after 1.5s (so user has a moment to see the new badge)
   useEffect(() => {
     const markRead = async () => {
       try {
         await API.patch("/notifications/read-all");
         setUnread(0);
         onUnreadChange?.(0);
-        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-      } catch {}
+        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      } catch (e) {
+        console.error("Mark-read error:", e);
+      }
     };
     const t = setTimeout(markRead, 1500);
     return () => clearTimeout(t);
   }, []);
 
-  // ── UPDATE 1: Navigate to correct dashboard on notification click ─
+  // ── Notification click handler ────────────────────────────────
   const handleNotifClick = (notif) => {
-    // Payment notifications open PaymentModal directly
-    if (notif.type === "payment_pending") {
+    // Payment notifications: open PaymentModal directly if booking is populated
+    if (notif.type === "payment_pending" && notif.bookingId?._id) {
       handlePayNow(notif);
       return;
     }
-    // Navigate based on role
+    // All other types → navigate to the right dashboard
     onClose();
     if (isVendor) {
       navigate("/vendor-dashboard");
@@ -88,15 +106,20 @@ export default function NotificationPanel({ onClose, onUnreadChange }) {
   };
 
   const handlePayNow = (notif) => {
+    // bookingId is populated by the notification route
     const booking = notif.bookingId;
     const vendor  = booking?.vendorId;
+    if (!booking) {
+      // Fallback: just navigate
+      onClose();
+      navigate("/my-bookings");
+      return;
+    }
     setPaymentTarget({ booking, vendor });
     onClose();
   };
 
-  const handlePaymentSuccess = () => {
-    setPaymentTarget(null);
-  };
+  const handlePaymentSuccess = () => setPaymentTarget(null);
 
   if (paymentTarget) {
     return (
@@ -110,50 +133,59 @@ export default function NotificationPanel({ onClose, onUnreadChange }) {
   }
 
   return (
-    <div className="np-panel" ref={panelRef}>
+    <div className="np-panel" ref={panelRef} role="dialog" aria-label="Notifications">
       {/* Header */}
       <div className="np-header">
         <div className="np-header-left">
           <span className="np-title">Notifications</span>
-          {unread > 0 && <span className="np-unread-pill">{unread} new</span>}
+          {unread > 0 && (
+            <span className="np-unread-pill" aria-label={`${unread} unread`}>
+              {unread} new
+            </span>
+          )}
         </div>
-        <button className="np-close" onClick={onClose}>✕</button>
+        <button className="np-close" onClick={onClose} aria-label="Close notifications">✕</button>
       </div>
 
       {/* Body */}
       <div className="np-body">
         {loading ? (
-          <div className="np-loading">
+          <div className="np-loading" aria-busy="true" aria-label="Loading notifications">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="np-skeleton" style={{ animationDelay: `${i * 0.1}s` }} />
             ))}
           </div>
         ) : notifications.length === 0 ? (
-          <div className="np-empty">
-            <span className="np-empty-icon">🔔</span>
+          <div className="np-empty" role="status">
+            <span className="np-empty-icon" aria-hidden="true">🔔</span>
             <p>No notifications yet</p>
             <span>Booking updates will appear here</span>
           </div>
         ) : (
-          <div className="np-list">
+          <div className="np-list" role="list">
             {notifications.map((notif) => {
-              const meta = TYPE_META[notif.type] || TYPE_META.booking_received;
-              const isPayment = notif.type === "payment_pending";
+              const meta      = TYPE_META[notif.type] || DEFAULT_META;
+              const isPayment = notif.type === "payment_pending" && notif.bookingId?._id;
               const booking   = notif.bookingId;
 
               return (
                 <div
                   key={notif._id}
-                  className={`np-item ${!notif.isRead ? "np-item-unread" : ""} ${!isPayment ? "np-item-clickable" : ""}`}
+                  role="listitem"
+                  className={`np-item ${!notif.isRead ? "np-item-unread" : ""} np-item-clickable`}
                   onClick={() => handleNotifClick(notif)}
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleNotifClick(notif); }}
+                  aria-label={`${notif.title}. ${notif.isRead ? "" : "Unread."} ${timeAgo(notif.createdAt)}`}
                 >
                   {/* Unread dot */}
-                  {!notif.isRead && <span className="np-dot" />}
+                  {!notif.isRead && <span className="np-dot" aria-hidden="true" />}
 
                   {/* Icon */}
                   <div
                     className="np-icon"
                     style={{ background: meta.bg, color: meta.color }}
+                    aria-hidden="true"
                   >
                     {meta.icon}
                   </div>
@@ -164,22 +196,21 @@ export default function NotificationPanel({ onClose, onUnreadChange }) {
                     <p className="np-notif-msg">{notif.message}</p>
                     <span className="np-time">{timeAgo(notif.createdAt)}</span>
 
-                    {/* Pay Now button — only for payment_pending */}
-                    {isPayment && booking && (
+                    {/* Pay Now button — only for payment_pending with a populated booking */}
+                    {isPayment && (
                       <button
                         className="np-pay-btn"
                         onClick={(e) => { e.stopPropagation(); handlePayNow(notif); }}
+                        aria-label={`Pay now ₹${booking?.packagePrice?.toLocaleString() || "—"}`}
                       >
-                        💳 Pay Now — ₹{booking.packagePrice?.toLocaleString() || "—"}
+                        💳 Pay Now — ₹{booking?.packagePrice?.toLocaleString() || "—"}
                       </button>
                     )}
 
-                    {/* Navigation hint for non-payment notifications */}
-                    {!isPayment && (
-                      <span className="np-nav-hint">
-                        {isVendor ? "View in Dashboard →" : "View Booking →"}
-                      </span>
-                    )}
+                    {/* Navigation hint */}
+                    <span className="np-nav-hint" aria-hidden="true">
+                      {isVendor ? "View in Dashboard →" : "View Booking →"}
+                    </span>
                   </div>
                 </div>
               );
@@ -240,6 +271,7 @@ const styles = `
     transition:all 0.2s;
   }
   .np-close:hover { border-color:var(--muted); color:var(--ink); }
+  .np-close:focus-visible { outline:2px solid var(--gold); outline-offset:2px; }
 
   .np-body { overflow-y:auto; flex:1; }
   .np-body::-webkit-scrollbar { width:4px; }
@@ -251,16 +283,15 @@ const styles = `
     position:relative; display:flex; gap:12px;
     padding:14px 18px;
     border-bottom:1px solid rgba(201,168,76,0.08);
-    transition:background 0.2s;
+    transition:background 0.2s, border-left 0.15s, padding-left 0.15s;
+    cursor:pointer;
+    outline:none;
   }
   .np-item:last-child { border-bottom:none; }
   .np-item:hover { background:var(--surface); }
+  .np-item:focus-visible { outline:2px solid var(--gold); outline-offset:-2px; }
   .np-item-unread { background:rgba(201,168,76,0.04); }
 
-  /* ── UPDATE 1: Clickable notification items ── */
-  .np-item-clickable {
-    cursor:pointer;
-  }
   .np-item-clickable:hover {
     background:rgba(201,168,76,0.06);
     border-left:3px solid var(--gold);
@@ -273,6 +304,7 @@ const styles = `
     background:var(--gold);
     box-shadow:0 0 0 2px rgba(201,168,76,0.25);
     animation:npDotPulse 2s ease infinite;
+    flex-shrink:0;
   }
 
   .np-icon {
@@ -322,6 +354,7 @@ const styles = `
     box-shadow:0 6px 18px rgba(14,12,10,0.2);
     animation:none;
   }
+  .np-pay-btn:focus-visible { outline:2px solid var(--gold); outline-offset:2px; }
 
   /* Empty */
   .np-empty {
