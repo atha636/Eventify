@@ -10,8 +10,9 @@ const {
   forgotPassword,
   verifyResetOTP,
   resetPassword,
-  updateProfile,    // ← NEW
-  changePassword,   // ← NEW
+  updateProfile,
+  changePassword,
+  markVendorWelcomeSeen,  // ← NEW
 } = require("../controllers/authController");
 
 // ── Public ────────────────────────────────────────────────────────
@@ -26,7 +27,12 @@ router.post("/verify-reset-otp",   verifyResetOTP);
 router.post("/reset-password",     resetPassword);
 
 // ── Profile (protected) ───────────────────────────────────────────
-router.put("/update-profile",  auth, updateProfile);   // ← NEW
-router.put("/change-password", auth, changePassword);  // ← NEW
+router.put("/update-profile",  auth, updateProfile);
+router.put("/change-password", auth, changePassword);
+
+// ── Vendor Onboarding ─────────────────────────────────────────────
+// Called by VendorWelcome.jsx when the vendor clicks "Go to Dashboard"
+// Marks hasSeenWelcome = true so they never see the screen again
+router.post("/vendor/seen-welcome", auth, markVendorWelcomeSeen);  // ← NEW
 
 module.exports = router;

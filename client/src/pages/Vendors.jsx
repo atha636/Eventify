@@ -18,53 +18,36 @@ function SEOHead({ category, search, dateFilter, count }) {
       florals: `Discover floral artists & decorators in India for weddings, mehendi, receptions & corporate events. Book fresh florals on Evencers.`,
       venues: `Explore premium event venues across India — banquet halls, outdoor gardens, rooftop spaces & more. Book your perfect venue on Evencers.`,
     };
-
     const title = search
       ? `"${search}" — Event Vendors | Evencers`
       : category !== "all"
       ? `${CATEGORIES.find(c => c.value === category)?.label} Vendors in India | Evencers`
       : base;
-
     document.title = title;
-
     let metaDesc = document.querySelector('meta[name="description"]');
     if (!metaDesc) { metaDesc = document.createElement("meta"); metaDesc.name = "description"; document.head.appendChild(metaDesc); }
     metaDesc.content = descriptions[category] || descriptions.all;
-
     let canonical = document.querySelector('link[rel="canonical"]');
     if (!canonical) { canonical = document.createElement("link"); canonical.rel = "canonical"; document.head.appendChild(canonical); }
     canonical.href = `https://evencers.com/vendors${category !== "all" ? `?cat=${category}` : ""}`;
-
     const ogTags = {
-      "og:title": title,
-      "og:description": descriptions[category] || descriptions.all,
-      "og:type": "website",
-      "og:url": canonical.href,
-      "og:image": "https://evencers.com/og-vendors.jpg",
-      "og:site_name": "Evencers",
+      "og:title": title, "og:description": descriptions[category] || descriptions.all,
+      "og:type": "website", "og:url": canonical.href,
+      "og:image": "https://evencers.com/og-vendors.jpg", "og:site_name": "Evencers",
     };
     Object.entries(ogTags).forEach(([prop, content]) => {
       let tag = document.querySelector(`meta[property="${prop}"]`);
       if (!tag) { tag = document.createElement("meta"); tag.setAttribute("property", prop); document.head.appendChild(tag); }
       tag.content = content;
     });
-
     let sd = document.querySelector("#evencers-sd");
     if (!sd) { sd = document.createElement("script"); sd.type = "application/ld+json"; sd.id = "evencers-sd"; document.head.appendChild(sd); }
-    sd.textContent = JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "ItemList",
-      "name": title,
-      "description": descriptions[category] || descriptions.all,
-      "url": canonical.href,
-      "numberOfItems": count,
-    });
+    sd.textContent = JSON.stringify({ "@context": "https://schema.org", "@type": "ItemList", "name": title, "description": descriptions[category] || descriptions.all, "url": canonical.href, "numberOfItems": count });
   }, [category, search, count]);
-
   return null;
 }
 
-// Categories — comingSoon flags for ones with no real vendors yet
+// ─── CONSTANTS ──────────────────────────────────────────────────
 const CATEGORIES = [
   { value: "all",         label: "All",         emoji: "✦",  count: null,  comingSoon: false },
   { value: "decor",       label: "Decor",       emoji: "🎨", count: "10+", comingSoon: false },
@@ -73,6 +56,16 @@ const CATEGORIES = [
   { value: "music",       label: "Music & DJ",  emoji: "🎵", count: null,  comingSoon: true  },
   { value: "florals",     label: "Florals",     emoji: "💐", count: null,  comingSoon: true  },
   { value: "venues",      label: "Venues",      emoji: "🏛",  count: null,  comingSoon: true  },
+];
+
+// ── UPDATED PRICE RANGES ─────────────────────────────────────────
+const PRICE_RANGES = [
+  { label: "Any",        value: "any",     min: 0,      max: Infinity },
+  { label: "₹0–5K",     value: "0-5k",    min: 0,      max: 5000     },
+  { label: "₹5K–20K",   value: "5k-20k",  min: 5000,   max: 20000    },
+  { label: "₹20K–50K",  value: "20k-50k", min: 20000,  max: 50000    },
+  { label: "₹50K–1L",   value: "50k-1l",  min: 50000,  max: 100000   },
+  { label: "₹1L+",      value: "1l+",     min: 100000, max: Infinity  },
 ];
 
 const SORT_OPTIONS = [
@@ -90,76 +83,151 @@ const TRUST_STATS = [
   { value: "2+",   label: "Cities Covered"    },
 ];
 
+// ─── ALL MAJOR INDIAN CITIES ─────────────────────────────────────
+const INDIAN_CITIES = [
+  "Agra","Ahmedabad","Ajmer","Aligarh","Allahabad","Amravati","Amritsar",
+  "Asansol","Aurangabad","Bareilly","Belgaum","Bengaluru","Bhilai","Bhiwandi",
+  "Bhopal","Bhubaneswar","Bikaner","Bombay","Chandigarh","Chennai","Coimbatore",
+  "Cuttack","Dehradun","Delhi","Dhanbad","Durgapur","Erode","Faridabad",
+  "Firozabad","Gaya","Ghaziabad","Gorakhpur","Gulbarga","Guntur","Guwahati",
+  "Gwalior","Howrah","Hubli-Dharwad","Hyderabad","Indore","Jabalpur","Jaipur",
+  "Jalandhar","Jalgaon","Jamnagar","Jammu","Jamshedpur","Jhansi","Jodhpur",
+  "Kalyan-Dombivali","Kanpur","Kochi","Kolhapur","Kolkata","Kota","Lucknow",
+  "Ludhiana","Madurai","Maheshtala","Malegaon","Mangalore","Meerut","Moradabad",
+  "Mumbai","Mysore","Nagpur","Nanded","Nashik","Navi Mumbai","Noida","Patna",
+  "Pimpri-Chinchwad","Pondicherry","Pune","Raipur","Rajkot","Ranchi","Salem",
+  "Saharanpur","Sangli-Miraj","Shimla","Siliguri","Solapur","Srinagar","Surat",
+  "Thane","Tiruchirappalli","Tirunelveli","Udaipur","Ujjain","Ulhasnagar",
+  "Vadodara","Varanasi","Vasai-Virar","Vijayawada","Visakhapatnam","Warangal",
+].sort();
+
+// ─── CITY SELECTOR MODAL ─────────────────────────────────────────
+function CityModal({ onSelect }) {
+  const [search, setSearch] = useState("");
+  const [visible, setVisible] = useState(false);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    setTimeout(() => setVisible(true), 60);
+    setTimeout(() => inputRef.current?.focus(), 200);
+  }, []);
+
+  const filtered = INDIAN_CITIES.filter(c =>
+    c.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className={`cm-overlay ${visible ? "cm-visible" : ""}`} role="dialog" aria-modal="true" aria-label="Select your city">
+      <div className="cm-modal">
+        {/* Orbs */}
+        <div className="cm-orb cm-orb1" aria-hidden="true" />
+        <div className="cm-orb cm-orb2" aria-hidden="true" />
+
+        <div className="cm-header">
+          <div className="cm-logo-wrap"><Logo /></div>
+          <div className="cm-eyebrow"><span className="cm-eyebrow-dot" />Select Your City<span className="cm-eyebrow-dot" /></div>
+          <h2 className="cm-title">Where are you <em>planning your event?</em></h2>
+          <p className="cm-sub">We'll show vendors available in your city. Don't worry — you can change this anytime.</p>
+        </div>
+
+        <div className="cm-search-wrap">
+          <span className="cm-search-icon" aria-hidden="true">⌕</span>
+          <input
+            ref={inputRef}
+            className="cm-search"
+            placeholder="Search your city…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            autoComplete="off"
+            aria-label="Search city"
+          />
+          {search && <button className="cm-search-clear" onClick={() => setSearch("")} aria-label="Clear search">✕</button>}
+        </div>
+
+        <div className="cm-cities" role="listbox" aria-label="City list">
+          {filtered.length === 0 ? (
+            <div className="cm-no-results">
+              <span className="cm-no-icon">🏙</span>
+              <p>No city found for "<strong>{search}</strong>"</p>
+            </div>
+          ) : (
+            filtered.map(city => (
+              <button
+                key={city}
+                className="cm-city-btn"
+                role="option"
+                onClick={() => onSelect(city)}
+                aria-label={`Select ${city}`}
+              >
+                <span className="cm-city-pin" aria-hidden="true">◉</span>
+                {city}
+                <span className="cm-city-arrow" aria-hidden="true">→</span>
+              </button>
+            ))
+          )}
+        </div>
+
+        <p className="cm-note">
+          <span className="cm-note-dot" />
+          Currently serving Delhi, Chandigarh & Bombay · More cities launching Q3 2026
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ─── CITY COMING SOON STATE ──────────────────────────────────────
+function CityComingSoon({ city, onChangeCity, onBrowseAll }) {
+  return (
+    <div className="vn-coming-soon" role="status">
+      <div className="vn-cs-glow" aria-hidden="true" />
+      <div className="vn-cs-icon" aria-hidden="true">🏙</div>
+      <div className="vn-cs-badge">Coming Soon</div>
+      <h2 className="vn-cs-title">We're launching in <em>{city}</em> soon!</h2>
+      <p className="vn-cs-sub">
+        We haven't launched in <strong>{city}</strong> yet, but we're expanding fast.
+        Leave your email and be the first to know when vendors near you go live.
+      </p>
+      <div className="vn-cs-notify">
+        <input className="vn-cs-email" type="email" placeholder="Enter your email address" aria-label="Email for notification" />
+        <button className="vn-cs-btn">Notify Me →</button>
+      </div>
+      <div className="cm-coming-btns">
+        <button className="vn-cs-back" onClick={onChangeCity}>📍 Change City</button>
+        <button className="vn-cs-back" onClick={onBrowseAll} style={{ background: "var(--gold-dim)", borderColor: "rgba(201,168,76,0.35)" }}>
+          Browse All Vendors →
+        </button>
+      </div>
+      <div className="vn-cs-eta"><span className="vn-cs-eta-dot" />Launching in select cities by Q3 2026</div>
+    </div>
+  );
+}
+
 // ─── PAYMENT MODAL ───────────────────────────────────────────────
 function PaymentModal({ onClose }) {
-  // Trap focus inside modal
   useEffect(() => {
     const prev = document.activeElement;
     return () => prev?.focus();
   }, []);
-
   const steps = [
-    {
-      n: "01",
-      icon: "📋",
-      pct: "25%",
-      label: "At Booking",
-      desc: "Paid when you confirm your vendor. Locks your date and secures the agreement instantly.",
-      color: "#c9a84c",
-    },
-    {
-      n: "02",
-      icon: "📅",
-      pct: "50%",
-      label: "On Event Day",
-      desc: "Released to the vendor on the morning of your event — when everything is in place.",
-      color: "#a07c2e",
-    },
-    {
-      n: "03",
-      icon: "✅",
-      pct: "25%",
-      label: "After Success",
-      desc: "Final payment released only after you confirm the event was completed to your satisfaction.",
-      color: "#7a5e1c",
-    },
+    { n: "01", icon: "📋", pct: "25%", label: "At Booking", desc: "Paid when you confirm your vendor. Locks your date and secures the agreement instantly.", color: "#c9a84c" },
+    { n: "02", icon: "📅", pct: "50%", label: "On Event Day", desc: "Released to the vendor on the morning of your event — when everything is in place.", color: "#a07c2e" },
+    { n: "03", icon: "✅", pct: "25%", label: "After Success", desc: "Final payment released only after you confirm the event was completed to your satisfaction.", color: "#7a5e1c" },
   ];
-
   return (
-    <div
-      className="pm-overlay"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Payment structure details"
-    >
+    <div className="pm-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }} role="dialog" aria-modal="true" aria-label="Payment structure details">
       <div className="pm-modal">
         <button className="pm-x-btn" onClick={onClose} aria-label="Close payment details">✕</button>
-
-        {/* Header */}
-        <div className="pm-eyebrow">
-          <span className="pm-eyebrow-icon">🔐</span>
-          Evencers Secure Pay
-        </div>
+        <div className="pm-eyebrow"><span className="pm-eyebrow-icon">🔐</span>Evencers Secure Pay</div>
         <h2 className="pm-title">Simple 3-Step <em>Payment Flow</em></h2>
-        <p className="pm-sub">
-          Your money stays protected at every stage. We hold it in escrow and release it only when you're happy.
-        </p>
-
-        {/* Visual bar */}
+        <p className="pm-sub">Your money stays protected at every stage. We hold it in escrow and release it only when you're happy.</p>
         <div className="pm-bar-wrap" aria-hidden="true">
           <div className="pm-bar">
-            <div className="pm-bar-seg pm-bar-30" style={{ width: "25%" }}>
-              <span>25%</span>
-            </div>
+            <div className="pm-bar-seg pm-bar-30" style={{ width: "25%" }}><span>25%</span></div>
             <div className="pm-bar-gap" />
-            <div className="pm-bar-seg pm-bar-50" style={{ width: "50%" }}>
-              <span>50%</span>
-            </div>
+            <div className="pm-bar-seg pm-bar-50" style={{ width: "50%" }}><span>50%</span></div>
             <div className="pm-bar-gap" />
-            <div className="pm-bar-seg pm-bar-20" style={{ width: "25%" }}>
-              <span>25%</span>
-            </div>
+            <div className="pm-bar-seg pm-bar-20" style={{ width: "25%" }}><span>25%</span></div>
           </div>
           <div className="pm-bar-labels">
             <span style={{ width: "25%" }}>Booking</span>
@@ -167,79 +235,39 @@ function PaymentModal({ onClose }) {
             <span style={{ width: "25%", textAlign: "right" }}>After</span>
           </div>
         </div>
-
-        {/* Steps */}
         <div className="pm-steps">
           {steps.map((s, i) => (
             <div key={s.n} className={`pm-step pm-step--${i}`}>
-              <div className="pm-step-header">
-                <span className="pm-step-num">{s.n}</span>
-                <span className="pm-step-icon">{s.icon}</span>
-              </div>
+              <div className="pm-step-header"><span className="pm-step-num">{s.n}</span><span className="pm-step-icon">{s.icon}</span></div>
               <div className="pm-step-pct" style={{ color: s.color }}>{s.pct}</div>
               <div className="pm-step-label">{s.label}</div>
               <p className="pm-step-desc">{s.desc}</p>
-              {i < 2 && (
-                <div className="pm-step-arrow" aria-hidden="true">↓</div>
-              )}
+              {i < 2 && <div className="pm-step-arrow" aria-hidden="true">↓</div>}
             </div>
           ))}
         </div>
-
-        {/* Escrow note */}
         <div className="pm-note" role="note">
           <span className="pm-note-icon" aria-hidden="true">🛡️</span>
-          <div>
-            <strong>Protected by Evencers Escrow</strong>
-            <br />
-            All payments are held securely and released to vendors only after you confirm satisfaction — no chasing, no disputes.
-          </div>
+          <div><strong>Protected by Evencers Escrow</strong><br />All payments are held securely and released to vendors only after you confirm satisfaction — no chasing, no disputes.</div>
         </div>
-
-        {/* CTA */}
-        <button className="pm-cta" onClick={onClose}>
-          Got it, thanks! →
-        </button>
+        <button className="pm-cta" onClick={onClose}>Got it, thanks! →</button>
       </div>
     </div>
   );
 }
 
-// ─────────────────────────────────────────────
-// DATE PICKER MODAL
-// ─────────────────────────────────────────────
+// ─── DATE PICKER MODAL ───────────────────────────────────────────
 function DatePickerModal({ value, onChange, onClear, onClose }) {
   const [viewYear,  setViewYear]  = useState(value ? new Date(value).getFullYear() : new Date().getFullYear());
   const [viewMonth, setViewMonth] = useState(value ? new Date(value).getMonth()    : new Date().getMonth());
-
-  const toKey = (d) => {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${y}-${m}-${day}`;
-  };
-
+  const toKey = (d) => { const y = d.getFullYear(); const m = String(d.getMonth() + 1).padStart(2, "0"); const day = String(d.getDate()).padStart(2, "0"); return `${y}-${m}-${day}`; };
   const today           = toKey(new Date());
   const daysInMonth     = new Date(viewYear, viewMonth + 1, 0).getDate();
   const firstDayOfWeek  = new Date(viewYear, viewMonth, 1).getDay();
   const monthName       = new Date(viewYear, viewMonth, 1).toLocaleString("en-IN", { month: "long" });
-
-  const prevMonth = () => {
-    if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1); }
-    else setViewMonth((m) => m - 1);
-  };
-  const nextMonth = () => {
-    if (viewMonth === 11) { setViewMonth(0); setViewYear((y) => y + 1); }
-    else setViewMonth((m) => m + 1);
-  };
-
-  const handleDay = (day) => {
-    const key = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    if (key < today) return;
-    onChange(key);
-    onClose();
-  };
-
+  const prevMonth = () => { if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1); } else setViewMonth((m) => m - 1); };
+  const nextMonth = () => { if (viewMonth === 11) { setViewMonth(0); setViewYear((y) => y + 1); } else setViewMonth((m) => m + 1); };
+  const handleDay = (day) => { const key = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`; if (key < today) return; onChange(key); onClose(); };
   return (
     <div className="dp-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="dp-modal" role="dialog" aria-modal="true" aria-label="Select event date">
@@ -251,36 +279,17 @@ function DatePickerModal({ value, onChange, onClear, onClose }) {
           <button className="dp-nav-btn" onClick={nextMonth} aria-label="Next month">›</button>
         </div>
         <div className="dp-grid" role="grid">
-          {["Su","Mo","Tu","We","Th","Fr","Sa"].map((d) => (
-            <div key={d} className="dp-hdr" role="columnheader">{d}</div>
-          ))}
+          {["Su","Mo","Tu","We","Th","Fr","Sa"].map((d) => (<div key={d} className="dp-hdr" role="columnheader">{d}</div>))}
           {[...Array(firstDayOfWeek)].map((_, i) => <div key={`e${i}`} aria-hidden="true" />)}
           {[...Array(daysInMonth)].map((_, i) => {
             const day  = i + 1;
             const key  = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-            const isPast     = key < today;
-            const isToday    = key === today;
-            const isSelected = key === value;
-            return (
-              <button
-                key={key}
-                className={`dp-day ${isPast ? "dp-past" : ""} ${isSelected ? "dp-selected" : ""} ${isToday && !isSelected ? "dp-today" : ""}`}
-                onClick={() => handleDay(day)}
-                disabled={isPast}
-                aria-label={`${day} ${monthName} ${viewYear}${isPast ? " (unavailable)" : ""}${isSelected ? " (selected)" : ""}`}
-                aria-pressed={isSelected}
-              >
-                {day}
-              </button>
-            );
+            const isPast = key < today; const isToday = key === today; const isSelected = key === value;
+            return (<button key={key} className={`dp-day ${isPast ? "dp-past" : ""} ${isSelected ? "dp-selected" : ""} ${isToday && !isSelected ? "dp-today" : ""}`} onClick={() => handleDay(day)} disabled={isPast} aria-label={`${day} ${monthName} ${viewYear}`} aria-pressed={isSelected}>{day}</button>);
           })}
         </div>
         <div className="dp-footer">
-          {value ? (
-            <button className="dp-clear-btn" onClick={() => { onClear(); onClose(); }}>✕ Clear date filter</button>
-          ) : (
-            <button className="dp-cancel-btn" onClick={onClose}>Cancel</button>
-          )}
+          {value ? (<button className="dp-clear-btn" onClick={() => { onClear(); onClose(); }}>✕ Clear date filter</button>) : (<button className="dp-cancel-btn" onClick={onClose}>Cancel</button>)}
         </div>
       </div>
     </div>
@@ -292,51 +301,31 @@ function AnimCount({ target }) {
   const [n, setN] = useState(0);
   const hasRun = useRef(false);
   const ref = useRef(null);
-
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
+    const el = ref.current; if (!el) return;
     const obs = new IntersectionObserver(([e]) => {
       if (e.isIntersecting && !hasRun.current) {
         hasRun.current = true;
         const num = parseInt(target.replace(/\D/g, ""), 10);
-        const steps = 30;
-        let i = 0;
-        const tick = setInterval(() => {
-          i++;
-          setN(Math.round((num * i) / steps));
-          if (i >= steps) clearInterval(tick);
-        }, 35);
+        const steps = 30; let i = 0;
+        const tick = setInterval(() => { i++; setN(Math.round((num * i) / steps)); if (i >= steps) clearInterval(tick); }, 35);
       }
     }, { threshold: 0.5 });
-    obs.observe(el);
-    return () => obs.disconnect();
+    obs.observe(el); return () => obs.disconnect();
   }, [target]);
-
   const num = parseInt(target.replace(/\D/g, ""), 10);
   const suffix = target.replace(/[\d,]/g, "");
   const hasComma = target.includes(",");
-
-  return (
-    <span ref={ref}>
-      {hasComma ? n.toLocaleString("en-IN") : n}{suffix}
-    </span>
-  );
+  return <span ref={ref}>{hasComma ? n.toLocaleString("en-IN") : n}{suffix}</span>;
 }
 
-// ─── POPULAR SEARCHES ────────────────────────────────────────────
 const POPULAR = ["Wedding Photographer", "Decor Delhi", "Wedding Decor", "DJ for Party", "Floral Designer", "Banquet Hall"];
 
-// ─── FAQ ACCORDION ITEM ─────────────────────────────────────────
 function FaqItem({ q, a }) {
   const [open, setOpen] = useState(false);
   return (
     <div className={`vn-faq-item ${open ? "open" : ""}`}>
-      <button
-        className="vn-faq-q"
-        onClick={() => setOpen(o => !o)}
-        aria-expanded={open}
-      >
+      <button className="vn-faq-q" onClick={() => setOpen(o => !o)} aria-expanded={open}>
         <span>{q}</span>
         <span className="vn-faq-chevron" aria-hidden="true">{open ? "−" : "+"}</span>
       </button>
@@ -345,7 +334,6 @@ function FaqItem({ q, a }) {
   );
 }
 
-// ─── COMING SOON EMPTY STATE ─────────────────────────────────────
 function ComingSoonState({ category, onClear }) {
   const cat = CATEGORIES.find(c => c.value === category);
   return (
@@ -354,73 +342,51 @@ function ComingSoonState({ category, onClear }) {
       <div className="vn-cs-icon" aria-hidden="true">{cat?.emoji}</div>
       <div className="vn-cs-badge">Coming Soon</div>
       <h2 className="vn-cs-title">{cat?.label} Vendors</h2>
-      <p className="vn-cs-sub">
-        We're onboarding the finest <strong>{cat?.label.toLowerCase()}</strong> professionals across India.
-        Be the first to know when they go live.
-      </p>
+      <p className="vn-cs-sub">We're onboarding the finest <strong>{cat?.label.toLowerCase()}</strong> professionals across India. Be the first to know when they go live.</p>
       <div className="vn-cs-notify">
-        <input
-          className="vn-cs-email"
-          type="email"
-          placeholder="Enter your email address"
-          aria-label="Email for notification"
-        />
+        <input className="vn-cs-email" type="email" placeholder="Enter your email address" aria-label="Email for notification" />
         <button className="vn-cs-btn">Notify Me →</button>
       </div>
-      <button className="vn-cs-back" onClick={onClear}>
-        ← Browse available vendors
-      </button>
-      <div className="vn-cs-eta">
-        <span className="vn-cs-eta-dot" />
-        Launching in select cities by Q3 2026
-      </div>
+      <button className="vn-cs-back" onClick={onClear}>← Browse available vendors</button>
+      <div className="vn-cs-eta"><span className="vn-cs-eta-dot" />Launching in select cities by Q3 2026</div>
     </div>
   );
 }
 
-// ─── ROLE DETECTION HOOK ─────────────────────────────────────────
-// Reads the logged-in user's role from localStorage.
-// Adjust the key name / field to match your auth system if needed.
 function useUserRole() {
   const [role, setRole] = useState(null);
-
   useEffect(() => {
     try {
-      // ── Option A: user object stored as JSON ──────────────────
-      // e.g. localStorage.setItem('user', JSON.stringify({ role: 'vendor' }))
       const stored = localStorage.getItem("user");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        // Support both { role } and { user: { role } } shapes
-        const r = parsed?.role ?? parsed?.user?.role ?? null;
-        if (r) { setRole(r); return; }
-      }
-
-      // ── Option B: role stored directly as a plain string ──────
-      // e.g. localStorage.setItem('role', 'vendor')
+      if (stored) { const parsed = JSON.parse(stored); const r = parsed?.role ?? parsed?.user?.role ?? null; if (r) { setRole(r); return; } }
       const direct = localStorage.getItem("role");
       if (direct) { setRole(direct); return; }
-
-      // ── Option C: token payload (JWT) ─────────────────────────
       const token = localStorage.getItem("token");
-      if (token) {
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        if (payload?.role) { setRole(payload.role); return; }
-      }
-    } catch {
-      // If anything fails, treat as a regular user (client)
-    }
+      if (token) { const payload = JSON.parse(atob(token.split(".")[1])); if (payload?.role) { setRole(payload.role); return; } }
+    } catch {}
     setRole("user");
   }, []);
-
   return role;
 }
 
+// ─── CITY BAR (shown after city selected) ──────────────────────
+function CityBar({ city, onChangCity }) {
+  return (
+    <div className="vn-city-bar" role="status" aria-live="polite">
+      <span className="vn-city-bar-icon" aria-hidden="true">📍</span>
+      <span>Showing vendors in <strong>{city}</strong></span>
+      <button className="vn-city-bar-change" onClick={onChangCity} aria-label="Change city">
+        Change City
+      </button>
+    </div>
+  );
+}
+
+// ─── MAIN COMPONENT ──────────────────────────────────────────────
 export default function Vendors() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // ── Role: 'vendor' hides the Secure Pay card ─────────────────
   const userRole = useUserRole();
   const isVendor = userRole === "vendor";
 
@@ -430,7 +396,7 @@ export default function Vendors() {
   const [category,       setCategory]       = useState("all");
   const [sort,           setSort]           = useState("default");
   const [layout,         setLayout]         = useState("grid");
-  const [maxPrice,       setMaxPrice]       = useState("");
+  const [priceRange,     setPriceRange]     = useState("any");
   const [dateFilter,     setDateFilter]     = useState("");
   const [dateLoading,    setDateLoading]    = useState(false);
   const [availVendors,   setAvailVendors]   = useState(null);
@@ -439,13 +405,20 @@ export default function Vendors() {
   const [searchFocused,  setSearchFocused]  = useState(false);
   const [heroVisible,    setHeroVisible]    = useState(false);
 
+  // ── City state ──────────────────────────────────────────────────
+  const [selectedCity,   setSelectedCity]   = useState(() => {
+    try { return localStorage.getItem("evencers_city") || ""; } catch { return ""; }
+  });
+  const [showCityModal,  setShowCityModal]  = useState(() => {
+    try { return !localStorage.getItem("evencers_city"); } catch { return true; }
+  });
+  const [browseAll,      setBrowseAll]      = useState(false);
+
   const isNavigatingRef  = useRef(false);
   const searchRef        = useRef(null);
   const howItWorksRef    = useRef(null);
 
-  const scrollToHowItWorks = () => {
-    howItWorksRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
+  const scrollToHowItWorks = () => howItWorksRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   useEffect(() => { setTimeout(() => setHeroVisible(true), 80); }, []);
 
@@ -454,10 +427,10 @@ export default function Vendors() {
     const params    = new URLSearchParams(location.search);
     const q         = params.get("q")    || "";
     const cat       = params.get("cat")  || "all";
-    const max       = params.get("max")  || "";
+    const pr        = params.get("pr")   || "any";
     const sortParam = params.get("sort") || "default";
     const date      = params.get("date") || "";
-    setSearch(q); setMaxPrice(max); setSort(sortParam); setDateFilter(date);
+    setSearch(q); setPriceRange(pr); setSort(sortParam); setDateFilter(date);
     setCategory(CATEGORIES.some((c) => c.value === cat) ? cat : "all");
   }, [location.search]);
 
@@ -479,32 +452,57 @@ export default function Vendors() {
 
   useEffect(() => {
     const params = new URLSearchParams();
-    if (search.trim())      params.set("q",    search);
-    if (category !== "all") params.set("cat",  category);
-    if (maxPrice)           params.set("max",  maxPrice);
-    if (sort !== "default") params.set("sort", sort);
-    if (dateFilter)         params.set("date", dateFilter);
+    if (search.trim())        params.set("q",    search);
+    if (category !== "all")   params.set("cat",  category);
+    if (priceRange !== "any") params.set("pr",   priceRange);
+    if (sort !== "default")   params.set("sort", sort);
+    if (dateFilter)           params.set("date", dateFilter);
     const newSearch = params.toString();
     const current   = location.search.replace(/^\?/, "");
-    if (newSearch !== current) {
-      isNavigatingRef.current = true;
-      navigate(`/vendors${newSearch ? `?${newSearch}` : ""}`, { replace: true });
-    }
-  }, [search, category, maxPrice, sort, dateFilter]);
+    if (newSearch !== current) { isNavigatingRef.current = true; navigate(`/vendors${newSearch ? `?${newSearch}` : ""}`, { replace: true }); }
+  }, [search, category, priceRange, sort, dateFilter]);
 
+  // ── Handle city selection ────────────────────────────────────────
+  const handleCitySelect = (city) => {
+    setSelectedCity(city);
+    setBrowseAll(false);
+    try { localStorage.setItem("evencers_city", city); } catch {}
+    setShowCityModal(false);
+  };
+
+  const handleChangeCity = () => {
+    setShowCityModal(true);
+    setBrowseAll(false);
+  };
+
+  const handleBrowseAll = () => {
+    setBrowseAll(true);
+    setShowCityModal(false);
+  };
+
+  // ── Filtering ────────────────────────────────────────────────────
   const filtered = useMemo(() => {
     let base = dateFilter && availVendors !== null ? availVendors : vendors;
     let list  = [...base];
+
+    // City filter (only if a city is selected and user hasn't opted to browse all)
+    if (selectedCity && !browseAll) {
+      const cityLower = selectedCity.toLowerCase();
+      list = list.filter(v => v.location?.toLowerCase().includes(cityLower));
+    }
+
     if (search.trim()) {
       const q = search.toLowerCase();
-      list = list.filter((v) =>
-        v.title?.toLowerCase().includes(q) ||
-        v.location?.toLowerCase().includes(q) ||
-        v.serviceType?.toLowerCase().includes(q)
-      );
+      list = list.filter((v) => v.title?.toLowerCase().includes(q) || v.location?.toLowerCase().includes(q) || v.serviceType?.toLowerCase().includes(q));
     }
     if (category !== "all") list = list.filter((v) => v.serviceType?.toLowerCase() === category);
-    if (maxPrice) list = list.filter((v) => (v.packages?.[0]?.price || 0) <= Number(maxPrice));
+    if (priceRange !== "any") {
+      const band = PRICE_RANGES.find(r => r.value === priceRange);
+      if (band) list = list.filter((v) => {
+        const p = v.packages?.[0]?.price || 0;
+        return p >= band.min && (band.max === Infinity ? true : p < band.max);
+      });
+    }
     switch (sort) {
       case "price_asc":  list.sort((a, b) => (a.packages?.[0]?.price || 0) - (b.packages?.[0]?.price || 0)); break;
       case "price_desc": list.sort((a, b) => (b.packages?.[0]?.price || 0) - (a.packages?.[0]?.price || 0)); break;
@@ -512,40 +510,37 @@ export default function Vendors() {
       case "newest":     list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)); break;
     }
     return list;
-  }, [vendors, availVendors, dateFilter, search, category, sort, maxPrice]);
+  }, [vendors, availVendors, dateFilter, search, category, sort, priceRange, selectedCity, browseAll]);
 
-  const hasActiveFilters = category !== "all" || maxPrice || search || dateFilter;
-  const clearAll = () => { setSearch(""); setCategory("all"); setSort("default"); setMaxPrice(""); setDateFilter(""); setAvailVendors(null); };
-  const dateLabel = dateFilter
-    ? new Date(dateFilter + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
-    : null;
+  // ── Check if selected city has no vendors (city coming soon) ──────
+  const cityVendorsCount = useMemo(() => {
+    if (!selectedCity || browseAll) return null;
+    return vendors.filter(v => v.location?.toLowerCase().includes(selectedCity.toLowerCase())).length;
+  }, [vendors, selectedCity, browseAll]);
 
+  const showCityComingSoon = selectedCity && !browseAll && !loading && cityVendorsCount === 0;
+
+  const hasActiveFilters = category !== "all" || priceRange !== "any" || search || dateFilter;
+  const clearAll = () => { setSearch(""); setCategory("all"); setSort("default"); setPriceRange("any"); setDateFilter(""); setAvailVendors(null); };
+  const dateLabel = dateFilter ? new Date(dateFilter + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : null;
   const activeCat = CATEGORIES.find(c => c.value === category);
-
-  // Is the selected category a "coming soon" one?
-  const isCategoryComingSoon = activeCat?.comingSoon && !search && !dateFilter && !maxPrice;
+  const isCategoryComingSoon = activeCat?.comingSoon && !search && !dateFilter && priceRange === "any";
 
   return (
     <>
       <style>{styles}</style>
       <SEOHead category={category} search={search} dateFilter={dateFilter} count={vendors.length || 20} />
 
+      {/* ── CITY SELECTOR MODAL ── */}
+      {showCityModal && <CityModal onSelect={handleCitySelect} />}
+
       <div className="vn-root">
         <Navbar />
 
         {showDatePicker && (
-          <DatePickerModal
-            value={dateFilter}
-            onChange={(d) => setDateFilter(d)}
-            onClear={() => { setDateFilter(""); setAvailVendors(null); }}
-            onClose={() => setShowDatePicker(false)}
-          />
+          <DatePickerModal value={dateFilter} onChange={(d) => setDateFilter(d)} onClear={() => { setDateFilter(""); setAvailVendors(null); }} onClose={() => setShowDatePicker(false)} />
         )}
-
-        {/* ── PAYMENT MODAL — only shown to clients (not vendors) ── */}
-        {showPayModal && !isVendor && (
-          <PaymentModal onClose={() => setShowPayModal(false)} />
-        )}
+        {showPayModal && !isVendor && (<PaymentModal onClose={() => setShowPayModal(false)} />)}
 
         {/* ── HERO ── */}
         <header className={`vn-hero ${heroVisible ? "vn-hero--visible" : ""}`} role="banner">
@@ -553,231 +548,118 @@ export default function Vendors() {
           <div className="vn-hero-orb vn-orb1" aria-hidden="true" />
           <div className="vn-hero-orb vn-orb2" aria-hidden="true" />
           <div className="vn-hero-orb vn-orb3" aria-hidden="true" />
-
-          {/* Floating card 1 — left: Happy Clients */}
           <div className="vn-float-card vn-fc-left vn-fc-1" aria-hidden="true">
             <span className="vn-fc-icon">👥</span>
-            <div className="vn-fc-text">
-              <span className="vn-fc-val">100+</span>
-              <span className="vn-fc-label">Happy Clients</span>
-            </div>
+            <div className="vn-fc-text"><span className="vn-fc-val">100+</span><span className="vn-fc-label">Happy Clients</span></div>
           </div>
-
-          {/* Floating card 2 — right: Best Platform */}
           <div className="vn-float-card vn-fc-right vn-fc-2" aria-hidden="true">
             <span className="vn-fc-icon">🏆</span>
-            <div className="vn-fc-text">
-              <span className="vn-fc-val">Best Platform</span>
-              <span className="vn-fc-label">2026 Award</span>
-            </div>
+            <div className="vn-fc-text"><span className="vn-fc-val">Best Platform</span><span className="vn-fc-label">2026 Award</span></div>
           </div>
-
-          {/* Floating card 3 — right: Rating */}
           <div className="vn-float-card vn-fc-right vn-fc-3" aria-hidden="true">
             <span className="vn-fc-icon">⭐</span>
-            <div className="vn-fc-text">
-              <span className="vn-fc-val">4.9★ Rating</span>
-              <span className="vn-fc-label">Avg. Rating</span>
-            </div>
+            <div className="vn-fc-text"><span className="vn-fc-val">4.9★ Rating</span><span className="vn-fc-label">Avg. Rating</span></div>
           </div>
-
-          {/* ── FLOATING CARD 4 — Payment Flow (clients only, hidden for vendors) ── */}
           {!isVendor && (
-            <button
-              className="vn-float-card vn-fc-left vn-fc-4"
-              onClick={() => setShowPayModal(true)}
-              aria-label="View Evencers payment plan — tap to see details"
-            >
+            <button className="vn-float-card vn-fc-left vn-fc-4" onClick={() => setShowPayModal(true)} aria-label="View Evencers payment plan">
               <span className="vn-fc-icon">🔐</span>
-              <div className="vn-fc-text">
-                <span className="vn-fc-val">Secure Pay</span>
-                <span className="vn-fc-label">25 · 50 · 25 Plan</span>
-              </div>
+              <div className="vn-fc-text"><span className="vn-fc-val">Secure Pay</span><span className="vn-fc-label">25 · 50 · 25 Plan</span></div>
               <span className="vn-fc4-tap" aria-hidden="true">tap ↗</span>
             </button>
           )}
-
           <div className="vn-hero-inner">
-            <div className="vn-eyebrow">
-              <span className="vn-eyebrow-dot" />
-              <span>Discover &amp; Book</span>
-              <span className="vn-eyebrow-dot" />
-            </div>
-
+            <div className="vn-eyebrow"><span className="vn-eyebrow-dot" /><span>Discover &amp; Book</span><span className="vn-eyebrow-dot" /></div>
             <h1 className="vn-hero-title">
-              {category !== "all" ? (
-                <>{activeCat.emoji} {activeCat.label} <em>Vendors</em></>
-              ) : (
-                <>Find Your Perfect <em>Event Team</em></>
-              )}
+              {category !== "all" ? (<>{activeCat.emoji} {activeCat.label} <em>Vendors</em></>) : (<>Find Your Perfect <em>Event Team</em></>)}
             </h1>
-
-            <p className="vn-hero-sub">
-              {loading
-                ? "Loading our curated vendor network across India…"
-                : `${vendors.length || "20+"}+ verified event professionals across 2 cities in India`}
-            </p>
-
-            {/* Search */}
+            <p className="vn-hero-sub">{loading ? "Loading our curated vendor network across India…" : `${vendors.length || "20+"}+ verified event professionals across 2 cities in India`}</p>
             <div className={`vn-search-bar ${searchFocused ? "focused" : ""}`} role="search">
               <span className="vn-search-icon" aria-hidden="true">⌕</span>
-              <input
-                ref={searchRef}
-                className="vn-search-input"
-                placeholder="Search vendors by name, city, or service type…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setSearchFocused(false)}
-                aria-label="Search vendors"
-                autoComplete="off"
-              />
-              {search && (
-                <button className="vn-search-clear" onClick={() => setSearch("")} aria-label="Clear search">✕</button>
-              )}
+              <input ref={searchRef} className="vn-search-input" placeholder="Search vendors by name, city, or service type…" value={search} onChange={(e) => setSearch(e.target.value)} onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} aria-label="Search vendors" autoComplete="off" />
+              {search && (<button className="vn-search-clear" onClick={() => setSearch("")} aria-label="Clear search">✕</button>)}
             </div>
-
             {!search && (
               <div className="vn-popular" aria-label="Popular searches">
                 <span className="vn-popular-label">Popular:</span>
-                {POPULAR.map((p) => (
-                  <button key={p} className="vn-popular-tag" onClick={() => setSearch(p)}>{p}</button>
-                ))}
+                {POPULAR.map((p) => (<button key={p} className="vn-popular-tag" onClick={() => setSearch(p)}>{p}</button>))}
               </div>
             )}
-
             <div className="vn-trust-strip" role="list" aria-label="Platform statistics">
               {TRUST_STATS.map((s) => (
                 <div key={s.label} className="vn-trust-item" role="listitem">
-                  <span className="vn-trust-val">
-                    <AnimCount target={s.value} />
-                  </span>
+                  <span className="vn-trust-val"><AnimCount target={s.value} /></span>
                   <span className="vn-trust-label">{s.label}</span>
                 </div>
               ))}
             </div>
-
-            {/* ── Mobile-only payment card pill — clients only, hidden for vendors ── */}
             {!isVendor && (
-              <button
-                className="vn-fc4-mobile-pill"
-                onClick={() => setShowPayModal(true)}
-                aria-label="View Evencers payment plan"
-              >
+              <button className="vn-fc4-mobile-pill" onClick={() => setShowPayModal(true)} aria-label="View Evencers payment plan">
                 <span className="vn-fc4-pill-icon">🔐</span>
-                <div className="vn-fc4-pill-text">
-                  <span className="vn-fc4-pill-val">Secure Pay Plan</span>
-                  <span className="vn-fc4-pill-sub">25% · 50% · 25% — tap to see how</span>
-                </div>
+                <div className="vn-fc4-pill-text"><span className="vn-fc4-pill-val">Secure Pay Plan</span><span className="vn-fc4-pill-sub">25% · 50% · 25% — tap to see how</span></div>
                 <span className="vn-fc4-pill-arrow">↗</span>
               </button>
             )}
-
           </div>
         </header>
+
+        {/* ── CITY BAR ── */}
+        {selectedCity && !showCityModal && (
+          <CityBar city={selectedCity} onChangCity={handleChangeCity} />
+        )}
 
         {/* ── CATEGORY STRIP ── */}
         <nav className="vn-category-strip" aria-label="Filter by service category">
           <div className="vn-category-inner">
             {CATEGORIES.map((c) => (
-              <button
-                key={c.value}
-                className={`vn-cat-pill ${category === c.value ? "active" : ""} ${c.comingSoon ? "vn-cat-soon" : ""}`}
-                onClick={() => { setCategory(c.value); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-                aria-pressed={category === c.value}
-                aria-label={`${c.label}${c.comingSoon ? " — Coming Soon" : c.count ? ` — ${c.count} vendors` : ""}`}
-              >
+              <button key={c.value} className={`vn-cat-pill ${category === c.value ? "active" : ""} ${c.comingSoon ? "vn-cat-soon" : ""}`} onClick={() => { setCategory(c.value); window.scrollTo({ top: 0, behavior: "smooth" }); }} aria-pressed={category === c.value} aria-label={`${c.label}${c.comingSoon ? " — Coming Soon" : c.count ? ` — ${c.count} vendors` : ""}`}>
                 <span className="vn-cat-emoji" aria-hidden="true">{c.emoji}</span>
                 <span>{c.label}</span>
-                {c.comingSoon ? (
-                  <span className="vn-cat-soon-badge">Soon</span>
-                ) : c.count ? (
-                  <span className="vn-cat-count">{c.count}</span>
-                ) : null}
+                {c.comingSoon ? (<span className="vn-cat-soon-badge">Soon</span>) : c.count ? (<span className="vn-cat-count">{c.count}</span>) : null}
               </button>
             ))}
           </div>
         </nav>
 
         {/* ── TOOLBAR ── */}
-        {!isCategoryComingSoon && (
+        {!isCategoryComingSoon && !showCityComingSoon && (
           <div className="vn-toolbar" role="toolbar" aria-label="Filter and sort vendors">
             <div className="vn-toolbar-left">
               <span className="vn-result-text" aria-live="polite" aria-atomic="true">
                 {(loading || dateLoading) ? (
                   <span className="vn-result-loading"><span className="vn-pulse" />Finding vendors…</span>
                 ) : (
-                  <>
-                    <strong>{filtered.length}</strong> vendor{filtered.length !== 1 ? "s" : ""}
-                    {dateFilter && <> available on <em>{dateLabel}</em></>}
-                    {search && !dateFilter && <> matching "<em>{search}</em>"</>}
-                  </>
+                  <><strong>{filtered.length}</strong> vendor{filtered.length !== 1 ? "s" : ""}{selectedCity && !browseAll ? <> in <em>{selectedCity}</em></> : null}{dateFilter && <> available on <em>{dateLabel}</em></>}{search && !dateFilter && <> matching "<em>{search}</em>"</>}</>
                 )}
               </span>
-              {hasActiveFilters && (
-                <button className="vn-clear-btn" onClick={clearAll} aria-label="Clear all filters">✕ Clear all</button>
-              )}
+              {hasActiveFilters && (<button className="vn-clear-btn" onClick={clearAll} aria-label="Clear all filters">✕ Clear all</button>)}
             </div>
-
             <div className="vn-toolbar-right">
-              <button
-                className={`vn-date-btn ${dateFilter ? "vn-date-active" : ""}`}
-                onClick={() => setShowDatePicker(true)}
-                aria-expanded={showDatePicker}
-                aria-label={dateFilter ? `Date filter: ${dateLabel}. Click to change` : "Filter by available date"}
-              >
+              <button className={`vn-date-btn ${dateFilter ? "vn-date-active" : ""}`} onClick={() => setShowDatePicker(true)} aria-expanded={showDatePicker} aria-label={dateFilter ? `Date filter: ${dateLabel}. Click to change` : "Filter by available date"}>
                 <span className="vn-date-icon" aria-hidden="true">📅</span>
                 {dateFilter ? dateLabel : "By Date"}
                 {dateFilter && (
-                  <span
-                    className="vn-date-clear-x"
-                    role="button"
-                    tabIndex={0}
-                    aria-label="Remove date filter"
-                    onClick={(e) => { e.stopPropagation(); setDateFilter(""); setAvailVendors(null); }}
-                    onKeyDown={(e) => e.key === "Enter" && (() => { setDateFilter(""); setAvailVendors(null); })()}
-                  >✕</span>
+                  <span className="vn-date-clear-x" role="button" tabIndex={0} aria-label="Remove date filter" onClick={(e) => { e.stopPropagation(); setDateFilter(""); setAvailVendors(null); }} onKeyDown={(e) => e.key === "Enter" && (() => { setDateFilter(""); setAvailVendors(null); })()}>✕</span>
                 )}
               </button>
-
-              <div className="vn-price-wrap" title="Maximum budget filter">
-                <span className="vn-price-label">Max ₹</span>
-                <input
-                  type="number"
-                  className="vn-price-input"
-                  placeholder="Any"
-                  value={maxPrice}
-                  onChange={(e) => setMaxPrice(e.target.value)}
-                  aria-label="Maximum price filter in rupees"
-                  min={0}
-                />
-              </div>
-
-              <select
-                className="vn-sort-select"
-                value={sort}
-                onChange={(e) => setSort(e.target.value)}
-                aria-label="Sort vendors"
-              >
-                {SORT_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
+              <select className="vn-sort-select" value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort vendors">
+                {SORT_OPTIONS.map((o) => (<option key={o.value} value={o.value}>{o.label}</option>))}
               </select>
-
               <div className="vn-layout-toggle" role="group" aria-label="View layout">
-                <button
-                  className={`vn-layout-btn ${layout === "grid" ? "active" : ""}`}
-                  onClick={() => setLayout("grid")}
-                  aria-pressed={layout === "grid"}
-                  aria-label="Grid view"
-                >⊞</button>
-                <button
-                  className={`vn-layout-btn ${layout === "list" ? "active" : ""}`}
-                  onClick={() => setLayout("list")}
-                  aria-pressed={layout === "list"}
-                  aria-label="List view"
-                >☰</button>
+                <button className={`vn-layout-btn ${layout === "grid" ? "active" : ""}`} onClick={() => setLayout("grid")} aria-pressed={layout === "grid"} aria-label="Grid view">⊞</button>
+                <button className={`vn-layout-btn ${layout === "list" ? "active" : ""}`} onClick={() => setLayout("list")} aria-pressed={layout === "list"} aria-label="List view">☰</button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── PRICE RANGE FILTER BAR ── */}
+        {!isCategoryComingSoon && !showCityComingSoon && (
+          <div className="vn-price-range-bar" role="group" aria-label="Filter by price range">
+            <span className="vn-price-range-label">Budget:</span>
+            <div className="vn-price-range-pills">
+              {PRICE_RANGES.map((r) => (
+                <button key={r.value} className={`vn-price-pill ${priceRange === r.value ? "active" : ""}`} onClick={() => setPriceRange(r.value)} aria-pressed={priceRange === r.value}>{r.label}</button>
+              ))}
             </div>
           </div>
         )}
@@ -786,106 +668,57 @@ export default function Vendors() {
         {dateFilter && !dateLoading && (
           <div className="vn-date-banner" role="status" aria-live="polite">
             <span className="vn-date-banner-icon" aria-hidden="true">📅</span>
-            <span>
-              Showing <strong>{filtered.length}</strong> vendor{filtered.length !== 1 ? "s" : ""} available on{" "}
-              <strong>{dateLabel}</strong>
-            </span>
-            <button
-              className="vn-date-banner-clear"
-              onClick={() => { setDateFilter(""); setAvailVendors(null); }}
-            >Clear date</button>
+            <span>Showing <strong>{filtered.length}</strong> vendor{filtered.length !== 1 ? "s" : ""} available on <strong>{dateLabel}</strong></span>
+            <button className="vn-date-banner-clear" onClick={() => { setDateFilter(""); setAvailVendors(null); }}>Clear date</button>
           </div>
         )}
 
         {/* ── ACTIVE FILTER CHIPS ── */}
-        {hasActiveFilters && !isCategoryComingSoon && (
+        {hasActiveFilters && !isCategoryComingSoon && !showCityComingSoon && (
           <div className="vn-filter-chips" aria-label="Active filters">
-            {category !== "all" && (
-              <span className="vn-chip">
-                {activeCat.emoji} {activeCat.label}
-                <button onClick={() => setCategory("all")} aria-label={`Remove ${activeCat.label} filter`}>✕</button>
-              </span>
-            )}
-            {maxPrice && (
-              <span className="vn-chip">
-                Under ₹{Number(maxPrice).toLocaleString("en-IN")}
-                <button onClick={() => setMaxPrice("")} aria-label="Remove price filter">✕</button>
-              </span>
-            )}
-            {sort !== "default" && (
-              <span className="vn-chip">
-                {SORT_OPTIONS.find(o => o.value === sort)?.label}
-                <button onClick={() => setSort("default")} aria-label="Remove sort">✕</button>
-              </span>
-            )}
+            {category !== "all" && (<span className="vn-chip">{activeCat.emoji} {activeCat.label}<button onClick={() => setCategory("all")} aria-label={`Remove ${activeCat.label} filter`}>✕</button></span>)}
+            {priceRange !== "any" && (<span className="vn-chip">{PRICE_RANGES.find(r => r.value === priceRange)?.label}<button onClick={() => setPriceRange("any")} aria-label="Remove price filter">✕</button></span>)}
+            {sort !== "default" && (<span className="vn-chip">{SORT_OPTIONS.find(o => o.value === sort)?.label}<button onClick={() => setSort("default")} aria-label="Remove sort">✕</button></span>)}
           </div>
         )}
 
         {/* ── CONTENT ── */}
         <main className="vn-content" id="vendor-results" aria-label="Vendor listings">
-
-          {/* ── COMING SOON STATE for categories with no vendors yet ── */}
           {isCategoryComingSoon ? (
             <ComingSoonState category={category} onClear={clearAll} />
+          ) : showCityComingSoon ? (
+            <CityComingSoon
+              city={selectedCity}
+              onChangeCity={handleChangeCity}
+              onBrowseAll={handleBrowseAll}
+            />
           ) : (loading || dateLoading) ? (
             <div className={`vn-grid ${layout}`} aria-busy="true" aria-label="Loading vendors">
-              {[...Array(6)].map((_, i) => (
-                <div
-                  key={i}
-                  className={`vn-skeleton ${layout === "list" ? "vn-skeleton-list" : ""}`}
-                  style={{ animationDelay: `${i * 0.07}s` }}
-                  aria-hidden="true"
-                />
-              ))}
+              {[...Array(6)].map((_, i) => (<div key={i} className={`vn-skeleton ${layout === "list" ? "vn-skeleton-list" : ""}`} style={{ animationDelay: `${i * 0.07}s` }} aria-hidden="true" />))}
             </div>
           ) : filtered.length === 0 ? (
             <div className="vn-empty" role="status">
               <div className="vn-empty-icon" aria-hidden="true">✨</div>
               {dateFilter ? (
-                <>
-                  <h2>No vendors available on {dateLabel}</h2>
-                  <p>All vendors matching your filters are booked on this date. Try a different date or browse all vendors.</p>
-                  <button className="vn-empty-btn" onClick={() => { setDateFilter(""); setAvailVendors(null); }}>
-                    Show all vendors
-                  </button>
-                </>
+                <><h2>No vendors available on {dateLabel}</h2><p>All vendors matching your filters are booked on this date.</p><button className="vn-empty-btn" onClick={() => { setDateFilter(""); setAvailVendors(null); }}>Show all vendors</button></>
               ) : (
-                <>
-                  <h2>No vendors found</h2>
-                  <p>
-                    {search
-                      ? `No results for "${search}". Try adjusting your search terms or filters.`
-                      : "No vendors match the selected filters. Try broadening your search."}
-                  </p>
-                  <button className="vn-empty-btn" onClick={clearAll}>Clear all filters</button>
-                </>
+                <><h2>No vendors found</h2><p>{search ? `No results for "${search}". Try adjusting your filters.` : priceRange !== "any" ? `No vendors in the ${PRICE_RANGES.find(r=>r.value===priceRange)?.label} range.` : "No vendors match the selected filters."}</p><button className="vn-empty-btn" onClick={clearAll}>Clear all filters</button></>
               )}
               <div className="vn-empty-suggest">
                 <p className="vn-empty-suggest-label">Try searching for:</p>
-                <div className="vn-empty-suggest-tags">
-                  {POPULAR.slice(0, 4).map(p => (
-                    <button key={p} className="vn-popular-tag" onClick={() => { clearAll(); setSearch(p); }}>{p}</button>
-                  ))}
-                </div>
+                <div className="vn-empty-suggest-tags">{POPULAR.slice(0, 4).map(p => (<button key={p} className="vn-popular-tag" onClick={() => { clearAll(); setSearch(p); }}>{p}</button>))}</div>
               </div>
             </div>
           ) : (
             <>
               <div className={`vn-grid ${layout}`} role="list" aria-label={`${filtered.length} vendors`}>
                 {filtered.map((v, i) => (
-                  <div
-                    key={v._id}
-                    className="vn-card-wrap"
-                    style={{ animationDelay: `${Math.min(i * 0.04, 0.5)}s` }}
-                    role="listitem"
-                  >
+                  <div key={v._id} className="vn-card-wrap" style={{ animationDelay: `${Math.min(i * 0.04, 0.5)}s` }} role="listitem">
                     <ServiceCard vendor={v} />
                   </div>
                 ))}
               </div>
-              {filtered.length >= 12 && (
-                <p className="vn-load-hint" aria-live="polite">Showing all {filtered.length} results</p>
-              )}
+              {filtered.length >= 12 && (<p className="vn-load-hint" aria-live="polite">Showing all {filtered.length} results</p>)}
             </>
           )}
         </main>
@@ -928,14 +761,13 @@ export default function Vendors() {
                 <h2 id="hiw-heading" className="vn-why-title">How Evencers Works</h2>
                 <p className="vn-why-sub">From discovery to your event day — everything in four easy steps.</p>
               </div>
-
               <div className="vn-hiw-label">For Clients</div>
               <div className="vn-hiw-steps">
                 {[
-                  { n: "01", icon: "🔍", title: "Browse & Filter",    desc: "Search 20+ verified vendors by category, city, budget, and availability date. Every profile shows real photos, packages, and genuine client reviews." },
-                  { n: "02", icon: "💬", title: "Get Instant Quotes", desc: "Send enquiries to multiple vendors at once. Compare detailed quotes, packages, and inclusions — all in one dashboard, no phone calls needed." },
-                  { n: "03", icon: "🔒", title: "Secure Your Booking", desc: "Confirm your vendor with a secure deposit. Your payment is held in escrow and released to the vendor only after your event is successfully completed." },
-                  { n: "04", icon: "🎉", title: "Enjoy Your Event",    desc: "Your vendor arrives prepared. After the event, leave a verified review to help other clients — and get cashback on your next booking." },
+                  { n: "01", icon: "🔍", title: "Browse & Filter",     desc: "Search 20+ verified vendors by category, city, budget, and availability date." },
+                  { n: "02", icon: "💬", title: "Get Instant Quotes",  desc: "Send enquiries to multiple vendors at once. Compare packages — all in one dashboard." },
+                  { n: "03", icon: "🔒", title: "Secure Your Booking", desc: "Confirm your vendor with a secure deposit held in escrow until event completion." },
+                  { n: "04", icon: "🎉", title: "Enjoy Your Event",    desc: "Your vendor arrives prepared. Leave a verified review and get cashback on your next booking." },
                 ].map((s, i) => (
                   <div key={s.n} className="vn-hiw-card" style={{ animationDelay: `${i * 0.1}s` }}>
                     <div className="vn-hiw-num">{s.n}</div>
@@ -946,18 +778,14 @@ export default function Vendors() {
                   </div>
                 ))}
               </div>
-
-              <div className="vn-hiw-divider">
-                <span className="vn-hiw-divider-label">Are you a vendor?</span>
-              </div>
-
+              <div className="vn-hiw-divider"><span className="vn-hiw-divider-label">Are you a vendor?</span></div>
               <div className="vn-hiw-label">For Vendors</div>
               <div className="vn-hiw-steps vn-hiw-steps--vendor">
                 {[
-                  { n: "01", icon: "📋", title: "Create Your Profile",  desc: "List your services, showcase your portfolio, set your packages and pricing. Our team verifies your credentials within 24 hours." },
-                  { n: "02", icon: "📥", title: "Receive Enquiries",     desc: "Get notified instantly when clients enquire. Respond with custom quotes, availability, and personalised offers directly from your dashboard." },
-                  { n: "03", icon: "📅", title: "Manage Your Calendar",  desc: "Accept bookings, block unavailable dates, and track upcoming events all in one place. No double bookings, ever." },
-                  { n: "04", icon: "💸", title: "Get Paid Securely",     desc: "Receive your payment within 48 hours of event completion. No chasing invoices — Evencers handles all payment processing for you." },
+                  { n: "01", icon: "📋", title: "Create Your Profile",  desc: "List your services, showcase your portfolio, set your packages and pricing." },
+                  { n: "02", icon: "📥", title: "Receive Enquiries",     desc: "Get notified instantly when clients enquire. Respond with custom quotes." },
+                  { n: "03", icon: "📅", title: "Manage Your Calendar",  desc: "Accept bookings, block unavailable dates, and track upcoming events." },
+                  { n: "04", icon: "💸", title: "Get Paid Securely",     desc: "Receive your payment within 48 hours of event completion." },
                 ].map((s, i) => (
                   <div key={s.n} className="vn-hiw-card vn-hiw-card--vendor" style={{ animationDelay: `${i * 0.1}s` }}>
                     <div className="vn-hiw-num vn-hiw-num--vendor">{s.n}</div>
@@ -968,19 +796,16 @@ export default function Vendors() {
                   </div>
                 ))}
               </div>
-
               <div className="vn-hiw-faq">
-                <div className="vn-hiw-faq-header">
-                  <h3 className="vn-hiw-faq-title">Frequently Asked Questions</h3>
-                </div>
+                <div className="vn-hiw-faq-header"><h3 className="vn-hiw-faq-title">Frequently Asked Questions</h3></div>
                 <div className="vn-hiw-faq-grid">
                   {[
-                    { q: "Is Evencers free to use for clients?",          a: "Yes — browsing, comparing, and messaging vendors is completely free for clients. You only pay when you confirm a booking." },
-                    { q: "How are vendors verified?",                      a: "Every vendor submits government ID, business registration, and portfolio proof. Our team manually reviews each application before approval." },
-                    { q: "What if my event gets cancelled?",               a: "Our cancellation policy protects both parties. Clients can cancel up to 48 hours before the event for a partial refund based on the vendor's policy." },
-                    { q: "How does the escrow payment work?",              a: "Your deposit is held securely by Evencers. It is transferred to the vendor only after you confirm the event was completed satisfactorily." },
-                    { q: "Can I book multiple vendors for one event?",     a: "Absolutely. Many clients book a photographer, caterer, decorator, and DJ all through Evencers — manage all bookings from a single dashboard." },
-                    { q: "What cities does Evencers currently cover?",     a: "We currently cover cities across India including Delhi, Chandigarh, Bombay and more — with many more launching in Q3 2026." },
+                    { q: "Is Evencers free to use for clients?",      a: "Yes — browsing, comparing, and messaging vendors is completely free for clients." },
+                    { q: "How are vendors verified?",                  a: "Every vendor submits government ID, business registration, and portfolio proof." },
+                    { q: "What if my event gets cancelled?",           a: "Our cancellation policy protects both parties. Clients can cancel up to 48 hours before." },
+                    { q: "How does the escrow payment work?",          a: "Your deposit is held securely by Evencers and transferred only after event completion." },
+                    { q: "Can I book multiple vendors for one event?", a: "Absolutely. Manage all bookings from a single dashboard." },
+                    { q: "What cities does Evencers currently cover?", a: "We currently cover Delhi, Chandigarh, Bombay and more — with many more launching Q3 2026." },
                   ].map((f) => <FaqItem key={f.q} q={f.q} a={f.a} />)}
                 </div>
               </div>
@@ -998,22 +823,14 @@ export default function Vendors() {
               <span>Are you an event professional?</span>
             </div>
             <h2 id="cta-heading" className="vn-footer-title">Grow your business with Evencers</h2>
-            <p className="vn-footer-sub">
-              Join 20+ verified vendors already earning through Evencers. Get discovered by thousands of clients planning weddings, corporate events, and private parties across India.
-            </p>
+            <p className="vn-footer-sub">Join 20+ verified vendors already earning through Evencers. Get discovered by thousands of clients planning weddings, corporate events, and private parties across India.</p>
             <div className="vn-footer-cta-btns">
-              <a href="/register" className="vn-footer-btn" aria-label="Register as a vendor on Evencers">
-                Become a Vendor →
-              </a>
-              <button onClick={scrollToHowItWorks} className="vn-footer-btn-ghost" aria-label="Learn how Evencers works for vendors">
-                How it works ↓
-              </button>
+              <a href="/register" className="vn-footer-btn" aria-label="Register as a vendor on Evencers">Become a Vendor →</a>
+              <button onClick={scrollToHowItWorks} className="vn-footer-btn-ghost" aria-label="Learn how Evencers works for vendors">How it works ↓</button>
             </div>
             <div className="vn-footer-logos" aria-label="Featured in">
               <span className="vn-footer-logos-label">Featured in</span>
-              {["YourStory", "Inc42", "Economic Times", "Hindustan Times"].map(p => (
-                <span key={p} className="vn-footer-press">{p}</span>
-              ))}
+              {["YourStory", "Inc42", "Economic Times", "Hindustan Times"].map(p => (<span key={p} className="vn-footer-press">{p}</span>))}
             </div>
           </section>
         )}
@@ -1026,1095 +843,386 @@ const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,500;0,600;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --ink: #0e0c0a;
-    --ink-soft: #1c1a17;
-    --cream: #f5f0e8;
-    --cream-dark: #ede7d9;
-    --gold: #c9a84c;
-    --gold-light: #e8d5a3;
-    --gold-dim: rgba(201,168,76,0.12);
-    --gold-glow: rgba(201,168,76,0.22);
-    --muted: #7a7265;
-    --muted-light: #a09890;
-    --border: rgba(201,168,76,0.16);
-    --border-soft: rgba(14,12,10,0.08);
-    --surface: #faf7f2;
-    --white: #ffffff;
-    --red-soft: rgba(184,92,92,0.16);
-    --red: #b85c5c;
+    --ink: #0e0c0a; --ink-soft: #1c1a17; --cream: #f5f0e8; --cream-dark: #ede7d9;
+    --gold: #c9a84c; --gold-light: #e8d5a3; --gold-dim: rgba(201,168,76,0.12);
+    --gold-glow: rgba(201,168,76,0.22); --muted: #7a7265; --muted-light: #a09890;
+    --border: rgba(201,168,76,0.16); --border-soft: rgba(14,12,10,0.08);
+    --surface: #faf7f2; --white: #ffffff;
+    --red-soft: rgba(184,92,92,0.16); --red: #b85c5c;
+  }
+  .vn-root { font-family: 'DM Sans', sans-serif; background: var(--cream); min-height: 100vh; color: var(--ink); }
+
+  /* ═══ CITY MODAL ═══════════════════════════════════════════════ */
+  .cm-overlay {
+    position: fixed; inset: 0; z-index: 2000;
+    background: rgba(14,12,10,0.88); backdrop-filter: blur(14px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    opacity: 0; transition: opacity 0.4s ease;
+  }
+  .cm-overlay.cm-visible { opacity: 1; }
+  .cm-modal {
+    position: relative; overflow: hidden;
+    background: var(--ink-soft); border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 28px; width: min(560px, 97vw); max-height: 90vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 48px 120px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+    animation: cmUp 0.45s cubic-bezier(0.34,1.15,0.64,1) both 0.05s;
+  }
+  .cm-orb {
+    position: absolute; border-radius: 50%;
+    filter: blur(100px); opacity: 0.13; pointer-events: none;
+  }
+  .cm-orb1 { width: 400px; height: 400px; background: var(--gold); top: -120px; left: -80px; }
+  .cm-orb2 { width: 260px; height: 260px; background: #7b5ea7; bottom: -60px; right: -40px; }
+  .cm-header {
+    position: relative; z-index: 1;
+    padding: 40px 36px 28px; text-align: center; border-bottom: 1px solid rgba(201,168,76,0.12);
+  }
+  .cm-logo-wrap { display: flex; justify-content: center; margin-bottom: 20px; }
+  .cm-logo-wrap img, .cm-logo-wrap svg { width: 36px; height: 36px; }
+  .cm-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 10px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--gold); margin-bottom: 14px; }
+  .cm-eyebrow-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--gold); opacity: 0.6; }
+  .cm-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 300; color: var(--white); margin-bottom: 10px; line-height: 1.15; }
+  .cm-title em { font-style: italic; color: var(--gold-light); }
+  .cm-sub { font-size: 13px; color: rgba(245,240,232,0.42); line-height: 1.65; max-width: 380px; margin: 0 auto; }
+  .cm-search-wrap {
+    position: relative; z-index: 1;
+    display: flex; align-items: center;
+    margin: 20px 28px 12px; background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(201,168,76,0.2); border-radius: 12px;
+    padding: 10px 14px 10px 18px; transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .cm-search-wrap:focus-within { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.12); }
+  .cm-search-icon { font-size: 18px; color: rgba(245,240,232,0.35); margin-right: 10px; flex-shrink: 0; }
+  .cm-search {
+    flex: 1; background: none; border: none; outline: none;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--white);
+  }
+  .cm-search::placeholder { color: rgba(245,240,232,0.28); }
+  .cm-search-clear { background: none; border: none; cursor: pointer; font-size: 11px; color: rgba(245,240,232,0.4); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background 0.2s, color 0.2s; }
+  .cm-search-clear:hover { background: rgba(255,255,255,0.1); color: var(--white); }
+  .cm-cities {
+    position: relative; z-index: 1;
+    flex: 1; overflow-y: auto; padding: 4px 28px 12px;
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;
+    scrollbar-width: thin; scrollbar-color: rgba(201,168,76,0.2) transparent;
+  }
+  .cm-cities::-webkit-scrollbar { width: 4px; }
+  .cm-cities::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.2); border-radius: 4px; }
+  .cm-city-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px; background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(201,168,76,0.1); border-radius: 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; color: rgba(245,240,232,0.72);
+    cursor: pointer; text-align: left; transition: all 0.2s; white-space: nowrap; overflow: hidden;
+  }
+  .cm-city-btn:hover { background: rgba(201,168,76,0.1); border-color: rgba(201,168,76,0.35); color: var(--gold-light); }
+  .cm-city-pin { font-size: 10px; color: var(--gold); opacity: 0.6; flex-shrink: 0; }
+  .cm-city-arrow { margin-left: auto; font-size: 11px; color: var(--gold); opacity: 0; transition: opacity 0.18s; flex-shrink: 0; }
+  .cm-city-btn:hover .cm-city-arrow { opacity: 1; }
+  .cm-no-results { grid-column: 1/-1; text-align: center; padding: 40px 20px; color: rgba(245,240,232,0.35); font-size: 13px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  .cm-no-icon { font-size: 2.2rem; opacity: 0.4; }
+  .cm-note {
+    position: relative; z-index: 1;
+    padding: 14px 28px 20px; font-size: 11px; color: rgba(245,240,232,0.28);
+    text-align: center; letter-spacing: 0.04em; border-top: 1px solid rgba(201,168,76,0.1);
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+  }
+  .cm-note-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); opacity: 0.4; flex-shrink: 0; }
+  .cm-coming-btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 16px; }
+  @keyframes cmUp { from { opacity:0; transform: translateY(32px) scale(0.95); } to { opacity:1; transform: translateY(0) scale(1); } }
+  @media (max-width: 480px) {
+    .cm-header { padding: 28px 20px 20px; }
+    .cm-search-wrap { margin: 16px 16px 10px; }
+    .cm-cities { padding: 4px 16px 12px; grid-template-columns: 1fr; }
+    .cm-note { padding: 12px 16px 18px; }
   }
 
-  /* ─── ROOT ─────────────────────────────────── */
-  .vn-root {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--cream);
-    min-height: 100vh;
-    color: var(--ink);
+  /* ═══ CITY BAR ═════════════════════════════════════════════════ */
+  .vn-city-bar {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(201,168,76,0.07); border-bottom: 1px solid rgba(201,168,76,0.18);
+    padding: 10px 32px; font-size: 13px; color: var(--ink);
   }
+  .vn-city-bar-icon { font-size: 14px; flex-shrink: 0; }
+  .vn-city-bar-change {
+    margin-left: auto; font-size: 12px; color: var(--gold); background: none;
+    border: 1px solid rgba(201,168,76,0.3); border-radius: 20px; padding: 4px 14px;
+    cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 500;
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .vn-city-bar-change:hover { background: var(--gold-dim); border-color: var(--gold); }
+  @media (max-width: 640px) { .vn-city-bar { padding: 10px 16px; } }
 
-  /* ─── HERO ──────────────────────────────────── */
-  .vn-hero {
-    position: relative;
-    background: var(--ink);
-    overflow: hidden;
-    padding: 108px 32px 72px;
-    text-align: center;
-    opacity: 0;
-    transform: translateY(10px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
-  }
+  /* ─── HERO ─── */
+  .vn-hero { position: relative; background: var(--ink); overflow: hidden; padding: 108px 32px 72px; text-align: center; opacity: 0; transform: translateY(10px); transition: opacity 0.6s ease, transform 0.6s ease; }
   .vn-hero--visible { opacity: 1; transform: translateY(0); }
-
-  .vn-hero-grain {
-    position: absolute; inset: 0; z-index: 1; pointer-events: none;
-    opacity: 0.035;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-    background-size: 160px;
-  }
-  .vn-hero-orb {
-    position: absolute; border-radius: 50%; filter: blur(120px);
-    opacity: 0.11; pointer-events: none;
-  }
+  .vn-hero-grain { position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0.035; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E"); background-size: 160px; }
+  .vn-hero-orb { position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.11; pointer-events: none; }
   .vn-orb1 { width: 520px; height: 520px; background: var(--gold); top: -180px; left: -80px; }
   .vn-orb2 { width: 360px; height: 360px; background: #7b5ea7; bottom: -120px; right: -60px; }
   .vn-orb3 { width: 220px; height: 220px; background: #4a8ea7; top: 40%; left: 55%; opacity: 0.07; }
-
-  /* ── FLOATING CARDS ─────────────────────────── */
-  .vn-float-card {
-    position: absolute;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: rgba(255,255,255,0.06);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(201,168,76,0.2);
-    border-radius: 14px;
-    padding: 12px 16px;
-    z-index: 3;
-    pointer-events: none;
-    min-width: 160px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.07);
-  }
+  .vn-float-card { position: absolute; display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.06); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(201,168,76,0.2); border-radius: 14px; padding: 12px 16px; z-index: 3; pointer-events: none; min-width: 160px; box-shadow: 0 8px 32px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.07); }
   .vn-fc-left  { left: clamp(16px, 5%, 80px); }
   .vn-fc-right { right: clamp(16px, 5%, 80px); }
   .vn-fc-1 { top: 28%; animation: floatCard1 5s ease-in-out infinite; }
   .vn-fc-2 { top: 22%; animation: floatCard2 6s ease-in-out infinite 0.8s; }
   .vn-fc-3 { top: 58%; animation: floatCard3 5.5s ease-in-out infinite 1.6s; }
-
   .vn-fc-icon { font-size: 1.4rem; line-height: 1; flex-shrink: 0; }
   .vn-fc-text { display: flex; flex-direction: column; gap: 2px; }
-  .vn-fc-val {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 0.95rem; font-weight: 600;
-    color: var(--gold-light); line-height: 1.1;
-  }
-  .vn-fc-label {
-    font-size: 10px; color: rgba(245,240,232,0.4);
-    letter-spacing: 0.05em; text-transform: uppercase;
-  }
-
-  @keyframes floatCard1 {
-    0%, 100% { transform: translateY(0px) rotate(-1deg); }
-    50%       { transform: translateY(-10px) rotate(-1deg); }
-  }
-  @keyframes floatCard2 {
-    0%, 100% { transform: translateY(0px) rotate(1.5deg); }
-    50%       { transform: translateY(-8px) rotate(1.5deg); }
-  }
-  @keyframes floatCard3 {
-    0%, 100% { transform: translateY(0px) rotate(-0.5deg); }
-    50%       { transform: translateY(-12px) rotate(-0.5deg); }
-  }
-
-  /* ────────────────────────────────────────────────────────────
-     4TH FLOATING CARD — PAYMENT (desktop: absolute, clients only)
-  ─────────────────────────────────────────────────────────────── */
-  .vn-fc-4 {
-    top: 62%;
-    animation: floatCard4 5.8s ease-in-out infinite 2.4s;
-    pointer-events: all;
-    cursor: pointer;
-    border-color: rgba(201,168,76,0.32);
-    background: rgba(255,255,255,0.07);
-    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
-    text-decoration: none;
-    font-family: 'DM Sans', sans-serif;
-    -webkit-appearance: none;
-    appearance: none;
-  }
-  .vn-fc-4:hover {
-    border-color: var(--gold);
-    box-shadow: 0 12px 40px rgba(201,168,76,0.25), inset 0 1px 0 rgba(255,255,255,0.12);
-    transform: translateY(-4px) rotate(-1deg) !important;
-  }
-  .vn-fc-4 .vn-fc-val {
-    color: var(--gold);
-  }
-  .vn-fc-4 .vn-fc-label {
-    color: rgba(201,168,76,0.55);
-    letter-spacing: 0.08em;
-  }
-
-  .vn-fc4-tap {
-    position: absolute;
-    top: -8px; right: -4px;
-    font-size: 8.5px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--gold);
-    background: var(--ink);
-    border: 1px solid rgba(201,168,76,0.3);
-    border-radius: 20px;
-    padding: 2px 7px;
-    white-space: nowrap;
-    font-weight: 500;
-    opacity: 0;
-    transform: translateY(4px);
-    transition: opacity 0.2s, transform 0.2s;
-  }
-  .vn-fc-4:hover .vn-fc4-tap {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  .vn-fc-4::after {
-    content: '';
-    position: absolute; inset: -3px;
-    border-radius: 17px;
-    border: 1px solid rgba(201,168,76,0.18);
-    animation: ringPulse 3s ease-in-out infinite 3s;
-    pointer-events: none;
-  }
-
-  @keyframes floatCard4 {
-    0%, 100% { transform: translateY(0px) rotate(-1.2deg); }
-    50%       { transform: translateY(-9px) rotate(-1.2deg); }
-  }
-  @keyframes ringPulse {
-    0%,100% { opacity: 0; transform: scale(1); }
-    30%     { opacity: 1; }
-    60%     { opacity: 0; transform: scale(1.08); }
-  }
-
-  /* ── Mobile-only pill version of the payment card ── */
-  .vn-fc4-mobile-pill {
-    display: none;
-    width: 100%;
-    max-width: 400px;
-    margin: 22px auto 0;
-    align-items: center;
-    gap: 12px;
-    background: rgba(201,168,76,0.08);
-    border: 1px solid rgba(201,168,76,0.28);
-    border-radius: 14px;
-    padding: 14px 16px;
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    text-align: left;
-    transition: background 0.22s, border-color 0.22s, transform 0.18s;
-    -webkit-appearance: none;
-    appearance: none;
-    position: relative;
-    overflow: hidden;
-  }
-  .vn-fc4-mobile-pill::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: linear-gradient(135deg, rgba(201,168,76,0.06) 0%, transparent 60%);
-    pointer-events: none;
-  }
+  .vn-fc-val { font-family: 'Cormorant Garamond', serif; font-size: 0.95rem; font-weight: 600; color: var(--gold-light); line-height: 1.1; }
+  .vn-fc-label { font-size: 10px; color: rgba(245,240,232,0.4); letter-spacing: 0.05em; text-transform: uppercase; }
+  @keyframes floatCard1 { 0%, 100% { transform: translateY(0px) rotate(-1deg); } 50% { transform: translateY(-10px) rotate(-1deg); } }
+  @keyframes floatCard2 { 0%, 100% { transform: translateY(0px) rotate(1.5deg); } 50% { transform: translateY(-8px) rotate(1.5deg); } }
+  @keyframes floatCard3 { 0%, 100% { transform: translateY(0px) rotate(-0.5deg); } 50% { transform: translateY(-12px) rotate(-0.5deg); } }
+  .vn-fc-4 { top: 62%; animation: floatCard4 5.8s ease-in-out infinite 2.4s; pointer-events: all; cursor: pointer; border-color: rgba(201,168,76,0.32); background: rgba(255,255,255,0.07); transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease; text-decoration: none; font-family: 'DM Sans', sans-serif; -webkit-appearance: none; appearance: none; }
+  .vn-fc-4:hover { border-color: var(--gold); box-shadow: 0 12px 40px rgba(201,168,76,0.25), inset 0 1px 0 rgba(255,255,255,0.12); transform: translateY(-4px) rotate(-1deg) !important; }
+  .vn-fc-4 .vn-fc-val { color: var(--gold); }
+  .vn-fc-4 .vn-fc-label { color: rgba(201,168,76,0.55); }
+  .vn-fc4-tap { position: absolute; top: -8px; right: -4px; font-size: 8.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--gold); background: var(--ink); border: 1px solid rgba(201,168,76,0.3); border-radius: 20px; padding: 2px 7px; white-space: nowrap; font-weight: 500; opacity: 0; transform: translateY(4px); transition: opacity 0.2s, transform 0.2s; }
+  .vn-fc-4:hover .vn-fc4-tap { opacity: 1; transform: translateY(0); }
+  @keyframes floatCard4 { 0%, 100% { transform: translateY(0px) rotate(-1.2deg); } 50% { transform: translateY(-9px) rotate(-1.2deg); } }
+  .vn-fc4-mobile-pill { display: none; width: 100%; max-width: 400px; margin: 22px auto 0; align-items: center; gap: 12px; background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.28); border-radius: 14px; padding: 14px 16px; cursor: pointer; font-family: 'DM Sans', sans-serif; text-align: left; transition: background 0.22s, border-color 0.22s, transform 0.18s; -webkit-appearance: none; appearance: none; position: relative; overflow: hidden; }
   .vn-fc4-mobile-pill:active { transform: scale(0.98); }
   .vn-fc4-pill-icon { font-size: 1.5rem; flex-shrink: 0; line-height: 1; }
   .vn-fc4-pill-text { display: flex; flex-direction: column; gap: 3px; flex: 1; }
-  .vn-fc4-pill-val {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1rem; font-weight: 600;
-    color: var(--gold-light); line-height: 1.1;
-  }
-  .vn-fc4-pill-sub {
-    font-size: 11px; color: rgba(245,240,232,0.42);
-    letter-spacing: 0.03em;
-  }
-  .vn-fc4-pill-arrow {
-    font-size: 14px; color: var(--gold);
-    opacity: 0.7; flex-shrink: 0;
-    transition: transform 0.2s, opacity 0.2s;
-  }
-  .vn-fc4-mobile-pill:hover .vn-fc4-pill-arrow {
-    transform: translate(2px, -2px);
-    opacity: 1;
-  }
-
-  .vn-hero-inner {
-    position: relative; z-index: 2;
-    max-width: 640px; margin: 0 auto;
-  }
-
-  .vn-eyebrow {
-    display: inline-flex; align-items: center; gap: 10px;
-    font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase;
-    color: var(--gold); margin-bottom: 18px; font-weight: 400;
-  }
-  .vn-eyebrow-dot {
-    width: 4px; height: 4px; border-radius: 50%;
-    background: var(--gold); opacity: 0.6;
-  }
+  .vn-fc4-pill-val { font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 600; color: var(--gold-light); line-height: 1.1; }
+  .vn-fc4-pill-sub { font-size: 11px; color: rgba(245,240,232,0.42); letter-spacing: 0.03em; }
+  .vn-fc4-pill-arrow { font-size: 14px; color: var(--gold); opacity: 0.7; flex-shrink: 0; }
+  .vn-hero-inner { position: relative; z-index: 2; max-width: 640px; margin: 0 auto; }
+  .vn-eyebrow { display: inline-flex; align-items: center; gap: 10px; font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--gold); margin-bottom: 18px; font-weight: 400; }
+  .vn-eyebrow-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--gold); opacity: 0.6; }
   .vn-eyebrow-logo img, .vn-eyebrow-logo svg { width: 26px; height: 26px; }
-
-  .vn-hero-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(2.4rem, 5.5vw, 3.8rem);
-    font-weight: 300;
-    color: var(--white);
-    margin-bottom: 14px;
-    letter-spacing: 0.015em;
-    line-height: 1.1;
-    animation: fadeUp 0.65s 0.15s cubic-bezier(0.4,0,0.2,1) both;
-  }
-  .vn-hero-title em {
-    font-style: italic;
-    color: var(--gold-light);
-    font-weight: 300;
-  }
-
-  .vn-hero-sub {
-    font-size: 13.5px; color: rgba(245,240,232,0.48);
-    margin-bottom: 32px; font-weight: 300; line-height: 1.6;
-    animation: fadeUp 0.65s 0.25s cubic-bezier(0.4,0,0.2,1) both;
-  }
-
-  /* Search bar */
-  .vn-search-bar {
-    display: flex; align-items: center; gap: 10px;
-    background: var(--white); border-radius: 12px;
-    padding: 8px 8px 8px 18px;
-    max-width: 540px; margin: 0 auto 16px;
-    box-shadow: 0 16px 56px rgba(0,0,0,0.3), 0 0 0 1px rgba(201,168,76,0.08);
-    transition: box-shadow 0.25s, transform 0.2s;
-    animation: fadeUp 0.65s 0.3s cubic-bezier(0.4,0,0.2,1) both;
-  }
-  .vn-search-bar.focused {
-    box-shadow: 0 16px 56px rgba(0,0,0,0.32), 0 0 0 2px var(--gold);
-    transform: translateY(-1px);
-  }
+  .vn-hero-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.4rem, 5.5vw, 3.8rem); font-weight: 300; color: var(--white); margin-bottom: 14px; letter-spacing: 0.015em; line-height: 1.1; animation: fadeUp 0.65s 0.15s cubic-bezier(0.4,0,0.2,1) both; }
+  .vn-hero-title em { font-style: italic; color: var(--gold-light); font-weight: 300; }
+  .vn-hero-sub { font-size: 13.5px; color: rgba(245,240,232,0.48); margin-bottom: 32px; font-weight: 300; line-height: 1.6; animation: fadeUp 0.65s 0.25s cubic-bezier(0.4,0,0.2,1) both; }
+  .vn-search-bar { display: flex; align-items: center; gap: 10px; background: var(--white); border-radius: 12px; padding: 8px 8px 8px 18px; max-width: 540px; margin: 0 auto 16px; box-shadow: 0 16px 56px rgba(0,0,0,0.3), 0 0 0 1px rgba(201,168,76,0.08); transition: box-shadow 0.25s, transform 0.2s; animation: fadeUp 0.65s 0.3s cubic-bezier(0.4,0,0.2,1) both; }
+  .vn-search-bar.focused { box-shadow: 0 16px 56px rgba(0,0,0,0.32), 0 0 0 2px var(--gold); transform: translateY(-1px); }
   .vn-search-icon { font-size: 20px; color: var(--muted); flex-shrink: 0; line-height: 1; }
-  .vn-search-input {
-    flex: 1; border: none; outline: none; background: transparent;
-    font-family: 'DM Sans', sans-serif; font-size: 14px;
-    color: var(--ink); padding: 5px 0;
-  }
+  .vn-search-input { flex: 1; border: none; outline: none; background: transparent; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink); padding: 5px 0; }
   .vn-search-input::placeholder { color: #bbb4a8; }
-  .vn-search-clear {
-    background: none; border: none; cursor: pointer;
-    font-size: 11px; color: var(--muted); width: 30px; height: 30px;
-    border-radius: 7px; display: flex; align-items: center;
-    justify-content: center; flex-shrink: 0;
-    transition: background 0.2s, color 0.2s;
-  }
+  .vn-search-clear { background: none; border: none; cursor: pointer; font-size: 11px; color: var(--muted); width: 30px; height: 30px; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s, color 0.2s; }
   .vn-search-clear:hover { background: var(--cream); color: var(--ink); }
-
-  /* Popular searches */
-  .vn-popular {
-    display: flex; align-items: center; flex-wrap: wrap;
-    gap: 7px; justify-content: center; margin-bottom: 32px;
-    animation: fadeUp 0.65s 0.38s cubic-bezier(0.4,0,0.2,1) both;
-  }
-  .vn-popular-label {
-    font-size: 11px; color: rgba(245,240,232,0.35);
-    letter-spacing: 0.05em; text-transform: uppercase; font-weight: 400;
-  }
-  .vn-popular-tag {
-    font-size: 11.5px; color: rgba(245,240,232,0.55);
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 20px; padding: 4px 12px;
-    cursor: pointer; font-family: 'DM Sans', sans-serif;
-    transition: all 0.2s;
-  }
-  .vn-popular-tag:hover {
-    background: rgba(201,168,76,0.15);
-    border-color: rgba(201,168,76,0.3);
-    color: var(--gold-light);
-  }
-
-  /* Trust stats */
-  .vn-trust-strip {
-    display: flex; justify-content: center; gap: 0;
-    border: 1px solid rgba(201,168,76,0.15);
-    border-radius: 14px;
-    overflow: hidden;
-    background: rgba(255,255,255,0.04);
-    max-width: 480px; margin: 0 auto;
-    animation: fadeUp 0.65s 0.45s cubic-bezier(0.4,0,0.2,1) both;
-  }
-  .vn-trust-item {
-    flex: 1; padding: 14px 8px;
-    display: flex; flex-direction: column; align-items: center; gap: 3px;
-    border-right: 1px solid rgba(201,168,76,0.1);
-  }
+  .vn-popular { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; justify-content: center; margin-bottom: 32px; animation: fadeUp 0.65s 0.38s cubic-bezier(0.4,0,0.2,1) both; }
+  .vn-popular-label { font-size: 11px; color: rgba(245,240,232,0.35); letter-spacing: 0.05em; text-transform: uppercase; font-weight: 400; }
+  .vn-popular-tag { font-size: 11.5px; color: rgba(245,240,232,0.55); background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 4px 12px; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+  .vn-popular-tag:hover { background: rgba(201,168,76,0.15); border-color: rgba(201,168,76,0.3); color: var(--gold-light); }
+  .vn-trust-strip { display: flex; justify-content: center; gap: 0; border: 1px solid rgba(201,168,76,0.15); border-radius: 14px; overflow: hidden; background: rgba(255,255,255,0.04); max-width: 480px; margin: 0 auto; animation: fadeUp 0.65s 0.45s cubic-bezier(0.4,0,0.2,1) both; }
+  .vn-trust-item { flex: 1; padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 3px; border-right: 1px solid rgba(201,168,76,0.1); }
   .vn-trust-item:last-child { border-right: none; }
-  .vn-trust-val {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.3rem; font-weight: 600; color: var(--gold-light);
-    line-height: 1;
-  }
-  .vn-trust-label {
-    font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase;
-    color: rgba(245,240,232,0.38); font-weight: 400;
-  }
-
-  /* ─── CATEGORY STRIP ─────────────────────────── */
-  .vn-category-strip {
-    background: var(--white);
-    border-bottom: 1px solid var(--border);
-    position: sticky; top: 66px; z-index: 9;
-    box-shadow: 0 2px 12px rgba(14,12,10,0.05);
-  }
-  .vn-category-inner {
-    max-width: 1160px; margin: 0 auto; padding: 0 32px;
-    display: flex; gap: 2px;
-    overflow-x: auto; scrollbar-width: none;
-  }
+  .vn-trust-val { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 600; color: var(--gold-light); line-height: 1; }
+  .vn-trust-label { font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(245,240,232,0.38); font-weight: 400; }
+  /* CATEGORY STRIP */
+  .vn-category-strip { background: var(--white); border-bottom: 1px solid var(--border); position: sticky; top: 66px; z-index: 9; box-shadow: 0 2px 12px rgba(14,12,10,0.05); }
+  .vn-category-inner { max-width: 1160px; margin: 0 auto; padding: 0 32px; display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
   .vn-category-inner::-webkit-scrollbar { display: none; }
-  .vn-cat-pill {
-    display: flex; align-items: center; gap: 6px;
-    padding: 14px 15px;
-    background: none; border: none; border-bottom: 2px solid transparent;
-    font-family: 'DM Sans', sans-serif; font-size: 12.5px;
-    letter-spacing: 0.02em; color: var(--muted);
-    cursor: pointer; transition: color 0.2s, border-color 0.2s;
-    white-space: nowrap; margin-bottom: -1px; flex-shrink: 0;
-  }
+  .vn-cat-pill { display: flex; align-items: center; gap: 6px; padding: 14px 15px; background: none; border: none; border-bottom: 2px solid transparent; font-family: 'DM Sans', sans-serif; font-size: 12.5px; letter-spacing: 0.02em; color: var(--muted); cursor: pointer; transition: color 0.2s, border-color 0.2s; white-space: nowrap; margin-bottom: -1px; flex-shrink: 0; }
   .vn-cat-emoji { font-size: 14px; line-height: 1; }
-  .vn-cat-count {
-    font-size: 10px; background: var(--cream-dark);
-    color: var(--muted); border-radius: 20px;
-    padding: 1px 6px; font-weight: 400; line-height: 1.4;
-  }
-  .vn-cat-soon-badge {
-    font-size: 9px; background: rgba(201,168,76,0.12);
-    color: var(--gold); border: 1px solid rgba(201,168,76,0.25);
-    border-radius: 20px; padding: 1px 6px;
-    font-weight: 500; line-height: 1.4;
-    letter-spacing: 0.04em;
-  }
+  .vn-cat-count { font-size: 10px; background: var(--cream-dark); color: var(--muted); border-radius: 20px; padding: 1px 6px; font-weight: 400; line-height: 1.4; }
+  .vn-cat-soon-badge { font-size: 9px; background: rgba(201,168,76,0.12); color: var(--gold); border: 1px solid rgba(201,168,76,0.25); border-radius: 20px; padding: 1px 6px; font-weight: 500; line-height: 1.4; letter-spacing: 0.04em; }
   .vn-cat-pill.vn-cat-soon { opacity: 0.7; }
   .vn-cat-pill:hover { color: var(--ink); opacity: 1; }
-  .vn-cat-pill:hover .vn-cat-count { background: var(--gold-dim); color: var(--gold); }
-  .vn-cat-pill.active {
-    color: var(--ink); font-weight: 500;
-    border-bottom-color: var(--gold);
-    opacity: 1;
-  }
-  .vn-cat-pill.active .vn-cat-count { background: var(--gold-dim); color: var(--gold); }
-  .vn-cat-pill.active .vn-cat-soon-badge {
-    background: var(--gold-dim); color: var(--gold);
-  }
-
-  /* ─── TOOLBAR ────────────────────────────────── */
-  .vn-toolbar {
-    max-width: 1160px; margin: 0 auto;
-    padding: 14px 32px;
-    display: flex; justify-content: space-between; align-items: center;
-    flex-wrap: wrap; gap: 10px;
-    border-bottom: 1px solid var(--border-soft);
-    background: var(--surface);
-  }
+  .vn-cat-pill.active { color: var(--ink); font-weight: 500; border-bottom-color: var(--gold); opacity: 1; }
+  /* TOOLBAR */
+  .vn-toolbar { max-width: 1160px; margin: 0 auto; padding: 14px 32px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid var(--border-soft); background: var(--surface); }
   .vn-toolbar-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .vn-result-text { font-size: 13px; color: var(--muted); }
   .vn-result-text strong { color: var(--ink); font-weight: 500; }
   .vn-result-text em { font-style: italic; color: var(--ink); }
   .vn-result-loading { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
-  .vn-pulse {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--gold); animation: pulse 1.2s ease infinite;
-  }
-  .vn-clear-btn {
-    font-size: 11.5px; color: var(--muted);
-    background: none; border: 1px solid var(--border);
-    border-radius: 20px; padding: 4px 12px; cursor: pointer;
-    transition: border-color 0.2s, color 0.2s, background 0.2s;
-    font-family: 'DM Sans', sans-serif;
-  }
+  .vn-pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); animation: pulse 1.2s ease infinite; }
+  .vn-clear-btn { font-size: 11.5px; color: var(--muted); background: none; border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; cursor: pointer; transition: border-color 0.2s, color 0.2s, background 0.2s; font-family: 'DM Sans', sans-serif; }
   .vn-clear-btn:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
   .vn-toolbar-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-
-  .vn-date-btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 8px 14px;
-    border: 1px solid var(--border); border-radius: 8px;
-    background: var(--white);
-    font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--muted);
-    cursor: pointer; transition: all 0.2s; white-space: nowrap;
-  }
+  .vn-date-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--white); font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--muted); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
   .vn-date-btn:hover { border-color: var(--gold); color: var(--ink); }
-  .vn-date-btn.vn-date-active {
-    border-color: var(--gold);
-    background: var(--gold-dim);
-    color: var(--ink); font-weight: 500;
-  }
+  .vn-date-btn.vn-date-active { border-color: var(--gold); background: var(--gold-dim); color: var(--ink); font-weight: 500; }
   .vn-date-icon { font-size: 13px; line-height: 1; }
-  .vn-date-clear-x {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 18px; height: 18px; border-radius: 50%;
-    background: rgba(122,114,101,0.14); font-size: 9px;
-    color: var(--muted); cursor: pointer; transition: background 0.2s;
-    margin-left: 2px;
-  }
+  .vn-date-clear-x { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: rgba(122,114,101,0.14); font-size: 9px; color: var(--muted); cursor: pointer; transition: background 0.2s; margin-left: 2px; }
   .vn-date-clear-x:hover { background: var(--red-soft); color: var(--red); }
-
-  .vn-price-wrap {
-    display: flex; align-items: center; gap: 8px;
-    border: 1px solid var(--border); border-radius: 8px;
-    padding: 7px 12px; background: var(--white);
-    transition: border-color 0.2s;
-  }
-  .vn-price-wrap:focus-within { border-color: var(--gold); }
-  .vn-price-label { font-size: 12px; color: var(--muted); white-space: nowrap; }
-  .vn-price-input {
-    border: none; outline: none; background: transparent;
-    font-family: 'DM Sans', sans-serif; font-size: 13px;
-    color: var(--ink); width: 68px;
-  }
-  .vn-price-input::placeholder { color: #bbb4a8; }
-  .vn-price-input::-webkit-outer-spin-button,
-  .vn-price-input::-webkit-inner-spin-button { -webkit-appearance: none; }
-  .vn-price-input[type=number] { -moz-appearance: textfield; }
-  .vn-sort-select {
-    border: 1px solid var(--border); border-radius: 8px;
-    padding: 8px 30px 8px 12px; background: var(--white);
-    font-family: 'DM Sans', sans-serif; font-size: 13px;
-    color: var(--ink); outline: none; cursor: pointer;
-    transition: border-color 0.2s;
-    appearance: none; -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M4.5 5L0 0h9z' fill='%237a7265'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: right 11px center;
-  }
+  .vn-sort-select { border: 1px solid var(--border); border-radius: 8px; padding: 8px 30px 8px 12px; background: var(--white); font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--ink); outline: none; cursor: pointer; transition: border-color 0.2s; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M4.5 5L0 0h9z' fill='%237a7265'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 11px center; }
   .vn-sort-select:focus { border-color: var(--gold); }
-  .vn-layout-toggle {
-    display: flex; border: 1px solid var(--border);
-    border-radius: 8px; overflow: hidden;
-  }
-  .vn-layout-btn {
-    padding: 8px 12px; background: var(--white); border: none;
-    cursor: pointer; font-size: 15px; color: var(--muted);
-    transition: background 0.2s, color 0.2s; line-height: 1;
-  }
+  .vn-layout-toggle { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .vn-layout-btn { padding: 8px 12px; background: var(--white); border: none; cursor: pointer; font-size: 15px; color: var(--muted); transition: background 0.2s, color 0.2s; line-height: 1; }
   .vn-layout-btn + .vn-layout-btn { border-left: 1px solid var(--border); }
   .vn-layout-btn.active { background: var(--ink); color: var(--white); }
   .vn-layout-btn:hover:not(.active) { background: var(--surface); color: var(--ink); }
-
-  /* ─── FILTER CHIPS ────────────────────────────── */
-  .vn-filter-chips {
-    max-width: 1160px; margin: 0 auto;
-    padding: 10px 32px 0;
-    display: flex; flex-wrap: wrap; gap: 7px;
-  }
-  .vn-chip {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: var(--gold-dim); border: 1px solid rgba(201,168,76,0.25);
-    border-radius: 20px; padding: 4px 8px 4px 12px;
-    font-size: 12px; color: var(--ink); font-weight: 500;
-  }
-  .vn-chip button {
-    width: 18px; height: 18px; border-radius: 50%;
-    background: rgba(14,12,10,0.08); border: none;
-    font-size: 9px; color: var(--muted); cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s; line-height: 1;
-  }
+  /* PRICE RANGE */
+  .vn-price-range-bar { max-width: 1160px; margin: 0 auto; padding: 10px 32px 12px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--surface); border-bottom: 1px solid var(--border-soft); }
+  .vn-price-range-label { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+  .vn-price-range-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .vn-price-pill { font-size: 12px; padding: 6px 14px; border: 1px solid var(--border); border-radius: 20px; background: var(--white); color: var(--muted); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.18s; white-space: nowrap; font-weight: 400; }
+  .vn-price-pill:hover { border-color: var(--gold); color: var(--ink); background: var(--gold-dim); }
+  .vn-price-pill.active { background: var(--ink); color: var(--white); border-color: var(--ink); font-weight: 500; }
+  /* FILTER CHIPS */
+  .vn-filter-chips { max-width: 1160px; margin: 0 auto; padding: 10px 32px 0; display: flex; flex-wrap: wrap; gap: 7px; }
+  .vn-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--gold-dim); border: 1px solid rgba(201,168,76,0.25); border-radius: 20px; padding: 4px 8px 4px 12px; font-size: 12px; color: var(--ink); font-weight: 500; }
+  .vn-chip button { width: 18px; height: 18px; border-radius: 50%; background: rgba(14,12,10,0.08); border: none; font-size: 9px; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; line-height: 1; }
   .vn-chip button:hover { background: var(--red-soft); color: var(--red); }
-
-  /* ─── DATE BANNER ─────────────────────────────── */
-  .vn-date-banner {
-    max-width: 1160px; margin: 0 auto;
-    padding: 10px 32px;
-    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-    background: rgba(201,168,76,0.06);
-    border-bottom: 1px solid rgba(201,168,76,0.18);
-    font-size: 13px; color: var(--ink);
-    animation: fadeIn 0.2s ease;
-  }
+  /* DATE BANNER */
+  .vn-date-banner { max-width: 1160px; margin: 0 auto; padding: 10px 32px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: rgba(201,168,76,0.06); border-bottom: 1px solid rgba(201,168,76,0.18); font-size: 13px; color: var(--ink); }
   .vn-date-banner-icon { font-size: 1rem; }
-  .vn-date-banner-clear {
-    margin-left: auto; font-size: 12px; color: var(--muted);
-    background: none; border: 1px solid var(--border);
-    border-radius: 20px; padding: 3px 11px; cursor: pointer;
-    transition: all 0.2s; font-family: 'DM Sans', sans-serif;
-  }
+  .vn-date-banner-clear { margin-left: auto; font-size: 12px; color: var(--muted); background: none; border: 1px solid var(--border); border-radius: 20px; padding: 3px 11px; cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
   .vn-date-banner-clear:hover { border-color: var(--gold); color: var(--gold); }
-
-  /* ─── CONTENT ──────────────────────────────────── */
-  .vn-content {
-    max-width: 1160px; margin: 0 auto;
-    padding: 28px 32px 72px;
-  }
-  .vn-grid.grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 22px;
-  }
+  /* CONTENT */
+  .vn-content { max-width: 1160px; margin: 0 auto; padding: 28px 32px 72px; }
+  .vn-grid.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
   .vn-grid.list { display: flex; flex-direction: column; gap: 12px; }
   .vn-card-wrap { animation: fadeUp 0.42s cubic-bezier(0.4,0,0.2,1) both; }
-
-  .vn-skeleton {
-    height: 278px; border-radius: 14px;
-    background: linear-gradient(90deg, #ede8e0 25%, #e5ddd3 50%, #ede8e0 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s ease infinite;
-  }
+  .vn-skeleton { height: 278px; border-radius: 14px; background: linear-gradient(90deg, #ede8e0 25%, #e5ddd3 50%, #ede8e0 75%); background-size: 200% 100%; animation: shimmer 1.5s ease infinite; }
   .vn-skeleton-list { height: 100px; }
-
-  /* ─── COMING SOON STATE ──────────────────────── */
-  .vn-coming-soon {
-    position: relative;
-    text-align: center;
-    padding: 80px 20px 72px;
-    animation: fadeUp 0.45s ease both;
-    overflow: hidden;
-  }
-  .vn-cs-glow {
-    position: absolute;
-    width: 500px; height: 500px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%);
-    top: 50%; left: 50%; transform: translate(-50%, -50%);
-    pointer-events: none;
-  }
-  .vn-cs-icon {
-    font-size: 3.2rem; display: block; margin-bottom: 20px;
-    animation: floatY 3.5s ease-in-out infinite;
-    filter: drop-shadow(0 8px 24px rgba(201,168,76,0.3));
-  }
-  .vn-cs-badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: var(--ink); color: var(--gold);
-    font-size: 10px; font-weight: 600;
-    letter-spacing: 0.22em; text-transform: uppercase;
-    padding: 6px 16px; border-radius: 20px;
-    border: 1px solid rgba(201,168,76,0.3);
-    margin-bottom: 20px; position: relative;
-  }
-  .vn-cs-badge::before {
-    content: ''; display: inline-block;
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--gold); animation: pulse 1.5s ease infinite;
-  }
-  .vn-cs-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(1.9rem, 4vw, 2.8rem);
-    font-weight: 300; color: var(--ink);
-    margin-bottom: 14px; letter-spacing: 0.01em;
-  }
-  .vn-cs-sub {
-    font-size: 14px; color: var(--muted); line-height: 1.7;
-    margin-bottom: 36px; max-width: 420px;
-    margin-left: auto; margin-right: auto;
-  }
+  /* COMING SOON */
+  .vn-coming-soon { position: relative; text-align: center; padding: 80px 20px 72px; animation: fadeUp 0.45s ease both; overflow: hidden; }
+  .vn-cs-glow { position: absolute; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+  .vn-cs-icon { font-size: 3.2rem; display: block; margin-bottom: 20px; animation: floatY 3.5s ease-in-out infinite; }
+  .vn-cs-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--ink); color: var(--gold); font-size: 10px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; padding: 6px 16px; border-radius: 20px; border: 1px solid rgba(201,168,76,0.3); margin-bottom: 20px; }
+  .vn-cs-badge::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); animation: pulse 1.5s ease infinite; }
+  .vn-cs-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.9rem, 4vw, 2.8rem); font-weight: 300; color: var(--ink); margin-bottom: 14px; }
+  .vn-cs-title em { font-style: italic; color: var(--gold); }
+  .vn-cs-sub { font-size: 14px; color: var(--muted); line-height: 1.7; margin-bottom: 36px; max-width: 420px; margin-left: auto; margin-right: auto; }
   .vn-cs-sub strong { color: var(--ink); font-weight: 500; }
-  .vn-cs-notify {
-    display: flex; align-items: center;
-    max-width: 400px; margin: 0 auto 24px;
-    border: 1px solid var(--border); border-radius: 10px;
-    overflow: hidden; background: var(--white);
-    box-shadow: 0 4px 20px rgba(14,12,10,0.06);
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-  .vn-cs-notify:focus-within {
-    border-color: var(--gold);
-    box-shadow: 0 4px 20px rgba(201,168,76,0.12);
-  }
-  .vn-cs-email {
-    flex: 1; border: none; outline: none;
-    padding: 13px 16px;
-    font-family: 'DM Sans', sans-serif; font-size: 13.5px;
-    color: var(--ink); background: transparent;
-  }
+  .vn-cs-notify { display: flex; align-items: center; max-width: 400px; margin: 0 auto 24px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--white); }
+  .vn-cs-notify:focus-within { border-color: var(--gold); }
+  .vn-cs-email { flex: 1; border: none; outline: none; padding: 13px 16px; font-family: 'DM Sans', sans-serif; font-size: 13.5px; color: var(--ink); background: transparent; }
   .vn-cs-email::placeholder { color: #bbb4a8; }
-  .vn-cs-btn {
-    padding: 13px 20px; background: var(--ink); color: var(--white);
-    border: none; cursor: pointer;
-    font-family: 'DM Sans', sans-serif; font-size: 13px;
-    font-weight: 500; white-space: nowrap;
-    transition: background 0.22s; flex-shrink: 0;
-  }
+  .vn-cs-btn { padding: 13px 20px; background: var(--ink); color: var(--white); border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; white-space: nowrap; transition: background 0.22s; flex-shrink: 0; }
   .vn-cs-btn:hover { background: var(--gold); color: var(--ink); }
-  .vn-cs-back {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-size: 12.5px; color: var(--muted);
-    background: none; border: 1px solid var(--border);
-    border-radius: 20px; padding: 7px 18px;
-    cursor: pointer; margin-bottom: 28px;
-    font-family: 'DM Sans', sans-serif; transition: all 0.2s;
-  }
+  .vn-cs-back { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); background: none; border: 1px solid var(--border); border-radius: 20px; padding: 7px 18px; cursor: pointer; margin-bottom: 28px; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
   .vn-cs-back:hover { border-color: var(--gold); color: var(--ink); background: var(--gold-dim); }
-  .vn-cs-eta {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-size: 11px; color: var(--muted-light); letter-spacing: 0.05em;
-  }
-  .vn-cs-eta-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--gold); opacity: 0.5;
-  }
-
-  /* Empty state */
-  .vn-empty {
-    text-align: center; padding: 96px 20px 72px;
-    animation: fadeUp 0.45s ease both;
-  }
-  .vn-empty-icon {
-    font-size: 2.2rem; margin-bottom: 22px;
-    color: var(--gold); display: block;
-    animation: floatY 3s ease-in-out infinite;
-  }
-  .vn-empty h2 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.8rem; font-weight: 600;
-    color: var(--ink); margin-bottom: 10px;
-  }
-  .vn-empty p {
-    font-size: 13.5px; color: var(--muted); line-height: 1.7;
-    margin-bottom: 26px; max-width: 400px;
-    margin-left: auto; margin-right: auto;
-  }
-  .vn-empty-btn {
-    padding: 12px 28px; background: var(--ink);
-    color: var(--white); border: none; border-radius: 8px;
-    font-family: 'DM Sans', sans-serif; font-size: 13px;
-    font-weight: 500; cursor: pointer;
-    transition: background 0.22s, transform 0.18s;
-    margin-bottom: 36px;
-  }
+  .vn-cs-eta { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted-light); letter-spacing: 0.05em; }
+  .vn-cs-eta-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); opacity: 0.5; }
+  /* EMPTY STATE */
+  .vn-empty { text-align: center; padding: 96px 20px 72px; animation: fadeUp 0.45s ease both; }
+  .vn-empty-icon { font-size: 2.2rem; margin-bottom: 22px; color: var(--gold); display: block; animation: floatY 3s ease-in-out infinite; }
+  .vn-empty h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; font-weight: 600; color: var(--ink); margin-bottom: 10px; }
+  .vn-empty p { font-size: 13.5px; color: var(--muted); line-height: 1.7; margin-bottom: 26px; max-width: 400px; margin-left: auto; margin-right: auto; }
+  .vn-empty-btn { padding: 12px 28px; background: var(--ink); color: var(--white); border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: background 0.22s, transform 0.18s; margin-bottom: 36px; }
   .vn-empty-btn:hover { background: var(--gold); color: var(--ink); transform: translateY(-2px); }
   .vn-empty-suggest { margin-top: 12px; }
-  .vn-empty-suggest-label {
-    font-size: 11px; color: var(--muted-light); letter-spacing: 0.06em;
-    text-transform: uppercase; margin-bottom: 10px; display: block;
-  }
+  .vn-empty-suggest-label { font-size: 11px; color: var(--muted-light); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 10px; display: block; }
   .vn-empty-suggest-tags { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; }
-
-  .vn-load-hint {
-    text-align: center; font-size: 11.5px; color: var(--muted);
-    margin-top: 40px; letter-spacing: 0.12em; text-transform: uppercase;
-  }
-
-  /* ─── WHY SECTION ──────────────────────────── */
-  .vn-why-section {
-    background: var(--white);
-    border-top: 1px solid var(--border-soft);
-    padding: 80px 32px;
-  }
+  .vn-load-hint { text-align: center; font-size: 11.5px; color: var(--muted); margin-top: 40px; letter-spacing: 0.12em; text-transform: uppercase; }
+  /* WHY SECTION */
+  .vn-why-section { background: var(--white); border-top: 1px solid var(--border-soft); padding: 80px 32px; }
   .vn-why-inner { max-width: 1160px; margin: 0 auto; }
   .vn-why-header { text-align: center; margin-bottom: 52px; }
-  .vn-why-eyebrow {
-    display: inline-block; font-size: 10px;
-    letter-spacing: 0.24em; text-transform: uppercase;
-    color: var(--gold); margin-bottom: 14px; font-weight: 400;
-  }
-  .vn-why-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(1.7rem, 3vw, 2.4rem);
-    font-weight: 300; color: var(--ink);
-    margin-bottom: 12px; letter-spacing: 0.01em;
-  }
-  .vn-why-sub {
-    font-size: 13.5px; color: var(--muted); max-width: 420px;
-    margin: 0 auto; line-height: 1.65;
-  }
-  .vn-why-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
-  }
-  .vn-why-card {
-    padding: 28px 24px; border-radius: 14px;
-    border: 1px solid var(--border-soft);
-    background: var(--surface);
-    transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
-  }
-  .vn-why-card:hover {
-    border-color: var(--border);
-    box-shadow: 0 8px 32px rgba(14,12,10,0.07);
-    transform: translateY(-3px);
-  }
+  .vn-why-eyebrow { display: inline-block; font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--gold); margin-bottom: 14px; font-weight: 400; }
+  .vn-why-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.7rem, 3vw, 2.4rem); font-weight: 300; color: var(--ink); margin-bottom: 12px; }
+  .vn-why-sub { font-size: 13.5px; color: var(--muted); max-width: 420px; margin: 0 auto; line-height: 1.65; }
+  .vn-why-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .vn-why-card { padding: 28px 24px; border-radius: 14px; border: 1px solid var(--border-soft); background: var(--surface); transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s; }
+  .vn-why-card:hover { border-color: var(--border); box-shadow: 0 8px 32px rgba(14,12,10,0.07); transform: translateY(-3px); }
   .vn-why-icon { font-size: 1.6rem; display: block; margin-bottom: 14px; }
-  .vn-why-card-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.1rem; font-weight: 600;
-    color: var(--ink); margin-bottom: 8px;
-  }
-  .vn-why-card-desc {
-    font-size: 12.5px; color: var(--muted); line-height: 1.65;
-  }
-
-  /* ─────────────────────────────────────────────────────────────
-     PAYMENT MODAL
-  ───────────────────────────────────────────────────────────── */
-  .pm-overlay {
-    position: fixed; inset: 0;
-    background: rgba(14,12,10,0.75);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 1500; padding: 20px;
-    animation: fadeIn 0.2s ease both;
-  }
-  .pm-modal {
-    position: relative;
-    background: var(--ink-soft);
-    border: 1px solid rgba(201,168,76,0.22);
-    border-radius: 24px;
-    padding: 44px 38px 36px;
-    width: min(640px, 96vw);
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow:
-      0 48px 120px rgba(0,0,0,0.55),
-      0 0 0 1px rgba(255,255,255,0.04),
-      inset 0 1px 0 rgba(255,255,255,0.06);
-    animation: popupUp 0.34s cubic-bezier(0.34,1.2,0.64,1) both;
-    text-align: center;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(201,168,76,0.2) transparent;
-  }
-  .pm-modal::-webkit-scrollbar { width: 4px; }
-  .pm-modal::-webkit-scrollbar-track { background: transparent; }
-  .pm-modal::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.2); border-radius: 4px; }
-
-  .pm-modal::before {
-    content: '';
-    position: absolute; inset: 0;
-    border-radius: 24px;
-    background: radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.07) 0%, transparent 60%);
-    pointer-events: none;
-  }
-
-  .pm-x-btn {
-    position: absolute; top: 18px; right: 18px;
-    width: 32px; height: 32px; border-radius: 50%;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(201,168,76,0.2);
-    font-size: 11px; color: rgba(245,240,232,0.45);
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: all 0.22s; font-family: 'DM Sans', sans-serif;
-    z-index: 1;
-  }
-  .pm-x-btn:hover {
-    background: rgba(201,168,76,0.14);
-    border-color: var(--gold);
-    color: var(--gold-light);
-  }
-
-  .pm-eyebrow {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase;
-    color: var(--gold); font-weight: 400; margin-bottom: 14px;
-  }
-  .pm-eyebrow-icon { font-size: 14px; }
-  .pm-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(1.7rem, 3.2vw, 2.2rem);
-    font-weight: 300; color: var(--cream);
-    margin-bottom: 10px; letter-spacing: 0.01em; line-height: 1.15;
-  }
-  .pm-title em { font-style: italic; color: var(--gold-light); font-weight: 300; }
-  .pm-sub {
-    font-size: 13px; color: rgba(245,240,232,0.38);
-    line-height: 1.65; margin-bottom: 30px;
-    max-width: 380px; margin-left: auto; margin-right: auto;
-  }
-
+  .vn-why-card-title { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
+  .vn-why-card-desc { font-size: 12.5px; color: var(--muted); line-height: 1.65; }
+  /* PAYMENT MODAL */
+  .pm-overlay { position: fixed; inset: 0; background: rgba(14,12,10,0.75); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; z-index: 1500; padding: 20px; animation: fadeIn 0.2s ease both; }
+  .pm-modal { position: relative; background: var(--ink-soft); border: 1px solid rgba(201,168,76,0.22); border-radius: 24px; padding: 44px 38px 36px; width: min(640px, 96vw); max-height: 90vh; overflow-y: auto; box-shadow: 0 48px 120px rgba(0,0,0,0.55); animation: popupUp 0.34s cubic-bezier(0.34,1.2,0.64,1) both; text-align: center; }
+  .pm-x-btn { position: absolute; top: 18px; right: 18px; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid rgba(201,168,76,0.2); font-size: 11px; color: rgba(245,240,232,0.45); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.22s; font-family: 'DM Sans', sans-serif; z-index: 1; }
+  .pm-x-btn:hover { background: rgba(201,168,76,0.14); border-color: var(--gold); color: var(--gold-light); }
+  .pm-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--gold); font-weight: 400; margin-bottom: 14px; }
+  .pm-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.7rem, 3.2vw, 2.2rem); font-weight: 300; color: var(--cream); margin-bottom: 10px; }
+  .pm-title em { font-style: italic; color: var(--gold-light); }
+  .pm-sub { font-size: 13px; color: rgba(245,240,232,0.38); line-height: 1.65; margin-bottom: 30px; max-width: 380px; margin-left: auto; margin-right: auto; }
   .pm-bar-wrap { margin-bottom: 32px; }
-  .pm-bar {
-    display: flex; height: 10px; border-radius: 10px;
-    overflow: hidden; gap: 3px; margin-bottom: 8px;
-  }
-  .pm-bar-seg {
-    display: flex; align-items: center; justify-content: center;
-    border-radius: 6px; font-size: 8px; font-weight: 700;
-    letter-spacing: 0.04em; color: rgba(14,12,10,0.65);
-    transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
-    overflow: hidden;
-  }
+  .pm-bar { display: flex; height: 10px; border-radius: 10px; overflow: hidden; gap: 3px; margin-bottom: 8px; }
+  .pm-bar-seg { display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 8px; font-weight: 700; color: rgba(14,12,10,0.65); }
   .pm-bar-30 { background: linear-gradient(90deg, #e8c96a, #c9a84c); }
   .pm-bar-50 { background: linear-gradient(90deg, #b8942e, #c9a84c); }
   .pm-bar-20 { background: linear-gradient(90deg, #7a5e1c, #a07c2e); }
-  .pm-bar-labels {
-    display: flex; justify-content: space-between;
-    font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
-    color: rgba(245,240,232,0.28); padding: 0 2px;
-  }
-
-  .pm-steps {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-bottom: 24px;
-    position: relative;
-  }
-  .pm-step {
-    text-align: center;
-    padding: 22px 14px 20px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(201,168,76,0.1);
-    border-radius: 16px;
-    position: relative;
-    transition: background 0.25s, border-color 0.25s, transform 0.22s;
-  }
-  .pm-step:hover {
-    background: rgba(201,168,76,0.06);
-    border-color: rgba(201,168,76,0.22);
-    transform: translateY(-3px);
-  }
-  .pm-step--1 {
-    background: rgba(201,168,76,0.055);
-    border-color: rgba(201,168,76,0.18);
-  }
-
-  .pm-step-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 12px;
-  }
-  .pm-step-num {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.4rem; font-weight: 300;
-    color: rgba(201,168,76,0.22); line-height: 1;
-    letter-spacing: -0.02em;
-  }
-  .pm-step-icon { font-size: 1.25rem; line-height: 1; }
-  .pm-step-pct {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 2.4rem; font-weight: 600; line-height: 1;
-    margin-bottom: 6px; letter-spacing: -0.02em;
-  }
-  .pm-step-label {
-    font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
-    color: rgba(245,240,232,0.55); font-weight: 500;
-    margin-bottom: 10px;
-  }
-  .pm-step-desc {
-    font-size: 11.5px; color: rgba(245,240,232,0.32);
-    line-height: 1.65;
-  }
-
-  .pm-step-arrow {
-    position: absolute;
-    top: 50%; right: -18px;
-    transform: translateY(-50%);
-    width: 24px; height: 24px; border-radius: 50%;
-    background: var(--ink-soft);
-    border: 1px solid rgba(201,168,76,0.2);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 10px; color: rgba(201,168,76,0.5);
-    z-index: 2; pointer-events: none;
-  }
-
-  .pm-note {
-    display: flex; align-items: flex-start; gap: 12px;
-    background: rgba(201,168,76,0.05);
-    border: 1px solid rgba(201,168,76,0.14);
-    border-radius: 12px; padding: 16px 18px;
-    font-size: 12.5px; color: rgba(245,240,232,0.4);
-    text-align: left; line-height: 1.65;
-    margin-bottom: 24px;
-  }
+  .pm-bar-labels { display: flex; justify-content: space-between; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(245,240,232,0.28); padding: 0 2px; }
+  .pm-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  .pm-step { text-align: center; padding: 22px 14px 20px; background: rgba(255,255,255,0.03); border: 1px solid rgba(201,168,76,0.1); border-radius: 16px; position: relative; transition: background 0.25s; }
+  .pm-step:hover { background: rgba(201,168,76,0.06); }
+  .pm-step--1 { background: rgba(201,168,76,0.055); border-color: rgba(201,168,76,0.18); }
+  .pm-step-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .pm-step-num { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 300; color: rgba(201,168,76,0.22); }
+  .pm-step-icon { font-size: 1.25rem; }
+  .pm-step-pct { font-family: 'Cormorant Garamond', serif; font-size: 2.4rem; font-weight: 600; line-height: 1; margin-bottom: 6px; }
+  .pm-step-label { font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(245,240,232,0.55); font-weight: 500; margin-bottom: 10px; }
+  .pm-step-desc { font-size: 11.5px; color: rgba(245,240,232,0.32); line-height: 1.65; }
+  .pm-step-arrow { position: absolute; top: 50%; right: -18px; transform: translateY(-50%); width: 24px; height: 24px; border-radius: 50%; background: var(--ink-soft); border: 1px solid rgba(201,168,76,0.2); display: flex; align-items: center; justify-content: center; font-size: 10px; color: rgba(201,168,76,0.5); z-index: 2; }
+  .pm-note { display: flex; align-items: flex-start; gap: 12px; background: rgba(201,168,76,0.05); border: 1px solid rgba(201,168,76,0.14); border-radius: 12px; padding: 16px 18px; font-size: 12.5px; color: rgba(245,240,232,0.4); text-align: left; line-height: 1.65; margin-bottom: 24px; }
   .pm-note strong { color: rgba(245,240,232,0.7); font-weight: 500; }
-  .pm-note-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
-
-  .pm-cta {
-    display: inline-block; padding: 13px 40px;
-    background: var(--gold); color: var(--ink);
-    border: none; border-radius: 8px;
-    font-family: 'DM Sans', sans-serif; font-size: 13px;
-    font-weight: 500; cursor: pointer; letter-spacing: 0.02em;
-    transition: background 0.22s, transform 0.18s, box-shadow 0.22s;
-    box-shadow: 0 4px 20px rgba(201,168,76,0.25);
-  }
-  .pm-cta:hover {
-    background: var(--gold-light);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 28px rgba(201,168,76,0.35);
-  }
-
-  /* ─── DATE PICKER ───────────────────────────── */
-  .dp-overlay {
-    position: fixed; inset: 0;
-    background: rgba(14,12,10,0.58);
-    backdrop-filter: blur(7px);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 1500; padding: 20px;
-    animation: fadeIn 0.18s ease both;
-  }
-  .dp-modal {
-    position: relative; background: var(--white);
-    border: 1px solid rgba(201,168,76,0.22);
-    border-radius: 22px; padding: 30px 26px 24px;
-    width: min(330px, 96vw);
-    box-shadow: 0 28px 72px rgba(0,0,0,0.22);
-    animation: popupUp 0.3s cubic-bezier(0.34,1.2,0.64,1) both;
-  }
-  .dp-x-btn {
-    position: absolute; top: 14px; right: 14px;
-    width: 30px; height: 30px; border-radius: 50%;
-    background: var(--surface); border: 1px solid var(--border);
-    font-size: 11px; color: var(--muted); cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s; font-family: 'DM Sans', sans-serif;
-  }
+  .pm-note-icon { font-size: 1.1rem; flex-shrink: 0; }
+  .pm-cta { display: inline-block; padding: 13px 40px; background: var(--gold); color: var(--ink); border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: background 0.22s, transform 0.18s; }
+  .pm-cta:hover { background: var(--gold-light); transform: translateY(-2px); }
+  /* DATE PICKER */
+  .dp-overlay { position: fixed; inset: 0; background: rgba(14,12,10,0.58); backdrop-filter: blur(7px); display: flex; align-items: center; justify-content: center; z-index: 1500; padding: 20px; }
+  .dp-modal { position: relative; background: var(--white); border: 1px solid rgba(201,168,76,0.22); border-radius: 22px; padding: 30px 26px 24px; width: min(330px, 96vw); box-shadow: 0 28px 72px rgba(0,0,0,0.22); animation: popupUp 0.3s cubic-bezier(0.34,1.2,0.64,1) both; }
+  .dp-x-btn { position: absolute; top: 14px; right: 14px; width: 30px; height: 30px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); font-size: 11px; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
   .dp-x-btn:hover { background: var(--ink); color: var(--white); border-color: var(--ink); }
-  .dp-modal-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.15rem; font-weight: 600; color: var(--ink);
-    margin-bottom: 18px; text-align: center; padding-right: 26px;
-  }
-  .dp-nav {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 14px;
-  }
-  .dp-nav-btn {
-    width: 32px; height: 32px; border-radius: 9px;
-    background: var(--surface); border: 1px solid var(--border);
-    font-size: 17px; color: var(--muted); cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s; line-height: 1;
-  }
+  .dp-modal-title { font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; font-weight: 600; color: var(--ink); margin-bottom: 18px; text-align: center; }
+  .dp-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .dp-nav-btn { width: 32px; height: 32px; border-radius: 9px; background: var(--surface); border: 1px solid var(--border); font-size: 17px; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
   .dp-nav-btn:hover { border-color: var(--gold); color: var(--gold); }
-  .dp-month-label {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.05rem; font-weight: 600; color: var(--ink);
-  }
-  .dp-grid {
-    display: grid; grid-template-columns: repeat(7, 1fr);
-    gap: 3px; margin-bottom: 16px;
-  }
-  .dp-hdr {
-    text-align: center; font-size: 9px; font-weight: 600;
-    letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--muted); padding: 5px 0;
-  }
-  .dp-day {
-    aspect-ratio: 1; border-radius: 9px; border: none;
-    background: none; font-family: 'DM Sans', sans-serif;
-    font-size: 12px; color: var(--ink); cursor: pointer;
-    transition: all 0.15s;
-    display: flex; align-items: center; justify-content: center;
-    min-height: 33px;
-  }
-  .dp-day:hover:not(:disabled):not(.dp-selected) {
-    background: var(--gold-dim); color: var(--ink);
-  }
-  .dp-day.dp-selected {
-    background: var(--ink); color: var(--white); font-weight: 600;
-    box-shadow: 0 3px 10px rgba(14,12,10,0.2);
-  }
-  .dp-day.dp-today {
-    background: var(--gold-dim); color: var(--gold); font-weight: 600;
-  }
+  .dp-month-label { font-family: 'Cormorant Garamond', serif; font-size: 1.05rem; font-weight: 600; color: var(--ink); }
+  .dp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-bottom: 16px; }
+  .dp-hdr { text-align: center; font-size: 9px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 5px 0; }
+  .dp-day { aspect-ratio: 1; border-radius: 9px; border: none; background: none; font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--ink); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; min-height: 33px; }
+  .dp-day:hover:not(:disabled):not(.dp-selected) { background: var(--gold-dim); color: var(--ink); }
+  .dp-day.dp-selected { background: var(--ink); color: var(--white); font-weight: 600; }
+  .dp-day.dp-today { background: var(--gold-dim); color: var(--gold); font-weight: 600; }
   .dp-day.dp-past { opacity: 0.25; cursor: not-allowed; }
   .dp-footer { border-top: 1px solid var(--border); padding-top: 14px; }
-  .dp-clear-btn {
-    width: 100%; padding: 11px; border-radius: 10px;
-    border: 1px solid rgba(184,92,92,0.22);
-    background: var(--red-soft); color: var(--red);
-    font-size: 13px; font-family: 'DM Sans', sans-serif;
-    cursor: pointer; transition: all 0.2s;
-  }
-  .dp-clear-btn:hover { background: rgba(184,92,92,0.18); }
-  .dp-cancel-btn {
-    width: 100%; padding: 11px; border-radius: 10px;
-    border: 1px solid var(--border); background: none;
-    color: var(--muted); font-size: 13px;
-    font-family: 'DM Sans', sans-serif; cursor: pointer;
-    transition: all 0.2s;
-  }
-  .dp-cancel-btn:hover { border-color: var(--gold); color: var(--ink); }
-
-  /* ─── FOOTER CTA ────────────────────────────── */
-  .vn-footer-cta {
-    position: relative; overflow: hidden;
-    text-align: center; padding: 96px 32px 72px;
-    background: var(--ink-soft);
-  }
-  .vn-footer-orb {
-    position: absolute; width: 600px; height: 600px;
-    background: var(--gold); border-radius: 50%;
-    filter: blur(140px); opacity: 0.065;
-    top: 50%; left: 50%; transform: translate(-50%,-50%);
-    pointer-events: none;
-  }
-  .vn-footer-orb2 {
-    width: 300px; height: 300px;
-    background: #7b5ea7; opacity: 0.06;
-    left: 15%; top: 20%; transform: none;
-  }
-  .vn-footer-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(1.8rem, 3.5vw, 2.8rem);
-    font-weight: 300; color: var(--cream);
-    margin: 12px 0 14px; position: relative; z-index: 1;
-    letter-spacing: 0.01em;
-  }
-  .vn-footer-sub {
-    font-size: 13.5px; color: rgba(122,114,101,0.85);
-    margin-bottom: 34px; max-width: 480px;
-    margin-left: auto; margin-right: auto;
-    position: relative; z-index: 1; line-height: 1.7;
-  }
-  .vn-footer-cta-btns {
-    display: flex; align-items: center; justify-content: center; gap: 12px;
-    flex-wrap: wrap; position: relative; z-index: 1; margin-bottom: 40px;
-  }
-  .vn-footer-btn {
-    display: inline-block; padding: 13px 34px;
-    background: var(--gold); color: var(--ink);
-    text-decoration: none; border-radius: 8px;
-    font-size: 13px; font-weight: 500;
-    letter-spacing: 0.04em;
-    transition: background 0.22s, transform 0.18s, box-shadow 0.22s;
-  }
-  .vn-footer-btn:hover {
-    background: var(--gold-light); transform: translateY(-2px);
-    box-shadow: 0 8px 28px rgba(201,168,76,0.3);
-  }
-  .vn-footer-btn-ghost {
-    display: inline-block; padding: 13px 28px;
-    background: transparent; color: rgba(245,240,232,0.55);
-    text-decoration: none; border-radius: 8px;
-    font-size: 13px; font-weight: 400;
-    border: 1px solid rgba(245,240,232,0.15);
-    transition: all 0.22s; cursor: pointer;
-  }
-  .vn-footer-btn-ghost:hover {
-    border-color: rgba(201,168,76,0.4); color: var(--gold-light);
-    background: rgba(201,168,76,0.05);
-  }
-  .vn-footer-logos {
-    display: flex; align-items: center; justify-content: center;
-    gap: 20px; flex-wrap: wrap; position: relative; z-index: 1;
-  }
-  .vn-footer-logos-label {
-    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
-    color: rgba(245,240,232,0.2);
-  }
-  .vn-footer-press {
-    font-size: 11.5px; color: rgba(245,240,232,0.22);
-    font-family: 'Cormorant Garamond', serif;
-    letter-spacing: 0.04em; font-style: italic;
-  }
-
-  /* ─── RESPONSIVE ────────────────────────────── */
-  @media (max-width: 1024px) {
-    .vn-float-card:not(.vn-fc-4) { display: none; }
-    .vn-fc-4 { display: none; }
-    .vn-fc4-mobile-pill { display: flex; }
-    .vn-why-grid { grid-template-columns: repeat(2, 1fr); }
-  }
-  @media (max-width: 960px) {
-    .vn-grid.grid { grid-template-columns: repeat(2, 1fr); }
-  }
+  .dp-clear-btn { width: 100%; padding: 11px; border-radius: 10px; border: 1px solid rgba(184,92,92,0.22); background: var(--red-soft); color: var(--red); font-size: 13px; font-family: 'DM Sans', sans-serif; cursor: pointer; }
+  .dp-cancel-btn { width: 100%; padding: 11px; border-radius: 10px; border: 1px solid var(--border); background: none; color: var(--muted); font-size: 13px; font-family: 'DM Sans', sans-serif; cursor: pointer; }
+  /* FOOTER CTA */
+  .vn-footer-cta { position: relative; overflow: hidden; text-align: center; padding: 96px 32px 72px; background: var(--ink-soft); }
+  .vn-footer-orb { position: absolute; width: 600px; height: 600px; background: var(--gold); border-radius: 50%; filter: blur(140px); opacity: 0.065; top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; }
+  .vn-footer-orb2 { width: 300px; height: 300px; background: #7b5ea7; opacity: 0.06; left: 15%; top: 20%; transform: none; }
+  .vn-footer-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.8rem, 3.5vw, 2.8rem); font-weight: 300; color: var(--cream); margin: 12px 0 14px; position: relative; z-index: 1; }
+  .vn-footer-sub { font-size: 13.5px; color: rgba(122,114,101,0.85); margin-bottom: 34px; max-width: 480px; margin-left: auto; margin-right: auto; position: relative; z-index: 1; line-height: 1.7; }
+  .vn-footer-cta-btns { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; position: relative; z-index: 1; margin-bottom: 40px; }
+  .vn-footer-btn { display: inline-block; padding: 13px 34px; background: var(--gold); color: var(--ink); text-decoration: none; border-radius: 8px; font-size: 13px; font-weight: 500; transition: background 0.22s, transform 0.18s; }
+  .vn-footer-btn:hover { background: var(--gold-light); transform: translateY(-2px); }
+  .vn-footer-btn-ghost { display: inline-block; padding: 13px 28px; background: transparent; color: rgba(245,240,232,0.55); text-decoration: none; border-radius: 8px; font-size: 13px; border: 1px solid rgba(245,240,232,0.15); transition: all 0.22s; cursor: pointer; }
+  .vn-footer-btn-ghost:hover { border-color: rgba(201,168,76,0.4); color: var(--gold-light); }
+  .vn-footer-logos { display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: wrap; position: relative; z-index: 1; }
+  .vn-footer-logos-label { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(245,240,232,0.2); }
+  .vn-footer-press { font-size: 11.5px; color: rgba(245,240,232,0.22); font-family: 'Cormorant Garamond', serif; letter-spacing: 0.04em; font-style: italic; }
+  /* HOW IT WORKS */
+  .vn-hiw-section { background: var(--ink); padding: 88px 32px 80px; }
+  .vn-hiw-section .vn-why-eyebrow { color: rgba(201,168,76,0.7); }
+  .vn-hiw-section .vn-why-title { color: var(--cream); }
+  .vn-hiw-section .vn-why-sub { color: rgba(245,240,232,0.4); }
+  .vn-hiw-inner { max-width: 1160px; margin: 0 auto; }
+  .vn-hiw-header { text-align: center; margin-bottom: 52px; }
+  .vn-hiw-label { text-align: center; font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase; color: rgba(201,168,76,0.55); margin-bottom: 22px; }
+  .vn-hiw-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-bottom: 60px; position: relative; }
+  .vn-hiw-card { padding: 28px 22px; border: 1px solid rgba(201,168,76,0.1); border-right: none; background: rgba(255,255,255,0.025); position: relative; transition: background 0.25s; animation: fadeUp 0.5s cubic-bezier(0.4,0,0.2,1) both; }
+  .vn-hiw-card:last-child { border-right: 1px solid rgba(201,168,76,0.1); }
+  .vn-hiw-card:hover { background: rgba(201,168,76,0.05); }
+  .vn-hiw-card--vendor { background: rgba(255,255,255,0.018); border-color: rgba(122,114,101,0.15); }
+  .vn-hiw-card--vendor:last-child { border-right: 1px solid rgba(122,114,101,0.15); }
+  .vn-hiw-num { font-family: 'Cormorant Garamond', serif; font-size: 2.8rem; font-weight: 300; line-height: 1; color: rgba(201,168,76,0.18); margin-bottom: 10px; }
+  .vn-hiw-num--vendor { color: rgba(122,114,101,0.2); }
+  .vn-hiw-icon { font-size: 1.5rem; display: block; margin-bottom: 12px; }
+  .vn-hiw-title { font-family: 'Cormorant Garamond', serif; font-size: 1.05rem; font-weight: 600; color: var(--cream); margin-bottom: 10px; }
+  .vn-hiw-desc { font-size: 12.5px; color: rgba(245,240,232,0.42); line-height: 1.68; }
+  .vn-hiw-arrow { position: absolute; right: -14px; top: 36px; width: 28px; height: 28px; border-radius: 50%; background: var(--ink); border: 1px solid rgba(201,168,76,0.2); display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--gold); z-index: 2; }
+  .vn-hiw-divider { display: flex; align-items: center; gap: 16px; margin: 0 0 36px; }
+  .vn-hiw-divider::before, .vn-hiw-divider::after { content: ''; flex: 1; height: 1px; background: rgba(201,168,76,0.1); }
+  .vn-hiw-divider-label { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(201,168,76,0.4); }
+  .vn-hiw-faq { margin-top: 64px; border-top: 1px solid rgba(201,168,76,0.1); padding-top: 52px; }
+  .vn-hiw-faq-header { text-align: center; margin-bottom: 36px; }
+  .vn-hiw-faq-title { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 300; color: var(--cream); }
+  .vn-hiw-faq-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 32px; }
+  .vn-faq-item { border-bottom: 1px solid rgba(201,168,76,0.08); }
+  .vn-faq-q { width: 100%; background: none; border: none; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 18px 0; font-family: 'DM Sans', sans-serif; font-size: 13.5px; color: rgba(245,240,232,0.75); cursor: pointer; text-align: left; transition: color 0.2s; }
+  .vn-faq-q:hover { color: var(--cream); }
+  .vn-faq-item.open .vn-faq-q { color: var(--gold-light); }
+  .vn-faq-chevron { flex-shrink: 0; width: 22px; height: 22px; border: 1px solid rgba(201,168,76,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--gold); }
+  .vn-faq-a { font-size: 12.5px; color: rgba(245,240,232,0.42); line-height: 1.7; padding: 0 28px 18px 0; }
+  /* RESPONSIVE */
+  @media (max-width: 1024px) { .vn-float-card:not(.vn-fc-4) { display: none; } .vn-fc-4 { display: none; } .vn-fc4-mobile-pill { display: flex; } .vn-why-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 960px) { .vn-grid.grid { grid-template-columns: repeat(2, 1fr); } }
   @media (max-width: 640px) {
     .vn-hero { padding: 92px 20px 52px; }
-    .vn-trust-strip { max-width: 100%; }
     .vn-category-inner { padding: 0 16px; }
     .vn-toolbar { padding: 12px 16px; }
+    .vn-price-range-bar { padding: 10px 16px 12px; }
     .vn-filter-chips { padding: 8px 16px 0; }
     .vn-content { padding: 20px 16px 56px; }
     .vn-grid.grid { grid-template-columns: 1fr; gap: 14px; }
@@ -2124,160 +1232,27 @@ const styles = `
     .vn-date-banner { padding: 10px 16px; }
     .vn-why-section { padding: 56px 20px; }
     .vn-why-grid { grid-template-columns: 1fr; gap: 14px; }
-    .vn-cs-notify { flex-direction: column; border-radius: 10px; }
-    .vn-cs-email { text-align: center; }
-    .vn-cs-btn { width: 100%; border-radius: 0 0 9px 9px; }
-
-    .pm-modal { padding: 36px 20px 28px; border-radius: 20px; }
     .pm-steps { grid-template-columns: 1fr; gap: 10px; }
-    .pm-step-arrow { display: none; }
-    .pm-step { padding: 18px 16px; text-align: left; }
-    .pm-step-pct { font-size: 2rem; }
-    .pm-bar-labels span { font-size: 8px; }
+    .vn-price-range-pills { gap: 4px; }
+    .vn-price-pill { font-size: 11px; padding: 5px 10px; }
   }
-
-  /* ─── KEYFRAMES ─────────────────────────────── */
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0);    }
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; } to { opacity: 1; }
-  }
-  @keyframes popupUp {
-    from { opacity: 0; transform: translateY(24px) scale(0.95); }
-    to   { opacity: 1; transform: translateY(0)    scale(1);    }
-  }
-  @keyframes shimmer {
-    0%   { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1;   transform: scale(1);    }
-    50%       { opacity: 0.4; transform: scale(0.85); }
-  }
-  @keyframes floatY {
-    0%, 100% { transform: translateY(0px);  }
-    50%       { transform: translateY(-8px); }
-  }
-  .vn-hiw-section .vn-why-eyebrow { color: rgba(201,168,76,0.7); }
-  .vn-hiw-section .vn-why-title { color: var(--cream); }
-  .vn-hiw-section .vn-why-sub { color: rgba(245,240,232,0.4); }
-
-  /* ─── HOW IT WORKS ──────────────────────────── */
-  .vn-hiw-section {
-    background: var(--ink);
-    padding: 88px 32px 80px;
-    scroll-margin-top: 80px;
-  }
-  .vn-hiw-inner { max-width: 1160px; margin: 0 auto; }
-  .vn-hiw-header { text-align: center; margin-bottom: 52px; }
-  .vn-hiw-label {
-    text-align: center; font-size: 10px;
-    letter-spacing: 0.24em; text-transform: uppercase;
-    color: rgba(201,168,76,0.55); margin-bottom: 22px; font-weight: 400;
-  }
-  .vn-hiw-steps {
-    display: grid; grid-template-columns: repeat(4, 1fr);
-    gap: 0; margin-bottom: 60px; position: relative;
-  }
-  .vn-hiw-card {
-    padding: 28px 22px 28px;
-    border: 1px solid rgba(201,168,76,0.1);
-    border-right: none;
-    background: rgba(255,255,255,0.025);
-    position: relative;
-    transition: background 0.25s, border-color 0.25s;
-    animation: fadeUp 0.5s cubic-bezier(0.4,0,0.2,1) both;
-  }
-  .vn-hiw-card:last-child { border-right: 1px solid rgba(201,168,76,0.1); }
-  .vn-hiw-card:hover { background: rgba(201,168,76,0.05); }
-  .vn-hiw-card--vendor {
-    background: rgba(255,255,255,0.018);
-    border-color: rgba(122,114,101,0.15);
-  }
-  .vn-hiw-card--vendor:last-child { border-right: 1px solid rgba(122,114,101,0.15); }
-  .vn-hiw-num {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 2.8rem; font-weight: 300; line-height: 1;
-    color: rgba(201,168,76,0.18); margin-bottom: 10px; letter-spacing: -0.02em;
-  }
-  .vn-hiw-num--vendor { color: rgba(122,114,101,0.2); }
-  .vn-hiw-icon { font-size: 1.5rem; display: block; margin-bottom: 12px; }
-  .vn-hiw-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.05rem; font-weight: 600;
-    color: var(--cream); margin-bottom: 10px; letter-spacing: 0.01em;
-  }
-  .vn-hiw-desc {
-    font-size: 12.5px; color: rgba(245,240,232,0.42); line-height: 1.68;
-  }
-  .vn-hiw-arrow {
-    position: absolute; right: -14px; top: 36px;
-    width: 28px; height: 28px; border-radius: 50%;
-    background: var(--ink); border: 1px solid rgba(201,168,76,0.2);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; color: var(--gold); z-index: 2; pointer-events: none;
-  }
-  .vn-hiw-divider {
-    display: flex; align-items: center; gap: 16px; margin: 0 0 36px;
-  }
-  .vn-hiw-divider::before, .vn-hiw-divider::after {
-    content: ''; flex: 1; height: 1px; background: rgba(201,168,76,0.1);
-  }
-  .vn-hiw-divider-label {
-    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
-    color: rgba(201,168,76,0.4); white-space: nowrap;
-  }
-  .vn-hiw-faq {
-    margin-top: 64px; border-top: 1px solid rgba(201,168,76,0.1);
-    padding-top: 52px;
-  }
-  .vn-hiw-faq-header { text-align: center; margin-bottom: 36px; }
-  .vn-hiw-faq-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.6rem; font-weight: 300;
-    color: var(--cream); letter-spacing: 0.01em;
-  }
-  .vn-hiw-faq-grid {
-    display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 32px;
-  }
-  .vn-faq-item { border-bottom: 1px solid rgba(201,168,76,0.08); overflow: hidden; }
-  .vn-faq-q {
-    width: 100%; background: none; border: none;
-    display: flex; align-items: flex-start; justify-content: space-between;
-    gap: 16px; padding: 18px 0;
-    font-family: 'DM Sans', sans-serif; font-size: 13.5px;
-    color: rgba(245,240,232,0.75); font-weight: 400;
-    cursor: pointer; text-align: left; transition: color 0.2s; line-height: 1.5;
-  }
-  .vn-faq-q:hover { color: var(--cream); }
-  .vn-faq-item.open .vn-faq-q { color: var(--gold-light); }
-  .vn-faq-chevron {
-    flex-shrink: 0; width: 22px; height: 22px;
-    border: 1px solid rgba(201,168,76,0.2); border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px; color: var(--gold); margin-top: 1px; transition: background 0.2s;
-  }
-  .vn-faq-item.open .vn-faq-chevron { background: rgba(201,168,76,0.1); }
-  .vn-faq-a {
-    font-size: 12.5px; color: rgba(245,240,232,0.42);
-    line-height: 1.7; padding: 0 28px 18px 0;
-    animation: fadeUp 0.2s ease both;
-  }
-
   @media (max-width: 900px) {
     .vn-hiw-steps { grid-template-columns: repeat(2, 1fr); }
     .vn-hiw-card { border-right: 1px solid rgba(201,168,76,0.1); }
     .vn-hiw-card:nth-child(odd) { border-right: none; }
-    .vn-hiw-card--vendor { border-color: rgba(122,114,101,0.15); }
     .vn-hiw-arrow { display: none; }
     .vn-hiw-faq-grid { grid-template-columns: 1fr; }
   }
   @media (max-width: 640px) {
     .vn-hiw-section { padding: 60px 20px; }
     .vn-hiw-steps { grid-template-columns: 1fr; }
-    .vn-hiw-card { border-right: 1px solid rgba(201,168,76,0.1) !important; border-bottom: none; }
-    .vn-hiw-card:last-child { border-bottom: 1px solid rgba(201,168,76,0.1); }
+    .vn-hiw-card { border-right: 1px solid rgba(201,168,76,0.1) !important; }
   }
+  /* KEYFRAMES */
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes popupUp { from { opacity: 0; transform: translateY(24px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.85); } }
+  @keyframes floatY { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
 `;

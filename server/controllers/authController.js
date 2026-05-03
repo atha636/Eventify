@@ -36,8 +36,9 @@ exports.register = async (req, res) => {
       otp,
       otpExpires: Date.now() + 5 * 60 * 1000,
       isVerified: false,
-      // Vendors start as pending verification
+      // Vendors start as pending verification and haven't seen the welcome screen
       isProfileVerified: role === "vendor" ? "pending" : "approved",
+      hasSeenWelcome:    role === "vendor" ? false : true, // ← NEW
     });
 
     await sendOTP(email, otp);
@@ -80,6 +81,7 @@ exports.verifyOTP = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
+    // user object returned here includes hasSeenWelcome — frontend uses it to redirect
     res.json({ msg: "Account verified", token, user });
   } catch (err) {
     res.status(500).json(err);
@@ -101,6 +103,7 @@ exports.login = async (req, res) => {
     if (!match) return res.status(400).json({ msg: "Invalid credentials" });
 
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    // user object returned here includes hasSeenWelcome — frontend uses it to redirect
     res.json({ token, user });
   } catch (err) {
     res.status(500).json(err);
@@ -108,11 +111,11 @@ exports.login = async (req, res) => {
 };
 
 // ─────────────────────────────────────────
-// GOOGLE LOGIN — FIXED
+// GOOGLE LOGIN
 // ─────────────────────────────────────────
 exports.googleLogin = async (req, res) => {
   try {
-    const { token, role } = req.body; // ← FIXED: destructure role from request
+    const { token, role } = req.body;
     if (!token) return res.status(400).json({ msg: "No token provided" });
 
     const ticket = await client.verifyIdToken({ idToken: token, audience: process.env.GOOGLE_CLIENT_ID });
@@ -121,16 +124,17 @@ exports.googleLogin = async (req, res) => {
 
     if (!user) {
       // ── NEW USER: use the role they selected on the register page ──
-      const assignedRole = role === "vendor" ? "vendor" : "user"; // safe fallback to "user"
+      const assignedRole = role === "vendor" ? "vendor" : "user";
 
       user = await User.create({
         name,
         email,
         password: null,
         avatar: picture,
-        role: assignedRole,                                              // ← FIXED: use selected role
+        role: assignedRole,
         isVerified: true,
-        isProfileVerified: assignedRole === "vendor" ? "pending" : "approved", // ← FIXED: vendors start pending
+        isProfileVerified: assignedRole === "vendor" ? "pending" : "approved",
+        hasSeenWelcome:    assignedRole === "vendor" ? false : true, // ← NEW
       });
 
       // Notify admin if a new vendor registers via Google
@@ -146,6 +150,7 @@ exports.googleLogin = async (req, res) => {
     // ── EXISTING USER: keep their stored role — do NOT overwrite ──
 
     const jwtToken = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    // user object returned here includes hasSeenWelcome — frontend uses it to redirect
     res.json({ token: jwtToken, user });
   } catch (err) {
     console.error("Google Login Error:", err);
@@ -272,6 +277,35 @@ exports.changePassword = async (req, res) => {
     res.json({ msg: "Password changed successfully" });
   } catch (err) {
     console.error("CHANGE PASSWORD ERROR:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
+
+// ─────────────────────────────────────────
+// MARK VENDOR WELCOME SEEN
+// POST /api/auth/vendor/seen-welcome
+// ─────────────────────────────────────────
+// Called once by VendorWelcome.jsx when the vendor
+// clicks "Go to my Dashboard". Sets hasSeenWelcome = true
+// so they go straight to the dashboard on all future logins.
+exports.markVendorWelcomeSeen = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ msg: "User not found" });
+
+    if (user.role !== "vendor") {
+      return res.status(403).json({ msg: "Only vendors have a welcome screen" });
+    }
+
+    // Idempotent — safe to call multiple times
+    if (!user.hasSeenWelcome) {
+      user.hasSeenWelcome = true;
+      await user.save();
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("markVendorWelcomeSeen ERROR:", err);
     res.status(500).json({ msg: "Server error" });
   }
 };

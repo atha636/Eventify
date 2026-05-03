@@ -56,6 +56,18 @@ const userSchema = new mongoose.Schema({
   },
   // ──────────────────────────────────────────────────────────────────
 
+  // ── Vendor Onboarding Welcome Screen ─────────────────────────────
+  // false = vendor has never seen the "Why Join Evencers" screen
+  //         → redirect to /vendor/welcome after first login
+  // true  = vendor has already seen and dismissed the welcome screen
+  //         → go straight to dashboard on subsequent logins
+  // Only meaningful when role === "vendor"
+  hasSeenWelcome: {
+    type: Boolean,
+    default: false,
+  },
+  // ──────────────────────────────────────────────────────────────────
+
   // ── Favorites ─────────────────────────────────────────────────────
   favorites: [{
     type: mongoose.Schema.Types.ObjectId,

@@ -20,6 +20,7 @@ import AboutUs            from "./pages/AboutUs";
 import Blogs              from "./pages/Blogs";
 import BlogDetail         from "./pages/BlogDetail";
 import CookieConsent      from "./components/CookieConsent";
+import VendorWelcome      from "./pages/VendorWelcome";
 
 // ── Resource pages ──────────────────────────────────────────────────
 import VendorHandbook   from "./pages/resources/VendorHandbook";
@@ -50,9 +51,11 @@ export default function App() {
 
         {/* ── Vendor ── */}
         <Route path="/vendor-dashboard"        element={<VendorDashboard />} />
+        <Route path="/vendor/welcome"          element={<VendorWelcome />} />
         <Route path="/add-service"             element={<AddService />} />
         <Route path="/edit-service/:id"        element={<EditService />} />
         <Route path="/services"                element={<Vendors />} />
+
 
         {/* ── User ── */}
         <Route path="/my-bookings"             element={<UserDashboard />} />

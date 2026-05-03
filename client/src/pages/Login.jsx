@@ -2,12 +2,25 @@ import { useState } from "react";
 import API from "../services/api";
 import { GoogleLogin } from "@react-oauth/google";
 import Logo from "../components/Logo";
+
 export default function Login() {
   const [data, setData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+
+  // ── Redirect logic ──────────────────────────────────────────
+  // New vendors (hasSeenWelcome === false) → /vendor/welcome
+  // Returning vendors / all other roles              → /
+  const redirectAfterLogin = (user) => {
+    if (user.role === "vendor" && user.hasSeenWelcome === false) {
+      window.location.href = "/vendor/welcome";
+    } else {
+      window.location.href = "/";
+    }
+  };
+  // ────────────────────────────────────────────────────────────
 
   const handleSubmit = async () => {
     if (!data.email || !data.password) {
@@ -21,7 +34,7 @@ export default function Login() {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
       setSuccess(true);
-      setTimeout(() => { window.location.href = "/"; }, 1200);
+      setTimeout(() => redirectAfterLogin(res.data.user), 1200);
     } catch (err) {
       setError(err?.response?.data?.msg || "Invalid credentials. Please try again.");
     } finally {
@@ -65,7 +78,6 @@ export default function Login() {
 
         {/* RIGHT PANEL */}
         <div className="lg-right">
-          {/* Mobile-only logo bar */}
           <div className="lg-mobile-top">
             <div className="lg-mobile-logo"><Logo /> Evencers</div>
           </div>
@@ -141,7 +153,6 @@ export default function Login() {
                   <div className="lg-divider"><span>or continue with</span></div>
 
                   <div className="lg-socials">
-                    {/* Google — full width on mobile */}
                     <div className="lg-google-wrap">
                       <GoogleLogin
                         onSuccess={async (credentialResponse) => {
@@ -149,7 +160,7 @@ export default function Login() {
                             const res = await API.post("/auth/google", { token: credentialResponse.credential });
                             localStorage.setItem("token", res.data.token);
                             localStorage.setItem("user", JSON.stringify(res.data.user));
-                            window.location.href = "/";
+                            redirectAfterLogin(res.data.user);
                           } catch (err) {
                             console.error("Google login error:", err);
                             setError("Google login failed");
@@ -188,39 +199,14 @@ const styles = `
     --muted: #7a7265; --border: rgba(201,168,76,0.22); --surface: #faf7f2;
     --error: #b85c5c; --success: #2d6a4f; --white: #ffffff;
   }
-
-  /* ── ROOT LAYOUT ── */
-  .lg-root {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    min-height: 100vh;
-    font-family: 'DM Sans', sans-serif;
-  }
-  @media (max-width: 780px) {
-    .lg-root { grid-template-columns: 1fr; }
-    .lg-left { display: none; }
-  }
-
-  /* ── LEFT PANEL ── */
-  .lg-left {
-    background: var(--ink); position: relative; overflow: hidden;
-    display: flex; align-items: center; padding: 60px 56px;
-  }
+  .lg-root { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; font-family: 'DM Sans', sans-serif; }
+  @media (max-width: 780px) { .lg-root { grid-template-columns: 1fr; } .lg-left { display: none; } }
+  .lg-left { background: var(--ink); position: relative; overflow: hidden; display: flex; align-items: center; padding: 60px 56px; }
   .lg-left-inner { position: relative; z-index: 2; width: 100%; }
-  .lg-logo {
-    font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 600;
-    color: var(--gold); letter-spacing: 0.18em; text-transform: uppercase;
-    margin-bottom: 80px; display: flex; align-items: center; gap: 8px;
-  }
+  .lg-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 600; color: var(--gold); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 80px; display: flex; align-items: center; gap: 8px; }
   .lg-quote-block { margin-bottom: 72px; }
-  .lg-quote-mark {
-    font-family: 'Cormorant Garamond', serif; font-size: 5rem; color: var(--gold);
-    opacity: 0.4; line-height: 0.6; display: block; margin-bottom: 16px;
-  }
-  .lg-quote {
-    font-family: 'Cormorant Garamond', serif; font-size: clamp(1.6rem, 2.8vw, 2.2rem);
-    font-weight: 300; font-style: italic; color: var(--cream); line-height: 1.35; margin-bottom: 16px;
-  }
+  .lg-quote-mark { font-family: 'Cormorant Garamond', serif; font-size: 5rem; color: var(--gold); opacity: 0.4; line-height: 0.6; display: block; margin-bottom: 16px; }
+  .lg-quote { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.6rem, 2.8vw, 2.2rem); font-weight: 300; font-style: italic; color: var(--cream); line-height: 1.35; margin-bottom: 16px; }
   .lg-quote-author { font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
   .lg-stats { display: flex; gap: 0; border-top: 1px solid rgba(201,168,76,0.15); padding-top: 32px; }
   .lg-stat { flex: 1; display: flex; flex-direction: column; gap: 4px; padding-right: 24px; border-right: 1px solid rgba(201,168,76,0.15); }
@@ -232,180 +218,53 @@ const styles = `
   .lg-orb1 { width: 380px; height: 380px; background: var(--gold); top: -80px; right: -100px; }
   .lg-orb2 { width: 280px; height: 280px; background: #7b5ea7; bottom: -60px; left: -40px; }
   .lg-orb3 { width: 180px; height: 180px; background: var(--gold); bottom: 120px; right: 40px; opacity: 0.07; }
-
-  /* ── RIGHT PANEL ── */
-  .lg-right {
-    background: var(--cream);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: 0;
-  }
-
-  /* Mobile-only top logo */
-  .lg-mobile-top {
-    display: none;
-    width: 100%;
-    padding: 20px 24px 0;
-    margin-bottom: 4px;
-  }
-  .lg-mobile-logo {
-    font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; font-weight: 600;
-    color: var(--ink); letter-spacing: 0.14em; text-transform: uppercase;
-    display: flex; align-items: center; gap: 7px;
-  }
-  @media (max-width: 780px) {
-    .lg-mobile-top { display: flex; }
-    .lg-right { justify-content: flex-start; padding-top: 0; }
-  }
-
-  /* Scrollable wrapper so card is never cropped */
-  .lg-card-wrap {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 32px 20px 40px;
-    flex: 1;
-  }
-  @media (max-width: 780px) {
-    .lg-card-wrap { padding: 16px 16px 40px; align-items: flex-start; }
-  }
-
-  /* ── CARD ── */
-  .lg-card {
-    width: 100%;
-    max-width: 420px;
-    background: var(--white);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 40px 36px;
-    box-shadow: 0 12px 48px rgba(14,12,10,0.07);
-    animation: fadeUp 0.5s ease both;
-  }
-  @media (max-width: 480px) {
-    .lg-card { padding: 28px 20px 24px; border-radius: 14px; }
-  }
-
+  .lg-right { background: var(--cream); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 0; }
+  .lg-mobile-top { display: none; width: 100%; padding: 20px 24px 0; margin-bottom: 4px; }
+  .lg-mobile-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; font-weight: 600; color: var(--ink); letter-spacing: 0.14em; text-transform: uppercase; display: flex; align-items: center; gap: 7px; }
+  @media (max-width: 780px) { .lg-mobile-top { display: flex; } .lg-right { justify-content: flex-start; padding-top: 0; } }
+  .lg-card-wrap { width: 100%; display: flex; align-items: center; justify-content: center; padding: 32px 20px 40px; flex: 1; }
+  @media (max-width: 780px) { .lg-card-wrap { padding: 16px 16px 40px; align-items: flex-start; } }
+  .lg-card { width: 100%; max-width: 420px; background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 40px 36px; box-shadow: 0 12px 48px rgba(14,12,10,0.07); animation: fadeUp 0.5s ease both; }
+  @media (max-width: 480px) { .lg-card { padding: 28px 20px 24px; border-radius: 14px; } }
   .lg-card-header { margin-bottom: 28px; }
-  .lg-eyebrow {
-    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
-    color: var(--gold); margin-bottom: 10px;
-  }
-  .lg-card-header h1 {
-    font-family: 'Cormorant Garamond', serif; font-size: clamp(1.7rem, 5vw, 2.1rem);
-    font-weight: 600; color: var(--ink); line-height: 1.15; margin-bottom: 10px;
-  }
+  .lg-eyebrow { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+  .lg-card-header h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.7rem, 5vw, 2.1rem); font-weight: 600; color: var(--ink); line-height: 1.15; margin-bottom: 10px; }
   .lg-sub-text { font-size: 13px; color: var(--muted); }
-
-  /* FIELDS */
   .lg-fields { display: flex; flex-direction: column; gap: 16px; margin-bottom: 18px; }
   .lg-field { display: flex; flex-direction: column; gap: 7px; }
   .lg-label-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px; }
   .lg-field label { font-size: 11px; font-weight: 500; letter-spacing: 0.13em; text-transform: uppercase; color: var(--muted); }
   .lg-forgot { font-size: 11px !important; }
-  .lg-input-wrap {
-    display: flex; align-items: center; gap: 10px;
-    border: 1px solid var(--border); border-radius: 7px; padding: 12px 13px;
-    background: var(--surface); transition: border-color 0.2s, box-shadow 0.2s;
-  }
-  .lg-input-wrap:focus-within {
-    border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.1); background: var(--white);
-  }
+  .lg-input-wrap { display: flex; align-items: center; gap: 10px; border: 1px solid var(--border); border-radius: 7px; padding: 12px 13px; background: var(--surface); transition: border-color 0.2s, box-shadow 0.2s; }
+  .lg-input-wrap:focus-within { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.1); background: var(--white); }
   .lg-icon { font-size: 13px; color: var(--gold); opacity: 0.8; flex-shrink: 0; }
-  .lg-input-wrap input {
-    border: none; background: transparent; font-family: 'DM Sans', sans-serif;
-    font-size: 14px; color: var(--ink); outline: none; width: 100%; min-width: 0;
-  }
+  .lg-input-wrap input { border: none; background: transparent; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink); outline: none; width: 100%; min-width: 0; }
   .lg-input-wrap input::placeholder { color: #bbb4a8; }
   .lg-eye { background: none; border: none; cursor: pointer; font-size: 14px; padding: 0; line-height: 1; flex-shrink: 0; opacity: 0.7; transition: opacity 0.15s; }
   .lg-eye:hover { opacity: 1; }
-
-  .lg-error {
-    font-size: 12.5px; color: var(--error);
-    background: rgba(184,92,92,0.07); border: 1px solid rgba(184,92,92,0.2);
-    border-radius: 6px; padding: 10px 14px; margin-bottom: 14px;
-    display: flex; align-items: flex-start; gap: 8px; line-height: 1.5;
-  }
-
-  /* SUBMIT */
-  .lg-submit {
-    width: 100%; padding: 14px; background: var(--ink); color: var(--white);
-    border: none; border-radius: 7px; font-family: 'DM Sans', sans-serif;
-    font-size: 14px; font-weight: 500; letter-spacing: 0.05em; cursor: pointer;
-    transition: all 0.25s ease; display: flex; align-items: center; justify-content: center;
-    margin-bottom: 20px; min-height: 48px;
-  }
-  .lg-submit:hover:not(:disabled) {
-    background: var(--gold); color: var(--ink);
-    box-shadow: 0 6px 24px rgba(201,168,76,0.3); transform: translateY(-1px);
-  }
+  .lg-error { font-size: 12.5px; color: var(--error); background: rgba(184,92,92,0.07); border: 1px solid rgba(184,92,92,0.2); border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; display: flex; align-items: flex-start; gap: 8px; line-height: 1.5; }
+  .lg-submit { width: 100%; padding: 14px; background: var(--ink); color: var(--white); border: none; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; letter-spacing: 0.05em; cursor: pointer; transition: all 0.25s ease; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; min-height: 48px; }
+  .lg-submit:hover:not(:disabled) { background: var(--gold); color: var(--ink); box-shadow: 0 6px 24px rgba(201,168,76,0.3); transform: translateY(-1px); }
   .lg-submit.loading { opacity: 0.65; pointer-events: none; }
-  .lg-spinner {
-    width: 18px; height: 18px;
-    border: 2px solid rgba(255,255,255,0.3); border-top-color: white;
-    border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block;
-  }
-
-  /* DIVIDER */
+  .lg-spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
   .lg-divider { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
   .lg-divider::before, .lg-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
   .lg-divider span { font-size: 11px; color: var(--muted); white-space: nowrap; letter-spacing: 0.08em; }
-
-  /* SOCIALS — stacked column on mobile so Google doesn't overflow */
-  .lg-socials {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 18px;
-  }
-
-  /* Google button wrapper — force it to fill the container */
-  .lg-google-wrap {
-    width: 100%;
-    overflow: hidden;
-    border-radius: 7px;
-  }
-  /* Override Google's iframe/button to fill width */
-  .lg-google-wrap > div,
-  .lg-google-wrap iframe,
-  .lg-google-wrap > div > div {
-    width: 100% !important;
-  }
-
-  .lg-social-btn {
-    width: 100%;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    padding: 11px; border: 1px solid var(--border); border-radius: 7px;
-    background: var(--surface); font-family: 'DM Sans', sans-serif;
-    font-size: 13px; color: var(--ink); cursor: pointer; transition: all 0.2s;
-  }
+  .lg-socials { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+  .lg-google-wrap { width: 100%; overflow: hidden; border-radius: 7px; }
+  .lg-google-wrap > div, .lg-google-wrap iframe, .lg-google-wrap > div > div { width: 100% !important; }
+  .lg-social-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 11px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--ink); cursor: pointer; transition: all 0.2s; }
   .lg-social-btn:hover { border-color: var(--gold); background: var(--white); box-shadow: 0 2px 12px rgba(201,168,76,0.12); }
-  .lg-social-icon {
-    width: 20px; height: 20px; background: #1877f2; color: var(--white);
-    border-radius: 4px; display: inline-flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 700; flex-shrink: 0;
-  }
-
+  .lg-social-icon { width: 20px; height: 20px; background: #1877f2; color: var(--white); border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
   .lg-terms { font-size: 11px; color: var(--muted); text-align: center; line-height: 1.7; }
   .lg-link { color: var(--gold); text-decoration: none; font-weight: 500; }
   .lg-link:hover { text-decoration: underline; }
-
-  /* SUCCESS */
   .lg-success { text-align: center; padding: 16px 0; animation: fadeUp 0.4s ease both; }
-  .lg-success-ring {
-    width: 64px; height: 64px; border: 2px solid rgba(45,106,79,0.4); border-radius: 50%;
-    display: flex; align-items: center; justify-content: center; font-size: 26px;
-    color: var(--success); margin: 0 auto 20px; background: rgba(45,106,79,0.07);
-    animation: popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275) both;
-  }
+  .lg-success-ring { width: 64px; height: 64px; border: 2px solid rgba(45,106,79,0.4); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; color: var(--success); margin: 0 auto 20px; background: rgba(45,106,79,0.07); animation: popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275) both; }
   .lg-success h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
   .lg-success p { font-size: 13.5px; color: var(--muted); margin-bottom: 28px; }
   .lg-progress-bar { height: 2px; background: var(--border); border-radius: 2px; overflow: hidden; }
   .lg-progress-fill { height: 100%; width: 0; background: var(--gold); animation: progress 1.2s ease forwards; border-radius: 2px; }
-
   @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes spin { to { transform: rotate(360deg); } }
   @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }

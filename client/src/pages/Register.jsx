@@ -46,6 +46,18 @@ export default function Register() {
 
   const otpRefs = useRef([]);
 
+  // ─── SHARED REDIRECT HELPER ──────────────────────────────────────────
+  // New vendors (hasSeenWelcome === false) → /vendor/welcome
+  // All other roles / returning vendors    → /
+  const redirectAfterAuth = (user) => {
+    if (user.role === "vendor" && user.hasSeenWelcome === false) {
+      window.location.href = "/vendor/welcome";
+    } else {
+      window.location.href = "/";
+    }
+  };
+  // ────────────────────────────────────────────────────────────────────
+
   // ─── RESTORE STATE FROM LOCALSTORAGE ────────────────────────────────
   useEffect(() => {
     const savedStep = localStorage.getItem("otp_step");
@@ -193,7 +205,8 @@ export default function Register() {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
       setVerifySuccess(true);
-      setTimeout(() => (window.location.href = "/"), 1200);
+      // ── Use shared redirect: new vendors go to /vendor/welcome ──
+      setTimeout(() => redirectAfterAuth(res.data.user), 1200);
     } catch (err) {
       setError(err?.response?.data?.msg || "Invalid OTP. Please try again.");
       setOtp(["", "", "", "", "", ""]);
@@ -212,15 +225,14 @@ export default function Register() {
         token: credentialResponse.credential,
         role: data.role,
       });
-      // Extract name for the overlay greeting
       const userName = res.data.user?.name || "";
       setGoogleUserName(userName);
 
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
-      // Small extra delay so the loading screen feels intentional, not broken
-      setTimeout(() => { window.location.href = "/"; }, 1000);
+      // ── Use shared redirect: new vendors go to /vendor/welcome ──
+      setTimeout(() => redirectAfterAuth(res.data.user), 1000);
     } catch {
       setGoogleLoading(false);
       setError("Google signup failed. Please try again.");
@@ -280,7 +292,7 @@ export default function Register() {
                   </h2>
                   <p className="otp-subtitle">
                     {verifySuccess
-                      ? "Redirecting you to your dashboard…"
+                      ? "Redirecting you now…"
                       : <><span>We sent a 6-digit code to</span><br /><strong>{data.email}</strong></>
                     }
                   </p>
@@ -532,7 +544,6 @@ const styles = `
     to   { opacity:1; transform:scale(1) translateY(0); }
   }
 
-  /* Icon ring with spinner */
   .gl-icon-ring {
     position: relative;
     width: 72px; height: 72px;
@@ -577,7 +588,6 @@ const styles = `
     margin-bottom: 24px;
   }
 
-  /* Animated dots */
   .gl-dots {
     display: flex; justify-content: center; gap: 8px;
   }
