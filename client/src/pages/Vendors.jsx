@@ -58,7 +58,6 @@ const CATEGORIES = [
   { value: "venues",      label: "Venues",      emoji: "🏛",  count: null,  comingSoon: true  },
 ];
 
-// ── UPDATED PRICE RANGES ─────────────────────────────────────────
 const PRICE_RANGES = [
   { label: "Any",        value: "any",     min: 0,      max: Infinity },
   { label: "₹0–5K",     value: "0-5k",    min: 0,      max: 5000     },
@@ -83,7 +82,6 @@ const TRUST_STATS = [
   { value: "2+",   label: "Cities Covered"    },
 ];
 
-// ─── ALL MAJOR INDIAN CITIES ─────────────────────────────────────
 const INDIAN_CITIES = [
   "Agra","Ahmedabad","Ajmer","Aligarh","Allahabad","Amravati","Amritsar",
   "Asansol","Aurangabad","Bareilly","Belgaum","Bengaluru","Bhilai","Bhiwandi",
@@ -101,76 +99,127 @@ const INDIAN_CITIES = [
   "Vadodara","Varanasi","Vasai-Virar","Vijayawada","Visakhapatnam","Warangal",
 ].sort();
 
-// ─── CITY SELECTOR MODAL ─────────────────────────────────────────
-function CityModal({ onSelect }) {
+// ─── CITY SELECTOR MODAL (fully redesigned, responsive) ─────────
+function CityModal({ onSelect, onBrowseAll }) {
   const [search, setSearch] = useState("");
   const [visible, setVisible] = useState(false);
   const inputRef = useRef(null);
 
   useEffect(() => {
-    setTimeout(() => setVisible(true), 60);
-    setTimeout(() => inputRef.current?.focus(), 200);
+    const t1 = setTimeout(() => setVisible(true), 40);
+    const t2 = setTimeout(() => inputRef.current?.focus(), 220);
+    // Prevent body scroll
+    document.body.style.overflow = "hidden";
+    return () => {
+      clearTimeout(t1); clearTimeout(t2);
+      document.body.style.overflow = "";
+    };
   }, []);
 
-  const filtered = INDIAN_CITIES.filter(c =>
-    c.toLowerCase().includes(search.toLowerCase())
+  const filtered = useMemo(() =>
+    INDIAN_CITIES.filter(c => c.toLowerCase().includes(search.toLowerCase())),
+    [search]
   );
 
   return (
-    <div className={`cm-overlay ${visible ? "cm-visible" : ""}`} role="dialog" aria-modal="true" aria-label="Select your city">
-      <div className="cm-modal">
-        {/* Orbs */}
-        <div className="cm-orb cm-orb1" aria-hidden="true" />
-        <div className="cm-orb cm-orb2" aria-hidden="true" />
+    <div
+      className={`ecm-backdrop ${visible ? "ecm-visible" : ""}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Select your city"
+    >
+      {/* Decorative blobs */}
+      <div className="ecm-blob ecm-blob1" aria-hidden="true" />
+      <div className="ecm-blob ecm-blob2" aria-hidden="true" />
 
-        <div className="cm-header">
-          <div className="cm-logo-wrap"><Logo /></div>
-          <div className="cm-eyebrow"><span className="cm-eyebrow-dot" />Select Your City<span className="cm-eyebrow-dot" /></div>
-          <h2 className="cm-title">Where are you <em>planning your event?</em></h2>
-          <p className="cm-sub">We'll show vendors available in your city. Don't worry — you can change this anytime.</p>
+      <div className="ecm-card">
+        {/* ── Fixed top section ── */}
+        <div className="ecm-top">
+          <div className="ecm-logo-row">
+            <Logo />
+          </div>
+          <p className="ecm-eyebrow">
+            <span className="ecm-dot" />SELECT YOUR CITY<span className="ecm-dot" />
+          </p>
+          <h2 className="ecm-heading">
+            Where are you <em>planning your event?</em>
+          </h2>
+          <p className="ecm-subtext">
+            We'll show vendors near you. You can change your city anytime.
+          </p>
+
+          {/* Browse All */}
+          <button className="ecm-browse-btn" onClick={onBrowseAll} aria-label="Browse vendors across all cities">
+            <span className="ecm-browse-icon" aria-hidden="true">🌏</span>
+            <span className="ecm-browse-text">Browse All Cities</span>
+            <span className="ecm-browse-arrow" aria-hidden="true">→</span>
+          </button>
+
+          <div className="ecm-divider">
+            <span className="ecm-divider-line" aria-hidden="true" />
+            <span className="ecm-divider-label">or choose a specific city</span>
+            <span className="ecm-divider-line" aria-hidden="true" />
+          </div>
+
+          {/* Search */}
+          <div className="ecm-search-box">
+            <span className="ecm-search-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </span>
+            <input
+              ref={inputRef}
+              className="ecm-search-input"
+              type="text"
+              placeholder="Search your city…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              autoComplete="off"
+              aria-label="Search city"
+            />
+            {search && (
+              <button
+                className="ecm-search-clear"
+                onClick={() => setSearch("")}
+                aria-label="Clear search"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="cm-search-wrap">
-          <span className="cm-search-icon" aria-hidden="true">⌕</span>
-          <input
-            ref={inputRef}
-            className="cm-search"
-            placeholder="Search your city…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            autoComplete="off"
-            aria-label="Search city"
-          />
-          {search && <button className="cm-search-clear" onClick={() => setSearch("")} aria-label="Clear search">✕</button>}
-        </div>
-
-        <div className="cm-cities" role="listbox" aria-label="City list">
+        {/* ── Scrollable city list ── */}
+        <div className="ecm-city-scroll" role="listbox" aria-label="City list">
           {filtered.length === 0 ? (
-            <div className="cm-no-results">
-              <span className="cm-no-icon">🏙</span>
-              <p>No city found for "<strong>{search}</strong>"</p>
+            <div className="ecm-empty" role="status">
+              <span className="ecm-empty-icon" aria-hidden="true">🏙️</span>
+              <p>No city found for <strong>"{search}"</strong></p>
+              <span className="ecm-empty-hint">Try a different spelling</span>
             </div>
           ) : (
-            filtered.map(city => (
-              <button
-                key={city}
-                className="cm-city-btn"
-                role="option"
-                onClick={() => onSelect(city)}
-                aria-label={`Select ${city}`}
-              >
-                <span className="cm-city-pin" aria-hidden="true">◉</span>
-                {city}
-                <span className="cm-city-arrow" aria-hidden="true">→</span>
-              </button>
-            ))
+            <div className="ecm-city-grid">
+              {filtered.map(city => (
+                <button
+                  key={city}
+                  className="ecm-city-btn"
+                  role="option"
+                  onClick={() => onSelect(city)}
+                  aria-label={`Select ${city}`}
+                >
+                  <span className="ecm-city-pin" aria-hidden="true">◉</span>
+                  <span className="ecm-city-name">{city}</span>
+                  <span className="ecm-city-arrow" aria-hidden="true">→</span>
+                </button>
+              ))}
+            </div>
           )}
         </div>
 
-        <p className="cm-note">
-          <span className="cm-note-dot" />
+        {/* ── Footer note ── */}
+        <div className="ecm-footer" role="note">
+          <span className="ecm-footer-dot" aria-hidden="true" />
           Currently serving Delhi, Chandigarh & Bombay · More cities launching Q3 2026
-        </p>
+        </div>
       </div>
     </div>
   );
@@ -298,25 +347,36 @@ function DatePickerModal({ value, onChange, onClear, onClose }) {
 
 // ─── ANIMATED COUNTER ───────────────────────────────────────────
 function AnimCount({ target }) {
-  const [n, setN] = useState(0);
+  const [display, setDisplay] = useState("0");
   const hasRun = useRef(false);
   const ref = useRef(null);
+
   useEffect(() => {
     const el = ref.current; if (!el) return;
     const obs = new IntersectionObserver(([e]) => {
       if (e.isIntersecting && !hasRun.current) {
         hasRun.current = true;
-        const num = parseInt(target.replace(/\D/g, ""), 10);
+        const numStr = target.match(/[\d.]+/)?.[0] || "0";
+        const num = parseFloat(numStr);
+        const isDecimal = numStr.includes(".");
+        const rawSuffix = target.replace(/[\d.]/g, "");
         const steps = 30; let i = 0;
-        const tick = setInterval(() => { i++; setN(Math.round((num * i) / steps)); if (i >= steps) clearInterval(tick); }, 35);
+        const tick = setInterval(() => {
+          i++;
+          const current = (num * i) / steps;
+          if (isDecimal) {
+            setDisplay(current.toFixed(numStr.split(".")[1]?.length || 1) + rawSuffix);
+          } else {
+            setDisplay(Math.round(current) + rawSuffix);
+          }
+          if (i >= steps) { clearInterval(tick); setDisplay(target); }
+        }, 35);
       }
     }, { threshold: 0.5 });
     obs.observe(el); return () => obs.disconnect();
   }, [target]);
-  const num = parseInt(target.replace(/\D/g, ""), 10);
-  const suffix = target.replace(/[\d,]/g, "");
-  const hasComma = target.includes(",");
-  return <span ref={ref}>{hasComma ? n.toLocaleString("en-IN") : n}{suffix}</span>;
+
+  return <span ref={ref}>{display}</span>;
 }
 
 const POPULAR = ["Wedding Photographer", "Decor Delhi", "Wedding Decor", "DJ for Party", "Floral Designer", "Banquet Hall"];
@@ -369,15 +429,26 @@ function useUserRole() {
   return role;
 }
 
-// ─── CITY BAR (shown after city selected) ──────────────────────
-function CityBar({ city, onChangCity }) {
+// ─── CITY BAR ──────────────────────────────────────────────────
+function CityBar({ city, onChangCity, onBrowseAll, browseAll }) {
   return (
     <div className="vn-city-bar" role="status" aria-live="polite">
       <span className="vn-city-bar-icon" aria-hidden="true">📍</span>
-      <span>Showing vendors in <strong>{city}</strong></span>
-      <button className="vn-city-bar-change" onClick={onChangCity} aria-label="Change city">
-        Change City
-      </button>
+      {browseAll ? (
+        <span>Showing vendors in <strong>All Cities</strong></span>
+      ) : (
+        <span>Showing vendors in <strong>{city}</strong></span>
+      )}
+      <div className="vn-city-bar-actions">
+        {!browseAll && (
+          <button className="vn-city-bar-all" onClick={onBrowseAll} aria-label="Show all cities">
+            All Cities
+          </button>
+        )}
+        <button className="vn-city-bar-change" onClick={onChangCity} aria-label="Change city">
+          {browseAll ? "Choose City" : "Change City"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -405,14 +476,15 @@ export default function Vendors() {
   const [searchFocused,  setSearchFocused]  = useState(false);
   const [heroVisible,    setHeroVisible]    = useState(false);
 
-  // ── City state ──────────────────────────────────────────────────
   const [selectedCity,   setSelectedCity]   = useState(() => {
     try { return localStorage.getItem("evencers_city") || ""; } catch { return ""; }
   });
   const [showCityModal,  setShowCityModal]  = useState(() => {
     try { return !localStorage.getItem("evencers_city"); } catch { return true; }
   });
-  const [browseAll,      setBrowseAll]      = useState(false);
+  const [browseAll,      setBrowseAll]      = useState(() => {
+    try { return localStorage.getItem("evencers_browse_all") === "true"; } catch { return false; }
+  });
 
   const isNavigatingRef  = useRef(false);
   const searchRef        = useRef(null);
@@ -462,35 +534,31 @@ export default function Vendors() {
     if (newSearch !== current) { isNavigatingRef.current = true; navigate(`/vendors${newSearch ? `?${newSearch}` : ""}`, { replace: true }); }
   }, [search, category, priceRange, sort, dateFilter]);
 
-  // ── Handle city selection ────────────────────────────────────────
   const handleCitySelect = (city) => {
     setSelectedCity(city);
     setBrowseAll(false);
-    try { localStorage.setItem("evencers_city", city); } catch {}
+    try {
+      localStorage.setItem("evencers_city", city);
+      localStorage.setItem("evencers_browse_all", "false");
+    } catch {}
     setShowCityModal(false);
   };
 
-  const handleChangeCity = () => {
-    setShowCityModal(true);
-    setBrowseAll(false);
-  };
+  const handleChangeCity = () => { setShowCityModal(true); };
 
   const handleBrowseAll = () => {
     setBrowseAll(true);
     setShowCityModal(false);
+    try { localStorage.setItem("evencers_browse_all", "true"); } catch {}
   };
 
-  // ── Filtering ────────────────────────────────────────────────────
   const filtered = useMemo(() => {
     let base = dateFilter && availVendors !== null ? availVendors : vendors;
     let list  = [...base];
-
-    // City filter (only if a city is selected and user hasn't opted to browse all)
     if (selectedCity && !browseAll) {
       const cityLower = selectedCity.toLowerCase();
       list = list.filter(v => v.location?.toLowerCase().includes(cityLower));
     }
-
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter((v) => v.title?.toLowerCase().includes(q) || v.location?.toLowerCase().includes(q) || v.serviceType?.toLowerCase().includes(q));
@@ -512,7 +580,6 @@ export default function Vendors() {
     return list;
   }, [vendors, availVendors, dateFilter, search, category, sort, priceRange, selectedCity, browseAll]);
 
-  // ── Check if selected city has no vendors (city coming soon) ──────
   const cityVendorsCount = useMemo(() => {
     if (!selectedCity || browseAll) return null;
     return vendors.filter(v => v.location?.toLowerCase().includes(selectedCity.toLowerCase())).length;
@@ -531,8 +598,7 @@ export default function Vendors() {
       <style>{styles}</style>
       <SEOHead category={category} search={search} dateFilter={dateFilter} count={vendors.length || 20} />
 
-      {/* ── CITY SELECTOR MODAL ── */}
-      {showCityModal && <CityModal onSelect={handleCitySelect} />}
+      {showCityModal && <CityModal onSelect={handleCitySelect} onBrowseAll={handleBrowseAll} />}
 
       <div className="vn-root">
         <Navbar />
@@ -602,9 +668,8 @@ export default function Vendors() {
           </div>
         </header>
 
-        {/* ── CITY BAR ── */}
-        {selectedCity && !showCityModal && (
-          <CityBar city={selectedCity} onChangCity={handleChangeCity} />
+        {(selectedCity || browseAll) && !showCityModal && (
+          <CityBar city={selectedCity} browseAll={browseAll} onChangCity={handleChangeCity} onBrowseAll={handleBrowseAll} />
         )}
 
         {/* ── CATEGORY STRIP ── */}
@@ -620,7 +685,6 @@ export default function Vendors() {
           </div>
         </nav>
 
-        {/* ── TOOLBAR ── */}
         {!isCategoryComingSoon && !showCityComingSoon && (
           <div className="vn-toolbar" role="toolbar" aria-label="Filter and sort vendors">
             <div className="vn-toolbar-left">
@@ -628,7 +692,7 @@ export default function Vendors() {
                 {(loading || dateLoading) ? (
                   <span className="vn-result-loading"><span className="vn-pulse" />Finding vendors…</span>
                 ) : (
-                  <><strong>{filtered.length}</strong> vendor{filtered.length !== 1 ? "s" : ""}{selectedCity && !browseAll ? <> in <em>{selectedCity}</em></> : null}{dateFilter && <> available on <em>{dateLabel}</em></>}{search && !dateFilter && <> matching "<em>{search}</em>"</>}</>
+                  <><strong>{filtered.length}</strong> vendor{filtered.length !== 1 ? "s" : ""}{selectedCity && !browseAll ? <> in <em>{selectedCity}</em></> : browseAll ? <> across <em>all cities</em></> : null}{dateFilter && <> available on <em>{dateLabel}</em></>}{search && !dateFilter && <> matching "<em>{search}</em>"</>}</>
                 )}
               </span>
               {hasActiveFilters && (<button className="vn-clear-btn" onClick={clearAll} aria-label="Clear all filters">✕ Clear all</button>)}
@@ -652,7 +716,6 @@ export default function Vendors() {
           </div>
         )}
 
-        {/* ── PRICE RANGE FILTER BAR ── */}
         {!isCategoryComingSoon && !showCityComingSoon && (
           <div className="vn-price-range-bar" role="group" aria-label="Filter by price range">
             <span className="vn-price-range-label">Budget:</span>
@@ -664,7 +727,6 @@ export default function Vendors() {
           </div>
         )}
 
-        {/* ── DATE BANNER ── */}
         {dateFilter && !dateLoading && (
           <div className="vn-date-banner" role="status" aria-live="polite">
             <span className="vn-date-banner-icon" aria-hidden="true">📅</span>
@@ -673,7 +735,6 @@ export default function Vendors() {
           </div>
         )}
 
-        {/* ── ACTIVE FILTER CHIPS ── */}
         {hasActiveFilters && !isCategoryComingSoon && !showCityComingSoon && (
           <div className="vn-filter-chips" aria-label="Active filters">
             {category !== "all" && (<span className="vn-chip">{activeCat.emoji} {activeCat.label}<button onClick={() => setCategory("all")} aria-label={`Remove ${activeCat.label} filter`}>✕</button></span>)}
@@ -682,16 +743,11 @@ export default function Vendors() {
           </div>
         )}
 
-        {/* ── CONTENT ── */}
         <main className="vn-content" id="vendor-results" aria-label="Vendor listings">
           {isCategoryComingSoon ? (
             <ComingSoonState category={category} onClear={clearAll} />
           ) : showCityComingSoon ? (
-            <CityComingSoon
-              city={selectedCity}
-              onChangeCity={handleChangeCity}
-              onBrowseAll={handleBrowseAll}
-            />
+            <CityComingSoon city={selectedCity} onChangeCity={handleChangeCity} onBrowseAll={handleBrowseAll} />
           ) : (loading || dateLoading) ? (
             <div className={`vn-grid ${layout}`} aria-busy="true" aria-label="Loading vendors">
               {[...Array(6)].map((_, i) => (<div key={i} className={`vn-skeleton ${layout === "list" ? "vn-skeleton-list" : ""}`} style={{ animationDelay: `${i * 0.07}s` }} aria-hidden="true" />))}
@@ -723,7 +779,6 @@ export default function Vendors() {
           )}
         </main>
 
-        {/* ── WHY EVENCERS SECTION ── */}
         {!loading && !search && category === "all" && !dateFilter && (
           <section className="vn-why-section" aria-labelledby="why-heading">
             <div className="vn-why-inner">
@@ -752,7 +807,6 @@ export default function Vendors() {
           </section>
         )}
 
-        {/* ── HOW IT WORKS ── */}
         {!loading && vendors.length > 0 && (
           <section className="vn-hiw-section" id="how-it-works" ref={howItWorksRef} aria-labelledby="hiw-heading">
             <div className="vn-hiw-inner">
@@ -813,7 +867,6 @@ export default function Vendors() {
           </section>
         )}
 
-        {/* ── FOOTER CTA ── */}
         {!loading && vendors.length > 0 && (
           <section className="vn-footer-cta" aria-labelledby="cta-heading">
             <div className="vn-footer-orb" aria-hidden="true" />
@@ -852,91 +905,253 @@ const styles = `
   }
   .vn-root { font-family: 'DM Sans', sans-serif; background: var(--cream); min-height: 100vh; color: var(--ink); }
 
-  /* ═══ CITY MODAL ═══════════════════════════════════════════════ */
-  .cm-overlay {
+  /* ══════════════════════════════════════════════════════════════
+     CITY MODAL — Redesigned, fully responsive
+  ══════════════════════════════════════════════════════════════ */
+  .ecm-backdrop {
     position: fixed; inset: 0; z-index: 2000;
-    background: rgba(14,12,10,0.88); backdrop-filter: blur(14px);
     display: flex; align-items: center; justify-content: center;
-    padding: 20px;
-    opacity: 0; transition: opacity 0.4s ease;
+    padding: 16px;
+    background: rgba(8, 7, 6, 0.82);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    opacity: 0;
+    transition: opacity 0.35s ease;
   }
-  .cm-overlay.cm-visible { opacity: 1; }
-  .cm-modal {
-    position: relative; overflow: hidden;
-    background: var(--ink-soft); border: 1px solid rgba(201,168,76,0.2);
-    border-radius: 28px; width: min(560px, 97vw); max-height: 90vh;
-    display: flex; flex-direction: column;
-    box-shadow: 0 48px 120px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
-    animation: cmUp 0.45s cubic-bezier(0.34,1.15,0.64,1) both 0.05s;
+  .ecm-backdrop.ecm-visible { opacity: 1; }
+
+  /* Decorative blobs behind the card */
+  .ecm-blob {
+    position: fixed; border-radius: 50%;
+    filter: blur(120px); pointer-events: none; z-index: 0;
   }
-  .cm-orb {
-    position: absolute; border-radius: 50%;
-    filter: blur(100px); opacity: 0.13; pointer-events: none;
+  .ecm-blob1 {
+    width: 480px; height: 480px;
+    background: radial-gradient(circle, #c9a84c 0%, transparent 70%);
+    opacity: 0.12; top: -80px; left: -80px;
   }
-  .cm-orb1 { width: 400px; height: 400px; background: var(--gold); top: -120px; left: -80px; }
-  .cm-orb2 { width: 260px; height: 260px; background: #7b5ea7; bottom: -60px; right: -40px; }
-  .cm-header {
+  .ecm-blob2 {
+    width: 340px; height: 340px;
+    background: radial-gradient(circle, #7b5ea7 0%, transparent 70%);
+    opacity: 0.1; bottom: -60px; right: -40px;
+  }
+
+  .ecm-card {
     position: relative; z-index: 1;
-    padding: 40px 36px 28px; text-align: center; border-bottom: 1px solid rgba(201,168,76,0.12);
+    width: 100%;
+    max-width: 540px;
+    max-height: calc(100vh - 32px);
+    background: #191714;
+    border: 1px solid rgba(201,168,76,0.22);
+    border-radius: 24px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow:
+      0 2px 0 rgba(255,255,255,0.04) inset,
+      0 40px 100px rgba(0,0,0,0.65),
+      0 0 0 1px rgba(0,0,0,0.4);
+    animation: ecmSlideUp 0.42s cubic-bezier(0.34, 1.18, 0.64, 1) both;
   }
-  .cm-logo-wrap { display: flex; justify-content: center; margin-bottom: 20px; }
-  .cm-logo-wrap img, .cm-logo-wrap svg { width: 36px; height: 36px; }
-  .cm-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 10px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--gold); margin-bottom: 14px; }
-  .cm-eyebrow-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--gold); opacity: 0.6; }
-  .cm-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 300; color: var(--white); margin-bottom: 10px; line-height: 1.15; }
-  .cm-title em { font-style: italic; color: var(--gold-light); }
-  .cm-sub { font-size: 13px; color: rgba(245,240,232,0.42); line-height: 1.65; max-width: 380px; margin: 0 auto; }
-  .cm-search-wrap {
-    position: relative; z-index: 1;
-    display: flex; align-items: center;
-    margin: 20px 28px 12px; background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(201,168,76,0.2); border-radius: 12px;
-    padding: 10px 14px 10px 18px; transition: border-color 0.2s, box-shadow 0.2s;
+
+  /* ── Fixed top section (logo, title, search) ── */
+  .ecm-top {
+    flex-shrink: 0;
+    padding: 32px 28px 16px;
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
   }
-  .cm-search-wrap:focus-within { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.12); }
-  .cm-search-icon { font-size: 18px; color: rgba(245,240,232,0.35); margin-right: 10px; flex-shrink: 0; }
-  .cm-search {
+
+  .ecm-logo-row {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 18px;
+  }
+  .ecm-logo-row img,
+  .ecm-logo-row svg { width: 40px; height: 40px; }
+
+  .ecm-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 9.5px; letter-spacing: 0.28em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 12px; font-weight: 500;
+  }
+  .ecm-dot {
+    display: inline-block; width: 4px; height: 4px;
+    border-radius: 50%; background: var(--gold); opacity: 0.55;
+  }
+
+  .ecm-heading {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.55rem, 5vw, 2rem);
+    font-weight: 300;
+    color: #f5f0e8;
+    line-height: 1.18;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .ecm-heading em { font-style: italic; color: #e8d5a3; }
+
+  .ecm-subtext {
+    font-size: 12.5px; color: rgba(245,240,232,0.38);
+    text-align: center; line-height: 1.6;
+    margin-bottom: 20px;
+    max-width: 340px;
+  }
+
+  /* Browse All button */
+  .ecm-browse-btn {
+    width: 100%;
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 18px;
+    background: rgba(201,168,76,0.09);
+    border: 1px solid rgba(201,168,76,0.28);
+    border-radius: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 500;
+    color: #e8d5a3;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    margin-bottom: 16px;
+  }
+  .ecm-browse-btn:hover {
+    background: rgba(201,168,76,0.16);
+    border-color: var(--gold);
+    color: #fff;
+  }
+  .ecm-browse-icon { font-size: 1.2rem; flex-shrink: 0; }
+  .ecm-browse-text { flex: 1; text-align: left; }
+  .ecm-browse-arrow { font-size: 13px; color: var(--gold); opacity: 0.7; flex-shrink: 0; }
+
+  /* Divider */
+  .ecm-divider {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; margin-bottom: 14px;
+  }
+  .ecm-divider-line {
+    flex: 1; height: 1px;
+    background: rgba(201,168,76,0.1);
+  }
+  .ecm-divider-label {
+    font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(245,240,232,0.22); white-space: nowrap;
+  }
+
+  /* Search box */
+  .ecm-search-box {
+    width: 100%;
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(201,168,76,0.18);
+    border-radius: 12px;
+    padding: 11px 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .ecm-search-box:focus-within {
+    border-color: rgba(201,168,76,0.55);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.1);
+  }
+  .ecm-search-icon { color: rgba(245,240,232,0.3); flex-shrink: 0; display: flex; }
+  .ecm-search-input {
     flex: 1; background: none; border: none; outline: none;
-    font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px; color: #f5f0e8;
   }
-  .cm-search::placeholder { color: rgba(245,240,232,0.28); }
-  .cm-search-clear { background: none; border: none; cursor: pointer; font-size: 11px; color: rgba(245,240,232,0.4); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background 0.2s, color 0.2s; }
-  .cm-search-clear:hover { background: rgba(255,255,255,0.1); color: var(--white); }
-  .cm-cities {
-    position: relative; z-index: 1;
-    flex: 1; overflow-y: auto; padding: 4px 28px 12px;
-    display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;
-    scrollbar-width: thin; scrollbar-color: rgba(201,168,76,0.2) transparent;
+  .ecm-search-input::placeholder { color: rgba(245,240,232,0.25); }
+  .ecm-search-clear {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: rgba(255,255,255,0.07); border: none;
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(245,240,232,0.45); cursor: pointer; flex-shrink: 0;
+    transition: background 0.18s, color 0.18s;
   }
-  .cm-cities::-webkit-scrollbar { width: 4px; }
-  .cm-cities::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.2); border-radius: 4px; }
-  .cm-city-btn {
+  .ecm-search-clear:hover { background: rgba(255,255,255,0.14); color: #f5f0e8; }
+
+  /* ── Scrollable city list ── */
+  .ecm-city-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 14px 0;
+    /* Custom scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(201,168,76,0.18) transparent;
+  }
+  .ecm-city-scroll::-webkit-scrollbar { width: 4px; }
+  .ecm-city-scroll::-webkit-scrollbar-thumb {
+    background: rgba(201,168,76,0.18); border-radius: 4px;
+  }
+
+  .ecm-city-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 7px;
+    padding-bottom: 14px;
+  }
+
+  .ecm-city-btn {
     display: flex; align-items: center; gap: 8px;
-    padding: 10px 14px; background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(201,168,76,0.1); border-radius: 10px;
-    font-family: 'DM Sans', sans-serif; font-size: 13px; color: rgba(245,240,232,0.72);
-    cursor: pointer; text-align: left; transition: all 0.2s; white-space: nowrap; overflow: hidden;
+    padding: 10px 13px;
+    background: rgba(255,255,255,0.035);
+    border: 1px solid rgba(201,168,76,0.09);
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12.5px; color: rgba(245,240,232,0.65);
+    cursor: pointer; text-align: left;
+    transition: background 0.18s, border-color 0.18s, color 0.18s;
+    white-space: nowrap; overflow: hidden;
   }
-  .cm-city-btn:hover { background: rgba(201,168,76,0.1); border-color: rgba(201,168,76,0.35); color: var(--gold-light); }
-  .cm-city-pin { font-size: 10px; color: var(--gold); opacity: 0.6; flex-shrink: 0; }
-  .cm-city-arrow { margin-left: auto; font-size: 11px; color: var(--gold); opacity: 0; transition: opacity 0.18s; flex-shrink: 0; }
-  .cm-city-btn:hover .cm-city-arrow { opacity: 1; }
-  .cm-no-results { grid-column: 1/-1; text-align: center; padding: 40px 20px; color: rgba(245,240,232,0.35); font-size: 13px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
-  .cm-no-icon { font-size: 2.2rem; opacity: 0.4; }
-  .cm-note {
-    position: relative; z-index: 1;
-    padding: 14px 28px 20px; font-size: 11px; color: rgba(245,240,232,0.28);
-    text-align: center; letter-spacing: 0.04em; border-top: 1px solid rgba(201,168,76,0.1);
+  .ecm-city-btn:hover {
+    background: rgba(201,168,76,0.1);
+    border-color: rgba(201,168,76,0.32);
+    color: #e8d5a3;
+  }
+  .ecm-city-pin {
+    font-size: 9px; color: var(--gold);
+    opacity: 0.55; flex-shrink: 0;
+  }
+  .ecm-city-name { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+  .ecm-city-arrow {
+    font-size: 10px; color: var(--gold);
+    opacity: 0; transition: opacity 0.15s; flex-shrink: 0;
+  }
+  .ecm-city-btn:hover .ecm-city-arrow { opacity: 0.8; }
+
+  /* Empty search state */
+  .ecm-empty {
+    padding: 40px 20px;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 8px; text-align: center;
+  }
+  .ecm-empty-icon { font-size: 2.4rem; opacity: 0.3; }
+  .ecm-empty p { font-size: 13px; color: rgba(245,240,232,0.35); line-height: 1.6; }
+  .ecm-empty-hint { font-size: 11px; color: rgba(245,240,232,0.2); }
+
+  /* Footer note */
+  .ecm-footer {
+    flex-shrink: 0;
+    padding: 12px 20px;
+    border-top: 1px solid rgba(201,168,76,0.09);
+    font-size: 10.5px; color: rgba(245,240,232,0.22);
+    text-align: center; letter-spacing: 0.03em;
     display: flex; align-items: center; justify-content: center; gap: 7px;
   }
-  .cm-note-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); opacity: 0.4; flex-shrink: 0; }
-  .cm-coming-btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 16px; }
-  @keyframes cmUp { from { opacity:0; transform: translateY(32px) scale(0.95); } to { opacity:1; transform: translateY(0) scale(1); } }
+  .ecm-footer-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--gold); opacity: 0.35; flex-shrink: 0;
+  }
+
+  @keyframes ecmSlideUp {
+    from { opacity: 0; transform: translateY(28px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0)    scale(1);    }
+  }
+
+  /* Mobile: single column cities, tighter padding */
   @media (max-width: 480px) {
-    .cm-header { padding: 28px 20px 20px; }
-    .cm-search-wrap { margin: 16px 16px 10px; }
-    .cm-cities { padding: 4px 16px 12px; grid-template-columns: 1fr; }
-    .cm-note { padding: 12px 16px 18px; }
+    .ecm-top { padding: 24px 18px 14px; }
+    .ecm-city-scroll { padding: 12px 10px 0; }
+    .ecm-city-grid { grid-template-columns: 1fr; gap: 6px; }
   }
 
   /* ═══ CITY BAR ═════════════════════════════════════════════════ */
@@ -946,14 +1161,22 @@ const styles = `
     padding: 10px 32px; font-size: 13px; color: var(--ink);
   }
   .vn-city-bar-icon { font-size: 14px; flex-shrink: 0; }
+  .vn-city-bar-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .vn-city-bar-all {
+    font-size: 12px; color: var(--muted); background: none;
+    border: 1px solid rgba(14,12,10,0.12); border-radius: 20px; padding: 4px 14px;
+    cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 400;
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .vn-city-bar-all:hover { background: rgba(14,12,10,0.05); border-color: var(--muted); color: var(--ink); }
   .vn-city-bar-change {
-    margin-left: auto; font-size: 12px; color: var(--gold); background: none;
+    font-size: 12px; color: var(--gold); background: none;
     border: 1px solid rgba(201,168,76,0.3); border-radius: 20px; padding: 4px 14px;
     cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 500;
     transition: all 0.2s; white-space: nowrap;
   }
   .vn-city-bar-change:hover { background: var(--gold-dim); border-color: var(--gold); }
-  @media (max-width: 640px) { .vn-city-bar { padding: 10px 16px; } }
+  @media (max-width: 640px) { .vn-city-bar { padding: 10px 16px; font-size: 12px; } }
 
   /* ─── HERO ─── */
   .vn-hero { position: relative; background: var(--ink); overflow: hidden; padding: 108px 32px 72px; text-align: center; opacity: 0; transform: translateY(10px); transition: opacity 0.6s ease, transform 0.6s ease; }
@@ -1255,4 +1478,5 @@ const styles = `
   @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
   @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.85); } }
   @keyframes floatY { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
+  .cm-coming-btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 16px; }
 `;
