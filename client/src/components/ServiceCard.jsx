@@ -1,10 +1,169 @@
 import API from "../services/api";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 
 function Portal({ children }) {
   return createPortal(children, document.body);
+}
+
+// ── Image Carousel ───────────────────────────────────────────────
+function ImageCarousel({ images, vendorId, vendorTitle, onGalleryClick }) {
+  const [activeIdx, setActiveIdx]       = useState(0);
+  const [prevIdx, setPrevIdx]           = useState(null);
+  const [transitioning, setTransition]  = useState(false);
+  const [paused, setPaused]             = useState(false);
+  const [imgLoaded, setImgLoaded]       = useState({});
+
+  const autoTimer   = useRef(null);
+  const pauseTimer  = useRef(null);
+  const touchStartX = useRef(null);
+  const touchStartY = useRef(null);
+
+  const hasMultiple = images && images.length > 1;
+
+  const goTo = useCallback((next, fromAuto = false) => {
+    if (transitioning || next === activeIdx) return;
+    if (!fromAuto) {
+      clearInterval(autoTimer.current);
+      clearTimeout(pauseTimer.current);
+      setPaused(true);
+      pauseTimer.current = setTimeout(() => setPaused(false), 5000);
+    }
+    setPrevIdx(activeIdx);
+    setActiveIdx(next);
+    setTransition(true);
+    setTimeout(() => { setPrevIdx(null); setTransition(false); }, 500);
+  }, [activeIdx, transitioning]);
+
+  // Auto-slide
+  useEffect(() => {
+    if (!hasMultiple || paused) return;
+    autoTimer.current = setInterval(() => {
+      setActiveIdx(cur => {
+        const next = (cur + 1) % images.length;
+        setPrevIdx(cur);
+        setTransition(true);
+        setTimeout(() => { setPrevIdx(null); setTransition(false); }, 500);
+        return next;
+      });
+    }, 3200);
+    return () => clearInterval(autoTimer.current);
+  }, [hasMultiple, paused, images?.length]);
+
+  // Swipe
+  const onTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+  const onTouchEnd = (e) => {
+    if (touchStartX.current === null || !hasMultiple) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current);
+    if (Math.abs(dx) > 36 && dy < 60) {
+      const len = images.length;
+      if (dx < 0) goTo((activeIdx + 1) % len);
+      else        goTo((activeIdx - 1 + len) % len);
+    }
+    touchStartX.current = null;
+  };
+
+  const handleImageClick = (e) => {
+    e.stopPropagation();
+    onGalleryClick(e);
+  };
+
+  const handleArrow = (e, dir) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const len = images.length;
+    goTo(dir === "next" ? (activeIdx + 1) % len : (activeIdx - 1 + len) % len);
+  };
+
+  const handleDotClick = (e, i) => {
+    e.stopPropagation();
+    e.preventDefault();
+    goTo(i);
+  };
+
+  if (!images || images.length === 0) {
+    return <div className="sc-img-fallback"><span>📷</span></div>;
+  }
+
+  return (
+    <div
+      className="sc-carousel"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      onClick={handleImageClick}
+    >
+      {/* Outgoing slide */}
+      {prevIdx !== null && (
+        <img
+          src={images[prevIdx]}
+          alt=""
+          className="sc-carousel-slide sc-slide-out"
+        />
+      )}
+
+      {/* Active slide */}
+      <img
+        key={activeIdx}
+        src={images[activeIdx]}
+        alt={vendorTitle}
+        className={`sc-carousel-slide sc-slide-in ${imgLoaded[activeIdx] ? "loaded" : ""}`}
+        onLoad={() => setImgLoaded(p => ({ ...p, [activeIdx]: true }))}
+        draggable={false}
+      />
+
+      {/* Gradient overlay */}
+      <div className="sc-carousel-overlay" />
+
+      {/* Progress bar */}
+      {hasMultiple && !paused && (
+        <div className="sc-carousel-progress" key={`prog-${activeIdx}`}>
+          <div className="sc-carousel-progress-fill" />
+        </div>
+      )}
+
+      {/* Arrows — show on hover */}
+      {hasMultiple && (
+        <>
+          <button
+            className="sc-carousel-arrow sc-arrow-prev"
+            onClick={(e) => handleArrow(e, "prev")}
+            aria-label="Previous image"
+          >‹</button>
+          <button
+            className="sc-carousel-arrow sc-arrow-next"
+            onClick={(e) => handleArrow(e, "next")}
+            aria-label="Next image"
+          >›</button>
+        </>
+      )}
+
+      {/* Dots */}
+      {hasMultiple && images.length <= 10 && (
+        <div className="sc-carousel-dots">
+          {images.map((_, i) => (
+            <button
+              key={i}
+              className={`sc-carousel-dot ${i === activeIdx ? "active" : ""}`}
+              onClick={(e) => handleDotClick(e, i)}
+              aria-label={`Go to image ${i + 1}`}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Image counter for 10+ */}
+      {hasMultiple && images.length > 10 && (
+        <div className="sc-img-counter">{activeIdx + 1}/{images.length}</div>
+      )}
+    </div>
+  );
 }
 
 // ── Share Modal ──────────────────────────────────────────────────
@@ -184,9 +343,7 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
   const startingPrice = vendor.packages?.[0]?.price;
   const packageCount  = Array.isArray(vendor.packages) ? vendor.packages.length : 0;
   const hasGallery    = vendor.images?.length > 0;
-
-  // vendorId is populated from backend with .populate("vendorId", "isVendorVerified")
-  const isVerified = vendor.vendorId?.isVendorVerified ?? vendor.isVendorVerified ?? false;
+  const isVerified    = vendor.vendorId?.isVendorVerified ?? vendor.isVendorVerified ?? false;
 
   useEffect(() => {
     if (!isLoggedIn) return;
@@ -263,41 +420,25 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
 
       <div className="sc-card" onClick={goToDetail}>
 
-        {/* IMAGE */}
-        <div
-          className={`sc-img-wrap ${hasGallery ? "sc-img-clickable" : ""}`}
-          onClick={goToGallery}
-          title={hasGallery ? "View full gallery" : undefined}
-        >
-          {!imgError && vendor.images?.[0] ? (
-            <img src={vendor.images[0]} alt={vendor.title} className="sc-img" onError={() => setImgError(true)} />
+        {/* IMAGE CAROUSEL */}
+        <div className="sc-img-wrap">
+          {!imgError && vendor.images?.length > 0 ? (
+            <ImageCarousel
+              images={vendor.images}
+              vendorId={vendor._id}
+              vendorTitle={vendor.title}
+              onGalleryClick={goToGallery}
+            />
           ) : (
-            <div className="sc-img-fallback"><span>📷</span></div>
+            <div className="sc-img-fallback" onClick={goToGallery}><span>📷</span></div>
           )}
 
-          <div className="sc-img-overlay" />
-
-          {vendor.images?.length > 1 && (
-            <div className="sc-gallery-hint">
-              <span className="sc-gallery-hint-icon">⊞</span>
-              <span>View all {vendor.images.length} photos</span>
-            </div>
-          )}
-
-          {/* ── TOP-LEFT: Verified gold badge ── */}
+          {/* TOP-LEFT: Verified badge */}
           {isVerified && (
             <div className="sc-verified-wrap">
               <span className="sc-verified-badge">
-                {/* Gold shield / star icon */}
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-                  <path
-                    d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
-                    fill="currentColor"
-                    stroke="currentColor"
-                    strokeWidth="1"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
+                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 Verified
               </span>
@@ -338,7 +479,7 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
             </div>
           )}
 
-          {/* BOTTOM-LEFT: package count badge only */}
+          {/* BOTTOM-LEFT: package count badge */}
           <div className="sc-bottom-badges">
             {packageCount > 0 && (
               <span className="sc-badge">
@@ -462,78 +603,155 @@ const cardStyles = `
   .sc-card { font-family:'DM Sans',sans-serif; background:var(--white); border:1px solid var(--border); border-radius:12px; overflow:hidden; cursor:pointer; transition:transform 0.28s ease,box-shadow 0.28s ease,border-color 0.28s ease; display:flex; flex-direction:column; }
   .sc-card:hover { transform:translateY(-5px); box-shadow:0 16px 48px rgba(14,12,10,0.1),0 0 0 1px var(--gold); border-color:var(--gold); }
 
-  /* ── IMAGE ── */
+  /* ── IMAGE WRAP ── */
   .sc-img-wrap { position:relative; height:210px; overflow:hidden; background:#e8e2d8; flex-shrink:0; border-radius:12px 12px 0 0; }
-  .sc-img-clickable { cursor:pointer; }
-  .sc-img { width:100%; height:100%; object-fit:cover; object-position:center; transition:transform 0.5s ease; display:block; }
-  .sc-card:hover .sc-img { transform:scale(1.02); }
-  .sc-img-overlay { position:absolute; inset:0; background:linear-gradient(to top,rgba(14,12,10,0.5) 0%,transparent 55%); pointer-events:none; }
-  .sc-img-fallback { width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#ede8e0,#e0d8cc); font-size:2.5rem; color:var(--muted); }
-  .sc-gallery-hint { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:8px; color:white; font-size:12.5px; letter-spacing:0.05em; font-weight:500; background:rgba(14,12,10,0); transition:background 0.25s ease; opacity:0; pointer-events:none; }
-  .sc-img-wrap:hover .sc-gallery-hint { background:rgba(14,12,10,0.4); opacity:1; }
-  .sc-gallery-hint-icon { font-size:1.1rem; }
+  .sc-img-fallback { width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#ede8e0,#e0d8cc); font-size:2.5rem; color:var(--muted); cursor:pointer; }
 
-  /* ── TOP-LEFT: VERIFIED GOLD BADGE ── */
-  .sc-verified-wrap {
-    position: absolute;
-    top: 11px;
-    left: 11px;
-    z-index: 4;
-    animation: scVerifiedIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
-  }
-  .sc-verified-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 10.5px;
-    font-weight: 600;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-
-    /* Gold gradient fill */
-    background: linear-gradient(135deg, #c9a84c 0%, #e8d5a3 50%, #b8922e 100%);
-    color: #3a2a00;
-
-    /* Glowing gold border */
-    border: 1px solid rgba(232,213,163,0.6);
-    border-radius: 20px;
-    padding: 5px 11px 5px 9px;
-    white-space: nowrap;
-
-    /* Depth shadow with gold glow */
-    box-shadow:
-      0 2px 12px rgba(201,168,76,0.45),
-      0 1px 3px rgba(0,0,0,0.2),
-      inset 0 1px 0 rgba(255,255,255,0.35);
-
-    /* Shine overlay via pseudo — handled below */
+  /* ── CAROUSEL ── */
+  .sc-carousel {
     position: relative;
+    width: 100%;
+    height: 100%;
     overflow: hidden;
+    cursor: pointer;
   }
 
-  /* Animated shine sweep */
-  .sc-verified-badge::after {
-    content: '';
+  /* Slides */
+  .sc-carousel-slide {
     position: absolute;
     inset: 0;
-    background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.45) 50%, transparent 65%);
-    transform: translateX(-100%);
-    animation: scVerifiedShine 3s ease 0.5s infinite;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+  .sc-slide-out {
+    z-index: 1;
+    animation: scSlideOut 0.5s ease forwards;
+  }
+  .sc-slide-in {
+    z-index: 2;
+    opacity: 0;
+    animation: scSlideIn 0.5s ease forwards;
+  }
+  .sc-slide-in.loaded {
+    animation: scSlideIn 0.5s ease forwards, scKenBurns 7s ease forwards;
   }
 
-  @keyframes scVerifiedIn {
-    from { opacity:0; transform:scale(0.7) translateY(-4px); }
-    to   { opacity:1; transform:scale(1) translateY(0); }
+  /* Gradient overlay — z:3 */
+  .sc-carousel-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    background: linear-gradient(
+      to top,
+      rgba(14,12,10,0.52) 0%,
+      rgba(14,12,10,0.18) 40%,
+      transparent 70%
+    );
   }
-  @keyframes scVerifiedShine {
-    0%   { transform: translateX(-100%); }
-    40%  { transform: translateX(200%); }
-    100% { transform: translateX(200%); }
+
+  /* Progress bar — z:4 */
+  .sc-carousel-progress {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    z-index: 4;
+    pointer-events: none;
+    background: rgba(255,255,255,0.15);
   }
+  .sc-carousel-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light));
+    width: 0;
+    animation: scProgress 3.2s linear forwards;
+  }
+
+  /* Arrows — z:5, show on .sc-img-wrap hover */
+  .sc-carousel-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 5;
+    pointer-events: all;
+    width: 30px; height: 30px;
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(6px);
+    border: none;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    color: var(--ink);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.22s ease, background 0.18s ease, transform 0.18s ease;
+    line-height: 1;
+    padding-bottom: 1px;
+  }
+  .sc-img-wrap:hover .sc-carousel-arrow { opacity: 1; }
+  .sc-carousel-arrow:hover {
+    background: var(--gold);
+    color: var(--ink);
+    transform: translateY(-50%) scale(1.1);
+  }
+  .sc-arrow-prev { left: 10px; }
+  .sc-arrow-next { right: 10px; }
+
+  /* Dots — z:6 */
+  .sc-carousel-dots {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 6;
+    display: flex;
+    gap: 5px;
+    pointer-events: none;
+  }
+  .sc-carousel-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.45);
+    border: none;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    padding: 0;
+    pointer-events: all;
+    flex-shrink: 0;
+  }
+  .sc-carousel-dot.active {
+    background: var(--gold);
+    transform: scale(1.5);
+    box-shadow: 0 0 6px rgba(201,168,76,0.7);
+  }
+  .sc-carousel-dot:hover:not(.active) { background: rgba(255,255,255,0.75); }
+
+  /* Counter for 10+ images */
+  .sc-img-counter {
+    position: absolute;
+    bottom: 10px; right: 10px;
+    z-index: 6;
+    font-size: 10px; font-weight: 500; letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.85);
+    background: rgba(14,12,10,0.55);
+    backdrop-filter: blur(4px);
+    padding: 3px 8px;
+    border-radius: 20px;
+    pointer-events: none;
+  }
+
+  /* ── TOP-LEFT: VERIFIED GOLD BADGE ── */
+  .sc-verified-wrap { position:absolute; top:11px; left:11px; z-index:7; animation:scVerifiedIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
+  .sc-verified-badge { display:inline-flex; align-items:center; gap:5px; font-family:'DM Sans',sans-serif; font-size:10.5px; font-weight:600; letter-spacing:0.09em; text-transform:uppercase; background:linear-gradient(135deg,#c9a84c 0%,#e8d5a3 50%,#b8922e 100%); color:#3a2a00; border:1px solid rgba(232,213,163,0.6); border-radius:20px; padding:5px 11px 5px 9px; white-space:nowrap; box-shadow:0 2px 12px rgba(201,168,76,0.45),0 1px 3px rgba(0,0,0,0.2),inset 0 1px 0 rgba(255,255,255,0.35); position:relative; overflow:hidden; }
+  .sc-verified-badge::after { content:''; position:absolute; inset:0; background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,0.45) 50%,transparent 65%); transform:translateX(-100%); animation:scVerifiedShine 3s ease 0.5s infinite; }
 
   /* ── TOP-RIGHT: share + heart (normal view) ── */
-  .sc-top-actions { position:absolute; top:10px; right:10px; display:flex; flex-direction:column; gap:6px; z-index:3; }
+  .sc-top-actions { position:absolute; top:10px; right:10px; display:flex; flex-direction:column; gap:6px; z-index:7; }
   .sc-share-btn { width:34px; height:34px; background:rgba(255,255,255,0.92); backdrop-filter:blur(8px); border:none; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--muted); transition:all 0.22s; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
   .sc-share-btn:hover { transform:scale(1.12); background:white; color:var(--gold); }
   .sc-wishlist { width:34px; height:34px; background:rgba(255,255,255,0.92); backdrop-filter:blur(8px); border:none; border-radius:50%; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--muted); transition:all 0.22s; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
@@ -543,7 +761,7 @@ const cardStyles = `
   .sc-fav-spinner { width:13px; height:13px; border-radius:50%; border:2px solid rgba(122,114,101,0.3); border-top-color:#c0445a; animation:scSpin 0.7s linear infinite; display:inline-block; }
 
   /* ── TOP-RIGHT: vendor dashboard actions ── */
-  .sc-vendor-actions { position:absolute; top:10px; right:10px; display:flex; gap:6px; z-index:3; align-items:center; }
+  .sc-vendor-actions { position:absolute; top:10px; right:10px; display:flex; gap:6px; z-index:7; align-items:center; }
   .sc-share-pill { display:flex; align-items:center; gap:4px; padding:5px 11px; background:rgba(255,255,255,0.92); backdrop-filter:blur(8px); border:1px solid rgba(201,168,76,0.3); border-radius:20px; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:500; color:var(--muted); cursor:pointer; transition:all 0.2s; box-shadow:0 2px 10px rgba(0,0,0,0.1); white-space:nowrap; }
   .sc-share-pill:hover { background:white; border-color:var(--gold); color:var(--gold); transform:translateY(-1px); }
   .sc-edit-btn { display:flex; align-items:center; gap:5px; padding:5px 12px; background:rgba(255,255,255,0.92); backdrop-filter:blur(8px); border:1px solid rgba(201,168,76,0.3); border-radius:20px; font-family:'DM Sans',sans-serif; font-size:11.5px; font-weight:500; color:var(--ink); cursor:pointer; transition:all 0.2s; box-shadow:0 2px 10px rgba(0,0,0,0.1); white-space:nowrap; }
@@ -552,7 +770,7 @@ const cardStyles = `
   .sc-delete:hover { background:#b85c5c; color:white; transform:scale(1.1); }
 
   /* ── BOTTOM-LEFT: package count only ── */
-  .sc-bottom-badges { position:absolute; bottom:12px; left:12px; display:flex; gap:6px; align-items:center; z-index:2; }
+  .sc-bottom-badges { position:absolute; bottom:12px; left:12px; display:flex; gap:6px; align-items:center; z-index:6; }
   .sc-badge { font-size:10.5px; font-weight:500; letter-spacing:0.08em; background:rgba(14,12,10,0.7); backdrop-filter:blur(6px); color:var(--gold-light); padding:4px 10px; border-radius:20px; border:1px solid rgba(201,168,76,0.25); white-space:nowrap; }
 
   /* ── BODY ── */
@@ -578,6 +796,13 @@ const cardStyles = `
   .sc-toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%); background:#0e0c0a; color:white; padding:12px 24px; border-radius:40px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; display:flex; align-items:center; gap:8px; box-shadow:0 8px 32px rgba(14,12,10,0.25); z-index:9999; animation:toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both; white-space:nowrap; }
   .sc-toast span { color:#c0445a; font-size:15px; }
 
-  @keyframes scSpin  { to{transform:rotate(360deg)} }
-  @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(16px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+  /* ── KEYFRAMES ── */
+  @keyframes scSlideIn    { from{opacity:0} to{opacity:1} }
+  @keyframes scSlideOut   { from{opacity:1} to{opacity:0} }
+  @keyframes scKenBurns   { from{transform:scale(1)} to{transform:scale(1.05)} }
+  @keyframes scProgress   { from{width:0%} to{width:100%} }
+  @keyframes scSpin       { to{transform:rotate(360deg)} }
+  @keyframes scVerifiedIn { from{opacity:0;transform:scale(0.7) translateY(-4px)} to{opacity:1;transform:scale(1) translateY(0)} }
+  @keyframes scVerifiedShine { 0%{transform:translateX(-100%)} 40%{transform:translateX(200%)} 100%{transform:translateX(200%)} }
+  @keyframes toastIn      { from{opacity:0;transform:translateX(-50%) translateY(16px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
 `;
