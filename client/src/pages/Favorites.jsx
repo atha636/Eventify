@@ -43,7 +43,7 @@ export default function Favorites() {
           <div className="fv-hero-orb fv-orb1" />
           <div className="fv-hero-orb fv-orb2" />
           <div className="fv-hero-inner">
-            <span className="fv-eyebrow"><Logo /> Saved Collection</span>
+            <span className="fv-eyebrow"> Saved Collection</span>
             <h1 className="fv-title">My Favourites</h1>
             <p className="fv-sub">
               {loading
