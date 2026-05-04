@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
 import ServiceCard from "../components/ServiceCard";
 import Logo from "../components/Logo";
+
 const CATEGORY_META = {
   decor:       { emoji: "🎨", desc: "Transform any space into something magical and memorable.", color: "#c9a84c" },
   photography: { emoji: "📸", desc: "Capture every fleeting moment, preserved forever in stunning detail.", color: "#a07850" },
@@ -14,51 +15,179 @@ const CATEGORY_META = {
 };
 
 const SORT_OPTIONS = [
-  { label: "Recommended",      value: "default"    },
+  { label: "Recommended",       value: "default"    },
   { label: "Price: Low → High", value: "price_asc"  },
   { label: "Price: High → Low", value: "price_desc" },
   { label: "Top Rated",         value: "rating"     },
 ];
 
+const PRICE_RANGES = [
+  { label: "Any",       value: "any",     min: 0,      max: Infinity },
+  { label: "₹0–5K",    value: "0-5k",    min: 0,      max: 5000     },
+  { label: "₹5K–20K",  value: "5k-20k",  min: 5000,   max: 20000    },
+  { label: "₹20K–50K", value: "20k-50k", min: 20000,  max: 50000    },
+  { label: "₹50K–1L",  value: "50k-1l",  min: 50000,  max: 100000   },
+  { label: "₹1L+",     value: "1l+",     min: 100000, max: Infinity  },
+];
+
+const INDIAN_CITIES = [
+  "Agra","Ahmedabad","Ajmer","Aligarh","Allahabad","Amravati","Amritsar",
+  "Asansol","Aurangabad","Bareilly","Belgaum","Bengaluru","Bhilai","Bhiwandi",
+  "Bhopal","Bhubaneswar","Bikaner","Bombay","Chandigarh","Chennai","Coimbatore",
+  "Cuttack","Dehradun","Delhi","Dhanbad","Durgapur","Erode","Faridabad",
+  "Firozabad","Gaya","Ghaziabad","Gorakhpur","Gulbarga","Guntur","Guwahati",
+  "Gwalior","Howrah","Hubli-Dharwad","Hyderabad","Indore","Jabalpur","Jaipur",
+  "Jalandhar","Jalgaon","Jamnagar","Jammu","Jamshedpur","Jhansi","Jodhpur",
+  "Kalyan-Dombivali","Kanpur","Kochi","Kolhapur","Kolkata","Kota","Lucknow",
+  "Ludhiana","Madurai","Maheshtala","Malegaon","Mangalore","Meerut","Moradabad",
+  "Mumbai","Mysore","Nagpur","Nanded","Nashik","Navi Mumbai","Noida","Patna",
+  "Pimpri-Chinchwad","Pondicherry","Pune","Raipur","Rajkot","Ranchi","Salem",
+  "Saharanpur","Sangli-Miraj","Shimla","Siliguri","Solapur","Srinagar","Surat",
+  "Thane","Tiruchirappalli","Tirunelveli","Udaipur","Ujjain","Ulhasnagar",
+  "Vadodara","Varanasi","Vasai-Virar","Vijayawada","Visakhapatnam","Warangal",
+].sort();
+
+// ── City Selector Modal ────────────────────────────────────────────
+function CityModal({ onSelect }) {
+  const [search, setSearch]   = useState("");
+  const [visible, setVisible] = useState(false);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    setTimeout(() => setVisible(true), 60);
+    setTimeout(() => inputRef.current?.focus(), 200);
+  }, []);
+
+  const filtered = INDIAN_CITIES.filter(c =>
+    c.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className={`ct-cm-overlay ${visible ? "ct-cm-visible" : ""}`} role="dialog" aria-modal="true">
+      <div className="ct-cm-modal">
+        <div className="ct-cm-orb ct-cm-orb1" />
+        <div className="ct-cm-orb ct-cm-orb2" />
+
+        <div className="ct-cm-header">
+          <div className="ct-cm-logo"><Logo /></div>
+          <div className="ct-cm-eyebrow">
+            <span className="ct-cm-edot" />Select Your City<span className="ct-cm-edot" />
+          </div>
+          <h2 className="ct-cm-title">Where are you <em>planning your event?</em></h2>
+          <p className="ct-cm-sub">We'll show vendors available in your city. Don't worry — you can change this anytime.</p>
+        </div>
+
+        <div className="ct-cm-search-wrap">
+          <span className="ct-cm-sicon">⌕</span>
+          <input
+            ref={inputRef}
+            className="ct-cm-search"
+            placeholder="Search your city…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            autoComplete="off"
+          />
+          {search && <button className="ct-cm-sclear" onClick={() => setSearch("")}>✕</button>}
+        </div>
+
+        <div className="ct-cm-cities">
+          {filtered.length === 0 ? (
+            <div className="ct-cm-noresult">
+              <span>🏙</span>
+              <p>No city found for "<strong>{search}</strong>"</p>
+            </div>
+          ) : filtered.map(city => (
+            <button key={city} className="ct-cm-city" onClick={() => onSelect(city)}>
+              <span className="ct-cm-pin">◉</span>
+              {city}
+              <span className="ct-cm-arrow">→</span>
+            </button>
+          ))}
+        </div>
+
+        <p className="ct-cm-note">
+          <span className="ct-cm-ndot" />
+          Currently serving Delhi, Chandigarh & Bombay · More cities launching Q3 2026
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── City Bar ───────────────────────────────────────────────────────
+function CityBar({ city, onChangeCity }) {
+  return (
+    <div className="ct-citybar">
+      <span className="ct-citybar-icon">📍</span>
+      <span>Showing vendors in <strong>{city}</strong></span>
+      <button className="ct-citybar-change" onClick={onChangeCity}>Change City</button>
+    </div>
+  );
+}
+
 export default function Category() {
-  const { type } = useParams();
+  const { type }  = useParams();
   const navigate  = useNavigate();
 
-  const [vendors, setVendors] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [sort, setSort]       = useState("default");
-  const [search, setSearch]   = useState("");
+  const [vendors,    setVendors]    = useState([]);
+  const [loading,    setLoading]    = useState(true);
+  const [sort,       setSort]       = useState("default");
+  const [search,     setSearch]     = useState("");
+  const [priceRange, setPriceRange] = useState("any");
+
+  // City state — shared with Vendors page via localStorage
+  const [selectedCity,  setSelectedCity]  = useState(() => {
+    try { return localStorage.getItem("evencers_city") || ""; } catch { return ""; }
+  });
+  const [showCityModal, setShowCityModal] = useState(() => {
+    try { return !localStorage.getItem("evencers_city"); } catch { return true; }
+  });
 
   const meta = CATEGORY_META[type?.toLowerCase()] || {
-    emoji: "<Logo />", desc: "Discover the best vendors for your event.", color: "#c9a84c",
+    emoji: "✦", desc: "Discover the best vendors for your event.", color: "#c9a84c",
   };
 
-  // ── Fetch vendors — AbortController stops double-fetch in React StrictMode ──
   useEffect(() => {
     const controller = new AbortController();
-
     setLoading(true);
     setVendors([]);
-
     API.get(`/vendors/${type}`, { signal: controller.signal })
       .then((res) => setVendors(res.data))
       .catch((err) => {
-        if (err.name !== "CanceledError" && err.code !== "ERR_CANCELED") {
-          setVendors([]);
-        }
+        if (err.name !== "CanceledError" && err.code !== "ERR_CANCELED") setVendors([]);
       })
       .finally(() => setLoading(false));
-
-    // Cleanup: cancel request on unmount or type change
     return () => controller.abort();
-  }, [type]); // ← only re-fetches when the category type changes
+  }, [type]);
+
+  const handleCitySelect = (city) => {
+    setSelectedCity(city);
+    try { localStorage.setItem("evencers_city", city); } catch {}
+    setShowCityModal(false);
+  };
 
   const filtered = vendors
-    .filter(
-      (v) =>
-        v.title?.toLowerCase().includes(search.toLowerCase()) ||
-        v.location?.toLowerCase().includes(search.toLowerCase())
-    )
+    .filter(v => {
+      // City filter
+      if (selectedCity) {
+        const cityLower = selectedCity.toLowerCase();
+        if (!v.location?.toLowerCase().includes(cityLower)) return false;
+      }
+      // Search filter
+      if (search) {
+        const q = search.toLowerCase();
+        if (!v.title?.toLowerCase().includes(q) && !v.location?.toLowerCase().includes(q)) return false;
+      }
+      // Price filter
+      if (priceRange !== "any") {
+        const band = PRICE_RANGES.find(r => r.value === priceRange);
+        if (band) {
+          const p = v.packages?.[0]?.price || 0;
+          if (p < band.min || (band.max !== Infinity && p >= band.max)) return false;
+        }
+      }
+      return true;
+    })
     .sort((a, b) => {
       if (sort === "price_asc")  return (a.packages?.[0]?.price || 0) - (b.packages?.[0]?.price || 0);
       if (sort === "price_desc") return (b.packages?.[0]?.price || 0) - (a.packages?.[0]?.price || 0);
@@ -66,16 +195,22 @@ export default function Category() {
       return 0;
     });
 
+  const hasFilters = search || priceRange !== "any";
+
   return (
     <>
       <style>{styles}</style>
+
+      {/* City Modal */}
+      {showCityModal && <CityModal onSelect={handleCitySelect} />}
+
       <div className="ct-root">
         <Navbar />
 
+        {/* Hero */}
         <div className="ct-hero" style={{ "--accent": meta.color }}>
           <div className="ct-hero-orb ct-orb1" />
           <div className="ct-hero-orb ct-orb2" />
-
           <div className="ct-hero-inner">
             <button className="ct-back" onClick={() => navigate(-1)}>← Back</button>
             <div className="ct-hero-emoji">{meta.emoji}</div>
@@ -84,12 +219,19 @@ export default function Category() {
             </h1>
             <p className="ct-hero-desc">{meta.desc}</p>
             <div className="ct-hero-badge">
-              {loading ? "Loading…" : `${vendors.length} verified vendors`}
+              {loading ? "Loading…" : `${vendors.length} verified vendor${vendors.length !== 1 ? "s" : ""}`}
             </div>
           </div>
         </div>
 
+        {/* City Bar */}
+        {selectedCity && !showCityModal && (
+          <CityBar city={selectedCity} onChangeCity={() => setShowCityModal(true)} />
+        )}
+
+        {/* Toolbar */}
         <div className="ct-toolbar">
+          {/* Search */}
           <div className="ct-search-wrap">
             <span className="ct-search-icon">⌕</span>
             <input
@@ -103,6 +245,7 @@ export default function Category() {
             )}
           </div>
 
+          {/* Sort pills */}
           <div className="ct-sort-wrap">
             <span className="ct-sort-label">Sort by</span>
             <div className="ct-sort-pills">
@@ -119,6 +262,23 @@ export default function Category() {
           </div>
         </div>
 
+        {/* Budget Filter Bar */}
+        <div className="ct-budget-bar">
+          <span className="ct-budget-label">Budget:</span>
+          <div className="ct-budget-pills">
+            {PRICE_RANGES.map((r) => (
+              <button
+                key={r.value}
+                className={`ct-budget-pill ${priceRange === r.value ? "active" : ""}`}
+                onClick={() => setPriceRange(r.value)}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Body */}
         <div className="ct-body">
           {loading ? (
             <div className="ct-loading">
@@ -130,15 +290,12 @@ export default function Category() {
             <>
               <p className="ct-result-count">
                 Showing <strong>{filtered.length}</strong> {filtered.length === 1 ? "vendor" : "vendors"}
+                {selectedCity && <> in <em>{selectedCity}</em></>}
                 {search && <> for "<em>{search}</em>"</>}
               </p>
               <div className="ct-grid">
                 {filtered.map((v, i) => (
-                  <div
-                    key={v._id}
-                    className="ct-card-wrapper"
-                    style={{ animationDelay: `${i * 0.06}s` }}
-                  >
+                  <div key={v._id} className="ct-card-wrapper" style={{ animationDelay: `${i * 0.06}s` }}>
                     <ServiceCard vendor={v} />
                   </div>
                 ))}
@@ -147,17 +304,30 @@ export default function Category() {
           ) : (
             <div className="ct-empty">
               <div className="ct-empty-icon">⌛</div>
-              <h3>Coming Soon…</h3>
+              <h3>
+                {selectedCity && !hasFilters
+                  ? `No vendors in ${selectedCity} yet`
+                  : "No results found"}
+              </h3>
               <p>
-                {search
-                  ? `No results for "${search}". Try a different search.`
-                  : `${type} vendors will be available very soon. Check back soon!`}
+                {hasFilters
+                  ? `Try adjusting your filters or search term.`
+                  : selectedCity
+                    ? `${type} vendors in ${selectedCity} will be available very soon!`
+                    : `${type} vendors will be available very soon. Check back soon!`}
               </p>
-              {search && (
-                <button className="ct-empty-btn" onClick={() => setSearch("")}>
-                  Clear Search
-                </button>
-              )}
+              <div className="ct-empty-btns">
+                {hasFilters && (
+                  <button className="ct-empty-btn" onClick={() => { setSearch(""); setPriceRange("any"); }}>
+                    Clear Filters
+                  </button>
+                )}
+                {selectedCity && (
+                  <button className="ct-empty-btn ct-empty-btn-ghost" onClick={() => setShowCityModal(true)}>
+                    📍 Change City
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -177,65 +347,120 @@ const styles = `
     --border: rgba(201,168,76,0.2); --surface: #faf7f2; --white: #ffffff;
   }
 
-  .ct-root { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--ink); min-height:100vh; }
+  .ct-root { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; }
 
-  .ct-hero { position:relative; background:var(--ink); overflow:hidden; padding:64px 32px 56px; text-align:center; }
-  .ct-hero-orb { position:absolute; border-radius:50%; filter:blur(90px); pointer-events:none; }
-  .ct-orb1 { width:420px; height:420px; background:var(--accent,var(--gold)); opacity:0.15; top:-100px; left:-60px; }
-  .ct-orb2 { width:320px; height:320px; background:var(--accent,var(--gold)); opacity:0.08; bottom:-80px; right:-40px; }
+  /* ── HERO ── */
+  .ct-hero { position: relative; background: var(--ink); overflow: hidden; padding: 64px 32px 56px; text-align: center; }
+  .ct-hero-orb { position: absolute; border-radius: 50%; filter: blur(90px); pointer-events: none; }
+  .ct-orb1 { width: 420px; height: 420px; background: var(--accent, var(--gold)); opacity: 0.15; top: -100px; left: -60px; }
+  .ct-orb2 { width: 320px; height: 320px; background: var(--accent, var(--gold)); opacity: 0.08; bottom: -80px; right: -40px; }
+  .ct-hero-inner { position: relative; z-index: 2; max-width: 640px; margin: 0 auto; animation: fadeUp 0.6s ease both; }
+  .ct-back { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); color: var(--gold-light); font-family: 'DM Sans', sans-serif; font-size: 12px; letter-spacing: 0.08em; padding: 6px 14px; border-radius: 20px; cursor: pointer; margin-bottom: 28px; transition: all 0.2s; }
+  .ct-back:hover { background: rgba(201,168,76,0.12); border-color: var(--gold); color: var(--gold); }
+  .ct-hero-emoji { font-size: 3.2rem; margin-bottom: 16px; display: block; filter: drop-shadow(0 4px 20px rgba(201,168,76,0.3)); }
+  .ct-hero-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.2rem,5vw,3.2rem); font-weight: 300; color: var(--white); margin-bottom: 14px; }
+  .ct-hero-desc { font-size: 14px; color: rgba(245,240,232,0.6); line-height: 1.7; margin-bottom: 24px; }
+  .ct-hero-badge { display: inline-block; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); border: 1px solid rgba(201,168,76,0.3); padding: 5px 16px; border-radius: 20px; background: rgba(201,168,76,0.08); }
 
-  .ct-hero-inner { position:relative; z-index:2; max-width:640px; margin:0 auto; animation:fadeUp 0.6s ease both; }
+  /* ── CITY BAR ── */
+  .ct-citybar { display: flex; align-items: center; gap: 10px; background: rgba(201,168,76,0.07); border-bottom: 1px solid rgba(201,168,76,0.18); padding: 10px 32px; font-size: 13px; color: var(--ink); }
+  .ct-citybar-icon { font-size: 14px; flex-shrink: 0; }
+  .ct-citybar-change { margin-left: auto; font-size: 12px; color: var(--gold); background: none; border: 1px solid rgba(201,168,76,0.3); border-radius: 20px; padding: 4px 14px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 500; transition: all 0.2s; white-space: nowrap; }
+  .ct-citybar-change:hover { background: rgba(201,168,76,0.1); border-color: var(--gold); }
+  @media (max-width: 640px) { .ct-citybar { padding: 10px 16px; } }
 
-  .ct-back { display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); color:var(--gold-light); font-family:'DM Sans',sans-serif; font-size:12px; letter-spacing:0.08em; padding:6px 14px; border-radius:20px; cursor:pointer; margin-bottom:28px; transition:all 0.2s; }
-  .ct-back:hover { background:rgba(201,168,76,0.12); border-color:var(--gold); color:var(--gold); }
+  /* ── TOOLBAR ── */
+  .ct-toolbar { background: var(--white); border-bottom: 1px solid var(--border); padding: 16px 32px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 16px rgba(14,12,10,0.05); }
+  .ct-search-wrap { display: flex; align-items: center; gap: 10px; border: 1px solid var(--border); border-radius: 7px; padding: 9px 14px; background: var(--surface); flex: 1; min-width: 200px; max-width: 320px; transition: border-color 0.2s, box-shadow 0.2s; }
+  .ct-search-wrap:focus-within { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.1); }
+  .ct-search-icon { font-size: 16px; color: var(--muted); flex-shrink: 0; }
+  .ct-search { border: none; background: transparent; outline: none; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--ink); width: 100%; }
+  .ct-search::placeholder { color: #bbb4a8; }
+  .ct-search-clear { background: none; border: none; cursor: pointer; font-size: 12px; color: var(--muted); flex-shrink: 0; padding: 0; transition: color 0.2s; }
+  .ct-search-clear:hover { color: var(--ink); }
+  .ct-sort-wrap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .ct-sort-label { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+  .ct-sort-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+  .ct-sort-pill { font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--muted); border: 1px solid var(--border); border-radius: 20px; padding: 5px 13px; background: transparent; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .ct-sort-pill:hover { border-color: var(--gold); color: var(--gold); }
+  .ct-sort-pill.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+  @media (max-width: 640px) { .ct-toolbar { padding: 12px 16px; } .ct-search-wrap { max-width: 100%; } }
 
-  .ct-hero-emoji { font-size:3.2rem; margin-bottom:16px; display:block; filter:drop-shadow(0 4px 20px rgba(201,168,76,0.3)); }
-  .ct-hero-title { font-family:'Cormorant Garamond',serif; font-size:clamp(2.2rem,5vw,3.2rem); font-weight:300; color:var(--white); margin-bottom:14px; letter-spacing:-0.01em; }
-  .ct-hero-desc { font-size:14px; color:rgba(245,240,232,0.6); line-height:1.7; margin-bottom:24px; }
-  .ct-hero-badge { display:inline-block; font-size:11px; letter-spacing:0.15em; text-transform:uppercase; color:var(--gold); border:1px solid rgba(201,168,76,0.3); padding:5px 16px; border-radius:20px; background:rgba(201,168,76,0.08); }
+  /* ── BUDGET BAR ── */
+  .ct-budget-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 32px 12px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .ct-budget-label { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+  .ct-budget-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ct-budget-pill { font-size: 12px; padding: 6px 14px; border: 1px solid var(--border); border-radius: 20px; background: var(--white); color: var(--muted); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.18s; white-space: nowrap; }
+  .ct-budget-pill:hover { border-color: var(--gold); color: var(--ink); background: rgba(201,168,76,0.06); }
+  .ct-budget-pill.active { background: var(--ink); color: var(--white); border-color: var(--ink); font-weight: 500; }
+  @media (max-width: 640px) { .ct-budget-bar { padding: 10px 16px 12px; } .ct-budget-pill { font-size: 11px; padding: 5px 10px; } }
 
-  .ct-toolbar { background:var(--white); border-bottom:1px solid var(--border); padding:16px 32px; display:flex; align-items:center; gap:20px; flex-wrap:wrap; position:sticky; top:0; z-index:10; box-shadow:0 2px 16px rgba(14,12,10,0.05); }
+  /* ── BODY ── */
+  .ct-body { max-width: 1140px; margin: 0 auto; padding: 40px 32px 80px; }
+  .ct-result-count { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+  .ct-result-count strong { color: var(--ink); font-weight: 500; }
+  .ct-result-count em { font-style: italic; color: var(--ink); }
+  .ct-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  @media (max-width: 960px) { .ct-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 580px) { .ct-grid { grid-template-columns: 1fr; } .ct-body { padding: 28px 16px 60px; } }
+  .ct-card-wrapper { animation: fadeUp 0.5s ease both; }
 
-  .ct-search-wrap { display:flex; align-items:center; gap:10px; border:1px solid var(--border); border-radius:7px; padding:9px 14px; background:var(--surface); flex:1; min-width:200px; max-width:320px; transition:border-color 0.2s,box-shadow 0.2s; }
-  .ct-search-wrap:focus-within { border-color:var(--gold); box-shadow:0 0 0 3px rgba(201,168,76,0.1); }
-  .ct-search-icon { font-size:16px; color:var(--muted); flex-shrink:0; }
-  .ct-search { border:none; background:transparent; outline:none; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--ink); width:100%; }
-  .ct-search::placeholder { color:#bbb4a8; }
-  .ct-search-clear { background:none; border:none; cursor:pointer; font-size:12px; color:var(--muted); flex-shrink:0; padding:0; transition:color 0.2s; }
-  .ct-search-clear:hover { color:var(--ink); }
+  .ct-loading { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  @media (max-width: 960px) { .ct-loading { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 580px) { .ct-loading { grid-template-columns: 1fr; } }
+  .ct-skeleton { height: 280px; border-radius: 12px; background: linear-gradient(90deg, #ede8e0 25%, #e5dfd4 50%, #ede8e0 75%); background-size: 200% 100%; animation: shimmer 1.4s ease infinite; }
 
-  .ct-sort-wrap { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-  .ct-sort-label { font-size:11px; font-weight:500; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); white-space:nowrap; }
-  .ct-sort-pills { display:flex; gap:6px; flex-wrap:wrap; }
-  .ct-sort-pill { font-family:'DM Sans',sans-serif; font-size:12px; color:var(--muted); border:1px solid var(--border); border-radius:20px; padding:5px 13px; background:transparent; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
-  .ct-sort-pill:hover { border-color:var(--gold); color:var(--gold); }
-  .ct-sort-pill.active { background:var(--ink); color:var(--white); border-color:var(--ink); }
+  .ct-empty { text-align: center; padding: 80px 20px; }
+  .ct-empty-icon { font-size: 3rem; margin-bottom: 20px; display: block; }
+  .ct-empty h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 600; color: var(--ink); margin-bottom: 10px; }
+  .ct-empty p { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 24px; }
+  .ct-empty-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .ct-empty-btn { padding: 11px 26px; background: var(--ink); color: var(--white); border: none; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+  .ct-empty-btn:hover { background: var(--gold); color: var(--ink); }
+  .ct-empty-btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .ct-empty-btn-ghost:hover { border-color: var(--gold); color: var(--gold); background: transparent; }
 
-  .ct-body { max-width:1140px; margin:0 auto; padding:40px 32px 80px; }
+  /* ── CITY MODAL ── */
+  .ct-cm-overlay { position: fixed; inset: 0; z-index: 2000; background: rgba(14,12,10,0.88); backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; transition: opacity 0.4s ease; }
+  .ct-cm-overlay.ct-cm-visible { opacity: 1; }
+  .ct-cm-modal { position: relative; overflow: hidden; background: #1c1a17; border: 1px solid rgba(201,168,76,0.2); border-radius: 28px; width: min(560px, 97vw); max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 48px 120px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05); animation: ctCmUp 0.45s cubic-bezier(0.34,1.15,0.64,1) both 0.05s; }
+  .ct-cm-orb { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.13; pointer-events: none; }
+  .ct-cm-orb1 { width: 400px; height: 400px; background: var(--gold); top: -120px; left: -80px; }
+  .ct-cm-orb2 { width: 260px; height: 260px; background: #7b5ea7; bottom: -60px; right: -40px; }
+  .ct-cm-header { position: relative; z-index: 1; padding: 40px 36px 28px; text-align: center; border-bottom: 1px solid rgba(201,168,76,0.12); }
+  .ct-cm-logo { display: flex; justify-content: center; margin-bottom: 20px; }
+  .ct-cm-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 10px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--gold); margin-bottom: 14px; }
+  .ct-cm-edot { width: 4px; height: 4px; border-radius: 50%; background: var(--gold); opacity: 0.6; }
+  .ct-cm-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.6rem,4vw,2.2rem); font-weight: 300; color: var(--white); margin-bottom: 10px; line-height: 1.15; }
+  .ct-cm-title em { font-style: italic; color: var(--gold-light); }
+  .ct-cm-sub { font-size: 13px; color: rgba(245,240,232,0.42); line-height: 1.65; max-width: 380px; margin: 0 auto; }
+  .ct-cm-search-wrap { position: relative; z-index: 1; display: flex; align-items: center; margin: 20px 28px 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(201,168,76,0.2); border-radius: 12px; padding: 10px 14px 10px 18px; transition: border-color 0.2s, box-shadow 0.2s; }
+  .ct-cm-search-wrap:focus-within { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.12); }
+  .ct-cm-sicon { font-size: 18px; color: rgba(245,240,232,0.35); margin-right: 10px; flex-shrink: 0; }
+  .ct-cm-search { flex: 1; background: none; border: none; outline: none; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--white); }
+  .ct-cm-search::placeholder { color: rgba(245,240,232,0.28); }
+  .ct-cm-sclear { background: none; border: none; cursor: pointer; font-size: 11px; color: rgba(245,240,232,0.4); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background 0.2s, color 0.2s; }
+  .ct-cm-sclear:hover { background: rgba(255,255,255,0.1); color: var(--white); }
+  .ct-cm-cities { position: relative; z-index: 1; flex: 1; overflow-y: auto; padding: 4px 28px 12px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; scrollbar-width: thin; scrollbar-color: rgba(201,168,76,0.2) transparent; }
+  .ct-cm-cities::-webkit-scrollbar { width: 4px; }
+  .ct-cm-cities::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.2); border-radius: 4px; }
+  .ct-cm-city { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(201,168,76,0.1); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: rgba(245,240,232,0.72); cursor: pointer; text-align: left; transition: all 0.2s; white-space: nowrap; overflow: hidden; }
+  .ct-cm-city:hover { background: rgba(201,168,76,0.1); border-color: rgba(201,168,76,0.35); color: var(--gold-light); }
+  .ct-cm-pin { font-size: 10px; color: var(--gold); opacity: 0.6; flex-shrink: 0; }
+  .ct-cm-arrow { margin-left: auto; font-size: 11px; color: var(--gold); opacity: 0; transition: opacity 0.18s; flex-shrink: 0; }
+  .ct-cm-city:hover .ct-cm-arrow { opacity: 1; }
+  .ct-cm-noresult { grid-column: 1/-1; text-align: center; padding: 40px 20px; color: rgba(245,240,232,0.35); font-size: 13px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  .ct-cm-noresult span { font-size: 2.2rem; opacity: 0.4; }
+  .ct-cm-note { position: relative; z-index: 1; padding: 14px 28px 20px; font-size: 11px; color: rgba(245,240,232,0.28); text-align: center; letter-spacing: 0.04em; border-top: 1px solid rgba(201,168,76,0.1); display: flex; align-items: center; justify-content: center; gap: 7px; }
+  .ct-cm-ndot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); opacity: 0.4; flex-shrink: 0; }
+  @media (max-width: 480px) {
+    .ct-cm-header { padding: 28px 20px 20px; }
+    .ct-cm-search-wrap { margin: 16px 16px 10px; }
+    .ct-cm-cities { padding: 4px 16px 12px; grid-template-columns: 1fr; }
+    .ct-cm-note { padding: 12px 16px 18px; }
+  }
 
-  .ct-result-count { font-size:13px; color:var(--muted); margin-bottom:24px; }
-  .ct-result-count strong { color:var(--ink); font-weight:500; }
-  .ct-result-count em { font-style:italic; color:var(--ink); }
-
-  .ct-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
-  @media(max-width:960px){ .ct-grid { grid-template-columns:repeat(2,1fr); } }
-  @media(max-width:580px){ .ct-grid { grid-template-columns:1fr; } }
-
-  .ct-card-wrapper { animation:fadeUp 0.5s ease both; }
-
-  .ct-loading { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
-  @media(max-width:960px){ .ct-loading { grid-template-columns:repeat(2,1fr); } }
-  @media(max-width:580px){ .ct-loading { grid-template-columns:1fr; } }
-
-  .ct-skeleton { height:280px; border-radius:12px; background:linear-gradient(90deg,#ede8e0 25%,#e5dfd4 50%,#ede8e0 75%); background-size:200% 100%; animation:shimmer 1.4s ease infinite; }
-
-  .ct-empty { text-align:center; padding:80px 20px; grid-column:1/-1; }
-  .ct-empty-icon { font-size:3rem; margin-bottom:20px; }
-  .ct-empty h3 { font-family:'Cormorant Garamond',serif; font-size:1.6rem; font-weight:600; color:var(--ink); margin-bottom:10px; }
-  .ct-empty p { font-size:14px; color:var(--muted); line-height:1.6; margin-bottom:24px; }
-  .ct-empty-btn { padding:11px 26px; background:var(--ink); color:var(--white); border:none; border-radius:7px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; }
-  .ct-empty-btn:hover { background:var(--gold); color:var(--ink); }
-
-  @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  @keyframes ctCmUp { from { opacity: 0; transform: translateY(32px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
 `;
