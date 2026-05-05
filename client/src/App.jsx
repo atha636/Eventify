@@ -21,7 +21,7 @@ import Blogs              from "./pages/Blogs";
 import BlogDetail         from "./pages/BlogDetail";
 import CookieConsent      from "./components/CookieConsent";
 import VendorWelcome      from "./pages/VendorWelcome";
-import WhyEvencers        from "./pages/WhyEvencers";
+import Whyevencers        from "./pages/Whyevencers";
 
 // ── Resource pages ──────────────────────────────────────────────────
 import VendorHandbook   from "./pages/resources/VendorHandbook";
