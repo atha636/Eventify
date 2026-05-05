@@ -6,7 +6,6 @@ const packageSchema = new mongoose.Schema({
   features: [String],
 });
 
-// Each entry = one date with available/unavailable flag
 const availabilitySchema = new mongoose.Schema({
   date:      { type: Date, required: true },
   available: { type: Boolean, default: true },
@@ -30,12 +29,20 @@ const serviceSchema = new mongoose.Schema(
     },
     title:       { type: String, trim: true },
     description: { type: String, trim: true },
-    location:    { type: String, trim: true },
-    images:      [String],
-    packages:    [packageSchema],
 
-    // Availability calendar — array of { date, available }
-    // Dates not in this array are considered AVAILABLE by default
+    // ── Legacy single-string location (kept for backwards compat) ──
+    location:  { type: String, trim: true },
+
+    // ── NEW: multi-city array ──
+    locations: [{ type: String, trim: true }],
+
+    images:   [String],
+    packages: [packageSchema],
+
+    // ── NEW: decor-specific fields ──
+    timeSlots: [{ type: String, trim: true }],
+    price:     { type: Number },
+
     availability: [availabilitySchema],
 
     isApproved: {
@@ -47,7 +54,6 @@ const serviceSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Index for fast date-range queries on availability
 serviceSchema.index({ "availability.date": 1 });
 
 module.exports = mongoose.model("Vendor", serviceSchema);

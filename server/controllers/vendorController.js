@@ -14,7 +14,7 @@ exports.getVendors = async (req, res) => {
     const ids = approvedVendorIds.map((v) => v._id);
     const vendors = await Vendor
       .find({ isApproved: true, vendorId: { $in: ids } })
-      .populate("vendorId", "isVendorVerified"); // ← FIX: sends isVendorVerified to frontend
+      .populate("vendorId", "isVendorVerified");
     res.json(vendors);
   } catch (err) {
     console.error("getVendors ERROR:", err);
@@ -36,7 +36,7 @@ exports.getByType = async (req, res) => {
         isApproved:  true,
         vendorId:    { $in: ids },
       })
-      .populate("vendorId", "isVendorVerified"); // ← FIX: sends isVendorVerified to frontend
+      .populate("vendorId", "isVendorVerified");
     res.json(vendors);
   } catch (err) {
     console.error("getByType ERROR:", err);
@@ -71,10 +71,25 @@ exports.addService = async (req, res) => {
 
     const imageUrls = req.files.map((f) => f.path);
 
+    // ── Parse locations (array) ──
+    let locations = [];
+    if (req.body.locations) {
+      try { locations = JSON.parse(req.body.locations); }
+      catch { locations = []; }
+    }
+
+    // ── Parse packages (non-decor) ──
     let packages = [];
     if (req.body.packages) {
       try { packages = JSON.parse(req.body.packages); }
       catch { return res.status(400).json({ error: "Invalid packages format" }); }
+    }
+
+    // ── Parse timeSlots (decor) ──
+    let timeSlots = [];
+    if (req.body.timeSlots) {
+      try { timeSlots = JSON.parse(req.body.timeSlots); }
+      catch { timeSlots = []; }
     }
 
     const vendor = await Vendor.create({
@@ -83,10 +98,16 @@ exports.addService = async (req, res) => {
       serviceType: req.body.serviceType,
       title:       req.body.title?.trim(),
       description: req.body.description?.trim(),
-      location:    req.body.location?.trim(),
+
+      // Save both for backwards compatibility
+      location:  locations[0] || "",
+      locations,
+
       packages,
-      images:      imageUrls,
-      isApproved:  true,
+      timeSlots,
+      price:      req.body.price ? Number(req.body.price) : undefined,
+      images:     imageUrls,
+      isApproved: true,
     });
 
     await sendEmail({
@@ -113,20 +134,36 @@ exports.editService = async (req, res) => {
     if (!service) return res.status(404).json({ error: "Service not found" });
     if (service.vendorId.toString() !== req.user.id) return res.status(403).json({ error: "Forbidden" });
 
+    // ── Parse locations (array) ──
+    let locations = service.locations || [];
+    if (req.body.locations) {
+      try { locations = JSON.parse(req.body.locations); }
+      catch { locations = service.locations || []; }
+    }
+
+    // ── Parse packages (non-decor) ──
     let packages = service.packages;
     if (req.body.packages) {
       try { packages = JSON.parse(req.body.packages); }
       catch { return res.status(400).json({ error: "Invalid packages format" }); }
     }
 
+    // ── Parse timeSlots (decor) ──
+    let timeSlots = service.timeSlots || [];
+    if (req.body.timeSlots) {
+      try { timeSlots = JSON.parse(req.body.timeSlots); }
+      catch { timeSlots = service.timeSlots || []; }
+    }
+
+    // ── Merge images ──
     let existingImages = service.images;
     if (req.body.existingImages) {
       try { existingImages = JSON.parse(req.body.existingImages); }
       catch { existingImages = service.images; }
     }
 
-    const imageUrls    = req.files ? req.files.map((f) => f.path) : [];
-    const mergedImages = [...existingImages, ...imageUrls].slice(0, 15);
+    const newImageUrls = req.files ? req.files.map((f) => f.path) : [];
+    const mergedImages = [...existingImages, ...newImageUrls].slice(0, 15);
 
     const updated = await Vendor.findByIdAndUpdate(
       req.params.id,
@@ -134,11 +171,18 @@ exports.editService = async (req, res) => {
         serviceType: req.body.serviceType || service.serviceType,
         title:       req.body.title?.trim()       || service.title,
         description: req.body.description?.trim() || service.description,
-        location:    req.body.location?.trim()    || service.location,
+
+        // Save both for backwards compatibility
+        location:  locations[0] || service.location || "",
+        locations,
+
         packages,
-        images:      mergedImages,
+        timeSlots,
+        price: req.body.price !== undefined ? Number(req.body.price) : service.price,
+
+        images: mergedImages,
       },
-      { returnDocument: 'after' }
+      { returnDocument: "after" }
     );
 
     const user = await User.findById(req.user.id);
@@ -288,7 +332,7 @@ exports.getAvailableOnDate = async (req, res) => {
         vendorId:   { $in: ids },
         _id:        { $nin: unavailableIds },
       })
-      .populate("vendorId", "isVendorVerified"); // ← FIX: sends isVendorVerified to frontend
+      .populate("vendorId", "isVendorVerified");
     res.json(vendors);
   } catch (err) {
     console.error("getAvailableOnDate ERROR:", err);
