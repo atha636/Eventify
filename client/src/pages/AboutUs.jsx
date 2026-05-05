@@ -102,8 +102,8 @@ export default function AboutUs() {
   const timeline = [
     { year: "2025",       title: "The Frustration",  desc: "Our founders tried planning a Delhi corporate event. Three weeks. Dozens of calls. Mediocre results. The idea was born." },
     { year: "Early 2026", title: "First 10 Vendors", desc: "We manually onboarded 10 Delhi vendors we personally trusted. First client booked within 48 hours." },
-    { year: "Mid 2027",   title: "Expanding Cities", desc: "Mumbai. Bangalore. Hyderabad. We hit 1500 verified vendors and 1,0000 happy clients." },
-    { year: "2028",       title: "All of India",     desc: "50+ cities. 10,000+ vendors. 1,20000+ clients. And we're just getting started." },
+    { year: "Mid 2027",   title: "Expanding Cities", desc: "Mumbai. Bangalore. Hyderabad. We hit 1500+ verified vendors and 10k+ happy clients." },
+    { year: "2028",       title: "All of India",     desc: "50+ cities. 10k+ vendors. 120k+ clients. And we're just getting started." },
   ];
 
   return (
