@@ -21,6 +21,7 @@ import Blogs              from "./pages/Blogs";
 import BlogDetail         from "./pages/BlogDetail";
 import CookieConsent      from "./components/CookieConsent";
 import VendorWelcome      from "./pages/VendorWelcome";
+import WhyEvencers        from "./pages/WhyEvencers";
 
 // ── Resource pages ──────────────────────────────────────────────────
 import VendorHandbook   from "./pages/resources/VendorHandbook";
@@ -48,6 +49,7 @@ export default function App() {
         <Route path="/about"                   element={<AboutUs />} />
         <Route path="/blog"                    element={<Blogs />} />
         <Route path="/blog/:slug"              element={<BlogDetail />} />
+        <Route path="/why-evencers"            element={<WhyEvencers />} />
 
         {/* ── Vendor ── */}
         <Route path="/vendor-dashboard"        element={<VendorDashboard />} />

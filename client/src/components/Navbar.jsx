@@ -117,6 +117,7 @@ export default function Navbar() {
             <Link to="/vendors"        className={`nb-link ${isActive("/vendors") ? "nb-link-active" : ""}`}>Vendors</Link>
             <Link to="/blog"           className={`nb-link ${isActive("/blog") ? "nb-link-active" : ""}`}>Blog</Link>
             <Link to="/about"          className={`nb-link ${isActive("/about") ? "nb-link-active" : ""}`}>About Us</Link>
+            <Link to="/why-evencers"   className={`nb-link ${isActive("/why-evencers") ? "nb-link-active" : ""}`}>Why Us</Link>
           </div>
 
           {/* ACTIONS */}
@@ -181,6 +182,7 @@ export default function Navbar() {
             <Link to="/vendors"        className="nb-mobile-link">Vendors</Link>
             <Link to="/blog"           className="nb-mobile-link">Blog</Link>
             <Link to="/about"          className="nb-mobile-link">About Us</Link>
+            <Link to="/why-evencers"   className="nb-mobile-link">Why Us</Link>
           </div>
           <div className="nb-mobile-divider" />
           <div className="nb-mobile-actions">
