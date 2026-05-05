@@ -49,7 +49,7 @@ export default function App() {
         <Route path="/about"                   element={<AboutUs />} />
         <Route path="/blog"                    element={<Blogs />} />
         <Route path="/blog/:slug"              element={<BlogDetail />} />
-        <Route path="/why-evencers"            element={<WhyEvencers />} />
+        <Route path="/why-evencers"            element={<Whyevencers />} />
 
         {/* ── Vendor ── */}
         <Route path="/vendor-dashboard"        element={<VendorDashboard />} />
