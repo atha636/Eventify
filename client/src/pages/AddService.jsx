@@ -385,7 +385,7 @@ export default function AddService() {
               {/* ── HEADER ── */}
               <div className="as-form-header">
                 <button className="as-back" onClick={goBack}>← Back to Dashboard</button>
-                <p className="as-eyebrow"><Logo /> Vendor Portal</p>
+                <p className="as-eyebrow"> Vendor Portal</p>
                 <h1 className="as-title">Add New Service</h1>
                 <p className="as-subtitle">Fill in your listing details. Your service goes live immediately on the platform.</p>
               </div>
