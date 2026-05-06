@@ -6,17 +6,17 @@ export const CATEGORIES = ["All", "Wedding", "Corporate", "Decor", "Photography"
 export const ALL_POSTS = [
   {
     id: 1,
-    slug: "complete-guide-indian-wedding-2025",
+    slug: "complete-guide-indian-wedding-2026",
     category: "Wedding",
     featured: true,
-    title: "The Complete Guide to Planning Your Dream Indian Wedding in 2025",
+    title: "The Complete Guide to Planning Your Dream Indian Wedding in 2026",
     excerpt:
       "From finding the perfect venue to coordinating 500 guests across three days of ceremonies — we break down every step, timeline, and vendor checklist you need for an unforgettable shaadi.",
     author: "Akarsh Gupta & Atharv Patidar",
     authorRole: "CEO & C0-founder",
     authorInitial: "A",
     authorGradient: "135deg, #c9a84c 0%, #e8d5a3 100%",
-    date: "April 18, 2025",
+    date: "April 18, 2026",
     readTime: "12 min read",
     tag: "Editor's Pick",
     emoji: "💒",
