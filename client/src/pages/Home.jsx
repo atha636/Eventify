@@ -150,8 +150,8 @@ export default function Home() {
   }, []);
 
   const services = [
-    { name: "Decor",       type: "decor",       emoji: "🎨", desc: "Transform any space into something magical",        count: "10+ vendors",  color: "#a78bfa" },
-    { name: "Photography", type: "photography", emoji: "📸", desc: "Capture every moment, forever preserved",           count: "15+ vendors",  color: "#f59e0b" },
+    { name: "Decor",       type: "decor",       emoji: "🎨", desc: "Transform any space into something magical",        count: "100+ vendors",  color: "#a78bfa" },
+    { name: "Photography", type: "photography", emoji: "📸", desc: "Capture every moment, forever preserved",           count: "150+ vendors",  color: "#f59e0b" },
     { name: "Catering",    type: "catering",    emoji: "🍽", desc: "Exquisite menus crafted for your occasion",         count: "loading..",    color: "#34d399" },
     { name: "Music & DJ",  type: "music",       emoji: "🎵", desc: "Set the perfect mood for your celebration",         count: "loading..",    color: "#f87171" },
     { name: "Florals",     type: "florals",     emoji: "💐", desc: "Blooms that breathe life into every event",         count: "loading..",    color: "#fb7185" },
@@ -259,12 +259,12 @@ export default function Home() {
             <div className="hm-float-card hm-fc1">
               <span className="hm-fc-emoji">📸</span>
               <span className="hm-fc-label">Photography</span>
-              <span className="hm-fc-sub">10+ vendors</span>
+              <span className="hm-fc-sub">100+ vendors</span>
             </div>
             <div className="hm-float-card hm-fc2">
               <span className="hm-fc-emoji">🎨</span>
               <span className="hm-fc-label">Decor</span>
-              <span className="hm-fc-sub">10+ vendors</span>
+              <span className="hm-fc-sub">150+ vendors</span>
             </div>
             <div className="hm-float-card hm-fc3">
               <span className="hm-fc-check">✓</span>
@@ -275,9 +275,9 @@ export default function Home() {
 
           <div className="hm-hero-stats">
             {[
-              { num: "100", suffix: "+",   label: "Happy Clients" },
-              { num: "20",  suffix: "+",   label: "Vendors"       },
-              { num: "2",   suffix: "+",   label: "Cities"        },
+              { num: "10", suffix: "K+",   label: "Happy Clients" },
+              { num: "200",  suffix: "+",   label: "Vendors"       },
+              { num: "4",   suffix: "+",   label: "Cities"        },
               { num: "4",   suffix: ".9★", label: "Rating"        },
             ].map((s, i) => (
               <div key={i} className="hm-hero-stat">
@@ -388,7 +388,7 @@ export default function Home() {
           <div className={`hm-cta-inner hm-reveal ${ctaVisible ? "hm-revealed" : ""}`}>
             <p className="hm-eyebrow" style={{ color: "var(--gold)" }}>Ready to begin?</p>
             <h2 className="hm-cta-title">Your dream event starts here.</h2>
-            <p className="hm-cta-sub">Join over 120 clients who planned their perfect day with Evencers.</p>
+            <p className="hm-cta-sub">Join over 12K+ clients who planned their perfect day with Evencers.</p>
             <div className="hm-cta-btns">
               <button className="hm-cta-primary" onClick={() => navigate("/register")}>
                 <span>Get Started Free</span>
