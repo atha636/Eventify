@@ -107,10 +107,10 @@ const TESTIMONIALS = [
 ];
 
 const STATS = [
-  { num: "100", suffix: "+", label: "Happy Clients", icon: "🎉" },
-  { num: "20", suffix: "+", label: "Verified Vendors", icon: "✓" },
+  { num: "10", suffix: "K+", label: "Happy Clients", icon: "🎉" },
+  { num: "200", suffix: "+", label: "Verified Vendors", icon: "✓" },
   { num: "4", suffix: ".9★", label: "Average Rating", icon: "⭐" },
-  { num: "2", suffix: "+", label: "Cities Served", icon: "📍" },
+  { num: "4", suffix: "+", label: "Cities Served", icon: "📍" },
 ];
 
 export default function WhyEvencers() {
@@ -128,7 +128,7 @@ export default function WhyEvencers() {
     document.title = "Why Evencers — India's Most Trusted Event Planning Platform";
     let meta = document.querySelector('meta[name="description"]');
     if (!meta) { meta = document.createElement("meta"); meta.name = "description"; document.head.appendChild(meta); }
-    meta.setAttribute("content", "Discover why 100+ clients and 20+ vendors trust Evencers for weddings, corporate events, birthdays, and more. Verified vendors, instant booking, and dedicated support across India.");
+    meta.setAttribute("content", "Discover why 10k+ clients and 200+ vendors trust Evencers for weddings, corporate events, birthdays, and more. Verified vendors, instant booking, and dedicated support across India.");
     return () => { document.title = "Evencers"; };
   }, []);
 
@@ -371,7 +371,7 @@ export default function WhyEvencers() {
               Ready to begin?
             </span>
             <h2 className="we-cta-title">Your perfect event starts <em>here.</em></h2>
-            <p className="we-cta-sub">Join over 100 clients and 20+ vendors who trust Evencers to deliver extraordinary celebrations across India.</p>
+            <p className="we-cta-sub">Join over 12K clients and 200+ vendors who trust Evencers to deliver extraordinary celebrations across India.</p>
             <div className="we-cta-btns">
               <button className="we-btn-primary we-btn-large" onClick={() => navigate("/vendors")}>
                 Find Vendors <span>→</span>
