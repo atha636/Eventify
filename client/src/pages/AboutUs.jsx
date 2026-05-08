@@ -53,9 +53,9 @@ function Counter({ target, suffix = "" }) {
 // ── Marquee Strip ──
 function MarqueeStrip() {
   const items = [
-    "20+ Verified Vendors", "★ 4.9 Rated", "2+ Cities",
+    "200+ Verified Vendors", "★ 4.9 Rated", "4+ Cities",
     "Weddings", "Birthdays", "Corporate Events", "Anniversaries",
-    "Delhi · Chandigarh ", "Instant Booking", "120+ Happy Clients",
+    "Delhi · Chandigarh ", "Instant Booking", "12k+ Happy Clients",
   ];
   const doubled = [...items, ...items];
   return (
@@ -102,7 +102,7 @@ export default function AboutUs() {
   const timeline = [
     { year: "2025",       title: "The Frustration",  desc: "Our founders tried planning a Delhi corporate event. Three weeks. Dozens of calls. Mediocre results. The idea was born." },
     { year: "Early 2026", title: "First 10 Vendors", desc: "We manually onboarded 10 Delhi vendors we personally trusted. First client booked within 48 hours." },
-    { year: "Mid 2027",   title: "Expanding Cities", desc: "Mumbai. Bangalore. Hyderabad. We hit 1500+ verified vendors and 10k+ happy clients." },
+    { year: "Mid 2027",   title: "Expanding Cities", desc: "Mumbai. Bangalore. Hyderabad. We hit 1500+ verified vendors and 30k+ happy clients." },
     { year: "2028",       title: "All of India",     desc: "50+ cities. 10k+ vendors. 120k+ clients. And we're just getting started." },
   ];
 
@@ -177,9 +177,9 @@ export default function AboutUs() {
         <section className="au-stats-section" ref={statsRef} aria-label="Platform statistics">
           <div className="au-stats-grid">
             {[
-              { num: "100", suffix: "+",   label: "Happy Clients",   sub: "across India",      icon: "👥" },
-              { num: "20",  suffix: "+",   label: "Verified Vendors", sub: "manually screened", icon: "✓" },
-              { num: "2",   suffix: "+",   label: "Cities",           sub: "and growing fast",  icon: "📍" },
+              { num: "10", suffix: "K+",   label: "Happy Clients",   sub: "across India",      icon: "👥" },
+              { num: "200",  suffix: "+",   label: "Verified Vendors", sub: "manually screened", icon: "✓" },
+              { num: "4",   suffix: "+",   label: "Cities",           sub: "and growing fast",  icon: "📍" },
               { num: "4",   suffix: ".9★", label: "Average Rating",   sub: "from real clients", icon: "★" },
             ].map((s, i) => (
               <div
@@ -221,7 +221,7 @@ export default function AboutUs() {
                 and private celebrations every month. And we're just getting started.
               </p>
               <div className="au-mission-badges">
-                <span className="au-badge">🎊 10+ events powered weekly</span>
+                <span className="au-badge">🎊 30+ events powered weekly</span>
                 <span className="au-badge">⚡ 3 min avg. booking time</span>
               </div>
             </div>
@@ -230,7 +230,7 @@ export default function AboutUs() {
               <div className="au-mv-bg-ring au-ring1" aria-hidden="true" />
               <div className="au-mv-bg-ring au-ring2" aria-hidden="true" />
               <div className="au-mv-center" aria-hidden="true">
-                <span className="au-mv-big">20+</span>
+                <span className="au-mv-big">200+</span>
                 <span className="au-mv-sub">verified vendors</span>
               </div>
               <div className="au-mv-orbit au-orb-card1" aria-hidden="true">
@@ -338,7 +338,7 @@ export default function AboutUs() {
             </div>
             <div className={`au-vendor-stats au-reveal ${vendorVisible ? "au-revealed" : ""}`} style={{ transitionDelay: "0.2s" }}>
               {[
-                { num: "20",  suffix: "+",   label: "Active Vendors",     icon: "🏪" },
+                { num: "200",  suffix: "+",   label: "Active Vendors",     icon: "🏪" },
                 { num: "94",  suffix: "%",   label: "Vendor Satisfaction", icon: "💛" },
                 { num: "48",  suffix: "hr",  label: "Avg. First Booking",  icon: "⚡" },
               ].map((s, i) => (
@@ -397,7 +397,7 @@ export default function AboutUs() {
             <p className="au-eyebrow" style={{ color: "var(--gold)" }}>Ready to begin?</p>
             <h2 id="cta-heading" className="au-cta-title">Your next great event<br />starts here.</h2>
             <p className="au-cta-sub">
-              Join over 120 clients across India who planned their perfect day with Evencers —
+              Join over 12k clients across India who planned their perfect day with Evencers —
               weddings, birthdays, corporate events and more.
             </p>
             <div className="au-cta-btns">
