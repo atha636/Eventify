@@ -10,7 +10,8 @@ import Logo from "../components/Logo";
 function ShareModal({ vendor, onClose }) {
   const [copied, setCopied] = useState(false);
   const shareUrl  = `${window.location.origin}/vendor/${vendor._id}`;
-  const shareText = `Check out ${vendor.title} on Evencers — starting at ₹${Number(vendor.packages?.[0]?.price || 0).toLocaleString()}`;
+  const startPrice = vendor.packages?.[0]?.price || vendor.price || 0;
+  const shareText = `Check out ${vendor.title} on Evencers — starting at ₹${Number(startPrice).toLocaleString()}`;
 
   const platforms = [
     {
@@ -56,7 +57,7 @@ function ShareModal({ vendor, onClose }) {
           {platforms.map((p) => (
             <button key={p.name} className="vsm-platform"
               style={{ "--pc": p.color, "--pbg": p.bg, "--pborder": p.border }}
-              onClick={() => p.href ? window.open(p.href, "_blank", "noopener,noreferrer,width=620,height=520") : handleCopy()}>
+              onClick={() => window.open(p.href, "_blank", "noopener,noreferrer,width=620,height=520")}>
               <span style={{ color: p.color }}>{p.icon}</span>
               <span className="vsm-p-name">{p.name}</span>
             </button>
@@ -73,7 +74,7 @@ function ShareModal({ vendor, onClose }) {
   );
 }
 
-// ── Custom Date Picker (unchanged from original) ──────────────────────────────
+// ── Custom Date Picker ────────────────────────────────────────────────────────
 function CustomDatePicker({ value, onChange, hasError }) {
   const [open, setOpen]           = useState(false);
   const [viewYear, setViewYear]   = useState(() => new Date().getFullYear());
@@ -189,27 +190,19 @@ function CustomDatePicker({ value, onChange, hasError }) {
 function PaymentPlanSelector({ price, selectedPlan, onChange }) {
   const plans = [
     {
-      id:       "25",
-      label:    "Book Date",
-      badge:    "25% Now",
-      color:    "#2d6a4f",
-      bgColor:  "rgba(45,106,79,0.07)",
-      borderColor: "rgba(45,106,79,0.3)",
+      id: "25", label: "Book Date", badge: "25% Now",
+      color: "#2d6a4f", bgColor: "rgba(45,106,79,0.07)", borderColor: "rgba(45,106,79,0.3)",
       amountNow: Math.round(price * 0.25),
       description: "Pay 25% to lock your date",
       steps: [
-        { label: "Now",          detail: `₹${Math.round(price * 0.25).toLocaleString("en-IN")} (25%)` },
+        { label: "Now",           detail: `₹${Math.round(price * 0.25).toLocaleString("en-IN")} (25%)` },
         { label: "3 days before", detail: `₹${Math.round(price * 0.50).toLocaleString("en-IN")} (50%) — reminder sent daily` },
-        { label: "After event",  detail: `₹${Math.round(price * 0.25).toLocaleString("en-IN")} (25%)` },
+        { label: "After event",   detail: `₹${Math.round(price * 0.25).toLocaleString("en-IN")} (25%)` },
       ],
     },
     {
-      id:       "75",
-      label:    "Partial Pay",
-      badge:    "75% Now",
-      color:    "#b87333",
-      bgColor:  "rgba(184,115,51,0.07)",
-      borderColor: "rgba(184,115,51,0.3)",
+      id: "75", label: "Partial Pay", badge: "75% Now",
+      color: "#b87333", bgColor: "rgba(184,115,51,0.07)", borderColor: "rgba(184,115,51,0.3)",
       amountNow: Math.round(price * 0.75),
       description: "Pay 75% now, rest after event",
       steps: [
@@ -218,12 +211,8 @@ function PaymentPlanSelector({ price, selectedPlan, onChange }) {
       ],
     },
     {
-      id:       "100",
-      label:    "Full Pay",
-      badge:    "5% Off",
-      color:    "#c9a84c",
-      bgColor:  "rgba(201,168,76,0.07)",
-      borderColor: "rgba(201,168,76,0.3)",
+      id: "100", label: "Full Pay", badge: "5% Off",
+      color: "#c9a84c", bgColor: "rgba(201,168,76,0.07)", borderColor: "rgba(201,168,76,0.3)",
       amountNow: Math.round(price * 0.95),
       description: "Pay full amount, get 5% discount",
       steps: [
@@ -242,31 +231,19 @@ function PaymentPlanSelector({ price, selectedPlan, onChange }) {
             <button
               key={plan.id}
               className={`pps-card ${isActive ? "active" : ""}`}
-              style={{
-                "--plan-color":  plan.color,
-                "--plan-bg":     plan.bgColor,
-                "--plan-border": plan.borderColor,
-              }}
+              style={{ "--plan-color": plan.color, "--plan-bg": plan.bgColor, "--plan-border": plan.borderColor }}
               onClick={() => onChange(plan.id)}
               type="button"
             >
-              {/* Top row */}
               <div className="pps-top">
                 <span className="pps-plan-label">{plan.label}</span>
-                <span className="pps-badge" style={{ background: plan.bgColor, color: plan.color, border: `1px solid ${plan.borderColor}` }}>
-                  {plan.badge}
-                </span>
+                <span className="pps-badge" style={{ background: plan.bgColor, color: plan.color, border: `1px solid ${plan.borderColor}` }}>{plan.badge}</span>
               </div>
-
-              {/* Amount now */}
               <div className="pps-amount-now">
                 ₹{plan.amountNow.toLocaleString("en-IN")}
                 <span className="pps-amount-label"> due now</span>
               </div>
-
               <p className="pps-desc">{plan.description}</p>
-
-              {/* Steps — only show when active */}
               {isActive && (
                 <div className="pps-steps">
                   {plan.steps.map((step, i) => (
@@ -280,8 +257,6 @@ function PaymentPlanSelector({ price, selectedPlan, onChange }) {
                   ))}
                 </div>
               )}
-
-              {/* Active indicator */}
               {isActive && <span className="pps-active-bar" style={{ background: plan.color }} />}
             </button>
           );
@@ -291,13 +266,39 @@ function PaymentPlanSelector({ price, selectedPlan, onChange }) {
   );
 }
 
+// ── Time Slot Selector (Decor) ────────────────────────────────────────────────
+function TimeSlotSelector({ slots, selectedSlot, onChange }) {
+  if (!slots || slots.length === 0) return null;
+  return (
+    <div className="tss-root">
+      <label className="vd-label">Select Time Slot</label>
+      <div className="tss-grid">
+        {slots.map((slot, i) => (
+          <button
+            key={i}
+            type="button"
+            className={`tss-btn ${selectedSlot === slot ? "active" : ""}`}
+            onClick={() => onChange(slot)}
+          >
+            <span className="tss-check">{selectedSlot === slot ? "✓" : ""}</span>
+            <span className="tss-label">{slot}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function VendorDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
+
   const [vendor,          setVendor]          = useState(null);
   const [selectedDate,    setSelectedDate]    = useState("");
   const [selectedPackage, setSelectedPackage] = useState(null);
-  const [selectedPlan,    setSelectedPlan]    = useState("100");   // ← NEW
+  const [selectedSlot,    setSelectedSlot]    = useState("");   // decor
+  const [selectedPlan,    setSelectedPlan]    = useState("100");
   const [loading,         setLoading]         = useState(false);
   const [dateWarning,     setDateWarning]     = useState("");
 
@@ -307,16 +308,20 @@ export default function VendorDetail() {
   const [showWaitModal,    setShowWaitModal]    = useState(false);
   const [showShareModal,   setShowShareModal]   = useState(false);
 
-  const navigate  = useNavigate();
-  const user      = JSON.parse(localStorage.getItem("user"));
-  const isVendor  = user?.role === "vendor";
+  const user     = JSON.parse(localStorage.getItem("user") || "{}");
+  const isVendor = user?.role === "vendor";
 
   useEffect(() => {
     const controller = new AbortController();
     API.get(`/vendors/single/${id}`, { signal: controller.signal })
       .then((res) => {
-        setVendor(res.data);
-        if (res.data?.packages?.length > 0) setSelectedPackage(0);
+        const v = res.data;
+        setVendor(v);
+        if (v?.packages?.length > 0) setSelectedPackage(0);
+        // Auto-select first time slot for decor
+        if (v?.serviceType === "decor" && v?.timeSlots?.length > 0) {
+          setSelectedSlot(v.timeSlots[0]);
+        }
       })
       .catch((err) => {
         if (err.name !== "CanceledError" && err.code !== "ERR_CANCELED")
@@ -325,14 +330,47 @@ export default function VendorDetail() {
     return () => controller.abort();
   }, [id]);
 
+  // ── Derived: is this a decor service? ────────────────────────────────────
+  const isDecor = vendor?.serviceType === "decor";
+
+  // ── Location display helper ───────────────────────────────────────────────
+  // Support both new `locations` array and old `location` string
+  const getLocationDisplay = (v) => {
+    if (!v) return "";
+    if (Array.isArray(v.locations) && v.locations.length > 0) {
+      return v.locations.join(" · ");
+    }
+    return v.location || "";
+  };
+
+  // ── Price for current selection ───────────────────────────────────────────
+  const currentPrice = isDecor
+    ? (vendor?.price || 0)
+    : (vendor?.packages?.[selectedPackage]?.price || 0);
+
+  const getButtonAmount = () => {
+    if (!currentPrice) return 0;
+    if (selectedPlan === "25")  return Math.round(currentPrice * 0.25);
+    if (selectedPlan === "75")  return Math.round(currentPrice * 0.75);
+    return Math.round(currentPrice * 0.95);
+  };
+
+  const getPlanNote = () => {
+    if (selectedPlan === "25")  return "Secure your date · Pay remaining 75% in installments";
+    if (selectedPlan === "75")  return "75% now · 25% after event confirmation";
+    return "Best value · 5% discount applied · One-time payment";
+  };
+
+  // ── Reserve click handler ─────────────────────────────────────────────────
   const handleReserveClick = () => {
     if (isVendor) { setShowVendorModal(true); return; }
     const token = localStorage.getItem("token");
-    if (!token)  { setShowLoginModal(true);  return; }
+    if (!token)  { setShowLoginModal(true); return; }
     if (!selectedDate) { setDateWarning("Please select a date to continue."); return; }
     const picked = new Date(selectedDate);
     if (isNaN(picked.getTime()))     { setDateWarning("Please select a valid date."); return; }
     if (picked.getFullYear() > 2100) { setDateWarning("Please select a realistic date."); return; }
+    if (isDecor && !selectedSlot)    { setDateWarning("Please select a time slot."); return; }
     setDateWarning("");
     setShowDetailsModal(true);
   };
@@ -341,15 +379,21 @@ export default function VendorDetail() {
     const token = localStorage.getItem("token");
     setLoading(true);
     try {
+      const pkg = !isDecor ? vendor.packages[selectedPackage] : null;
+
       await API.post(
         "/bookings",
         {
           vendorId:     vendor._id,
           date:         selectedDate,
-          packageName:  vendor.packages[selectedPackage].name,
-          packagePrice: vendor.packages[selectedPackage].price,
+          // Package-based (photography etc.)
+          packageName:  pkg?.name  || null,
+          packagePrice: pkg?.price || null,
+          // Decor-specific
+          timeSlot:     isDecor ? selectedSlot : null,
+          price:        isDecor ? vendor.price  : null,
           userDetails,
-          paymentPlan:  selectedPlan,     // ← send plan to backend
+          paymentPlan:  selectedPlan,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -374,21 +418,7 @@ export default function VendorDetail() {
     );
   }
 
-  const pkg = vendor.packages?.[selectedPackage];
-
-  // Computed amount for the Reserve button based on selected plan
-  const getButtonAmount = () => {
-    if (!pkg) return 0;
-    if (selectedPlan === "25")  return Math.round(pkg.price * 0.25);
-    if (selectedPlan === "75")  return Math.round(pkg.price * 0.75);
-    return Math.round(pkg.price * 0.95);   // 100 plan = 5% discount
-  };
-
-  const getPlanNote = () => {
-    if (selectedPlan === "25")  return "Secure your date · Pay remaining 75% in installments";
-    if (selectedPlan === "75")  return "75% now · 25% after event confirmation";
-    return "Best value · 5% discount applied · One-time payment";
-  };
+  const pkg = !isDecor ? vendor.packages?.[selectedPackage] : null;
 
   return (
     <>
@@ -396,12 +426,18 @@ export default function VendorDetail() {
       <style>{shareModalStyles}</style>
       <Navbar />
 
-      {showDetailsModal && pkg && (
+      {showDetailsModal && (
         <BookingDetailsModal
-          pkg={pkg}
+          // For non-decor pass the package; for decor pass a synthetic "pkg" object
+          pkg={isDecor
+            ? { name: selectedSlot || "Decor Service", price: vendor.price }
+            : pkg
+          }
           vendor={vendor}
           date={selectedDate}
           paymentPlan={selectedPlan}
+          isDecor={isDecor}
+          selectedSlot={selectedSlot}
           onConfirm={handleDetailsConfirm}
           onClose={() => setShowDetailsModal(false)}
           loading={loading}
@@ -414,7 +450,7 @@ export default function VendorDetail() {
           onClose={() => { setShowWaitModal(false); navigate("/my-bookings"); }}
         />
       )}
-      {showShareModal && vendor && (
+      {showShareModal && (
         <ShareModal vendor={vendor} onClose={() => setShowShareModal(false)} />
       )}
 
@@ -451,17 +487,24 @@ export default function VendorDetail() {
       )}
 
       <div className="vd-root">
-        {/* Hero */}
+        {/* ── Hero ── */}
         <div className="vd-hero">
           <img src={vendor.images?.[0] || "/placeholder.jpg"} alt={vendor.title} className="vd-hero-img" />
           <div className="vd-hero-overlay" />
           <div className="vd-hero-content">
-            <span className="vd-tag">📍 {vendor.location}</span>
+            {/* ── Location: support array and string ── */}
+            <span className="vd-tag">
+              📍 {getLocationDisplay(vendor) || "India"}
+            </span>
             <h1 className="vd-title">{vendor.title}</h1>
             <div className="vd-badge-row">
               <span className="vd-badge">⭐ Premium Vendor</span>
               <span className="vd-badge">✓ Verified</span>
-              <span className="vd-badge">📦 {vendor.packages?.length} {vendor.packages?.length === 1 ? "Package" : "Packages"}</span>
+              {isDecor ? (
+                <span className="vd-badge">🎨 Decor Service</span>
+              ) : (
+                <span className="vd-badge">📦 {vendor.packages?.length} {vendor.packages?.length === 1 ? "Package" : "Packages"}</span>
+              )}
               <button className="vd-share-badge" onClick={() => setShowShareModal(true)} title="Share this service">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                 Share
@@ -470,99 +513,169 @@ export default function VendorDetail() {
           </div>
         </div>
 
-        {/* Body */}
+        {/* ── Body ── */}
         <div className="vd-body">
-          {/* Sidebar */}
+
+          {/* ── Sidebar: packages (non-decor) or decor info ── */}
           <aside className="vd-sidebar">
-            <h2 className="vd-section-label">Choose a Package</h2>
-            <div className="vd-pkg-list">
-              {vendor.packages.map((p, i) => (
-                <button key={i} className={`vd-pkg-card ${selectedPackage === i ? "active" : ""}`} onClick={() => setSelectedPackage(i)}>
-                  <div className="vd-pkg-top">
-                    <span className="vd-pkg-name">{p.name}</span>
-                    <span className="vd-pkg-price">₹{p.price?.toLocaleString()}</span>
+            {isDecor ? (
+              <>
+                <h2 className="vd-section-label">Service Details</h2>
+                <div className="vd-decor-info-card">
+                  <div className="vd-decor-emoji">🎨</div>
+                  <h3 className="vd-decor-name">{vendor.title}</h3>
+                  {vendor.description && (
+                    <p className="vd-decor-desc">{vendor.description}</p>
+                  )}
+                  <div className="vd-decor-price-row">
+                    <span className="vd-decor-price-label">Service Price</span>
+                    <span className="vd-decor-price">₹{vendor.price?.toLocaleString("en-IN") || "—"}</span>
                   </div>
-                  <ul className="vd-pkg-desc">{p.features?.map((f, fi) => <li key={fi}>✔ {f}</li>)}</ul>
-                  {selectedPackage === i && <span className="vd-pkg-selected-dot" />}
-                </button>
-              ))}
-            </div>
+                  {/* Location pills */}
+                  {(Array.isArray(vendor.locations) && vendor.locations.length > 0) && (
+                    <div className="vd-decor-locs">
+                      <span className="vd-decor-locs-label">Available in</span>
+                      <div className="vd-decor-loc-pills">
+                        {vendor.locations.map((loc) => (
+                          <span key={loc} className="vd-decor-loc-pill">📍 {loc}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* Time slots list */}
+                  {vendor.timeSlots?.length > 0 && (
+                    <div className="vd-decor-slots-preview">
+                      <span className="vd-decor-locs-label">Available Slots</span>
+                      {vendor.timeSlots.map((s) => (
+                        <span key={s} className="vd-decor-slot-tag">⏰ {s}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="vd-section-label">Choose a Package</h2>
+                <div className="vd-pkg-list">
+                  {vendor.packages.map((p, i) => (
+                    <button key={i} className={`vd-pkg-card ${selectedPackage === i ? "active" : ""}`} onClick={() => setSelectedPackage(i)}>
+                      <div className="vd-pkg-top">
+                        <span className="vd-pkg-name">{p.name}</span>
+                        <span className="vd-pkg-price">₹{p.price?.toLocaleString()}</span>
+                      </div>
+                      <ul className="vd-pkg-desc">{p.features?.map((f, fi) => <li key={fi}>✔ {f}</li>)}</ul>
+                      {selectedPackage === i && <span className="vd-pkg-selected-dot" />}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </aside>
 
-          {/* Main */}
+          {/* ── Main booking panel ── */}
           <main className="vd-main">
-            {pkg && (
-              <div className="vd-booking-panel">
-                {/* Panel header */}
-                <div className="vd-panel-header">
-                  <h3 className="vd-panel-title">{pkg.name}</h3>
-                  <div className="vd-panel-right">
-                    <div className="vd-panel-price">
-                      <span className="vd-price-label">Starting at</span>
-                      <span className="vd-price-value">₹{pkg.price?.toLocaleString()}</span>
-                    </div>
-                    <button className="vd-panel-share-btn" onClick={() => setShowShareModal(true)} title="Share">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="15" height="15"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                    </button>
+            <div className="vd-booking-panel">
+              {/* Panel header */}
+              <div className="vd-panel-header">
+                <h3 className="vd-panel-title">
+                  {isDecor ? vendor.title : (pkg?.name || "—")}
+                </h3>
+                <div className="vd-panel-right">
+                  <div className="vd-panel-price">
+                    <span className="vd-price-label">
+                      {isDecor ? "Fixed Price" : "Starting at"}
+                    </span>
+                    <span className="vd-price-value">
+                      ₹{currentPrice?.toLocaleString("en-IN") || "—"}
+                    </span>
                   </div>
-                </div>
-
-                <ul className="vd-panel-desc">{pkg.features?.map((f, i) => <li key={i}>✔ {f}</li>)}</ul>
-
-                <div className="vd-divider" />
-
-                {/* ── PAYMENT PLAN SELECTOR ── */}
-                <PaymentPlanSelector
-                  price={pkg.price}
-                  selectedPlan={selectedPlan}
-                  onChange={setSelectedPlan}
-                />
-
-                <div className="vd-divider" />
-
-                {/* Date picker */}
-                <div className="vd-date-section">
-                  <label className="vd-label">Select Your Date</label>
-                  <CustomDatePicker
-                    value={selectedDate}
-                    onChange={(iso) => { setSelectedDate(iso); setDateWarning(""); }}
-                    hasError={!!dateWarning}
-                  />
-                  {dateWarning && (
-                    <p className="vd-date-warning"><span className="vd-warn-icon">⚠</span> {dateWarning}</p>
-                  )}
-                </div>
-
-                {/* Reserve button */}
-                <button
-                  className={`vd-book-btn ${loading ? "loading" : ""} plan-${selectedPlan}`}
-                  onClick={handleReserveClick}
-                  disabled={loading}
-                >
-                  {isVendor ? (
-                    "It seems you are a Vendor — Explore as a Client"
-                  ) : loading ? (
-                    <><span className="vd-btn-spinner" /> Processing…</>
-                  ) : (
-                    <>
-                      {selectedPlan === "25" && `Book Date — Pay ₹${getButtonAmount().toLocaleString("en-IN")} Now`}
-                      {selectedPlan === "75" && `Pay 75% — ₹${getButtonAmount().toLocaleString("en-IN")} Now`}
-                      {selectedPlan === "100" && `Pay Full — ₹${getButtonAmount().toLocaleString("en-IN")} (5% off)`}
-                    </>
-                  )}
-                </button>
-
-                {/* Plan note + share */}
-                <div className="vd-bottom-row">
-                  <p className="vd-note">{getPlanNote()}</p>
-                  <button className="vd-share-text-btn" onClick={() => setShowShareModal(true)}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="12" height="12"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                    Share
+                  <button className="vd-panel-share-btn" onClick={() => setShowShareModal(true)} title="Share">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="15" height="15"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                   </button>
                 </div>
               </div>
-            )}
 
+              {/* Features list (non-decor) */}
+              {!isDecor && pkg?.features?.length > 0 && (
+                <ul className="vd-panel-desc">
+                  {pkg.features.map((f, i) => <li key={i}>✔ {f}</li>)}
+                </ul>
+              )}
+
+              {/* Location pills in booking panel */}
+              {Array.isArray(vendor.locations) && vendor.locations.length > 0 && (
+                <div className="vd-panel-locs">
+                  {vendor.locations.map((loc) => (
+                    <span key={loc} className="vd-panel-loc-pill">📍 {loc}</span>
+                  ))}
+                </div>
+              )}
+
+              <div className="vd-divider" />
+
+              {/* ── Time slot selector (decor only) ── */}
+              {isDecor && vendor.timeSlots?.length > 0 && (
+                <>
+                  <TimeSlotSelector
+                    slots={vendor.timeSlots}
+                    selectedSlot={selectedSlot}
+                    onChange={setSelectedSlot}
+                  />
+                  <div className="vd-divider" />
+                </>
+              )}
+
+              {/* ── Payment plan ── */}
+              <PaymentPlanSelector
+                price={currentPrice}
+                selectedPlan={selectedPlan}
+                onChange={setSelectedPlan}
+              />
+
+              <div className="vd-divider" />
+
+              {/* ── Date picker ── */}
+              <div className="vd-date-section">
+                <label className="vd-label">Select Your Date</label>
+                <CustomDatePicker
+                  value={selectedDate}
+                  onChange={(iso) => { setSelectedDate(iso); setDateWarning(""); }}
+                  hasError={!!dateWarning}
+                />
+                {dateWarning && (
+                  <p className="vd-date-warning"><span className="vd-warn-icon">⚠</span> {dateWarning}</p>
+                )}
+              </div>
+
+              {/* ── Reserve button ── */}
+              <button
+                className={`vd-book-btn ${loading ? "loading" : ""} plan-${selectedPlan}`}
+                onClick={handleReserveClick}
+                disabled={loading}
+              >
+                {isVendor ? (
+                  "It seems you are a Vendor — Explore as a Client"
+                ) : loading ? (
+                  <><span className="vd-btn-spinner" /> Processing…</>
+                ) : (
+                  <>
+                    {selectedPlan === "25"  && `Book Date — Pay ₹${getButtonAmount().toLocaleString("en-IN")} Now`}
+                    {selectedPlan === "75"  && `Pay 75% — ₹${getButtonAmount().toLocaleString("en-IN")} Now`}
+                    {selectedPlan === "100" && `Pay Full — ₹${getButtonAmount().toLocaleString("en-IN")} (5% off)`}
+                  </>
+                )}
+              </button>
+
+              <div className="vd-bottom-row">
+                <p className="vd-note">{getPlanNote()}</p>
+                <button className="vd-share-text-btn" onClick={() => setShowShareModal(true)}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="12" height="12"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                  Share
+                </button>
+              </div>
+            </div>
+
+            {/* ── Gallery ── */}
             {vendor.images?.length > 1 && (
               <div className="vd-gallery">
                 <h2 className="vd-section-label">Gallery</h2>
@@ -646,6 +759,23 @@ const styles = `
   .vd-body { display:grid;grid-template-columns:340px 1fr;gap:0;max-width:1200px;margin:0 auto;padding:48px 32px;align-items:start; }
   .vd-sidebar { padding-right:40px; }
   .vd-section-label { font-size:10px;font-weight:500;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin:0 0 20px; }
+
+  /* ── Decor sidebar card ── */
+  .vd-decor-info-card { background:var(--white);border:1px solid var(--border);border-radius:12px;padding:24px;box-shadow:0 4px 20px rgba(14,12,10,0.05); }
+  .vd-decor-emoji { font-size:2.2rem;margin-bottom:12px;display:block; }
+  .vd-decor-name { font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:600;color:var(--ink);margin:0 0 10px; }
+  .vd-decor-desc { font-size:13px;color:var(--muted);line-height:1.6;margin:0 0 16px; }
+  .vd-decor-price-row { display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:14px; }
+  .vd-decor-price-label { font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted); }
+  .vd-decor-price { font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;color:var(--gold); }
+  .vd-decor-locs { margin-bottom:14px; }
+  .vd-decor-locs-label { font-size:10px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px; }
+  .vd-decor-loc-pills { display:flex;flex-wrap:wrap;gap:6px; }
+  .vd-decor-loc-pill { font-size:11.5px;color:var(--ink);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:4px 10px; }
+  .vd-decor-slots-preview { display:flex;flex-direction:column;gap:6px; }
+  .vd-decor-slot-tag { font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 10px; }
+
+  /* Packages */
   .vd-pkg-list { display:flex;flex-direction:column;gap:12px; }
   .vd-pkg-card { position:relative;background:var(--white);border:1px solid var(--border);border-radius:8px;padding:20px;text-align:left;cursor:pointer;transition:all 0.25s;overflow:hidden; }
   .vd-pkg-card:hover { border-color:var(--gold);transform:translateX(4px);box-shadow:0 4px 20px rgba(201,168,76,0.12); }
@@ -656,6 +786,7 @@ const styles = `
   .vd-pkg-desc { font-size:12.5px;color:var(--muted);line-height:1.5;margin:0;padding-left:0;list-style:none; }
   .vd-pkg-selected-dot { position:absolute;top:0;left:0;width:3px;height:100%;background:var(--gold);border-radius:0 2px 2px 0; }
 
+  /* Main */
   .vd-main { display:flex;flex-direction:column;gap:40px; }
   .vd-booking-panel { background:var(--white);border:1px solid var(--border);border-radius:12px;padding:36px;box-shadow:0 8px 40px rgba(14,12,10,0.06); }
   .vd-panel-header { display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px; }
@@ -666,51 +797,48 @@ const styles = `
   .vd-price-value { font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:600;color:var(--ink); }
   .vd-panel-share-btn { width:36px;height:36px;background:var(--surface);border:1px solid var(--border);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);transition:all 0.2s;flex-shrink:0;margin-top:4px; }
   .vd-panel-share-btn:hover { border-color:var(--gold);color:var(--gold); }
-  .vd-panel-desc { font-size:13.5px;color:var(--muted);line-height:1.7;margin:0;padding-left:0;list-style:none; }
+  .vd-panel-desc { font-size:13.5px;color:var(--muted);line-height:1.7;margin:0 0 16px;padding-left:0;list-style:none; }
+  .vd-panel-locs { display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px; }
+  .vd-panel-loc-pill { font-size:11.5px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:4px 10px; }
   .vd-divider { height:1px;background:var(--border);margin:24px 0; }
+
+  /* ── Time Slot Selector ── */
+  .tss-root { margin-bottom:4px; }
+  .tss-grid { display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px; }
+  .tss-btn { display:flex;align-items:center;gap:10px;padding:12px 16px;border:1px solid var(--border);border-radius:8px;background:var(--surface);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--muted);transition:all 0.2s;text-align:left;min-height:48px; }
+  .tss-btn:hover { border-color:var(--gold);color:var(--ink); }
+  .tss-btn.active { border-color:var(--gold);background:linear-gradient(135deg,rgba(201,168,76,0.08),rgba(201,168,76,0.03));color:var(--ink);font-weight:500;box-shadow:0 2px 10px rgba(201,168,76,0.12); }
+  .tss-check { width:18px;height:18px;border-radius:4px;border:1.5px solid rgba(201,168,76,0.4);background:transparent;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);flex-shrink:0;transition:all 0.2s; }
+  .tss-btn.active .tss-check { background:var(--gold);border-color:var(--gold);color:white;font-weight:700; }
+  .tss-label { flex:1; }
 
   /* ── Payment Plan Selector ── */
   .pps-root { margin-bottom:4px; }
   .pps-cards { display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px; }
-  .pps-card {
-    position:relative;overflow:hidden;
-    background:var(--surface);border:1.5px solid var(--border);
-    border-radius:10px;padding:16px 14px;text-align:left;
-    cursor:pointer;transition:all 0.25s ease;
-  }
+  .pps-card { position:relative;overflow:hidden;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:16px 14px;text-align:left;cursor:pointer;transition:all 0.25s ease; }
   .pps-card:hover { border-color:var(--plan-border,var(--gold));box-shadow:0 4px 16px rgba(14,12,10,0.08); }
-  .pps-card.active {
-    background:var(--plan-bg,rgba(201,168,76,0.07));
-    border-color:var(--plan-color,var(--gold));
-    box-shadow:0 6px 24px rgba(14,12,10,0.10);
-  }
+  .pps-card.active { background:var(--plan-bg,rgba(201,168,76,0.07));border-color:var(--plan-color,var(--gold));box-shadow:0 6px 24px rgba(14,12,10,0.10); }
   .pps-top { display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px; }
   .pps-plan-label { font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:600;color:var(--ink); }
   .pps-badge { font-size:9px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:3px 7px;border-radius:20px;white-space:nowrap; }
   .pps-amount-now { font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:600;color:var(--ink);margin-bottom:4px; }
   .pps-amount-label { font-family:'DM Sans',sans-serif;font-size:11px;font-weight:400;color:var(--muted); }
   .pps-desc { font-size:11px;color:var(--muted);line-height:1.4;margin:0; }
-
-  /* Steps (shown when plan is active) */
-  .pps-steps {
-    margin-top:12px;display:flex;flex-direction:column;gap:0;
-    border-top:1px solid rgba(14,12,10,0.06);padding-top:10px;
-  }
+  .pps-steps { margin-top:12px;display:flex;flex-direction:column;gap:0;border-top:1px solid rgba(14,12,10,0.06);padding-top:10px; }
   .pps-step { display:flex;align-items:flex-start;gap:8px;padding:5px 0; }
   .pps-step-dot { width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px; }
   .pps-step-info { display:flex;flex-direction:column;gap:1px; }
   .pps-step-label { font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted); }
   .pps-step-detail { font-size:11.5px;color:var(--ink);font-weight:500; }
-
-  /* Active indicator bar */
   .pps-active-bar { position:absolute;bottom:0;left:0;right:0;height:3px;border-radius:0 0 8px 8px; }
 
+  /* Date */
   .vd-date-section { margin-bottom:28px; }
   .vd-label { display:block;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:10px; }
   .vd-date-warning { display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--danger);margin:8px 0 0;padding:9px 13px;background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:5px; }
   .vd-warn-icon { font-size:13px;flex-shrink:0; }
 
-  /* Reserve button variants */
+  /* Reserve button */
   .vd-book-btn { width:100%;padding:17px 24px;background:var(--gold);color:var(--ink);border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;letter-spacing:0.05em;cursor:pointer;transition:all 0.3s ease;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px; }
   .vd-book-btn:hover:not(:disabled) { background:var(--ink);color:var(--white);transform:translateY(-1px);box-shadow:0 8px 24px rgba(14,12,10,0.2); }
   .vd-book-btn.plan-25 { background:var(--success);color:#fff; }
@@ -773,6 +901,7 @@ const styles = `
     .vd-hero-content { padding:32px 24px; }
     .vd-hero { height:360px; }
     .pps-cards { grid-template-columns:1fr; }
+    .tss-grid { grid-template-columns:1fr; }
   }
   @media(max-width:480px){
     .vd-hero { height:280px; }

@@ -36,7 +36,6 @@ function ImageCarousel({ images, vendorId, vendorTitle, onGalleryClick }) {
     setTimeout(() => { setPrevIdx(null); setTransition(false); }, 500);
   }, [activeIdx, transitioning]);
 
-  // Auto-slide
   useEffect(() => {
     if (!hasMultiple || paused) return;
     autoTimer.current = setInterval(() => {
@@ -51,7 +50,6 @@ function ImageCarousel({ images, vendorId, vendorTitle, onGalleryClick }) {
     return () => clearInterval(autoTimer.current);
   }, [hasMultiple, paused, images?.length]);
 
-  // Swipe
   const onTouchStart = (e) => {
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
@@ -68,23 +66,13 @@ function ImageCarousel({ images, vendorId, vendorTitle, onGalleryClick }) {
     touchStartX.current = null;
   };
 
-  const handleImageClick = (e) => {
-    e.stopPropagation();
-    onGalleryClick(e);
-  };
-
+  const handleImageClick = (e) => { e.stopPropagation(); onGalleryClick(e); };
   const handleArrow = (e, dir) => {
-    e.stopPropagation();
-    e.preventDefault();
+    e.stopPropagation(); e.preventDefault();
     const len = images.length;
     goTo(dir === "next" ? (activeIdx + 1) % len : (activeIdx - 1 + len) % len);
   };
-
-  const handleDotClick = (e, i) => {
-    e.stopPropagation();
-    e.preventDefault();
-    goTo(i);
-  };
+  const handleDotClick = (e, i) => { e.stopPropagation(); e.preventDefault(); goTo(i); };
 
   if (!images || images.length === 0) {
     return <div className="sc-img-fallback"><span>📷</span></div>;
@@ -99,16 +87,9 @@ function ImageCarousel({ images, vendorId, vendorTitle, onGalleryClick }) {
       onTouchEnd={onTouchEnd}
       onClick={handleImageClick}
     >
-      {/* Outgoing slide */}
       {prevIdx !== null && (
-        <img
-          src={images[prevIdx]}
-          alt=""
-          className="sc-carousel-slide sc-slide-out"
-        />
+        <img src={images[prevIdx]} alt="" className="sc-carousel-slide sc-slide-out" />
       )}
-
-      {/* Active slide */}
       <img
         key={activeIdx}
         src={images[activeIdx]}
@@ -117,48 +98,25 @@ function ImageCarousel({ images, vendorId, vendorTitle, onGalleryClick }) {
         onLoad={() => setImgLoaded(p => ({ ...p, [activeIdx]: true }))}
         draggable={false}
       />
-
-      {/* Gradient overlay */}
       <div className="sc-carousel-overlay" />
-
-      {/* Progress bar */}
       {hasMultiple && !paused && (
         <div className="sc-carousel-progress" key={`prog-${activeIdx}`}>
           <div className="sc-carousel-progress-fill" />
         </div>
       )}
-
-      {/* Arrows — show on hover */}
       {hasMultiple && (
         <>
-          <button
-            className="sc-carousel-arrow sc-arrow-prev"
-            onClick={(e) => handleArrow(e, "prev")}
-            aria-label="Previous image"
-          >‹</button>
-          <button
-            className="sc-carousel-arrow sc-arrow-next"
-            onClick={(e) => handleArrow(e, "next")}
-            aria-label="Next image"
-          >›</button>
+          <button className="sc-carousel-arrow sc-arrow-prev" onClick={(e) => handleArrow(e, "prev")} aria-label="Previous image">‹</button>
+          <button className="sc-carousel-arrow sc-arrow-next" onClick={(e) => handleArrow(e, "next")} aria-label="Next image">›</button>
         </>
       )}
-
-      {/* Dots */}
       {hasMultiple && images.length <= 10 && (
         <div className="sc-carousel-dots">
           {images.map((_, i) => (
-            <button
-              key={i}
-              className={`sc-carousel-dot ${i === activeIdx ? "active" : ""}`}
-              onClick={(e) => handleDotClick(e, i)}
-              aria-label={`Go to image ${i + 1}`}
-            />
+            <button key={i} className={`sc-carousel-dot ${i === activeIdx ? "active" : ""}`} onClick={(e) => handleDotClick(e, i)} aria-label={`Go to image ${i + 1}`} />
           ))}
         </div>
       )}
-
-      {/* Image counter for 10+ */}
       {hasMultiple && images.length > 10 && (
         <div className="sc-img-counter">{activeIdx + 1}/{images.length}</div>
       )}
@@ -408,8 +366,8 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
     <>
       <style>{cardStyles}</style>
 
-      {showFavModal  && <FavouriteModal vendor={vendor} isLoggedIn={isLoggedIn} onConfirm={handleFavConfirm} onCancel={() => setShowFavModal(false)} />}
-      {showDelModal  && <DeleteModal serviceName={vendor.title} onConfirm={handleDeleteConfirm} onCancel={() => setShowDelModal(false)} deleting={deleting} />}
+      {showFavModal   && <FavouriteModal vendor={vendor} isLoggedIn={isLoggedIn} onConfirm={handleFavConfirm} onCancel={() => setShowFavModal(false)} />}
+      {showDelModal   && <DeleteModal serviceName={vendor.title} onConfirm={handleDeleteConfirm} onCancel={() => setShowDelModal(false)} deleting={deleting} />}
       {showShareModal && <ShareModal vendor={vendor} onClose={() => setShowShareModal(false)} />}
       {showToast && (
         <Portal>
@@ -420,7 +378,7 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
 
       <div className="sc-card" onClick={goToDetail}>
 
-        {/* IMAGE CAROUSEL */}
+        {/* ── IMAGE CAROUSEL ── */}
         <div className="sc-img-wrap">
           {!imgError && vendor.images?.length > 0 ? (
             <ImageCarousel
@@ -489,8 +447,9 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
           </div>
         </div>
 
-        {/* BODY */}
+        {/* ── BODY ── */}
         <div className="sc-body">
+          {/* Title + Rating */}
           <div className="sc-top">
             <div className="sc-title-wrap">
               <h3 className="sc-title">{vendor.title}</h3>
@@ -506,6 +465,7 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
             )}
           </div>
 
+          {/* Footer: price + actions — always on one line */}
           <div className="sc-footer">
             <div className="sc-price-block">
               <span className="sc-price-label">Starting at</span>
@@ -600,209 +560,321 @@ const cardStyles = `
   }
 
   /* ── CARD ── */
-  .sc-card { font-family:'DM Sans',sans-serif; background:var(--white); border:1px solid var(--border); border-radius:12px; overflow:hidden; cursor:pointer; transition:transform 0.28s ease,box-shadow 0.28s ease,border-color 0.28s ease; display:flex; flex-direction:column; }
-  .sc-card:hover { transform:translateY(-5px); box-shadow:0 16px 48px rgba(14,12,10,0.1),0 0 0 1px var(--gold); border-color:var(--gold); }
+  .sc-card {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+    display: flex;
+    flex-direction: column;
+    /* Fixed height so all cards are uniform in the grid */
+    height: 100%;
+  }
+  .sc-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 16px 48px rgba(14,12,10,0.1), 0 0 0 1px var(--gold);
+    border-color: var(--gold);
+  }
 
   /* ── IMAGE WRAP ── */
-  .sc-img-wrap { position:relative; height:210px; overflow:hidden; background:#e8e2d8; flex-shrink:0; border-radius:12px 12px 0 0; }
-  .sc-img-fallback { width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#ede8e0,#e0d8cc); font-size:2.5rem; color:var(--muted); cursor:pointer; }
+  .sc-img-wrap {
+    position: relative;
+    /* Fixed height so image is always the same */
+    height: 210px;
+    flex-shrink: 0;
+    overflow: hidden;
+    background: #e8e2d8;
+    border-radius: 12px 12px 0 0;
+  }
+  .sc-img-fallback {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #ede8e0, #e0d8cc);
+    font-size: 2.5rem; color: var(--muted); cursor: pointer;
+  }
 
   /* ── CAROUSEL ── */
   .sc-carousel {
     position: relative;
-    width: 100%;
-    height: 100%;
+    width: 100%; height: 100%;
     overflow: hidden;
     cursor: pointer;
   }
-
-  /* Slides */
   .sc-carousel-slide {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: center;
     display: block;
-    pointer-events: none;
-    user-select: none;
-    -webkit-user-drag: none;
+    pointer-events: none; user-select: none; -webkit-user-drag: none;
   }
-  .sc-slide-out {
-    z-index: 1;
-    animation: scSlideOut 0.5s ease forwards;
-  }
-  .sc-slide-in {
-    z-index: 2;
-    opacity: 0;
-    animation: scSlideIn 0.5s ease forwards;
-  }
-  .sc-slide-in.loaded {
-    animation: scSlideIn 0.5s ease forwards, scKenBurns 7s ease forwards;
-  }
+  .sc-slide-out { z-index: 1; animation: scSlideOut 0.5s ease forwards; }
+  .sc-slide-in  { z-index: 2; opacity: 0; animation: scSlideIn 0.5s ease forwards; }
+  .sc-slide-in.loaded { animation: scSlideIn 0.5s ease forwards, scKenBurns 7s ease forwards; }
 
-  /* Gradient overlay — z:3 */
   .sc-carousel-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 3;
-    pointer-events: none;
-    background: linear-gradient(
-      to top,
-      rgba(14,12,10,0.52) 0%,
-      rgba(14,12,10,0.18) 40%,
-      transparent 70%
-    );
+    position: absolute; inset: 0; z-index: 3; pointer-events: none;
+    background: linear-gradient(to top, rgba(14,12,10,0.52) 0%, rgba(14,12,10,0.18) 40%, transparent 70%);
   }
-
-  /* Progress bar — z:4 */
   .sc-carousel-progress {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 2px;
-    z-index: 4;
-    pointer-events: none;
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 2px; z-index: 4; pointer-events: none;
     background: rgba(255,255,255,0.15);
   }
   .sc-carousel-progress-fill {
     height: 100%;
     background: linear-gradient(90deg, var(--gold), var(--gold-light));
-    width: 0;
-    animation: scProgress 3.2s linear forwards;
+    width: 0; animation: scProgress 3.2s linear forwards;
   }
-
-  /* Arrows — z:5, show on .sc-img-wrap hover */
   .sc-carousel-arrow {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 5;
-    pointer-events: all;
+    position: absolute; top: 50%; transform: translateY(-50%);
+    z-index: 5; pointer-events: all;
     width: 30px; height: 30px;
-    background: rgba(255,255,255,0.88);
-    backdrop-filter: blur(6px);
-    border: none;
-    border-radius: 50%;
-    font-size: 1.2rem;
-    color: var(--ink);
+    background: rgba(255,255,255,0.88); backdrop-filter: blur(6px);
+    border: none; border-radius: 50%;
+    font-size: 1.2rem; color: var(--ink);
     display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    opacity: 0;
+    cursor: pointer; opacity: 0;
     transition: opacity 0.22s ease, background 0.18s ease, transform 0.18s ease;
-    line-height: 1;
-    padding-bottom: 1px;
+    line-height: 1; padding-bottom: 1px;
   }
   .sc-img-wrap:hover .sc-carousel-arrow { opacity: 1; }
-  .sc-carousel-arrow:hover {
-    background: var(--gold);
-    color: var(--ink);
-    transform: translateY(-50%) scale(1.1);
-  }
+  .sc-carousel-arrow:hover { background: var(--gold); color: var(--ink); transform: translateY(-50%) scale(1.1); }
   .sc-arrow-prev { left: 10px; }
   .sc-arrow-next { right: 10px; }
-
-  /* Dots — z:6 */
   .sc-carousel-dots {
-    position: absolute;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 6;
-    display: flex;
-    gap: 5px;
-    pointer-events: none;
+    position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+    z-index: 6; display: flex; gap: 5px; pointer-events: none;
   }
   .sc-carousel-dot {
-    width: 5px; height: 5px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.45);
-    border: none;
-    cursor: pointer;
-    transition: all 0.25s ease;
-    padding: 0;
-    pointer-events: all;
-    flex-shrink: 0;
+    width: 5px; height: 5px; border-radius: 50%;
+    background: rgba(255,255,255,0.45); border: none;
+    cursor: pointer; transition: all 0.25s ease; padding: 0;
+    pointer-events: all; flex-shrink: 0;
   }
-  .sc-carousel-dot.active {
-    background: var(--gold);
-    transform: scale(1.5);
-    box-shadow: 0 0 6px rgba(201,168,76,0.7);
-  }
+  .sc-carousel-dot.active { background: var(--gold); transform: scale(1.5); box-shadow: 0 0 6px rgba(201,168,76,0.7); }
   .sc-carousel-dot:hover:not(.active) { background: rgba(255,255,255,0.75); }
-
-  /* Counter for 10+ images */
   .sc-img-counter {
-    position: absolute;
-    bottom: 10px; right: 10px;
-    z-index: 6;
+    position: absolute; bottom: 10px; right: 10px; z-index: 6;
     font-size: 10px; font-weight: 500; letter-spacing: 0.08em;
-    color: rgba(255,255,255,0.85);
-    background: rgba(14,12,10,0.55);
-    backdrop-filter: blur(4px);
-    padding: 3px 8px;
-    border-radius: 20px;
-    pointer-events: none;
+    color: rgba(255,255,255,0.85); background: rgba(14,12,10,0.55);
+    backdrop-filter: blur(4px); padding: 3px 8px; border-radius: 20px; pointer-events: none;
   }
 
-  /* ── TOP-LEFT: VERIFIED GOLD BADGE ── */
+  /* ── VERIFIED BADGE ── */
   .sc-verified-wrap { position:absolute; top:11px; left:11px; z-index:7; animation:scVerifiedIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
-  .sc-verified-badge { display:inline-flex; align-items:center; gap:5px; font-family:'DM Sans',sans-serif; font-size:10.5px; font-weight:600; letter-spacing:0.09em; text-transform:uppercase; background:linear-gradient(135deg,#c9a84c 0%,#e8d5a3 50%,#b8922e 100%); color:#3a2a00; border:1px solid rgba(232,213,163,0.6); border-radius:20px; padding:5px 11px 5px 9px; white-space:nowrap; box-shadow:0 2px 12px rgba(201,168,76,0.45),0 1px 3px rgba(0,0,0,0.2),inset 0 1px 0 rgba(255,255,255,0.35); position:relative; overflow:hidden; }
-  .sc-verified-badge::after { content:''; position:absolute; inset:0; background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,0.45) 50%,transparent 65%); transform:translateX(-100%); animation:scVerifiedShine 3s ease 0.5s infinite; }
+  .sc-verified-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: 'DM Sans', sans-serif; font-size: 10.5px; font-weight: 600;
+    letter-spacing: 0.09em; text-transform: uppercase;
+    background: linear-gradient(135deg, #c9a84c 0%, #e8d5a3 50%, #b8922e 100%);
+    color: #3a2a00; border: 1px solid rgba(232,213,163,0.6);
+    border-radius: 20px; padding: 5px 11px 5px 9px; white-space: nowrap;
+    box-shadow: 0 2px 12px rgba(201,168,76,0.45), 0 1px 3px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.35);
+    position: relative; overflow: hidden;
+  }
+  .sc-verified-badge::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.45) 50%, transparent 65%);
+    transform: translateX(-100%); animation: scVerifiedShine 3s ease 0.5s infinite;
+  }
 
-  /* ── TOP-RIGHT: share + heart (normal view) ── */
-  .sc-top-actions { position:absolute; top:10px; right:10px; display:flex; flex-direction:column; gap:6px; z-index:7; }
-  .sc-share-btn { width:34px; height:34px; background:rgba(255,255,255,0.92); backdrop-filter:blur(8px); border:none; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--muted); transition:all 0.22s; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
-  .sc-share-btn:hover { transform:scale(1.12); background:white; color:var(--gold); }
-  .sc-wishlist { width:34px; height:34px; background:rgba(255,255,255,0.92); backdrop-filter:blur(8px); border:none; border-radius:50%; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--muted); transition:all 0.22s; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
-  .sc-wishlist:hover { transform:scale(1.12); background:white; color:#c0445a; }
-  .sc-wishlist.active { color:#c0445a; background:rgba(255,255,255,0.97); }
-  .sc-wishlist.loading { pointer-events:none; opacity:0.7; }
-  .sc-fav-spinner { width:13px; height:13px; border-radius:50%; border:2px solid rgba(122,114,101,0.3); border-top-color:#c0445a; animation:scSpin 0.7s linear infinite; display:inline-block; }
+  /* ── TOP-RIGHT ACTIONS (normal user view) ── */
+  .sc-top-actions {
+    position: absolute; top: 10px; right: 10px;
+    display: flex; flex-direction: column; gap: 6px; z-index: 7;
+  }
+  .sc-share-btn {
+    width: 34px; height: 34px;
+    background: rgba(255,255,255,0.92); backdrop-filter: blur(8px);
+    border: none; border-radius: 50%; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted); transition: all 0.22s;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+  .sc-share-btn:hover { transform: scale(1.12); background: white; color: var(--gold); }
+  .sc-wishlist {
+    width: 34px; height: 34px;
+    background: rgba(255,255,255,0.92); backdrop-filter: blur(8px);
+    border: none; border-radius: 50%; font-size: 16px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: var(--muted); transition: all 0.22s;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+  .sc-wishlist:hover { transform: scale(1.12); background: white; color: #c0445a; }
+  .sc-wishlist.active { color: #c0445a; background: rgba(255,255,255,0.97); }
+  .sc-wishlist.loading { pointer-events: none; opacity: 0.7; }
+  .sc-fav-spinner {
+    width: 13px; height: 13px; border-radius: 50%;
+    border: 2px solid rgba(122,114,101,0.3); border-top-color: #c0445a;
+    animation: scSpin 0.7s linear infinite; display: inline-block;
+  }
 
   /* ── TOP-RIGHT: vendor dashboard actions ── */
-  .sc-vendor-actions { position:absolute; top:10px; right:10px; display:flex; gap:6px; z-index:7; align-items:center; }
-  .sc-share-pill { display:flex; align-items:center; gap:4px; padding:5px 11px; background:rgba(255,255,255,0.92); backdrop-filter:blur(8px); border:1px solid rgba(201,168,76,0.3); border-radius:20px; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:500; color:var(--muted); cursor:pointer; transition:all 0.2s; box-shadow:0 2px 10px rgba(0,0,0,0.1); white-space:nowrap; }
-  .sc-share-pill:hover { background:white; border-color:var(--gold); color:var(--gold); transform:translateY(-1px); }
-  .sc-edit-btn { display:flex; align-items:center; gap:5px; padding:5px 12px; background:rgba(255,255,255,0.92); backdrop-filter:blur(8px); border:1px solid rgba(201,168,76,0.3); border-radius:20px; font-family:'DM Sans',sans-serif; font-size:11.5px; font-weight:500; color:var(--ink); cursor:pointer; transition:all 0.2s; box-shadow:0 2px 10px rgba(0,0,0,0.1); white-space:nowrap; }
-  .sc-edit-btn:hover { background:var(--gold); border-color:var(--gold); color:var(--ink); transform:translateY(-1px); }
-  .sc-delete { width:34px; height:34px; background:rgba(255,255,255,0.92); backdrop-filter:blur(8px); border:none; border-radius:50%; font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#b85c5c; transition:all 0.2s; box-shadow:0 2px 10px rgba(0,0,0,0.12); }
-  .sc-delete:hover { background:#b85c5c; color:white; transform:scale(1.1); }
+  .sc-vendor-actions {
+    position: absolute; top: 10px; right: 10px;
+    display: flex; gap: 6px; z-index: 7; align-items: center;
+  }
+  .sc-share-pill {
+    display: flex; align-items: center; gap: 4px; padding: 5px 11px;
+    background: rgba(255,255,255,0.92); backdrop-filter: blur(8px);
+    border: 1px solid rgba(201,168,76,0.3); border-radius: 20px;
+    font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500;
+    color: var(--muted); cursor: pointer; transition: all 0.2s;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1); white-space: nowrap;
+  }
+  .sc-share-pill:hover { background: white; border-color: var(--gold); color: var(--gold); transform: translateY(-1px); }
+  .sc-edit-btn {
+    display: flex; align-items: center; gap: 5px; padding: 5px 12px;
+    background: rgba(255,255,255,0.92); backdrop-filter: blur(8px);
+    border: 1px solid rgba(201,168,76,0.3); border-radius: 20px;
+    font-family: 'DM Sans', sans-serif; font-size: 11.5px; font-weight: 500;
+    color: var(--ink); cursor: pointer; transition: all 0.2s;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1); white-space: nowrap;
+  }
+  .sc-edit-btn:hover { background: var(--gold); border-color: var(--gold); color: var(--ink); transform: translateY(-1px); }
+  .sc-delete {
+    width: 34px; height: 34px;
+    background: rgba(255,255,255,0.92); backdrop-filter: blur(8px);
+    border: none; border-radius: 50%; font-size: 15px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #b85c5c; transition: all 0.2s;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+  }
+  .sc-delete:hover { background: #b85c5c; color: white; transform: scale(1.1); }
 
-  /* ── BOTTOM-LEFT: package count only ── */
-  .sc-bottom-badges { position:absolute; bottom:12px; left:12px; display:flex; gap:6px; align-items:center; z-index:6; }
-  .sc-badge { font-size:10.5px; font-weight:500; letter-spacing:0.08em; background:rgba(14,12,10,0.7); backdrop-filter:blur(6px); color:var(--gold-light); padding:4px 10px; border-radius:20px; border:1px solid rgba(201,168,76,0.25); white-space:nowrap; }
+  /* ── BOTTOM-LEFT: package count ── */
+  .sc-bottom-badges {
+    position: absolute; bottom: 12px; left: 12px;
+    display: flex; gap: 6px; align-items: center; z-index: 6;
+  }
+  .sc-badge {
+    font-size: 10.5px; font-weight: 500; letter-spacing: 0.08em;
+    background: rgba(14,12,10,0.7); backdrop-filter: blur(6px);
+    color: var(--gold-light); padding: 4px 10px; border-radius: 20px;
+    border: 1px solid rgba(201,168,76,0.25); white-space: nowrap;
+  }
 
   /* ── BODY ── */
-  .sc-body { padding:20px; display:flex; flex-direction:column; gap:16px; flex:1; }
-  .sc-top { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
-  .sc-title-wrap { flex:1; min-width:0; }
-  .sc-title { font-family:'Cormorant Garamond',serif; font-size:1.15rem; font-weight:600; color:var(--ink); margin-bottom:5px; line-height:1.25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .sc-location { display:flex; align-items:center; gap:5px; font-size:12px; color:var(--muted); }
-  .sc-loc-dot { font-size:8px; color:var(--gold); }
-  .sc-rating { display:flex; align-items:center; gap:3px; font-size:12.5px; font-weight:500; color:var(--ink); background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:3px 9px; flex-shrink:0; }
-  .sc-star { color:var(--gold); font-size:12px; }
-  .sc-footer { display:flex; align-items:center; justify-content:space-between; border-top:1px solid var(--border); padding-top:16px; margin-top:auto; }
-  .sc-price-block { display:flex; flex-direction:column; gap:1px; }
-  .sc-price-label { font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); }
-  .sc-price { font-family:'Cormorant Garamond',serif; font-size:1.25rem; font-weight:600; color:var(--ink); }
-  .sc-footer-actions { display:flex; align-items:center; gap:8px; }
-  .sc-share-inline { width:34px; height:34px; background:var(--surface); border:1px solid var(--border); border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--muted); transition:all 0.2s; flex-shrink:0; }
-  .sc-share-inline:hover { border-color:var(--gold); color:var(--gold); background:rgba(201,168,76,0.06); }
-  .sc-btn { padding:9px 20px; background:var(--ink); color:var(--white); border:none; border-radius:6px; font-family:'DM Sans',sans-serif; font-size:12.5px; font-weight:500; cursor:pointer; transition:all 0.22s ease; letter-spacing:0.03em; flex-shrink:0; }
-  .sc-btn:hover { background:var(--gold); color:var(--ink); box-shadow:0 4px 16px rgba(201,168,76,0.3); transform:translateX(2px); }
+  .sc-body {
+    padding: 18px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    flex: 1;
+    /* Ensure body doesn't shrink weirdly */
+    min-height: 0;
+  }
+
+  /* Title row */
+  .sc-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    flex: 1;
+  }
+  .sc-title-wrap { flex: 1; min-width: 0; }
+  .sc-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.08rem; font-weight: 600;
+    color: var(--ink); margin-bottom: 5px;
+    line-height: 1.3;
+    /* Allow up to 2 lines, then ellipsis */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .sc-location {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 12px; color: var(--muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .sc-loc-dot { font-size: 8px; color: var(--gold); flex-shrink: 0; }
+  .sc-rating {
+    display: flex; align-items: center; gap: 3px;
+    font-size: 12.5px; font-weight: 500; color: var(--ink);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 3px 9px; flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .sc-star { color: var(--gold); font-size: 12px; }
+
+  /* ── FOOTER — always one row, price left, actions right ── */
+  .sc-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+    /* Never let this wrap */
+    flex-wrap: nowrap;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .sc-price-block {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    /* Prevent it from growing too wide */
+    min-width: 0;
+    flex-shrink: 1;
+  }
+  .sc-price-label {
+    font-size: 10px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted);
+    white-space: nowrap;
+  }
+  .sc-price {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.22rem; font-weight: 600; color: var(--ink);
+    white-space: nowrap;
+  }
+  .sc-footer-actions {
+    display: flex; align-items: center; gap: 7px;
+    flex-shrink: 0;
+  }
+  .sc-share-inline {
+    width: 34px; height: 34px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted); transition: all 0.2s; flex-shrink: 0;
+  }
+  .sc-share-inline:hover { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.06); }
+  .sc-btn {
+    padding: 9px 18px;
+    background: var(--ink); color: var(--white);
+    border: none; border-radius: 6px;
+    font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 500;
+    cursor: pointer; transition: all 0.22s ease;
+    letter-spacing: 0.03em; flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .sc-btn:hover { background: var(--gold); color: var(--ink); box-shadow: 0 4px 16px rgba(201,168,76,0.3); transform: translateX(2px); }
 
   /* ── TOAST ── */
-  .sc-toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%); background:#0e0c0a; color:white; padding:12px 24px; border-radius:40px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; display:flex; align-items:center; gap:8px; box-shadow:0 8px 32px rgba(14,12,10,0.25); z-index:9999; animation:toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both; white-space:nowrap; }
-  .sc-toast span { color:#c0445a; font-size:15px; }
+  .sc-toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+    background: #0e0c0a; color: white; padding: 12px 24px;
+    border-radius: 40px; font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 500;
+    display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 8px 32px rgba(14,12,10,0.25); z-index: 9999;
+    animation: toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both; white-space: nowrap;
+  }
+  .sc-toast span { color: #c0445a; font-size: 15px; }
 
   /* ── KEYFRAMES ── */
-  @keyframes scSlideIn    { from{opacity:0} to{opacity:1} }
-  @keyframes scSlideOut   { from{opacity:1} to{opacity:0} }
-  @keyframes scKenBurns   { from{transform:scale(1)} to{transform:scale(1.05)} }
-  @keyframes scProgress   { from{width:0%} to{width:100%} }
-  @keyframes scSpin       { to{transform:rotate(360deg)} }
-  @keyframes scVerifiedIn { from{opacity:0;transform:scale(0.7) translateY(-4px)} to{opacity:1;transform:scale(1) translateY(0)} }
+  @keyframes scSlideIn     { from{opacity:0} to{opacity:1} }
+  @keyframes scSlideOut    { from{opacity:1} to{opacity:0} }
+  @keyframes scKenBurns    { from{transform:scale(1)} to{transform:scale(1.05)} }
+  @keyframes scProgress    { from{width:0%} to{width:100%} }
+  @keyframes scSpin        { to{transform:rotate(360deg)} }
+  @keyframes scVerifiedIn  { from{opacity:0;transform:scale(0.7) translateY(-4px)} to{opacity:1;transform:scale(1) translateY(0)} }
   @keyframes scVerifiedShine { 0%{transform:translateX(-100%)} 40%{transform:translateX(200%)} 100%{transform:translateX(200%)} }
-  @keyframes toastIn      { from{opacity:0;transform:translateX(-50%) translateY(16px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+  @keyframes toastIn       { from{opacity:0;transform:translateX(-50%) translateY(16px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
 `;
