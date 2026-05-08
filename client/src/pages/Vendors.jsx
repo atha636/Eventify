@@ -76,10 +76,10 @@ const SORT_OPTIONS = [
 ];
 
 const TRUST_STATS = [
-  { value: "20+",  label: "Verified Vendors"  },
-  { value: "30+",  label: "Events Completed"  },
+  { value: "200+",  label: "Verified Vendors"  },
+  { value: "100+",  label: "Events Completed"  },
   { value: "4.9★", label: "Avg. Rating"       },
-  { value: "2+",   label: "Cities Covered"    },
+  { value: "4+",   label: "Cities Covered"    },
 ];
 
 const INDIAN_CITIES = [
@@ -616,7 +616,7 @@ export default function Vendors() {
           <div className="vn-hero-orb vn-orb3" aria-hidden="true" />
           <div className="vn-float-card vn-fc-left vn-fc-1" aria-hidden="true">
             <span className="vn-fc-icon">👥</span>
-            <div className="vn-fc-text"><span className="vn-fc-val">100+</span><span className="vn-fc-label">Happy Clients</span></div>
+            <div className="vn-fc-text"><span className="vn-fc-val">10k+</span><span className="vn-fc-label">Happy Clients</span></div>
           </div>
           <div className="vn-float-card vn-fc-right vn-fc-2" aria-hidden="true">
             <span className="vn-fc-icon">🏆</span>
@@ -876,7 +876,7 @@ export default function Vendors() {
               <span>Are you an event professional?</span>
             </div>
             <h2 id="cta-heading" className="vn-footer-title">Grow your business with Evencers</h2>
-            <p className="vn-footer-sub">Join 20+ verified vendors already earning through Evencers. Get discovered by thousands of clients planning weddings, corporate events, and private parties across India.</p>
+            <p className="vn-footer-sub">Join 200+ verified vendors already earning through Evencers. Get discovered by thousands of clients planning weddings, corporate events, and private parties across India.</p>
             <div className="vn-footer-cta-btns">
               <a href="/register" className="vn-footer-btn" aria-label="Register as a vendor on Evencers">Become a Vendor →</a>
               <button onClick={scrollToHowItWorks} className="vn-footer-btn-ghost" aria-label="Learn how Evencers works for vendors">How it works ↓</button>
