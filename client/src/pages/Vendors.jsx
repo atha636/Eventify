@@ -565,12 +565,39 @@ export default function Vendors() {
     }
     if (category !== "all") list = list.filter((v) => v.serviceType?.toLowerCase() === category);
     if (priceRange !== "any") {
-      const band = PRICE_RANGES.find(r => r.value === priceRange);
-      if (band) list = list.filter((v) => {
-        const p = v.packages?.[0]?.price || 0;
-        return p >= band.min && (band.max === Infinity ? true : p < band.max);
-      });
-    }
+  const band = PRICE_RANGES.find(r => r.value === priceRange);
+
+  if (band) {
+    list = list.filter((v) => {
+
+      // DECOR SERVICE
+      if (v.serviceType === "decor") {
+        const price = v.price || 0;
+
+        return (
+          price >= band.min &&
+          (band.max === Infinity
+            ? true
+            : price <= band.max)
+        );
+      }
+
+      // NORMAL PACKAGE SERVICE
+      const prices = v.packages?.map(pkg => pkg.price || 0) || [];
+
+      const minPrice = prices.length
+        ? Math.min(...prices)
+        : 0;
+
+      return (
+        minPrice >= band.min &&
+        (band.max === Infinity
+          ? true
+          : minPrice <= band.max)
+      );
+    });
+  }
+}
     switch (sort) {
       case "price_asc":  list.sort((a, b) => (a.packages?.[0]?.price || 0) - (b.packages?.[0]?.price || 0)); break;
       case "price_desc": list.sort((a, b) => (b.packages?.[0]?.price || 0) - (a.packages?.[0]?.price || 0)); break;
@@ -638,7 +665,7 @@ export default function Vendors() {
             <h1 className="vn-hero-title">
               {category !== "all" ? (<>{activeCat.emoji} {activeCat.label} <em>Vendors</em></>) : (<>Find Your Perfect <em>Event Team</em></>)}
             </h1>
-            <p className="vn-hero-sub">{loading ? "Loading our curated vendor network across India…" : `${vendors.length || "20+"}+ verified event professionals across 2 cities in India`}</p>
+            <p className="vn-hero-sub">{loading ? "Loading our curated vendor network across India…" : `${vendors.length || "20+"}+ verified event professionals across 4+ cities in India`}</p>
             <div className={`vn-search-bar ${searchFocused ? "focused" : ""}`} role="search">
               <span className="vn-search-icon" aria-hidden="true">⌕</span>
               <input ref={searchRef} className="vn-search-input" placeholder="Search vendors by name, city, or service type…" value={search} onChange={(e) => setSearch(e.target.value)} onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} aria-label="Search vendors" autoComplete="off" />

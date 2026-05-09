@@ -249,12 +249,40 @@ export default function Category() {
           if (!v.title?.toLowerCase().includes(q) && !v.location?.toLowerCase().includes(q)) return false;
         }
         if (priceRange !== "any") {
-          const band = PRICE_RANGES.find(r => r.value === priceRange);
-          if (band) {
-            const p = v.packages?.[0]?.price || 0;
-            if (p < band.min || (band.max !== Infinity && p >= band.max)) return false;
-          }
-        }
+  const band = PRICE_RANGES.find(r => r.value === priceRange);
+
+  if (band) {
+
+    // Decor services use vendor.price
+    if (v.serviceType === "decor") {
+      const price = v.price || 0;
+
+      if (
+        price < band.min ||
+        (band.max !== Infinity && price > band.max)
+      ) {
+        return false;
+      }
+    }
+
+    // Other services use package prices
+    else {
+      const prices =
+        v.packages?.map(pkg => pkg.price || 0) || [];
+
+      const minPrice = prices.length
+        ? Math.min(...prices)
+        : 0;
+
+      if (
+        minPrice < band.min ||
+        (band.max !== Infinity && minPrice > band.max)
+      ) {
+        return false;
+      }
+    }
+  }
+}
         return true;
       })
       .sort((a, b) => {
