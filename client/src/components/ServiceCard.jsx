@@ -9,11 +9,11 @@ function Portal({ children }) {
 
 // ── Image Carousel ───────────────────────────────────────────────
 function ImageCarousel({ images, vendorId, vendorTitle, onGalleryClick }) {
-  const [activeIdx, setActiveIdx]       = useState(0);
-  const [prevIdx, setPrevIdx]           = useState(null);
-  const [transitioning, setTransition]  = useState(false);
-  const [paused, setPaused]             = useState(false);
-  const [imgLoaded, setImgLoaded]       = useState({});
+  const [activeIdx, setActiveIdx]      = useState(0);
+  const [prevIdx, setPrevIdx]          = useState(null);
+  const [transitioning, setTransition] = useState(false);
+  const [paused, setPaused]            = useState(false);
+  const [imgLoaded, setImgLoaded]      = useState({});
 
   const autoTimer   = useRef(null);
   const pauseTimer  = useRef(null);
@@ -128,8 +128,6 @@ function ImageCarousel({ images, vendorId, vendorTitle, onGalleryClick }) {
 function ShareModal({ vendor, onClose }) {
   const [copied, setCopied] = useState(false);
   const shareUrl  = `${window.location.origin}/vendor/${vendor._id}`;
-
-  // ── FIX: support both decor (vendor.price) and package-based pricing ──
   const displayPrice = vendor.packages?.[0]?.price || vendor.price || 0;
   const shareText = `Check out ${vendor.title} on Evencers — starting at ₹${Number(displayPrice).toLocaleString()}`;
 
@@ -301,24 +299,15 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
   const isUser     = user?.role === "user";
   const isLoggedIn = !!token && isUser;
 
-  // ── FIX: Detect decor service type ──────────────────────────────
-  const isDecor = vendor?.serviceType === "decor";
-
-  // ── FIX: Price — use vendor.price for decor, packages[0].price otherwise ──
+  const isDecor       = vendor?.serviceType === "decor";
   const startingPrice = isDecor
     ? (vendor.price || null)
     : (vendor.packages?.[0]?.price || null);
+  const packageCount  = isDecor ? 0 : (Array.isArray(vendor.packages) ? vendor.packages.length : 0);
+  const timeSlots     = isDecor ? (vendor.timeSlots || []) : [];
+  const hasGallery    = vendor.images?.length > 0;
+  const isVerified    = vendor.vendorId?.isVendorVerified ?? vendor.isVendorVerified ?? false;
 
-  // ── FIX: Package count — decor has no packages ──────────────────
-  const packageCount = isDecor ? 0 : (Array.isArray(vendor.packages) ? vendor.packages.length : 0);
-
-  // ── Time slots (decor only) ──────────────────────────────────────
-  const timeSlots = isDecor ? (vendor.timeSlots || []) : [];
-
-  const hasGallery = vendor.images?.length > 0;
-  const isVerified = vendor.vendorId?.isVendorVerified ?? vendor.isVendorVerified ?? false;
-
-  // ── Location display: support both array and string ──────────────
   const locationDisplay = (() => {
     if (Array.isArray(vendor.locations) && vendor.locations.length > 0)
       return vendor.locations.join(" · ");
@@ -380,8 +369,8 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
     }
   };
 
-  const goToGallery    = (e) => { e.stopPropagation(); if (hasGallery) navigate(`/vendor/${vendor._id}/gallery`); };
-  const goToDetail     = (e) => { e?.stopPropagation(); navigate(`/vendor/${vendor._id}`); };
+  const goToGallery      = (e) => { e.stopPropagation(); if (hasGallery) navigate(`/vendor/${vendor._id}/gallery`); };
+  const goToDetail       = (e) => { e?.stopPropagation(); navigate(`/vendor/${vendor._id}`); };
   const handleShareClick = (e) => { e.stopPropagation(); e.preventDefault(); setShowShareModal(true); };
 
   return (
@@ -398,9 +387,10 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
         </Portal>
       )}
 
+      {/* ── FIX: card uses flex-column, fixed height image, auto body ── */}
       <div className="sc-card" onClick={goToDetail}>
 
-        {/* ── IMAGE CAROUSEL ── */}
+        {/* ── IMAGE WRAP ── */}
         <div className="sc-img-wrap">
           {!imgError && vendor.images?.length > 0 ? (
             <ImageCarousel
@@ -413,7 +403,7 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
             <div className="sc-img-fallback" onClick={goToGallery}><span>📷</span></div>
           )}
 
-          {/* TOP-LEFT: Verified badge */}
+          {/* Verified badge */}
           {isVerified && (
             <div className="sc-verified-wrap">
               <span className="sc-verified-badge">
@@ -425,7 +415,7 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
             </div>
           )}
 
-          {/* TOP-RIGHT: share + heart (normal view) */}
+          {/* Top-right: normal user actions */}
           {!showDelete && (
             <div className="sc-top-actions">
               <button className="sc-share-btn" onClick={handleShareClick} aria-label="Share" title="Share this service">
@@ -444,7 +434,7 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
             </div>
           )}
 
-          {/* TOP-RIGHT: vendor dashboard actions */}
+          {/* Top-right: vendor dashboard actions */}
           {showDelete && (
             <div className="sc-vendor-actions">
               <button className="sc-share-pill" onClick={handleShareClick} aria-label="Share">
@@ -459,7 +449,7 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
             </div>
           )}
 
-          {/* BOTTOM-LEFT: package count OR decor badge */}
+          {/* Bottom-left: package / decor badge */}
           <div className="sc-bottom-badges">
             {isDecor ? (
               <span className="sc-badge sc-badge-decor">🎨 Decor</span>
@@ -471,15 +461,15 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
           </div>
         </div>
 
-        {/* ── BODY ── */}
+        {/* ── BODY — FIX: fixed min-height so all cards same body size ── */}
         <div className="sc-body">
           {/* Title + Rating */}
-          <div className="sc-top">
+          <div className="sc-top-row">
             <div className="sc-title-wrap">
               <h3 className="sc-title">{vendor.title}</h3>
               <p className="sc-location">
                 <span className="sc-loc-dot">◉</span>
-                {locationDisplay || "India"}
+                <span className="sc-location-text">{locationDisplay || "India"}</span>
               </p>
             </div>
             {vendor.rating && (
@@ -490,20 +480,25 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
             )}
           </div>
 
-          {/* ── TIME SLOTS (decor only) ── */}
-          {isDecor && timeSlots.length > 0 && (
-            <div className="sc-slots-row">
-              <span className="sc-slots-label">⏰ Slots:</span>
-              <div className="sc-slots-pills">
-                {timeSlots.slice(0, 3).map((slot, i) => (
-                  <span key={i} className="sc-slot-pill">{slot}</span>
-                ))}
-                {timeSlots.length > 3 && (
-                  <span className="sc-slot-more">+{timeSlots.length - 3} more</span>
-                )}
+          {/* FIX: time slots always reserve same space — shown for decor, hidden placeholder for others */}
+          <div className="sc-slots-area">
+            {isDecor && timeSlots.length > 0 ? (
+              <div className="sc-slots-row">
+                <span className="sc-slots-label">⏰</span>
+                <div className="sc-slots-pills">
+                  {timeSlots.slice(0, 2).map((slot, i) => (
+                    <span key={i} className="sc-slot-pill">{slot}</span>
+                  ))}
+                  {timeSlots.length > 2 && (
+                    <span className="sc-slot-more">+{timeSlots.length - 2}</span>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            ) : (
+              /* invisible placeholder — keeps layout same height for non-decor cards */
+              <div className="sc-slots-placeholder" aria-hidden="true" />
+            )}
+          </div>
 
           {/* Footer: price + actions */}
           <div className="sc-footer">
@@ -518,7 +513,7 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
               </span>
             </div>
             <div className="sc-footer-actions">
-              <button className="sc-share-inline" onClick={handleShareClick} title="Share">
+              <button className="sc-share-inline" onClick={handleShareClick} title="Share" aria-label="Share">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" width="13" height="13">
                   <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
                   <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
@@ -533,7 +528,7 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
   );
 }
 
-// ── Share Modal CSS ───────────────────────────────────────────────
+// ── Share Modal CSS ──────────────────────────────────────────────
 const shareModalStyles = `
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=DM+Sans:wght@400;500&display=swap');
   .sm-backdrop { position:fixed; inset:0; background:rgba(14,12,10,0.6); backdrop-filter:blur(6px); z-index:9998; animation:smFadeIn 0.18s ease both; }
@@ -603,7 +598,9 @@ const cardStyles = `
     --muted:#7a7265; --border:rgba(201,168,76,0.2); --surface:#faf7f2; --white:#ffffff;
   }
 
-  /* ── CARD ── */
+  /* ═══════════════════════════════════════
+     CARD — uniform height across all types
+  ═══════════════════════════════════════ */
   .sc-card {
     font-family: 'DM Sans', sans-serif;
     background: var(--white);
@@ -611,10 +608,11 @@ const cardStyles = `
     border-radius: 12px;
     overflow: hidden;
     cursor: pointer;
-    transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+    /* FIX: stretch to fill grid cell height */
     display: flex;
     flex-direction: column;
     height: 100%;
+    transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
   }
   .sc-card:hover {
     transform: translateY(-5px);
@@ -622,7 +620,7 @@ const cardStyles = `
     border-color: var(--gold);
   }
 
-  /* ── IMAGE WRAP ── */
+  /* ── IMAGE WRAP — fixed height, never shrinks ── */
   .sc-img-wrap {
     position: relative;
     height: 210px;
@@ -655,7 +653,6 @@ const cardStyles = `
   .sc-slide-out { z-index: 1; animation: scSlideOut 0.5s ease forwards; }
   .sc-slide-in  { z-index: 2; opacity: 0; animation: scSlideIn 0.5s ease forwards; }
   .sc-slide-in.loaded { animation: scSlideIn 0.5s ease forwards, scKenBurns 7s ease forwards; }
-
   .sc-carousel-overlay {
     position: absolute; inset: 0; z-index: 3; pointer-events: none;
     background: linear-gradient(to top, rgba(14,12,10,0.52) 0%, rgba(14,12,10,0.18) 40%, transparent 70%);
@@ -723,7 +720,7 @@ const cardStyles = `
     transform: translateX(-100%); animation: scVerifiedShine 3s ease 0.5s infinite;
   }
 
-  /* ── TOP-RIGHT ACTIONS (normal user view) ── */
+  /* ── TOP-RIGHT: normal user actions ── */
   .sc-top-actions {
     position: absolute; top: 10px; right: 10px;
     display: flex; flex-direction: column; gap: 6px; z-index: 7;
@@ -758,6 +755,9 @@ const cardStyles = `
   .sc-vendor-actions {
     position: absolute; top: 10px; right: 10px;
     display: flex; gap: 6px; z-index: 7; align-items: center;
+    /* FIX: prevent overflow on small screens */
+    flex-wrap: wrap;
+    max-width: calc(100% - 20px);
   }
   .sc-share-pill {
     display: flex; align-items: center; gap: 4px; padding: 5px 11px;
@@ -783,11 +783,11 @@ const cardStyles = `
     border: none; border-radius: 50%; font-size: 15px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     color: #b85c5c; transition: all 0.2s;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.12); flex-shrink: 0;
   }
   .sc-delete:hover { background: #b85c5c; color: white; transform: scale(1.1); }
 
-  /* ── BOTTOM-LEFT: badges ── */
+  /* ── BOTTOM-LEFT BADGES ── */
   .sc-bottom-badges {
     position: absolute; bottom: 12px; left: 12px;
     display: flex; gap: 6px; align-items: center; z-index: 6;
@@ -804,107 +804,137 @@ const cardStyles = `
     border-color: rgba(45,106,79,0.4);
   }
 
-  /* ── BODY ── */
+  /* ═══════════════════════════════════════
+     BODY — FIX: flex-1 so all cards same
+  ═══════════════════════════════════════ */
   .sc-body {
-    padding: 16px 20px 20px;
+    padding: 14px 16px 16px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    /* FIX: takes remaining space so footer always at bottom */
     flex: 1;
     min-height: 0;
+    gap: 0;
   }
 
   /* Title row */
-  .sc-top {
+  .sc-top-row {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     gap: 8px;
+    margin-bottom: 8px;
   }
   .sc-title-wrap { flex: 1; min-width: 0; }
   .sc-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 1.08rem; font-weight: 600;
-    color: var(--ink); margin-bottom: 5px;
+    font-size: 1.05rem; font-weight: 600;
+    color: var(--ink); margin-bottom: 4px;
     line-height: 1.3;
+    /* FIX: clamp to 2 lines so all titles same height */
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    min-height: 2.6em;
   }
   .sc-location {
     display: flex; align-items: center; gap: 5px;
-    font-size: 12px; color: var(--muted);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 11.5px; color: var(--muted);
+    min-width: 0;
   }
   .sc-loc-dot { font-size: 8px; color: var(--gold); flex-shrink: 0; }
+  /* FIX: truncate long location strings */
+  .sc-location-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+  }
   .sc-rating {
     display: flex; align-items: center; gap: 3px;
-    font-size: 12.5px; font-weight: 500; color: var(--ink);
+    font-size: 12px; font-weight: 500; color: var(--ink);
     background: var(--surface); border: 1px solid var(--border);
-    border-radius: 20px; padding: 3px 9px; flex-shrink: 0;
-    white-space: nowrap;
+    border-radius: 20px; padding: 3px 8px; flex-shrink: 0;
+    white-space: nowrap; height: fit-content;
   }
-  .sc-star { color: var(--gold); font-size: 12px; }
+  .sc-star { color: var(--gold); font-size: 11px; }
 
-  /* ── TIME SLOTS ROW ── */
+  /* ═══════════════════════════════════════
+     SLOTS AREA — FIX: fixed height so
+     decor and non-decor cards align
+  ═══════════════════════════════════════ */
+  .sc-slots-area {
+    /* fixed height so all cards have same mid-section */
+    height: 40px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+  }
+  /* invisible placeholder — exact same height as slots row */
+  .sc-slots-placeholder {
+    height: 100%;
+    width: 100%;
+  }
   .sc-slots-row {
     display: flex;
     align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    padding: 8px 10px;
+    gap: 6px;
+    width: 100%;
+    padding: 6px 10px;
     background: rgba(45,106,79,0.05);
     border: 1px solid rgba(45,106,79,0.15);
     border-radius: 8px;
+    overflow: hidden;
   }
   .sc-slots-label {
-    font-size: 10.5px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #2d6a4f;
-    white-space: nowrap;
+    font-size: 12px;
     flex-shrink: 0;
+    color: #2d6a4f;
   }
   .sc-slots-pills {
     display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
+    flex-wrap: nowrap;
+    gap: 4px;
+    overflow: hidden;
     flex: 1;
+    min-width: 0;
   }
   .sc-slot-pill {
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 500;
     color: #2d6a4f;
     background: rgba(45,106,79,0.1);
     border: 1px solid rgba(45,106,79,0.25);
     border-radius: 20px;
-    padding: 3px 9px;
+    padding: 2px 8px;
     white-space: nowrap;
+    flex-shrink: 0;
   }
   .sc-slot-more {
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 500;
     color: var(--muted);
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 20px;
-    padding: 3px 9px;
+    padding: 2px 7px;
     white-space: nowrap;
+    flex-shrink: 0;
   }
 
-  /* ── FOOTER ── */
+  /* ── FOOTER — always pinned to bottom ── */
   .sc-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
     border-top: 1px solid var(--border);
     padding-top: 12px;
-    flex-wrap: nowrap;
     gap: 8px;
-    flex-shrink: 0;
+    /* FIX: push footer to bottom */
     margin-top: auto;
+    flex-shrink: 0;
   }
   .sc-price-block {
     display: flex;
@@ -914,21 +944,21 @@ const cardStyles = `
     flex-shrink: 1;
   }
   .sc-price-label {
-    font-size: 10px; letter-spacing: 0.12em;
+    font-size: 9.5px; letter-spacing: 0.1em;
     text-transform: uppercase; color: var(--muted);
     white-space: nowrap;
   }
   .sc-price {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 1.22rem; font-weight: 600; color: var(--ink);
+    font-size: 1.18rem; font-weight: 600; color: var(--ink);
     white-space: nowrap;
   }
   .sc-footer-actions {
-    display: flex; align-items: center; gap: 7px;
+    display: flex; align-items: center; gap: 6px;
     flex-shrink: 0;
   }
   .sc-share-inline {
-    width: 34px; height: 34px;
+    width: 32px; height: 32px;
     background: var(--surface); border: 1px solid var(--border);
     border-radius: 6px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
@@ -936,10 +966,10 @@ const cardStyles = `
   }
   .sc-share-inline:hover { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.06); }
   .sc-btn {
-    padding: 9px 18px;
+    padding: 8px 16px;
     background: var(--ink); color: var(--white);
     border: none; border-radius: 6px;
-    font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 500;
+    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
     cursor: pointer; transition: all 0.22s ease;
     letter-spacing: 0.03em; flex-shrink: 0;
     white-space: nowrap;
@@ -958,13 +988,50 @@ const cardStyles = `
   }
   .sc-toast span { color: #c0445a; font-size: 15px; }
 
+  /* ═══════════════════════════════════════
+     MOBILE FIXES — responsive breakpoints
+  ═══════════════════════════════════════ */
+  @media (max-width: 480px) {
+    /* Slightly smaller image on very small screens */
+    .sc-img-wrap { height: 190px; }
+
+    /* Tighter padding */
+    .sc-body { padding: 12px 14px 14px; }
+
+    /* Price font smaller so it never overflows */
+    .sc-price { font-size: 1.05rem; }
+
+    /* View button smaller */
+    .sc-btn { padding: 7px 13px; font-size: 11.5px; }
+
+    /* Location text shorter clamp */
+    .sc-location-text { max-width: 110px; }
+
+    /* Vendor dashboard action pills — stack or shrink */
+    .sc-vendor-actions { gap: 4px; }
+    .sc-share-pill { padding: 4px 8px; font-size: 10px; }
+    .sc-edit-btn   { padding: 4px 8px; font-size: 10px; }
+    .sc-delete     { width: 28px; height: 28px; font-size: 13px; }
+
+    /* Slot pills smaller */
+    .sc-slot-pill  { font-size: 9px; padding: 2px 6px; }
+    .sc-slot-more  { font-size: 9px; padding: 2px 5px; }
+  }
+
+  @media (max-width: 360px) {
+    .sc-img-wrap { height: 175px; }
+    .sc-title { font-size: 0.97rem; }
+    .sc-price { font-size: 1rem; }
+    .sc-share-inline { display: none; } /* hide share in footer on tiny screens */
+  }
+
   /* ── KEYFRAMES ── */
-  @keyframes scSlideIn     { from{opacity:0} to{opacity:1} }
-  @keyframes scSlideOut    { from{opacity:1} to{opacity:0} }
-  @keyframes scKenBurns    { from{transform:scale(1)} to{transform:scale(1.05)} }
-  @keyframes scProgress    { from{width:0%} to{width:100%} }
-  @keyframes scSpin        { to{transform:rotate(360deg)} }
-  @keyframes scVerifiedIn  { from{opacity:0;transform:scale(0.7) translateY(-4px)} to{opacity:1;transform:scale(1) translateY(0)} }
-  @keyframes scVerifiedShine { 0%{transform:translateX(-100%)} 40%{transform:translateX(200%)} 100%{transform:translateX(200%)} }
-  @keyframes toastIn       { from{opacity:0;transform:translateX(-50%) translateY(16px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+  @keyframes scSlideIn      { from{opacity:0} to{opacity:1} }
+  @keyframes scSlideOut     { from{opacity:1} to{opacity:0} }
+  @keyframes scKenBurns     { from{transform:scale(1)} to{transform:scale(1.05)} }
+  @keyframes scProgress     { from{width:0%} to{width:100%} }
+  @keyframes scSpin         { to{transform:rotate(360deg)} }
+  @keyframes scVerifiedIn   { from{opacity:0;transform:scale(0.7) translateY(-4px)} to{opacity:1;transform:scale(1) translateY(0)} }
+  @keyframes scVerifiedShine{ 0%{transform:translateX(-100%)} 40%{transform:translateX(200%)} 100%{transform:translateX(200%)} }
+  @keyframes toastIn        { from{opacity:0;transform:translateX(-50%) translateY(16px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
 `;
