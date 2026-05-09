@@ -48,7 +48,6 @@ export default function EditService() {
     locations: [],
   });
 
-  // ── City Toast Popup state ────────────────────────────────────
   const [showCityToast,   setShowCityToast]   = useState(false);
   const [citySearchInput, setCitySearchInput] = useState("");
   const [filteredCities,  setFilteredCities]  = useState(INDIAN_CITIES);
@@ -76,7 +75,6 @@ export default function EditService() {
   const isDecor = form.serviceType === "decor";
   const selectedType = SERVICE_TYPES.find((t) => t.value === form.serviceType);
 
-  // ── City search filter ────────────────────────────────────────
   useEffect(() => {
     const val = citySearchInput.trim().toLowerCase();
     if (!val) {
@@ -117,9 +115,9 @@ export default function EditService() {
     })
       .then((res) => {
         const service = res.data.find((s) => s._id === id);
-        if (!service) { navigate("/dashboard"); return; }
+        // ✅ FIX 3: was navigate("/dashboard") — now goes to vendor dashboard
+        if (!service) { navigate("/vendor-dashboard"); return; }
 
-        // Normalize locations — could be string or array
         let locs = [];
         if (Array.isArray(service.locations)) locs = service.locations;
         else if (typeof service.location === "string" && service.location.trim()) {
@@ -133,10 +131,8 @@ export default function EditService() {
           locations:   locs,
         });
 
-        // Decor: time slots + price
         if (service.serviceType === "decor") {
           if (Array.isArray(service.timeSlots) && service.timeSlots.length) {
-            // Map saved slots back — any that aren't one of the preset labels become custom
             const presetLabels = TIME_SLOTS.filter((s) => s !== "Custom");
             const restoredSlots = [];
             let restoredCustom = "";
@@ -168,11 +164,11 @@ export default function EditService() {
         setExistingImages(service.images || []);
         if (service.images?.[0]) setActivePreview(service.images[0]);
       })
-      .catch(() => navigate("/dashboard"))
+      // ✅ FIX 3: was navigate("/dashboard")
+      .catch(() => navigate("/vendor-dashboard"))
       .finally(() => setLoading(false));
   }, [id, navigate]);
 
-  // ── Location helpers ──────────────────────────────────────────
   const addLocation = (city) => {
     if (!city || form.locations.includes(city) || form.locations.length >= 8) return;
     setForm((f) => ({ ...f, locations: [...f.locations, city] }));
@@ -180,13 +176,11 @@ export default function EditService() {
   const removeLocation = (loc) =>
     setForm((f) => ({ ...f, locations: f.locations.filter((l) => l !== loc) }));
 
-  // ── Time Slot helpers ─────────────────────────────────────────
   const toggleSlot = (slot) =>
     setSelectedSlots((prev) =>
       prev.includes(slot) ? prev.filter((s) => s !== slot) : [...prev, slot]
     );
 
-  // ── Package helpers ───────────────────────────────────────────
   const addPackage    = () => { if (packages.length >= 4) return; setPackages([...packages, { name: TIER_LABELS[packages.length] || "", price: "", features: [""] }]); };
   const removePackage = (i) => setPackages(packages.filter((_, idx) => idx !== i));
   const updatePackage = (i, field, val) => { const u = [...packages]; u[i][field] = val; setPackages(u); };
@@ -194,7 +188,6 @@ export default function EditService() {
   const removeFeature = (pi, fi) => { const u = [...packages]; u[pi].features.splice(fi, 1); setPackages(u); };
   const updateFeature = (pi, fi, val) => { const u = [...packages]; u[pi].features[fi] = val; setPackages(u); };
 
-  // ── Image helpers ─────────────────────────────────────────────
   const addNewImages = (files) => {
     const maxNew = 15 - existingImages.length;
     const valid = Array.from(files).filter((f) => f.type.startsWith("image/")).slice(0, maxNew - newImages.length);
@@ -232,7 +225,6 @@ export default function EditService() {
 
   const allPreviews = [...existingImages, ...newPreviews];
 
-  // ── Validation ────────────────────────────────────────────────
   const validate = () => {
     if (!form.title.trim())          return "Please enter a service title.";
     if (!form.description.trim())    return "Please add a description.";
@@ -249,7 +241,6 @@ export default function EditService() {
     return null;
   };
 
-  // ── Submit ────────────────────────────────────────────────────
   const handleSubmit = async () => {
     const err = validate();
     if (err) { setError(err); return; }
@@ -292,7 +283,6 @@ export default function EditService() {
     ? (decorPrice ? `₹${Number(decorPrice).toLocaleString()}` : "₹ —")
     : (packages[0]?.price ? `₹${Number(packages[0].price).toLocaleString()}` : "₹ —");
 
-  // ── Loading skeleton ───────────────────────────────────────────
   if (loading) {
     return (
       <>
@@ -393,7 +383,8 @@ export default function EditService() {
 
           {/* ── SUCCESS MODAL ── */}
           {success && (
-            <div className="es-modal-overlay" onClick={(e) => e.target === e.currentTarget && navigate("/dashboard")}>
+            // ✅ FIX 3: backdrop click goes to vendor-dashboard
+            <div className="es-modal-overlay" onClick={(e) => e.target === e.currentTarget && navigate("/vendor-dashboard")}>
               <div className="es-modal">
                 <div className="es-modal-orb" />
                 <div className="es-modal-orb es-modal-orb-2" />
@@ -421,7 +412,8 @@ export default function EditService() {
                   </div>
                 </div>
                 <div className="es-modal-actions">
-                  <button className="es-modal-btn-primary" onClick={() => navigate("/dashboard")}>Go to Dashboard →</button>
+                  {/* ✅ FIX 3: Go to Dashboard → /vendor-dashboard */}
+                  <button className="es-modal-btn-primary" onClick={() => navigate("/vendor-dashboard")}>Go to Dashboard →</button>
                   <button className="es-modal-btn-ghost" onClick={() => navigate(`/vendor/${id}`)}>View Service</button>
                 </div>
               </div>
@@ -429,7 +421,6 @@ export default function EditService() {
           )}
 
           <div className="es-layout">
-            {/* ── LEFT — FORM ── */}
             <div className="es-form-col">
               <div className="es-form-header">
                 <button className="es-back" onClick={() => navigate(-1)}>← Back to Dashboard</button>
@@ -438,7 +429,6 @@ export default function EditService() {
                 <p className="es-subtitle">Update your listing details. Changes go live instantly.</p>
               </div>
 
-              {/* SERVICE TYPE */}
               <div className="es-field">
                 <label className="es-label">Service Category</label>
                 <div className="es-type-grid">
@@ -457,7 +447,6 @@ export default function EditService() {
                 </div>
               </div>
 
-              {/* TITLE */}
               <div className="es-field">
                 <label className="es-label">Service Title</label>
                 <div className="es-input-wrap">
@@ -470,7 +459,6 @@ export default function EditService() {
                 </div>
               </div>
 
-              {/* DESCRIPTION */}
               <div className="es-field">
                 <label className="es-label">Description</label>
                 <div className="es-textarea-wrap">
@@ -484,7 +472,6 @@ export default function EditService() {
                 <span className="es-char-count">{form.description.length} / 500</span>
               </div>
 
-              {/* LOCATION — TOAST TRIGGER */}
               <div className="es-field">
                 <label className="es-label">
                   Location
@@ -525,7 +512,6 @@ export default function EditService() {
                 )}
               </div>
 
-              {/* DECOR: TIME SLOTS + PRICE */}
               {isDecor && (
                 <div className="es-field">
                   <label className="es-label">
@@ -572,7 +558,6 @@ export default function EditService() {
                 </div>
               )}
 
-              {/* NON-DECOR: PACKAGES */}
               {!isDecor && (
                 <div className="es-field">
                   <label className="es-label">Packages</label>
@@ -614,7 +599,6 @@ export default function EditService() {
                 </div>
               )}
 
-              {/* EXISTING IMAGES */}
               {existingImages.length > 0 && (
                 <div className="es-field">
                   <label className="es-label">
@@ -637,7 +621,6 @@ export default function EditService() {
                 </div>
               )}
 
-              {/* NEW IMAGES */}
               <div className="es-field">
                 <label className="es-label">
                   {existingImages.length > 0 ? "Add More Images" : "Portfolio Images"}
@@ -695,7 +678,8 @@ export default function EditService() {
               {error && <div className="es-error">⚠ {error}</div>}
 
               <div className="es-actions">
-                <button className="es-btn-ghost-full" onClick={() => navigate("/dashboard")} disabled={saving}>Cancel</button>
+                {/* ✅ FIX 3: Cancel goes to /vendor-dashboard */}
+                <button className="es-btn-ghost-full" onClick={() => navigate("/vendor-dashboard")} disabled={saving}>Cancel</button>
                 <button
                   className={`es-submit ${saving ? "loading" : ""}`}
                   onClick={handleSubmit}
@@ -808,7 +792,7 @@ export default function EditService() {
   );
 }
 
-// ── STYLES ────────────────────────────────────────────────────────────────────
+// ── STYLES (unchanged from original) ─────────────────────────────────────────
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,300&family=DM+Sans:wght@300;400;500&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -820,17 +804,14 @@ const styles = `
   .es-root { font-family: 'DM Sans', sans-serif; background: var(--cream); min-height: 100vh; color: var(--ink); }
   .es-body { width: 100%; max-width: 1200px; margin: 0 auto; padding: 48px 32px 80px; }
 
-  /* ── LOADING ── */
   .es-loading { min-height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: var(--muted); font-size: 13px; letter-spacing: 0.1em; }
   .es-load-spinner { width: 36px; height: 36px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.9s linear infinite; }
 
-  /* ── LAYOUT ── */
   .es-layout { display: grid; grid-template-columns: 1fr 380px; gap: 48px; align-items: start; }
   @media (max-width: 1024px) { .es-layout { grid-template-columns: 1fr 320px; gap: 32px; } .es-body { padding: 36px 24px 70px; } }
   @media (max-width: 768px)  { .es-layout { grid-template-columns: 1fr; gap: 0; } .es-body { padding: 24px 16px 60px; } .es-preview-col { order: -1; margin-bottom: 28px; } }
   @media (max-width: 480px)  { .es-body { padding: 16px 12px 52px; } }
 
-  /* ── FORM HEADER ── */
   .es-form-header { margin-bottom: 36px; animation: fadeUp 0.5s ease both; }
   @media (max-width: 768px) { .es-form-header { margin-bottom: 24px; } }
   .es-back { display: inline-block; font-size: 12px; color: var(--muted); background: none; border: none; cursor: pointer; margin-bottom: 20px; transition: color 0.2s; letter-spacing: 0.04em; font-family: 'DM Sans', sans-serif; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -839,7 +820,6 @@ const styles = `
   .es-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.7rem, 4vw, 2.6rem); font-weight: 300; color: var(--ink); margin-bottom: 8px; line-height: 1.15; }
   .es-subtitle { font-size: 13.5px; color: var(--muted); line-height: 1.6; }
 
-  /* ── FIELDS ── */
   .es-field { display: flex; flex-direction: column; gap: 7px; margin-bottom: 22px; animation: fadeUp 0.5s ease both; }
   @media (max-width: 768px) { .es-field { margin-bottom: 18px; } }
   .es-label { font-size: 11px; font-weight: 500; letter-spacing: 0.13em; text-transform: uppercase; color: var(--muted); }
@@ -857,7 +837,6 @@ const styles = `
   .es-textarea-wrap textarea::placeholder { color: #bbb4a8; }
   .es-char-count { font-size: 11px; color: var(--muted); text-align: right; }
 
-  /* ── SERVICE TYPE GRID ── */
   .es-type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   @media (max-width: 580px) { .es-type-grid { grid-template-columns: repeat(2, 1fr); gap: 7px; } }
   .es-type-btn { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--white); cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--muted); transition: all 0.2s; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
@@ -870,7 +849,6 @@ const styles = `
   .es-type-label { font-size: 11.5px; }
   .es-type-soon-tag { position: absolute; top: 6px; right: 6px; font-size: 8.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; background: rgba(201,168,76,0.12); color: var(--gold); border: 1px solid rgba(201,168,76,0.3); padding: 1.5px 6px; border-radius: 20px; }
 
-  /* ── LOCATION TAGS ── */
   .es-loc-tags { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 4px; }
   .es-loc-tag { display: inline-flex; align-items: center; gap: 6px; padding: 6px 8px 6px 12px; background: linear-gradient(135deg, rgba(201,168,76,0.1), rgba(201,168,76,0.04)); border: 1px solid rgba(201,168,76,0.35); border-radius: 20px; font-size: 12.5px; color: var(--ink); font-weight: 500; animation: tagIn 0.2s cubic-bezier(0.175,0.885,0.32,1.275) both; }
   @media (max-width: 480px) { .es-loc-tag { font-size: 12px; padding: 5px 7px 5px 10px; } }
@@ -878,7 +856,6 @@ const styles = `
   .es-loc-tag-remove { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 16px; line-height: 1; width: 20px; height: 20px; border-radius: 50%; transition: color 0.18s, background 0.18s; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   .es-loc-tag-remove:hover { color: #b85c5c; background: rgba(184,92,92,0.1); }
 
-  /* ── LOCATION TRIGGER BUTTON ── */
   .es-loc-trigger { display: flex; align-items: center; gap: 10px; padding: 13px 16px; border: 1.5px dashed rgba(201,168,76,0.4); border-radius: 8px; background: var(--white); cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 13.5px; color: var(--muted); transition: all 0.2s; text-align: left; width: 100%; -webkit-tap-highlight-color: transparent; touch-action: manipulation; min-height: 50px; }
   .es-loc-trigger:hover:not(:disabled) { border-color: var(--gold); color: var(--ink); background: rgba(201,168,76,0.03); box-shadow: 0 2px 10px rgba(201,168,76,0.1); }
   .es-loc-trigger-full { opacity: 0.55; cursor: not-allowed; }
@@ -887,7 +864,6 @@ const styles = `
   .es-loc-trigger-arrow { font-size: 16px; color: var(--gold); flex-shrink: 0; font-weight: 300; }
   .es-loc-hint { font-size: 11px; color: var(--muted); line-height: 1.5; }
 
-  /* ── CITY PICKER TOAST ── */
   .es-city-overlay { position: fixed; inset: 0; background: rgba(14,12,10,0.55); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); display: flex; align-items: flex-end; justify-content: center; z-index: 2000; padding: 0; animation: overlayIn 0.25s ease both; }
   @media (min-width: 600px) { .es-city-overlay { align-items: center; padding: 20px; } }
   .es-city-toast { background: var(--white); border: 1px solid rgba(201,168,76,0.2); border-radius: 20px 20px 0 0; width: 100%; max-width: 520px; display: flex; flex-direction: column; max-height: 88vh; box-shadow: 0 -8px 40px rgba(14,12,10,0.15), 0 -2px 12px rgba(201,168,76,0.1); animation: toastUp 0.3s cubic-bezier(0.175,0.885,0.32,1.275) both; overflow: hidden; }
@@ -935,7 +911,6 @@ const styles = `
   .es-city-toast-done { width: 100%; padding: 15px; background: var(--ink); color: var(--white); border: none; border-radius: 9px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; letter-spacing: 0.04em; cursor: pointer; transition: all 0.22s ease; min-height: 52px; -webkit-tap-highlight-color: transparent; }
   .es-city-toast-done:hover { background: var(--gold); color: var(--ink); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(201,168,76,0.3); }
 
-  /* ── TIME SLOTS (Decor) ── */
   .es-slot-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 4px; }
   @media (max-width: 480px) { .es-slot-grid { grid-template-columns: 1fr; gap: 7px; } }
   .es-slot-btn { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--white); cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--muted); transition: all 0.2s; text-align: left; -webkit-tap-highlight-color: transparent; touch-action: manipulation; min-height: 48px; }
@@ -951,7 +926,6 @@ const styles = `
   .es-slot-price-row .es-input-wrap { border: none; padding: 0; box-shadow: none; background: transparent; }
   .es-slot-price-row .es-input-wrap:focus-within { box-shadow: none; }
 
-  /* ── PACKAGES ── */
   .es-pkg-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 14px; transition: border-color 0.2s, box-shadow 0.2s; animation: fadeUp 0.3s ease both; }
   @media (max-width: 480px) { .es-pkg-card { padding: 16px; } }
   .es-pkg-card:focus-within { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.08); }
@@ -971,7 +945,6 @@ const styles = `
   .es-add-pkg-btn { width: 100%; padding: 14px; background: none; border: 1px dashed rgba(201,168,76,0.4); border-radius: 10px; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.2s; letter-spacing: 0.03em; margin-top: 2px; min-height: 52px; -webkit-tap-highlight-color: transparent; }
   .es-add-pkg-btn:hover { border-color: var(--gold); color: var(--ink); background: rgba(201,168,76,0.04); }
 
-  /* ── IMAGE GRID ── */
   .es-img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 10px; }
   @media (max-width: 480px) { .es-img-grid { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 8px; } }
   .es-img-thumb { position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 2px solid transparent; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; }
@@ -985,7 +958,6 @@ const styles = `
   .es-img-hint { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
   .es-img-count { color: var(--gold); font-weight: 500; }
 
-  /* ── UPLOAD ZONE ── */
   .es-upload-zone { border: 1.5px dashed rgba(201,168,76,0.4); border-radius: 12px; padding: 36px 20px; background: var(--white); text-align: center; transition: border-color 0.22s, background 0.22s, transform 0.15s; display: flex; flex-direction: column; align-items: center; gap: 10px; }
   @media (max-width: 480px) { .es-upload-zone { padding: 28px 16px; border-radius: 10px; } }
   .es-upload-zone:hover { border-color: var(--gold); background: rgba(201,168,76,0.02); }
@@ -1000,10 +972,8 @@ const styles = `
   .es-upload-label:hover { background: var(--gold); color: var(--ink); }
   .es-upload-count { font-size: 12px; color: #2d6a4f; font-weight: 500; }
 
-  /* ── ERROR ── */
   .es-error { font-size: 12.5px; color: #b85c5c; background: rgba(184,92,92,0.07); border: 1px solid rgba(184,92,92,0.2); border-radius: 6px; padding: 10px 14px; margin-bottom: 18px; }
 
-  /* ── ACTIONS ── */
   .es-actions { display: grid; grid-template-columns: 1fr 2fr; gap: 12px; margin-bottom: 14px; }
   @media (max-width: 480px) { .es-actions { grid-template-columns: 1fr 1.5fr; gap: 10px; } }
   .es-btn-ghost-full { padding: 16px; background: none; border: 1px solid var(--border); border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--muted); cursor: pointer; transition: all 0.2s; min-height: 52px; -webkit-tap-highlight-color: transparent; }
@@ -1017,7 +987,6 @@ const styles = `
   .es-link { color: var(--gold); text-decoration: none; font-weight: 500; }
   .es-link:hover { text-decoration: underline; }
 
-  /* ── PREVIEW COLUMN ── */
   .es-preview-sticky { position: sticky; top: 88px; }
   @media (max-width: 768px) { .es-preview-sticky { position: static; } }
   .es-preview-label { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); margin-bottom: 14px; }
@@ -1057,7 +1026,6 @@ const styles = `
   .es-strip-more { width: 52px; height: 52px; flex-shrink: 0; border-radius: 6px; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--muted); font-weight: 500; }
   .es-preview-note { font-size: 11px; color: var(--muted); text-align: center; margin-top: 10px; }
 
-  /* ── SUCCESS MODAL ── */
   .es-modal-overlay { position: fixed; inset: 0; background: rgba(14,12,10,0.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; animation: overlayIn 0.3s ease both; }
   .es-modal { position: relative; overflow: hidden; background: var(--white); border: 1px solid rgba(201,168,76,0.25); border-radius: 24px; padding: 48px 40px 40px; width: 100%; max-width: 440px; box-shadow: 0 32px 80px rgba(14,12,10,0.2), 0 8px 24px rgba(201,168,76,0.1); animation: modalIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275) both; display: flex; flex-direction: column; align-items: center; gap: 0; max-height: 90vh; overflow-y: auto; }
   @media (max-width: 480px) { .es-modal { padding: 32px 20px 28px; border-radius: 18px; } }
@@ -1082,7 +1050,6 @@ const styles = `
   .es-modal-btn-ghost { width: 100%; padding: 13px; background: none; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.2s; min-height: 48px; -webkit-tap-highlight-color: transparent; }
   .es-modal-btn-ghost:hover { border-color: var(--gold); color: var(--ink); }
 
-  /* ── ANIMATIONS ── */
   @keyframes overlayIn  { from { opacity: 0; } to { opacity: 1; } }
   @keyframes modalIn    { from { opacity: 0; transform: scale(0.88) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
   @keyframes toastUp    { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
