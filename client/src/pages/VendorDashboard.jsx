@@ -1,8 +1,22 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
 import ServiceCard from "../components/ServiceCard";
 import Logo from "../components/Logo";
+
+// ─────────────────────────────────────────────────────────────
+// PAGE SIZE HOOK
+// ─────────────────────────────────────────────────────────────
+function usePageSize() {
+  const getSize = () => window.innerWidth <= 640 ? 8 : 12;
+  const [pageSize, setPageSize] = useState(getSize);
+  useEffect(() => {
+    const handler = () => setPageSize(getSize());
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+  return pageSize;
+}
 
 // ─────────────────────────────────────────────────────────────
 // SEO HELMET COMPONENT
@@ -16,32 +30,18 @@ function DashboardHelmet({ vendorName, serviceCount, pendingCount }) {
     document.title = title;
 
     let metaDesc = document.querySelector('meta[name="description"]');
-    if (!metaDesc) {
-      metaDesc = document.createElement("meta");
-      metaDesc.name = "description";
-      document.head.appendChild(metaDesc);
-    }
+    if (!metaDesc) { metaDesc = document.createElement("meta"); metaDesc.name = "description"; document.head.appendChild(metaDesc); }
     metaDesc.content = `Manage your vendor profile, bookings, and services. ${serviceCount} service${serviceCount !== 1 ? "s" : ""} listed. ${pendingCount > 0 ? `${pendingCount} pending booking${pendingCount !== 1 ? "s" : ""} awaiting review.` : ""}`;
 
     let metaRobots = document.querySelector('meta[name="robots"]');
-    if (!metaRobots) {
-      metaRobots = document.createElement("meta");
-      metaRobots.name = "robots";
-      document.head.appendChild(metaRobots);
-    }
+    if (!metaRobots) { metaRobots = document.createElement("meta"); metaRobots.name = "robots"; document.head.appendChild(metaRobots); }
     metaRobots.content = "noindex, nofollow";
 
     let link = document.querySelector('link[rel="canonical"]');
-    if (!link) {
-      link = document.createElement("link");
-      link.rel = "canonical";
-      document.head.appendChild(link);
-    }
+    if (!link) { link = document.createElement("link"); link.rel = "canonical"; document.head.appendChild(link); }
     link.href = window.location.origin + "/vendor/dashboard";
 
-    return () => {
-      document.title = prev;
-    };
+    return () => { document.title = prev; };
   }, [vendorName, serviceCount, pendingCount]);
 
   return null;
@@ -92,11 +92,36 @@ function fmtTime(date) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// LOAD MORE BUTTON
+// ─────────────────────────────────────────────────────────────
+function LoadMoreBtn({ onLoadMore, remaining, loading, label = "services" }) {
+  return (
+    <div className="vd-load-more-wrap" aria-live="polite">
+      <button
+        className="vd-load-more-btn"
+        onClick={onLoadMore}
+        disabled={loading}
+        aria-label={`Load ${remaining} more ${label}`}
+      >
+        {loading ? (
+          <span className="vd-load-more-spinner" aria-hidden="true" />
+        ) : (
+          <>
+            <span>Show more {label}</span>
+            <span className="vd-load-more-count">{remaining} remaining</span>
+            <span className="vd-load-more-arrow" aria-hidden="true">↓</span>
+          </>
+        )}
+      </button>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 // TOAST NOTIFICATION
 // ─────────────────────────────────────────────────────────────
 function Toast({ message, type = "info", onDismiss }) {
   const timerRef = useRef(null);
-
   useEffect(() => {
     timerRef.current = setTimeout(onDismiss, 3500);
     return () => clearTimeout(timerRef.current);
@@ -114,9 +139,7 @@ function Toast({ message, type = "info", onDismiss }) {
   return (
     <div className="toast-wrap" role="alert" aria-live="assertive" aria-atomic="true">
       <div className="toast" style={{ background: c.bg, border: `1px solid ${c.border}` }}>
-        <span className="toast-icon" aria-hidden="true" style={{ color: c.color, background: `${c.color}18`, border: `1px solid ${c.color}33` }}>
-          {icons[type]}
-        </span>
+        <span className="toast-icon" aria-hidden="true" style={{ color: c.color, background: `${c.color}18`, border: `1px solid ${c.color}33` }}>{icons[type]}</span>
         <span className="toast-msg">{message}</span>
         <button className="toast-close" onClick={onDismiss} aria-label="Dismiss notification">✕</button>
       </div>
@@ -128,9 +151,7 @@ function Toast({ message, type = "info", onDismiss }) {
 // AVAILABILITY CALENDAR MODAL
 // ─────────────────────────────────────────────────────────────
 function AvailabilityCalendar({ services, onClose }) {
-  const [selectedServiceId, setSelectedServiceId] = useState(
-    services.length > 0 ? services[0]._id : null
-  );
+  const [selectedServiceId, setSelectedServiceId] = useState(services.length > 0 ? services[0]._id : null);
   const [availability, setAvailability] = useState({});
   const [viewYear,  setViewYear]  = useState(new Date().getFullYear());
   const [viewMonth, setViewMonth] = useState(new Date().getMonth());
@@ -152,10 +173,7 @@ function AvailabilityCalendar({ services, onClose }) {
     API.get(`/vendors/${selectedServiceId}/availability`)
       .then((res) => {
         const map = {};
-        (res.data || []).forEach((entry) => {
-          const key = toKey(new Date(entry.date));
-          map[key] = entry.available;
-        });
+        (res.data || []).forEach((entry) => { const key = toKey(new Date(entry.date)); map[key] = entry.available; });
         setAvailability(map);
       })
       .catch(() => {})
@@ -175,11 +193,7 @@ function AvailabilityCalendar({ services, onClose }) {
     if (key < today) return;
     setAvailability((prev) => {
       const current = prev[key];
-      if (current === false) {
-        const next = { ...prev };
-        delete next[key];
-        return next;
-      }
+      if (current === false) { const next = { ...prev }; delete next[key]; return next; }
       return { ...prev, [key]: false };
     });
     setSaved(false);
@@ -193,29 +207,15 @@ function AvailabilityCalendar({ services, onClose }) {
       await API.put(`/vendors/${selectedServiceId}/availability`, { dates });
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
-    } catch {
-    } finally {
-      setSaving(false);
-    }
+    } catch {} finally { setSaving(false); }
   };
 
   const daysInMonth    = new Date(viewYear, viewMonth + 1, 0).getDate();
   const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
   const monthName      = new Date(viewYear, viewMonth, 1).toLocaleString("en-IN", { month: "long" });
-
-  const prevMonth = () => {
-    if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1); }
-    else setViewMonth((m) => m - 1);
-  };
-  const nextMonth = () => {
-    if (viewMonth === 11) { setViewMonth(0); setViewYear((y) => y + 1); }
-    else setViewMonth((m) => m + 1);
-  };
-
-  const unavailableThisMonth = Object.entries(availability).filter(([key, val]) =>
-    val === false && key.startsWith(`${viewYear}-${String(viewMonth + 1).padStart(2, "0")}`)
-  ).length;
-
+  const prevMonth = () => { if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1); } else setViewMonth((m) => m - 1); };
+  const nextMonth = () => { if (viewMonth === 11) { setViewMonth(0); setViewYear((y) => y + 1); } else setViewMonth((m) => m + 1); };
+  const unavailableThisMonth = Object.entries(availability).filter(([key, val]) => val === false && key.startsWith(`${viewYear}-${String(viewMonth + 1).padStart(2, "0")}`)).length;
   const handleBackdrop = (e) => { if (e.target === e.currentTarget) onClose(); };
 
   return (
@@ -229,7 +229,6 @@ function AvailabilityCalendar({ services, onClose }) {
             <p className="ac-subtitle">Tell clients when you're available to work</p>
           </div>
         </div>
-
         {services.length > 1 && (
           <div className="ac-service-select-wrap">
             <label className="ac-label" htmlFor="ac-service-select">Manage availability for</label>
@@ -238,7 +237,6 @@ function AvailabilityCalendar({ services, onClose }) {
             </select>
           </div>
         )}
-
         <div className="ac-legend" role="list" aria-label="Calendar legend">
           {[
             { cls: "ac-dot-available",   label: "Available",   sub: "(default)" },
@@ -251,11 +249,7 @@ function AvailabilityCalendar({ services, onClose }) {
             </div>
           ))}
         </div>
-
-        <p className="ac-instruction">
-          Click any <strong>future date</strong> to toggle between available and unavailable.
-        </p>
-
+        <p className="ac-instruction">Click any <strong>future date</strong> to toggle between available and unavailable.</p>
         {loading ? (
           <div className="ac-loading" aria-label="Loading calendar…" role="status">
             {[...Array(35)].map((_, i) => (<div key={i} className="ac-skeleton-day" style={{ animationDelay: `${i * 0.01}s` }} />))}
@@ -268,44 +262,26 @@ function AvailabilityCalendar({ services, onClose }) {
               <button className="ac-nav-btn" onClick={nextMonth} aria-label="Next month">›</button>
             </div>
             <div className="ac-grid" role="grid" aria-label={`${monthName} ${viewYear} availability calendar`}>
-              {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d) => (
-                <div key={d} className="ac-day-header" role="columnheader">{d}</div>
-              ))}
-              {[...Array(firstDayOfWeek)].map((_, i) => (
-                <div key={`empty-${i}`} className="ac-day-cell ac-empty" role="gridcell" aria-hidden="true" />
-              ))}
+              {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d) => (<div key={d} className="ac-day-header" role="columnheader">{d}</div>))}
+              {[...Array(firstDayOfWeek)].map((_, i) => (<div key={`empty-${i}`} className="ac-day-cell ac-empty" role="gridcell" aria-hidden="true" />))}
               {[...Array(daysInMonth)].map((_, i) => {
                 const day = i + 1;
                 const key = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-                const isPast       = key < today;
-                const isToday      = key === today;
-                const isUnavailable = availability[key] === false;
+                const isPast = key < today; const isToday = key === today; const isUnavailable = availability[key] === false;
                 let cls = "ac-day-cell";
-                if (isPast)             cls += " ac-past";
-                else if (isUnavailable) cls += " ac-unavailable";
-                else                    cls += " ac-available";
-                if (isToday)            cls += " ac-today";
-                const label = isPast
-                  ? `${day} ${monthName}, past date`
-                  : isUnavailable
-                    ? `${day} ${monthName}, marked unavailable`
-                    : `${day} ${monthName}, available`;
+                if (isPast) cls += " ac-past"; else if (isUnavailable) cls += " ac-unavailable"; else cls += " ac-available";
+                if (isToday) cls += " ac-today";
                 return (
-                  <button key={key} className={cls} role="gridcell" onClick={() => toggleDate(key)} disabled={isPast} aria-label={label} aria-pressed={isUnavailable}>
+                  <button key={key} className={cls} role="gridcell" onClick={() => toggleDate(key)} disabled={isPast} aria-label={`${day} ${monthName}`} aria-pressed={isUnavailable}>
                     <span className="ac-day-num">{day}</span>
                     {isUnavailable && <span className="ac-unavail-dot" aria-hidden="true" />}
                   </button>
                 );
               })}
             </div>
-            {unavailableThisMonth > 0 && (
-              <p className="ac-month-stat" aria-live="polite">
-                {unavailableThisMonth} day{unavailableThisMonth !== 1 ? "s" : ""} marked unavailable this month
-              </p>
-            )}
+            {unavailableThisMonth > 0 && <p className="ac-month-stat" aria-live="polite">{unavailableThisMonth} day{unavailableThisMonth !== 1 ? "s" : ""} marked unavailable this month</p>}
           </>
         )}
-
         <div className="ac-footer">
           <button className="ac-cancel-btn" onClick={onClose}>Cancel</button>
           <button className={`ac-save-btn ${saved ? "ac-saved" : ""}`} onClick={handleSave} disabled={saving || loading} aria-busy={saving}>
@@ -334,11 +310,7 @@ function ConfirmUndoPopup({ bookingName, onConfirm, onCancel, confirming }) {
       <div className="cu-modal">
         <div className="cu-icon-wrap" aria-hidden="true">↩</div>
         <h3 id="cu-title" className="cu-title">Move Back to Pending?</h3>
-        <p id="cu-desc" className="cu-sub">
-          This will revert <strong>{bookingName || "this booking"}</strong>'s status from{" "}
-          <span className="cu-status-word cu-approved">Approved</span> back to{" "}
-          <span className="cu-status-word cu-pending">Pending</span>.
-        </p>
+        <p id="cu-desc" className="cu-sub">This will revert <strong>{bookingName || "this booking"}</strong>'s status from <span className="cu-status-word cu-approved">Approved</span> back to <span className="cu-status-word cu-pending">Pending</span>.</p>
         <div className="cu-btns">
           <button className="cu-cancel-btn" onClick={onCancel} disabled={confirming}>Cancel</button>
           <button className="cu-confirm-btn" onClick={onConfirm} disabled={confirming} ref={btnRef} aria-busy={confirming}>
@@ -354,7 +326,7 @@ function ConfirmUndoPopup({ bookingName, onConfirm, onCancel, confirming }) {
 // BOOKING DETAIL POPUP
 // ─────────────────────────────────────────────────────────────
 function BookingDetailPopup({ booking, onClose, onUpdateStatus, updating, onRequestUndo }) {
-  const b       = booking;
+  const b = booking;
   const meta    = STATUS_META[b.status] || STATUS_META.pending;
   const payMeta = PAY_META[b.paymentStatus] || PAY_META.pending;
   const dcr     = b.dateChangeRequest;
@@ -380,11 +352,8 @@ function BookingDetailPopup({ booking, onClose, onUpdateStatus, updating, onRequ
             <h2 id="bd-name" className="bd-name">{b.userId?.name || "Unknown Client"}</h2>
             <p className="bd-email">{b.userId?.email || ""}</p>
           </div>
-          <span className="bd-status-badge" style={{ color: meta.color, background: meta.bg, border: `1px solid ${meta.border}` }} aria-label={`Booking status: ${meta.label}`}>
-            {meta.label}
-          </span>
+          <span className="bd-status-badge" style={{ color: meta.color, background: meta.bg, border: `1px solid ${meta.border}` }} aria-label={`Booking status: ${meta.label}`}>{meta.label}</span>
         </div>
-
         <div className="bd-pay-banner" style={{ background: payMeta.bg, border: `1px solid ${payMeta.border}` }} role="status" aria-label={payMeta.label}>
           <div className="bd-pay-icon-wrap" style={{ color: payMeta.color }} aria-hidden="true"><span>{payMeta.icon}</span></div>
           <div className="bd-pay-info">
@@ -395,36 +364,26 @@ function BookingDetailPopup({ booking, onClose, onUpdateStatus, updating, onRequ
           </div>
           {b.paymentStatus === "paid" && <span className="bd-pay-amount">₹{b.packagePrice?.toLocaleString()}</span>}
         </div>
-
         <dl className="bd-grid">
           <div className="bd-info-block"><dt className="bd-info-label">Booking Date</dt><dd className="bd-info-value">🗓 {fmt(b.date)}</dd></div>
           <div className="bd-info-block"><dt className="bd-info-label">Package</dt><dd className="bd-info-value">📦 {b.packageName || "—"}</dd></div>
           <div className="bd-info-block"><dt className="bd-info-label">Package Price</dt><dd className="bd-info-value">₹ {b.packagePrice?.toLocaleString() || "—"}</dd></div>
           <div className="bd-info-block"><dt className="bd-info-label">Booked On</dt><dd className="bd-info-value">{b.createdAt ? fmtTime(b.createdAt) : "—"}</dd></div>
         </dl>
-
         <h3 className="bd-section-title">Client Details</h3>
         <address className="bd-client-details">
-          {b.userDetails?.name && (
-            <div className="bd-detail-row"><span className="bd-detail-icon" aria-hidden="true">👤</span><div><span className="bd-detail-label">Name on Booking</span><span className="bd-detail-value">{b.userDetails.name}</span></div></div>
-          )}
-          {b.userDetails?.phone && (
-            <div className="bd-detail-row"><span className="bd-detail-icon" aria-hidden="true">📱</span><div><span className="bd-detail-label">Phone</span><a className="bd-detail-value bd-detail-link" href={`tel:${b.userDetails.phone}`}>{b.userDetails.phone}</a></div></div>
-          )}
-          {b.userDetails?.address && (
-            <div className="bd-detail-row"><span className="bd-detail-icon" aria-hidden="true">📍</span><div><span className="bd-detail-label">Address</span><span className="bd-detail-value">{b.userDetails.address}</span></div></div>
-          )}
+          {b.userDetails?.name && (<div className="bd-detail-row"><span className="bd-detail-icon" aria-hidden="true">👤</span><div><span className="bd-detail-label">Name on Booking</span><span className="bd-detail-value">{b.userDetails.name}</span></div></div>)}
+          {b.userDetails?.phone && (<div className="bd-detail-row"><span className="bd-detail-icon" aria-hidden="true">📱</span><div><span className="bd-detail-label">Phone</span><a className="bd-detail-value bd-detail-link" href={`tel:${b.userDetails.phone}`}>{b.userDetails.phone}</a></div></div>)}
+          {b.userDetails?.address && (<div className="bd-detail-row"><span className="bd-detail-icon" aria-hidden="true">📍</span><div><span className="bd-detail-label">Address</span><span className="bd-detail-value">{b.userDetails.address}</span></div></div>)}
         </address>
-
         {hasDcr && (
           <div className="bd-dcr-box" role="region" aria-label="Pending change request">
             <div className="bd-dcr-header"><span className="bd-dcr-tag">📅 Change Request Pending</span></div>
-            {dcr.requestedDate && <div className="bd-dcr-row"><span className="bd-dcr-key">New Date</span><span className="bd-dcr-val">{fmt(dcr.requestedDate)}</span></div>}
+            {dcr.requestedDate    && <div className="bd-dcr-row"><span className="bd-dcr-key">New Date</span><span className="bd-dcr-val">{fmt(dcr.requestedDate)}</span></div>}
             {dcr.requestedAddress && <div className="bd-dcr-row"><span className="bd-dcr-key">New Address</span><span className="bd-dcr-val">{dcr.requestedAddress}</span></div>}
             {dcr.reason && <div className="bd-dcr-reason">"{dcr.reason}"</div>}
           </div>
         )}
-
         {b.status === "pending" && (
           <div className="bd-actions" role="group" aria-label="Booking actions">
             <button className="bd-reject-btn" onClick={() => onUpdateStatus(b._id, "rejected")} disabled={!!updating} aria-busy={updating === b._id + "rejected"}>
@@ -435,7 +394,6 @@ function BookingDetailPopup({ booking, onClose, onUpdateStatus, updating, onRequ
             </button>
           </div>
         )}
-
         {b.status === "approved" && !hasDcr && (
           <div className="bd-actions">
             <button className="bd-undo-btn" onClick={() => onRequestUndo(b)} disabled={!!updating}>↩ Move back to Pending</button>
@@ -450,8 +408,8 @@ function BookingDetailPopup({ booking, onClose, onUpdateStatus, updating, onRequ
 // DATE CHANGE POPUP
 // ─────────────────────────────────────────────────────────────
 function DateChangePopup({ booking, onAccept, onReject, responding }) {
-  const dcr       = booking.dateChangeRequest;
-  const client    = booking.userId?.name || "The client";
+  const dcr    = booking.dateChangeRequest;
+  const client = booking.userId?.name || "The client";
   const rejectRef = useRef(null);
   useEffect(() => { rejectRef.current?.focus(); }, []);
   const changeItems = [];
@@ -470,12 +428,7 @@ function DateChangePopup({ booking, onAccept, onReject, responding }) {
               <div><span className="vd-popup-change-label">{item.label}</span><span className="vd-popup-change-value">{item.value}</span></div>
             </div>
           ))}
-          {dcr.reason && (
-            <div className="vd-popup-reason">
-              <span className="vd-popup-reason-label">Client's reason:</span>
-              <blockquote className="vd-popup-reason-text">"{dcr.reason}"</blockquote>
-            </div>
-          )}
+          {dcr.reason && (<div className="vd-popup-reason"><span className="vd-popup-reason-label">Client's reason:</span><blockquote className="vd-popup-reason-text">"{dcr.reason}"</blockquote></div>)}
         </div>
         <div className="vd-popup-current">
           <span className="vd-popup-current-label">Current:</span>
@@ -502,18 +455,8 @@ function BookingSearchBar({ value, onChange }) {
   return (
     <div className="vd-search-wrap">
       <span className="vd-search-icon" aria-hidden="true">🔍</span>
-      <input
-        className="vd-search-input"
-        type="search"
-        placeholder="Search by client name or email…"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        aria-label="Search bookings"
-        autoComplete="off"
-      />
-      {value && (
-        <button className="vd-search-clear" onClick={() => onChange("")} aria-label="Clear search">✕</button>
-      )}
+      <input className="vd-search-input" type="search" placeholder="Search by client name or email…" value={value} onChange={(e) => onChange(e.target.value)} aria-label="Search bookings" autoComplete="off" />
+      {value && (<button className="vd-search-clear" onClick={() => onChange("")} aria-label="Clear search">✕</button>)}
     </div>
   );
 }
@@ -595,6 +538,8 @@ function LegalModal({ type, onClose }) {
 // MAIN DASHBOARD
 // ─────────────────────────────────────────────────────────────
 export default function VendorDashboard() {
+  const pageSize = usePageSize();
+
   const [bookings,      setBookings]      = useState([]);
   const [services,      setServices]      = useState([]);
   const [loadingB,      setLoadingB]      = useState(true);
@@ -611,13 +556,27 @@ export default function VendorDashboard() {
   const [toast,         setToast]         = useState(null);
   const [vendorName,    setVendorName]    = useState("");
   const [legalModal,    setLegalModal]    = useState(null);
-
-  // ── NEW: service type filter for My Services section ──
   const [serviceTypeFilter, setServiceTypeFilter] = useState("all");
+
+  // ── Pagination state ──
+  const [svcVisibleCount, setSvcVisibleCount] = useState(pageSize);
+  const [bkgVisibleCount, setBkgVisibleCount] = useState(pageSize);
+
+  const svcLoadMoreRef = useRef(null);
+  const bkgLoadMoreRef = useRef(null);
 
   const showToast = useCallback((message, type = "info") => {
     setToast({ message, type });
   }, []);
+
+  // Reset counts when filters or pageSize change
+  useEffect(() => {
+    setSvcVisibleCount(pageSize);
+  }, [serviceTypeFilter, pageSize]);
+
+  useEffect(() => {
+    setBkgVisibleCount(pageSize);
+  }, [filter, searchQuery, pageSize]);
 
   useEffect(() => {
     const isOpen = popupBooking || detailBooking || undoTarget || showAvailCal || legalModal;
@@ -632,11 +591,8 @@ export default function VendorDashboard() {
       setBookings(res.data);
       const withPendingDcr = res.data.find((b) => b.dateChangeRequest?.status === "pending");
       if (withPendingDcr) setPopupBooking(withPendingDcr);
-    } catch (e) {
-      console.error("fetchBookings:", e);
-    } finally {
-      setLoadingB(false);
-    }
+    } catch (e) { console.error("fetchBookings:", e); }
+    finally { setLoadingB(false); }
   };
 
   const fetchServices = async () => {
@@ -644,11 +600,8 @@ export default function VendorDashboard() {
     try {
       const res = await API.get("/vendors/my-services", { headers: { Authorization: `Bearer ${token}` } });
       setServices(res.data);
-    } catch (e) {
-      console.error("fetchServices:", e);
-    } finally {
-      setLoadingS(false);
-    }
+    } catch (e) { console.error("fetchServices:", e); }
+    finally { setLoadingS(false); }
   };
 
   useEffect(() => {
@@ -658,10 +611,7 @@ export default function VendorDashboard() {
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
-    fetchBookings();
-    fetchServices();
-  }, []);
+  useEffect(() => { fetchBookings(); fetchServices(); }, []);
 
   const updateStatus = async (id, status) => {
     const token = localStorage.getItem("token");
@@ -670,15 +620,9 @@ export default function VendorDashboard() {
       await API.put(`/bookings/${id}/status`, { status }, { headers: { Authorization: `Bearer ${token}` } });
       await fetchBookings();
       setDetailBooking((prev) => (prev && prev._id === id ? { ...prev, status } : prev));
-      showToast(
-        status === "approved" ? "Booking approved successfully." : "Booking rejected.",
-        status === "approved" ? "success" : "error"
-      );
-    } catch {
-      showToast("Something went wrong. Please try again.", "error");
-    } finally {
-      setUpdating(null);
-    }
+      showToast(status === "approved" ? "Booking approved successfully." : "Booking rejected.", status === "approved" ? "success" : "error");
+    } catch { showToast("Something went wrong. Please try again.", "error"); }
+    finally { setUpdating(null); }
   };
 
   const handleRequestUndo  = (booking) => setUndoTarget(booking);
@@ -689,22 +633,19 @@ export default function VendorDashboard() {
       await updateStatus(undoTarget._id, "pending");
       setUndoTarget(null);
       setDetailBooking((prev) => prev && prev._id === undoTarget._id ? { ...prev, status: "pending" } : prev);
-    } finally {
-      setConfirming(false);
-    }
+    } finally { setConfirming(false); }
   };
-  const handleCancelUndo   = () => setUndoTarget(null);
+  const handleCancelUndo = () => setUndoTarget(null);
 
   const handleAcceptChange = async () => {
     if (!popupBooking) return;
     setResponding("approve");
     try {
       await API.put(`/bookings/${popupBooking._id}/change-request`, { action: "approved" });
-      setPopupBooking(null);
-      await fetchBookings();
+      setPopupBooking(null); await fetchBookings();
       showToast("Change request approved.", "success");
     } catch { showToast("Failed to approve change. Try again.", "error"); }
-    finally  { setResponding(null); }
+    finally { setResponding(null); }
   };
 
   const handleRejectChange = async () => {
@@ -712,11 +653,10 @@ export default function VendorDashboard() {
     setResponding("reject");
     try {
       await API.put(`/bookings/${popupBooking._id}/change-request`, { action: "rejected" });
-      setPopupBooking(null);
-      await fetchBookings();
+      setPopupBooking(null); await fetchBookings();
       showToast("Change request declined.", "info");
     } catch { showToast("Failed to decline change. Try again.", "error"); }
-    finally  { setResponding(null); }
+    finally { setResponding(null); }
   };
 
   const handleServiceDeleted = (id) => {
@@ -741,21 +681,38 @@ export default function VendorDashboard() {
   };
   const pendingDcrCount = bookings.filter((b) => b.dateChangeRequest?.status === "pending").length;
 
-  // ── NEW: filtered services by type ──
-  const filteredServices = serviceTypeFilter === "all"
-    ? services
-    : services.filter((s) => s.serviceType === serviceTypeFilter);
+  // ── Services filtered by type ──
+  const filteredServices = useMemo(() =>
+    serviceTypeFilter === "all" ? services : services.filter((s) => s.serviceType === serviceTypeFilter),
+    [services, serviceTypeFilter]
+  );
 
-  // ── NEW: service counts per type ──
   const serviceTypeCounts = SERVICE_TYPE_FILTERS.reduce((acc, t) => {
     acc[t.key] = t.key === "all" ? services.length : services.filter((s) => s.serviceType === t.key).length;
     return acc;
   }, {});
 
-  // Only show tabs that have services OR are "all"
-  const activeServiceTypeTabs = SERVICE_TYPE_FILTERS.filter(
-    (t) => t.key === "all" || serviceTypeCounts[t.key] > 0
-  );
+  const activeServiceTypeTabs = SERVICE_TYPE_FILTERS.filter((t) => t.key === "all" || serviceTypeCounts[t.key] > 0);
+
+  // ── Services pagination ──
+  const visibleServices = useMemo(() => filteredServices.slice(0, svcVisibleCount), [filteredServices, svcVisibleCount]);
+  const svcHasMore  = svcVisibleCount < filteredServices.length;
+  const svcRemaining = filteredServices.length - svcVisibleCount;
+
+  const handleSvcLoadMore = () => {
+    setSvcVisibleCount(prev => prev + pageSize);
+    setTimeout(() => { svcLoadMoreRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }); }, 100);
+  };
+
+  // ── Bookings pagination ──
+  const visibleBookings = useMemo(() => filtered.slice(0, bkgVisibleCount), [filtered, bkgVisibleCount]);
+  const bkgHasMore   = bkgVisibleCount < filtered.length;
+  const bkgRemaining = filtered.length - bkgVisibleCount;
+
+  const handleBkgLoadMore = () => {
+    setBkgVisibleCount(prev => prev + pageSize);
+    setTimeout(() => { bkgLoadMoreRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }); }, 100);
+  };
 
   const TABS = [
     { key: "all",      label: "All" },
@@ -777,22 +734,10 @@ export default function VendorDashboard() {
 
         {toast && <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
 
-        {popupBooking && (
-          <DateChangePopup booking={popupBooking} onAccept={handleAcceptChange} onReject={handleRejectChange} responding={responding} />
-        )}
-
-        {detailBooking && (
-          <BookingDetailPopup booking={detailBooking} onClose={() => setDetailBooking(null)} onUpdateStatus={updateStatus} updating={updating} onRequestUndo={handleRequestUndo} />
-        )}
-
-        {undoTarget && (
-          <ConfirmUndoPopup bookingName={undoTarget.userId?.name} onConfirm={handleConfirmUndo} onCancel={handleCancelUndo} confirming={confirming} />
-        )}
-
-        {showAvailCal && services.length > 0 && (
-          <AvailabilityCalendar services={services} onClose={() => setShowAvailCal(false)} />
-        )}
-
+        {popupBooking && (<DateChangePopup booking={popupBooking} onAccept={handleAcceptChange} onReject={handleRejectChange} responding={responding} />)}
+        {detailBooking && (<BookingDetailPopup booking={detailBooking} onClose={() => setDetailBooking(null)} onUpdateStatus={updateStatus} updating={updating} onRequestUndo={handleRequestUndo} />)}
+        {undoTarget && (<ConfirmUndoPopup bookingName={undoTarget.userId?.name} onConfirm={handleConfirmUndo} onCancel={handleCancelUndo} confirming={confirming} />)}
+        {showAvailCal && services.length > 0 && (<AvailabilityCalendar services={services} onClose={() => setShowAvailCal(false)} />)}
         {legalModal && <LegalModal type={legalModal} onClose={() => setLegalModal(null)} />}
 
         <div className="vd-bg-ornament" aria-hidden="true">
@@ -848,21 +793,7 @@ export default function VendorDashboard() {
 
           {/* ── DCR ALERT ── */}
           {pendingDcrCount > 0 && (
-            <div
-              className="vd-dcr-alert"
-              role="alert"
-              onClick={() => {
-                const first = bookings.find((b) => b.dateChangeRequest?.status === "pending");
-                if (first) setPopupBooking(first);
-              }}
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  const first = bookings.find((b) => b.dateChangeRequest?.status === "pending");
-                  if (first) setPopupBooking(first);
-                }
-              }}
-            >
+            <div className="vd-dcr-alert" role="alert" onClick={() => { const first = bookings.find((b) => b.dateChangeRequest?.status === "pending"); if (first) setPopupBooking(first); }} tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { const first = bookings.find((b) => b.dateChangeRequest?.status === "pending"); if (first) setPopupBooking(first); } }}>
               <span className="vd-dcr-alert-icon" aria-hidden="true">📅</span>
               <div><strong>{pendingDcrCount} client{pendingDcrCount !== 1 ? "s" : ""}</strong>{" "}want{pendingDcrCount === 1 ? "s" : ""} to change their booking details</div>
               <span className="vd-dcr-alert-cta" aria-hidden="true">Review →</span>
@@ -874,24 +805,16 @@ export default function VendorDashboard() {
             <div className="vd-section-header">
               <div>
                 <h2 id="services-heading" className="vd-section-title">My Services</h2>
-                <p className="vd-section-sub">
-                  {loadingS ? "Loading…" : `${services.length} service${services.length !== 1 ? "s" : ""} listed`}
-                </p>
+                <p className="vd-section-sub">{loadingS ? "Loading…" : `${services.length} service${services.length !== 1 ? "s" : ""} listed`}</p>
               </div>
               <a href="/add-service" className="vd-section-add" aria-label="Add a new service">+ New Service</a>
             </div>
 
-            {/* ── SERVICE TYPE FILTER TABS (NEW) ── */}
+            {/* Service type filter tabs */}
             {!loadingS && services.length > 0 && activeServiceTypeTabs.length > 1 && (
               <div className="vd-svc-type-tabs" role="tablist" aria-label="Filter services by type">
                 {activeServiceTypeTabs.map(({ key, label, emoji }) => (
-                  <button
-                    key={key}
-                    role="tab"
-                    className={`vd-svc-type-tab ${serviceTypeFilter === key ? "active" : ""}`}
-                    onClick={() => setServiceTypeFilter(key)}
-                    aria-selected={serviceTypeFilter === key}
-                  >
+                  <button key={key} role="tab" className={`vd-svc-type-tab ${serviceTypeFilter === key ? "active" : ""}`} onClick={() => setServiceTypeFilter(key)} aria-selected={serviceTypeFilter === key}>
                     <span className="vd-svc-type-tab-emoji">{emoji}</span>
                     <span>{label}</span>
                     <span className="vd-svc-type-tab-count">{serviceTypeCounts[key]}</span>
@@ -902,9 +825,7 @@ export default function VendorDashboard() {
 
             {loadingS ? (
               <div className="vd-svc-grid" aria-label="Loading services…" role="status">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="vd-skeleton vd-skeleton-card" style={{ animationDelay: `${i * 0.08}s` }} />
-                ))}
+                {[...Array(3)].map((_, i) => (<div key={i} className="vd-skeleton vd-skeleton-card" style={{ animationDelay: `${i * 0.08}s` }} />))}
               </div>
             ) : services.length === 0 ? (
               <div className="vd-svc-empty" role="status">
@@ -921,13 +842,24 @@ export default function VendorDashboard() {
                 <button className="vd-clear-search-btn" onClick={() => setServiceTypeFilter("all")} style={{ marginTop: 12 }}>Show all services</button>
               </div>
             ) : (
-              <div className="vd-svc-grid">
-                {filteredServices.map((v, i) => (
-                  <div key={v._id} style={{ animationDelay: `${i * 0.06}s` }} className="vd-svc-card-wrapper">
-                    <ServiceCard vendor={v} showDelete={true} onDeleted={handleServiceDeleted} />
+              <>
+                <div className="vd-svc-grid">
+                  {visibleServices.map((v, i) => (
+                    <div key={v._id} style={{ animationDelay: `${Math.min(i * 0.06, 0.5)}s` }} className="vd-svc-card-wrapper">
+                      <ServiceCard vendor={v} showDelete={true} onDeleted={handleServiceDeleted} />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Services load more */}
+                {svcHasMore ? (
+                  <div ref={svcLoadMoreRef}>
+                    <LoadMoreBtn onLoadMore={handleSvcLoadMore} remaining={svcRemaining} loading={false} label="services" />
                   </div>
-                ))}
-              </div>
+                ) : filteredServices.length > pageSize ? (
+                  <p className="vd-load-hint" aria-live="polite">Showing all {filteredServices.length} services</p>
+                ) : null}
+              </>
             )}
           </section>
 
@@ -944,15 +876,7 @@ export default function VendorDashboard() {
 
             <div className="vd-tabs" role="tablist" aria-label="Filter bookings by status">
               {TABS.map(({ key, label }) => (
-                <button
-                  key={key}
-                  role="tab"
-                  className={`vd-tab ${filter === key ? "active" : ""}`}
-                  onClick={() => { setFilter(key); setSearchQuery(""); }}
-                  aria-selected={filter === key}
-                  aria-controls="bookings-list"
-                  id={`tab-${key}`}
-                >
+                <button key={key} role="tab" className={`vd-tab ${filter === key ? "active" : ""}`} onClick={() => { setFilter(key); setSearchQuery(""); }} aria-selected={filter === key} aria-controls="bookings-list" id={`tab-${key}`}>
                   {label}
                   <span className="vd-tab-count" aria-label={`${counts[key]} bookings`}>{counts[key]}</span>
                 </button>
@@ -967,102 +891,81 @@ export default function VendorDashboard() {
               <div className="vd-empty" role="status" id="bookings-list">
                 <div className="vd-empty-icon" aria-hidden="true">📭</div>
                 <h3>No bookings found</h3>
-                <p>
-                  {searchQuery
-                    ? `No results for "${searchQuery}".`
-                    : filter === "all" ? "You haven't received any bookings yet." : `No ${filter} bookings.`}
-                </p>
+                <p>{searchQuery ? `No results for "${searchQuery}".` : filter === "all" ? "You haven't received any bookings yet." : `No ${filter} bookings.`}</p>
                 {searchQuery && (<button className="vd-clear-search-btn" onClick={() => setSearchQuery("")}>Clear search</button>)}
               </div>
             ) : (
-              <ol className="vd-bookings" id="bookings-list" aria-labelledby={`tab-${filter}`} style={{ listStyle: "none", padding: 0, margin: 0 }}>
-                {filtered.map((b, i) => {
-                  const meta    = STATUS_META[b.status] || STATUS_META.pending;
-                  const payMeta = PAY_META[b.paymentStatus] || PAY_META.pending;
-                  const dcr     = b.dateChangeRequest;
-                  const hasDcr  = dcr?.status === "pending";
-                  return (
-                    <li key={b._id} className={`vd-booking-card ${hasDcr ? "vd-booking-card-dcr" : ""}`} style={{ animationDelay: `${i * 0.06}s` }}>
-                      <button
-                        className="vd-booking-card-btn"
-                        onClick={() => setDetailBooking(b)}
-                        aria-label={`View details for ${b.userId?.name || "Unknown Client"}'s booking`}
-                      >
-                        <div className="vd-booking-left">
-                          <div className="vd-avatar" aria-hidden="true">{b.userId?.name?.charAt(0)?.toUpperCase() || "?"}</div>
-                          <div className="vd-booking-info">
-                            <h3 className="vd-booking-name">{b.userId?.name || "Unknown Client"}</h3>
-                            <p className="vd-booking-email">{b.userId?.email || ""}</p>
-                            <div className="vd-booking-meta">
-                              <span className="vd-meta-item">🗓 {new Date(b.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
-                              {b.packageName  && <span className="vd-meta-item">📦 {b.packageName}</span>}
-                              {b.packagePrice && <span className="vd-meta-item">₹ {b.packagePrice.toLocaleString()}</span>}
+              <>
+                <ol className="vd-bookings" id="bookings-list" aria-labelledby={`tab-${filter}`} style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                  {visibleBookings.map((b, i) => {
+                    const meta    = STATUS_META[b.status] || STATUS_META.pending;
+                    const payMeta = PAY_META[b.paymentStatus] || PAY_META.pending;
+                    const dcr     = b.dateChangeRequest;
+                    const hasDcr  = dcr?.status === "pending";
+                    return (
+                      <li key={b._id} className={`vd-booking-card ${hasDcr ? "vd-booking-card-dcr" : ""}`} style={{ animationDelay: `${Math.min(i * 0.06, 0.5)}s` }}>
+                        <button className="vd-booking-card-btn" onClick={() => setDetailBooking(b)} aria-label={`View details for ${b.userId?.name || "Unknown Client"}'s booking`}>
+                          <div className="vd-booking-left">
+                            <div className="vd-avatar" aria-hidden="true">{b.userId?.name?.charAt(0)?.toUpperCase() || "?"}</div>
+                            <div className="vd-booking-info">
+                              <h3 className="vd-booking-name">{b.userId?.name || "Unknown Client"}</h3>
+                              <p className="vd-booking-email">{b.userId?.email || ""}</p>
+                              <div className="vd-booking-meta">
+                                <span className="vd-meta-item">🗓 {new Date(b.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                                {b.packageName  && <span className="vd-meta-item">📦 {b.packageName}</span>}
+                                {b.packagePrice && <span className="vd-meta-item">₹ {b.packagePrice.toLocaleString()}</span>}
+                              </div>
+                              {(b.userDetails?.phone || b.userDetails?.address) && (
+                                <div className="vd-user-details">
+                                  {b.userDetails.phone   && <span className="vd-detail-chip">📱 {b.userDetails.phone}</span>}
+                                  {b.userDetails.address && <span className="vd-detail-chip">📍 {b.userDetails.address}</span>}
+                                </div>
+                              )}
+                              {hasDcr && (
+                                <div className="vd-dcr-pill" role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); setPopupBooking(b); }} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); setPopupBooking(b); } }} aria-label="Review pending change request">
+                                  <span>📅 Client wants changes</span>
+                                  {dcr.requestedDate    && <span className="vd-dcr-pill-detail">Date → {fmt(dcr.requestedDate)}</span>}
+                                  {dcr.requestedAddress && <span className="vd-dcr-pill-detail">Addr → {dcr.requestedAddress}</span>}
+                                  <span className="vd-dcr-pill-cta" aria-hidden="true">Review →</span>
+                                </div>
+                              )}
                             </div>
-                            {(b.userDetails?.phone || b.userDetails?.address) && (
-                              <div className="vd-user-details">
-                                {b.userDetails.phone   && <span className="vd-detail-chip">📱 {b.userDetails.phone}</span>}
-                                {b.userDetails.address && <span className="vd-detail-chip">📍 {b.userDetails.address}</span>}
-                              </div>
-                            )}
-                            {hasDcr && (
-                              <div
-                                className="vd-dcr-pill"
-                                role="button" tabIndex={0}
-                                onClick={(e) => { e.stopPropagation(); setPopupBooking(b); }}
-                                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); setPopupBooking(b); } }}
-                                aria-label="Review pending change request"
-                              >
-                                <span>📅 Client wants changes</span>
-                                {dcr.requestedDate    && <span className="vd-dcr-pill-detail">Date → {fmt(dcr.requestedDate)}</span>}
-                                {dcr.requestedAddress && <span className="vd-dcr-pill-detail">Addr → {dcr.requestedAddress}</span>}
-                                <span className="vd-dcr-pill-cta" aria-hidden="true">Review →</span>
-                              </div>
-                            )}
                           </div>
+                        </button>
+                        <div className="vd-booking-right" onClick={(e) => e.stopPropagation()}>
+                          <span className="vd-pay-chip" style={{ color: payMeta.color, background: payMeta.bg, border: `1px solid ${payMeta.border}` }} aria-label={payMeta.label}>
+                            <span aria-hidden="true">{payMeta.icon}</span> {payMeta.label}
+                          </span>
+                          <span className="vd-status-badge" style={{ color: meta.color, background: meta.bg, border: `1px solid ${meta.border}` }} aria-label={`Status: ${meta.label}`}>{meta.label}</span>
+                          {b.status === "pending" && (
+                            <div className="vd-actions" role="group" aria-label="Quick actions">
+                              <button className={`vd-accept-btn ${updating === b._id + "approved" ? "loading" : ""}`} onClick={() => updateStatus(b._id, "approved")} disabled={!!updating} aria-busy={updating === b._id + "approved"} aria-label={`Approve ${b.userId?.name || "this"}'s booking`}>
+                                {updating === b._id + "approved" ? <span className="vd-spinner" aria-hidden="true" /> : "✓ Accept"}
+                              </button>
+                              <button className={`vd-reject-btn ${updating === b._id + "rejected" ? "loading" : ""}`} onClick={() => updateStatus(b._id, "rejected")} disabled={!!updating} aria-busy={updating === b._id + "rejected"} aria-label={`Reject ${b.userId?.name || "this"}'s booking`}>
+                                {updating === b._id + "rejected" ? <span className="vd-spinner vd-spinner-dark" aria-hidden="true" /> : "✕ Reject"}
+                              </button>
+                            </div>
+                          )}
+                          {b.status === "approved" && !hasDcr && (
+                            <button className="vd-undo-btn" onClick={() => handleRequestUndo(b)} aria-label="Move booking back to pending">Undo</button>
+                          )}
+                          <span className="vd-view-hint" aria-hidden="true">View details →</span>
                         </div>
-                      </button>
+                      </li>
+                    );
+                  })}
+                </ol>
 
-                      <div className="vd-booking-right" onClick={(e) => e.stopPropagation()}>
-                        <span className="vd-pay-chip" style={{ color: payMeta.color, background: payMeta.bg, border: `1px solid ${payMeta.border}` }} aria-label={payMeta.label}>
-                          <span aria-hidden="true">{payMeta.icon}</span> {payMeta.label}
-                        </span>
-                        <span className="vd-status-badge" style={{ color: meta.color, background: meta.bg, border: `1px solid ${meta.border}` }} aria-label={`Status: ${meta.label}`}>
-                          {meta.label}
-                        </span>
-
-                        {b.status === "pending" && (
-                          <div className="vd-actions" role="group" aria-label="Quick actions">
-                            <button
-                              className={`vd-accept-btn ${updating === b._id + "approved" ? "loading" : ""}`}
-                              onClick={() => updateStatus(b._id, "approved")}
-                              disabled={!!updating}
-                              aria-busy={updating === b._id + "approved"}
-                              aria-label={`Approve ${b.userId?.name || "this"}'s booking`}
-                            >
-                              {updating === b._id + "approved" ? <span className="vd-spinner" aria-hidden="true" /> : "✓ Accept"}
-                            </button>
-                            <button
-                              className={`vd-reject-btn ${updating === b._id + "rejected" ? "loading" : ""}`}
-                              onClick={() => updateStatus(b._id, "rejected")}
-                              disabled={!!updating}
-                              aria-busy={updating === b._id + "rejected"}
-                              aria-label={`Reject ${b.userId?.name || "this"}'s booking`}
-                            >
-                              {updating === b._id + "rejected" ? <span className="vd-spinner vd-spinner-dark" aria-hidden="true" /> : "✕ Reject"}
-                            </button>
-                          </div>
-                        )}
-
-                        {b.status === "approved" && !hasDcr && (
-                          <button className="vd-undo-btn" onClick={() => handleRequestUndo(b)} aria-label="Move booking back to pending">Undo</button>
-                        )}
-
-                        <span className="vd-view-hint" aria-hidden="true">View details →</span>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ol>
+                {/* Bookings load more */}
+                {bkgHasMore ? (
+                  <div ref={bkgLoadMoreRef}>
+                    <LoadMoreBtn onLoadMore={handleBkgLoadMore} remaining={bkgRemaining} loading={false} label="bookings" />
+                  </div>
+                ) : filtered.length > pageSize ? (
+                  <p className="vd-load-hint" aria-live="polite">Showing all {filtered.length} bookings</p>
+                ) : null}
+              </>
             )}
           </section>
 
@@ -1087,60 +990,26 @@ export default function VendorDashboard() {
 // ═══════════════════════════════════════════════════════
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --ink:        #0e0c0a;
-    --cream:      #f5f0e8;
-    --gold:       #c9a84c;
-    --gold-light: #e8d5a3;
-    --gold-dim:   rgba(201,168,76,0.18);
-    --muted:      #7a7265;
-    --border:     rgba(201,168,76,0.2);
-    --surface:    #faf7f2;
-    --white:      #ffffff;
-    --green:      #2d6a4f;
-    --red:        #b85c5c;
-    --radius-sm:  8px;
-    --radius-md:  12px;
-    --radius-lg:  20px;
-    --shadow-sm:  0 2px 8px rgba(14,12,10,0.06);
-    --shadow-md:  0 8px 32px rgba(14,12,10,0.1);
-    --shadow-lg:  0 24px 64px rgba(14,12,10,0.16);
+    --ink: #0e0c0a; --cream: #f5f0e8; --gold: #c9a84c; --gold-light: #e8d5a3;
+    --gold-dim: rgba(201,168,76,0.18); --muted: #7a7265;
+    --border: rgba(201,168,76,0.2); --surface: #faf7f2; --white: #ffffff;
+    --green: #2d6a4f; --red: #b85c5c;
+    --radius-sm: 8px; --radius-md: 12px; --radius-lg: 20px;
+    --shadow-sm: 0 2px 8px rgba(14,12,10,0.06);
+    --shadow-md: 0 8px 32px rgba(14,12,10,0.1);
+    --shadow-lg: 0 24px 64px rgba(14,12,10,0.16);
   }
 
-  .vd-skip-link {
-    position: fixed; top: -100%; left: 16px;
-    background: var(--ink); color: var(--white);
-    padding: 10px 18px; border-radius: 0 0 8px 8px;
-    font-family: 'DM Sans', sans-serif; font-size: 13px;
-    text-decoration: none; z-index: 9999;
-    transition: top 0.2s;
-    outline: 2px solid var(--gold);
-  }
+  .vd-skip-link { position: fixed; top: -100%; left: 16px; background: var(--ink); color: var(--white); padding: 10px 18px; border-radius: 0 0 8px 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; text-decoration: none; z-index: 9999; transition: top 0.2s; outline: 2px solid var(--gold); }
   .vd-skip-link:focus { top: 0; }
-
-  .vd-root {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--cream);
-    min-height: 100vh;
-    color: var(--ink);
-    position: relative;
-    overflow-x: hidden;
-  }
-
+  .vd-root { font-family: 'DM Sans', sans-serif; background: var(--cream); min-height: 100vh; color: var(--ink); position: relative; overflow-x: hidden; }
   .vd-bg-ornament { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
   .vd-bg-circle { position: absolute; border-radius: 50%; background: radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 70%); }
   .vd-bg-circle-1 { width: 700px; height: 700px; top: -200px; right: -200px; }
   .vd-bg-circle-2 { width: 500px; height: 500px; bottom: 10%; left: -150px; }
-
-  .vd-body {
-    position: relative; z-index: 1;
-    width: 100%; max-width: 1200px;
-    margin: 0 auto;
-    padding: 48px 32px 80px;
-  }
+  .vd-body { position: relative; z-index: 1; width: 100%; max-width: 1200px; margin: 0 auto; padding: 48px 32px 80px; }
 
   /* ── TOAST ── */
   .toast-wrap { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 9999; width: min(420px, 92vw); animation: toastIn 0.32s cubic-bezier(0.34,1.2,0.64,1) both; }
@@ -1319,7 +1188,7 @@ const styles = `
   .vd-stat-card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 22px 20px; display: flex; flex-direction: column; gap: 6px; transition: box-shadow 0.2s, transform 0.2s; box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), var(--shadow-sm); }
   .vd-stat-card:hover { box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), var(--shadow-md); transform: translateY(-2px); }
   .vd-stat-icon { font-size: 1.4rem; }
-  .vd-stat-value { font-family: 'Cormorant Garamond', serif; font-size: 2.4rem; font-weight: 600; line-height: 1; transition: color 0.2s; }
+  .vd-stat-value { font-family: 'Cormorant Garamond', serif; font-size: 2.4rem; font-weight: 600; line-height: 1; }
   .vd-stat-label { font-size: 11.5px; color: var(--muted); }
 
   /* ── DCR ALERT ── */
@@ -1336,66 +1205,15 @@ const styles = `
   .vd-section-add { font-size: 12.5px; color: var(--gold); text-decoration: none; font-weight: 500; border: 1px solid var(--border); padding: 6px 14px; border-radius: 6px; transition: all 0.2s; white-space: nowrap; }
   .vd-section-add:hover { background: rgba(201,168,76,0.07); border-color: var(--gold); }
 
-  /* ── SERVICE TYPE FILTER TABS (NEW) ── */
-  .vd-svc-type-tabs {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--border);
-  }
-  .vd-svc-type-tab {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--white);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    color: var(--muted);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-  }
-  .vd-svc-type-tab:hover {
-    border-color: var(--gold);
-    color: var(--ink);
-    background: rgba(201,168,76,0.04);
-  }
-  .vd-svc-type-tab.active {
-    background: var(--ink);
-    color: var(--white);
-    border-color: var(--ink);
-    font-weight: 500;
-    box-shadow: 0 2px 10px rgba(14,12,10,0.15);
-  }
-  .vd-svc-type-tab-emoji {
-    font-size: 14px;
-    line-height: 1;
-  }
-  .vd-svc-type-tab-count {
-    font-size: 10.5px;
-    padding: 1px 7px;
-    border-radius: 20px;
-    background: rgba(255,255,255,0.15);
-    color: inherit;
-    opacity: 0.8;
-    font-weight: 400;
-    min-width: 20px;
-    text-align: center;
-  }
-  .vd-svc-type-tab:not(.active) .vd-svc-type-tab-count {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--muted);
-  }
-  @media (max-width: 600px) {
-    .vd-svc-type-tabs { gap: 5px; }
-    .vd-svc-type-tab { padding: 7px 12px; font-size: 12px; }
-  }
+  /* ── SERVICE TYPE FILTER TABS ── */
+  .vd-svc-type-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .vd-svc-type-tab { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--white); font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--muted); cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
+  .vd-svc-type-tab:hover { border-color: var(--gold); color: var(--ink); background: rgba(201,168,76,0.04); }
+  .vd-svc-type-tab.active { background: var(--ink); color: var(--white); border-color: var(--ink); font-weight: 500; box-shadow: 0 2px 10px rgba(14,12,10,0.15); }
+  .vd-svc-type-tab-emoji { font-size: 14px; line-height: 1; }
+  .vd-svc-type-tab-count { font-size: 10.5px; padding: 1px 7px; border-radius: 20px; background: rgba(255,255,255,0.15); color: inherit; opacity: 0.8; font-weight: 400; min-width: 20px; text-align: center; }
+  .vd-svc-type-tab:not(.active) .vd-svc-type-tab-count { background: var(--surface); border: 1px solid var(--border); color: var(--muted); }
+  @media (max-width: 600px) { .vd-svc-type-tabs { gap: 5px; } .vd-svc-type-tab { padding: 7px 12px; font-size: 12px; } }
 
   .vd-svc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
   @media (max-width: 900px) { .vd-svc-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -1405,6 +1223,18 @@ const styles = `
   .vd-svc-empty-icon { font-size: 2.2rem; display: block; margin-bottom: 12px; }
   .vd-svc-empty-title { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
   .vd-svc-empty-sub { font-size: 13px; color: var(--muted); }
+
+  /* ── LOAD MORE ── */
+  .vd-load-more-wrap { display: flex; flex-direction: column; align-items: center; padding: 32px 20px 0; gap: 14px; }
+  .vd-load-more-btn { display: inline-flex; align-items: center; gap: 10px; padding: 13px 32px; background: var(--white); border: 1.5px solid rgba(201,168,76,0.35); border-radius: 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; color: var(--ink); cursor: pointer; transition: all 0.25s ease; position: relative; overflow: hidden; box-shadow: 0 4px 20px rgba(14,12,10,0.06); }
+  .vd-load-more-btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(201,168,76,0.06) 0%, transparent 60%); opacity: 0; transition: opacity 0.25s; }
+  .vd-load-more-btn:hover { border-color: var(--gold); box-shadow: 0 8px 32px rgba(201,168,76,0.18); transform: translateY(-2px); }
+  .vd-load-more-btn:hover::before { opacity: 1; }
+  .vd-load-more-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .vd-load-more-count { font-size: 11px; color: var(--muted); background: #ede7d9; border: 1px solid rgba(201,168,76,0.2); border-radius: 20px; padding: 2px 10px; font-weight: 400; letter-spacing: 0.04em; }
+  .vd-load-more-arrow { font-size: 15px; color: var(--gold); animation: bounceDown 1.8s ease-in-out infinite; }
+  .vd-load-more-spinner { width: 18px; height: 18px; border: 2px solid rgba(14,12,10,0.12); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
+  .vd-load-hint { text-align: center; font-size: 11.5px; color: var(--muted); margin-top: 32px; letter-spacing: 0.12em; text-transform: uppercase; }
 
   /* ── SEARCH BAR ── */
   .vd-search-wrap { position: relative; display: flex; align-items: center; margin-bottom: 16px; background: var(--white); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s; }
@@ -1506,6 +1336,7 @@ const styles = `
     .vd-avail-section { flex-direction: column; align-items: flex-start; }
     .vd-footer-bar { padding: 16px; flex-direction: column; align-items: flex-start; }
     .toast-wrap { top: 70px; }
+    .vd-load-more-btn { padding: 12px 24px; font-size: 13px; }
   }
   @media (max-width: 480px) {
     .vd-stats { grid-template-columns: repeat(2, 1fr); }
@@ -1513,14 +1344,13 @@ const styles = `
     .vd-actions { width: 100%; }
     .vd-accept-btn, .vd-reject-btn { flex: 1; }
   }
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-  }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
 
   /* ── KEYFRAMES ── */
-  @keyframes fadeUp  { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
-  @keyframes popupUp { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-  @keyframes spin    { to { transform: rotate(360deg); } }
-  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  @keyframes fadeUp    { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeIn    { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes popupUp   { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  @keyframes spin      { to { transform: rotate(360deg); } }
+  @keyframes shimmer   { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  @keyframes bounceDown { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
 `;
