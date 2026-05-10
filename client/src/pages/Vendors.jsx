@@ -99,7 +99,19 @@ const INDIAN_CITIES = [
   "Vadodara","Varanasi","Vasai-Virar","Vijayawada","Visakhapatnam","Warangal",
 ].sort();
 
-// ─── CITY SELECTOR MODAL (fully redesigned, responsive) ─────────
+// ─── PAGE SIZE HOOK ─────────────────────────────────────────────
+function usePageSize() {
+  const getSize = () => window.innerWidth <= 640 ? 8 : 12;
+  const [pageSize, setPageSize] = useState(getSize);
+  useEffect(() => {
+    const handler = () => setPageSize(getSize());
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+  return pageSize;
+}
+
+// ─── CITY SELECTOR MODAL ────────────────────────────────────────
 function CityModal({ onSelect, onBrowseAll }) {
   const [search, setSearch] = useState("");
   const [visible, setVisible] = useState(false);
@@ -108,7 +120,6 @@ function CityModal({ onSelect, onBrowseAll }) {
   useEffect(() => {
     const t1 = setTimeout(() => setVisible(true), 40);
     const t2 = setTimeout(() => inputRef.current?.focus(), 220);
-    // Prevent body scroll
     document.body.style.overflow = "hidden";
     return () => {
       clearTimeout(t1); clearTimeout(t2);
@@ -128,12 +139,10 @@ function CityModal({ onSelect, onBrowseAll }) {
       aria-modal="true"
       aria-label="Select your city"
     >
-      {/* Decorative blobs */}
       <div className="ecm-blob ecm-blob1" aria-hidden="true" />
       <div className="ecm-blob ecm-blob2" aria-hidden="true" />
 
       <div className="ecm-card">
-        {/* ── Fixed top section ── */}
         <div className="ecm-top">
           <div className="ecm-logo-row">
             <Logo />
@@ -148,7 +157,6 @@ function CityModal({ onSelect, onBrowseAll }) {
             We'll show vendors near you. You can change your city anytime.
           </p>
 
-          {/* Browse All */}
           <button className="ecm-browse-btn" onClick={onBrowseAll} aria-label="Browse vendors across all cities">
             <span className="ecm-browse-icon" aria-hidden="true">🌏</span>
             <span className="ecm-browse-text">Browse All Cities</span>
@@ -161,7 +169,6 @@ function CityModal({ onSelect, onBrowseAll }) {
             <span className="ecm-divider-line" aria-hidden="true" />
           </div>
 
-          {/* Search */}
           <div className="ecm-search-box">
             <span className="ecm-search-icon" aria-hidden="true">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -188,7 +195,6 @@ function CityModal({ onSelect, onBrowseAll }) {
           </div>
         </div>
 
-        {/* ── Scrollable city list ── */}
         <div className="ecm-city-scroll" role="listbox" aria-label="City list">
           {filtered.length === 0 ? (
             <div className="ecm-empty" role="status">
@@ -215,7 +221,6 @@ function CityModal({ onSelect, onBrowseAll }) {
           )}
         </div>
 
-        {/* ── Footer note ── */}
         <div className="ecm-footer" role="note">
           <span className="ecm-footer-dot" aria-hidden="true" />
           Currently serving Delhi, Chandigarh & Bombay · More cities launching Q3 2026
@@ -453,6 +458,30 @@ function CityBar({ city, onChangCity, onBrowseAll, browseAll }) {
   );
 }
 
+// ─── LOAD MORE BUTTON ───────────────────────────────────────────
+function LoadMoreBtn({ onLoadMore, remaining, loading }) {
+  return (
+    <div className="vn-load-more-wrap" aria-live="polite">
+      <button
+        className="vn-load-more-btn"
+        onClick={onLoadMore}
+        disabled={loading}
+        aria-label={`Load ${remaining} more vendors`}
+      >
+        {loading ? (
+          <span className="vn-load-more-spinner" aria-hidden="true" />
+        ) : (
+          <>
+            <span>Show more vendors</span>
+            <span className="vn-load-more-count">{remaining} remaining</span>
+            <span className="vn-load-more-arrow" aria-hidden="true">↓</span>
+          </>
+        )}
+      </button>
+    </div>
+  );
+}
+
 // ─── MAIN COMPONENT ──────────────────────────────────────────────
 export default function Vendors() {
   const location = useLocation();
@@ -460,6 +489,7 @@ export default function Vendors() {
 
   const userRole = useUserRole();
   const isVendor = userRole === "vendor";
+  const pageSize = usePageSize();
 
   const [vendors,        setVendors]        = useState([]);
   const [loading,        setLoading]        = useState(true);
@@ -476,6 +506,9 @@ export default function Vendors() {
   const [searchFocused,  setSearchFocused]  = useState(false);
   const [heroVisible,    setHeroVisible]    = useState(false);
 
+  // ─── PAGINATION STATE ───────────────────────────────────────
+  const [visibleCount, setVisibleCount] = useState(pageSize);
+
   const [selectedCity,   setSelectedCity]   = useState(() => {
     try { return localStorage.getItem("evencers_city") || ""; } catch { return ""; }
   });
@@ -489,10 +522,16 @@ export default function Vendors() {
   const isNavigatingRef  = useRef(false);
   const searchRef        = useRef(null);
   const howItWorksRef    = useRef(null);
+  const loadMoreRef      = useRef(null);
 
   const scrollToHowItWorks = () => howItWorksRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   useEffect(() => { setTimeout(() => setHeroVisible(true), 80); }, []);
+
+  // Reset visible count when filters/pageSize change
+  useEffect(() => {
+    setVisibleCount(pageSize);
+  }, [search, category, priceRange, sort, dateFilter, selectedCity, browseAll, pageSize]);
 
   useEffect(() => {
     if (isNavigatingRef.current) { isNavigatingRef.current = false; return; }
@@ -565,39 +604,19 @@ export default function Vendors() {
     }
     if (category !== "all") list = list.filter((v) => v.serviceType?.toLowerCase() === category);
     if (priceRange !== "any") {
-  const band = PRICE_RANGES.find(r => r.value === priceRange);
-
-  if (band) {
-    list = list.filter((v) => {
-
-      // DECOR SERVICE
-      if (v.serviceType === "decor") {
-        const price = v.price || 0;
-
-        return (
-          price >= band.min &&
-          (band.max === Infinity
-            ? true
-            : price <= band.max)
-        );
+      const band = PRICE_RANGES.find(r => r.value === priceRange);
+      if (band) {
+        list = list.filter((v) => {
+          if (v.serviceType === "decor") {
+            const price = v.price || 0;
+            return price >= band.min && (band.max === Infinity ? true : price <= band.max);
+          }
+          const prices = v.packages?.map(pkg => pkg.price || 0) || [];
+          const minPrice = prices.length ? Math.min(...prices) : 0;
+          return minPrice >= band.min && (band.max === Infinity ? true : minPrice <= band.max);
+        });
       }
-
-      // NORMAL PACKAGE SERVICE
-      const prices = v.packages?.map(pkg => pkg.price || 0) || [];
-
-      const minPrice = prices.length
-        ? Math.min(...prices)
-        : 0;
-
-      return (
-        minPrice >= band.min &&
-        (band.max === Infinity
-          ? true
-          : minPrice <= band.max)
-      );
-    });
-  }
-}
+    }
     switch (sort) {
       case "price_asc":  list.sort((a, b) => (a.packages?.[0]?.price || 0) - (b.packages?.[0]?.price || 0)); break;
       case "price_desc": list.sort((a, b) => (b.packages?.[0]?.price || 0) - (a.packages?.[0]?.price || 0)); break;
@@ -606,6 +625,19 @@ export default function Vendors() {
     }
     return list;
   }, [vendors, availVendors, dateFilter, search, category, sort, priceRange, selectedCity, browseAll]);
+
+  // Paginated slice
+  const visibleVendors = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
+  const hasMore = visibleCount < filtered.length;
+  const remaining = filtered.length - visibleCount;
+
+  const handleLoadMore = () => {
+    setVisibleCount(prev => prev + pageSize);
+    // Scroll to load more button area after render
+    setTimeout(() => {
+      loadMoreRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
+  };
 
   const cityVendorsCount = useMemo(() => {
     if (!selectedCity || browseAll) return null;
@@ -795,13 +827,23 @@ export default function Vendors() {
           ) : (
             <>
               <div className={`vn-grid ${layout}`} role="list" aria-label={`${filtered.length} vendors`}>
-                {filtered.map((v, i) => (
+                {visibleVendors.map((v, i) => (
                   <div key={v._id} className="vn-card-wrap" style={{ animationDelay: `${Math.min(i * 0.04, 0.5)}s` }} role="listitem">
                     <ServiceCard vendor={v} />
                   </div>
                 ))}
               </div>
-              {filtered.length >= 12 && (<p className="vn-load-hint" aria-live="polite">Showing all {filtered.length} results</p>)}
+
+              {/* ── LOAD MORE ── */}
+              {hasMore ? (
+                <div ref={loadMoreRef}>
+                  <LoadMoreBtn onLoadMore={handleLoadMore} remaining={remaining} loading={false} />
+                </div>
+              ) : filtered.length > pageSize ? (
+                <p className="vn-load-hint" aria-live="polite">
+                  Showing all {filtered.length} results
+                </p>
+              ) : null}
             </>
           )}
         </main>
@@ -932,9 +974,7 @@ const styles = `
   }
   .vn-root { font-family: 'DM Sans', sans-serif; background: var(--cream); min-height: 100vh; color: var(--ink); }
 
-  /* ══════════════════════════════════════════════════════════════
-     CITY MODAL — Redesigned, fully responsive
-  ══════════════════════════════════════════════════════════════ */
+  /* ══ CITY MODAL ══ */
   .ecm-backdrop {
     position: fixed; inset: 0; z-index: 2000;
     display: flex; align-items: center; justify-content: center;
@@ -946,8 +986,6 @@ const styles = `
     transition: opacity 0.35s ease;
   }
   .ecm-backdrop.ecm-visible { opacity: 1; }
-
-  /* Decorative blobs behind the card */
   .ecm-blob {
     position: fixed; border-radius: 50%;
     filter: blur(120px); pointer-events: none; z-index: 0;
@@ -962,7 +1000,6 @@ const styles = `
     background: radial-gradient(circle, #7b5ea7 0%, transparent 70%);
     opacity: 0.1; bottom: -60px; right: -40px;
   }
-
   .ecm-card {
     position: relative; z-index: 1;
     width: 100%;
@@ -980,8 +1017,6 @@ const styles = `
       0 0 0 1px rgba(0,0,0,0.4);
     animation: ecmSlideUp 0.42s cubic-bezier(0.34, 1.18, 0.64, 1) both;
   }
-
-  /* ── Fixed top section (logo, title, search) ── */
   .ecm-top {
     flex-shrink: 0;
     padding: 32px 28px 16px;
@@ -991,7 +1026,6 @@ const styles = `
     align-items: center;
     gap: 0;
   }
-
   .ecm-logo-row {
     display: flex;
     justify-content: center;
@@ -999,7 +1033,6 @@ const styles = `
   }
   .ecm-logo-row img,
   .ecm-logo-row svg { width: 40px; height: 40px; }
-
   .ecm-eyebrow {
     display: inline-flex; align-items: center; gap: 8px;
     font-size: 9.5px; letter-spacing: 0.28em; text-transform: uppercase;
@@ -1009,7 +1042,6 @@ const styles = `
     display: inline-block; width: 4px; height: 4px;
     border-radius: 50%; background: var(--gold); opacity: 0.55;
   }
-
   .ecm-heading {
     font-family: 'Cormorant Garamond', serif;
     font-size: clamp(1.55rem, 5vw, 2rem);
@@ -1020,15 +1052,12 @@ const styles = `
     margin-bottom: 8px;
   }
   .ecm-heading em { font-style: italic; color: #e8d5a3; }
-
   .ecm-subtext {
     font-size: 12.5px; color: rgba(245,240,232,0.38);
     text-align: center; line-height: 1.6;
     margin-bottom: 20px;
     max-width: 340px;
   }
-
-  /* Browse All button */
   .ecm-browse-btn {
     width: 100%;
     display: flex; align-items: center; gap: 12px;
@@ -1051,8 +1080,6 @@ const styles = `
   .ecm-browse-icon { font-size: 1.2rem; flex-shrink: 0; }
   .ecm-browse-text { flex: 1; text-align: left; }
   .ecm-browse-arrow { font-size: 13px; color: var(--gold); opacity: 0.7; flex-shrink: 0; }
-
-  /* Divider */
   .ecm-divider {
     display: flex; align-items: center; gap: 10px;
     width: 100%; margin-bottom: 14px;
@@ -1065,8 +1092,6 @@ const styles = `
     font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
     color: rgba(245,240,232,0.22); white-space: nowrap;
   }
-
-  /* Search box */
   .ecm-search-box {
     width: 100%;
     display: flex; align-items: center; gap: 10px;
@@ -1095,13 +1120,10 @@ const styles = `
     transition: background 0.18s, color 0.18s;
   }
   .ecm-search-clear:hover { background: rgba(255,255,255,0.14); color: #f5f0e8; }
-
-  /* ── Scrollable city list ── */
   .ecm-city-scroll {
     flex: 1;
     overflow-y: auto;
     padding: 14px 14px 0;
-    /* Custom scrollbar */
     scrollbar-width: thin;
     scrollbar-color: rgba(201,168,76,0.18) transparent;
   }
@@ -1109,14 +1131,12 @@ const styles = `
   .ecm-city-scroll::-webkit-scrollbar-thumb {
     background: rgba(201,168,76,0.18); border-radius: 4px;
   }
-
   .ecm-city-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 7px;
     padding-bottom: 14px;
   }
-
   .ecm-city-btn {
     display: flex; align-items: center; gap: 8px;
     padding: 10px 13px;
@@ -1144,8 +1164,6 @@ const styles = `
     opacity: 0; transition: opacity 0.15s; flex-shrink: 0;
   }
   .ecm-city-btn:hover .ecm-city-arrow { opacity: 0.8; }
-
-  /* Empty search state */
   .ecm-empty {
     padding: 40px 20px;
     display: flex; flex-direction: column; align-items: center;
@@ -1154,8 +1172,6 @@ const styles = `
   .ecm-empty-icon { font-size: 2.4rem; opacity: 0.3; }
   .ecm-empty p { font-size: 13px; color: rgba(245,240,232,0.35); line-height: 1.6; }
   .ecm-empty-hint { font-size: 11px; color: rgba(245,240,232,0.2); }
-
-  /* Footer note */
   .ecm-footer {
     flex-shrink: 0;
     padding: 12px 20px;
@@ -1168,13 +1184,10 @@ const styles = `
     width: 5px; height: 5px; border-radius: 50%;
     background: var(--gold); opacity: 0.35; flex-shrink: 0;
   }
-
   @keyframes ecmSlideUp {
     from { opacity: 0; transform: translateY(28px) scale(0.96); }
     to   { opacity: 1; transform: translateY(0)    scale(1);    }
   }
-
-  /* Mobile: single column cities, tighter padding */
   @media (max-width: 480px) {
     .ecm-top { padding: 24px 18px 14px; }
     .ecm-city-scroll { padding: 12px 10px 0; }
@@ -1322,6 +1335,83 @@ const styles = `
   .vn-card-wrap { animation: fadeUp 0.42s cubic-bezier(0.4,0,0.2,1) both; }
   .vn-skeleton { height: 278px; border-radius: 14px; background: linear-gradient(90deg, #ede8e0 25%, #e5ddd3 50%, #ede8e0 75%); background-size: 200% 100%; animation: shimmer 1.5s ease infinite; }
   .vn-skeleton-list { height: 100px; }
+
+  /* ── LOAD MORE ── */
+  .vn-load-more-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 0;
+    gap: 14px;
+  }
+  .vn-load-more-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 36px;
+    background: var(--white);
+    border: 1.5px solid rgba(201,168,76,0.35);
+    border-radius: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(14,12,10,0.06);
+  }
+  .vn-load-more-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(201,168,76,0.06) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+  .vn-load-more-btn:hover {
+    border-color: var(--gold);
+    box-shadow: 0 8px 32px rgba(201,168,76,0.18);
+    transform: translateY(-2px);
+    color: var(--ink);
+  }
+  .vn-load-more-btn:hover::before { opacity: 1; }
+  .vn-load-more-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .vn-load-more-count {
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--cream-dark);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+  }
+  .vn-load-more-arrow {
+    font-size: 15px;
+    color: var(--gold);
+    animation: bounceDown 1.8s ease-in-out infinite;
+  }
+  .vn-load-more-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(14,12,10,0.12);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+  }
+  @keyframes bounceDown {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(4px); }
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
   /* COMING SOON */
   .vn-coming-soon { position: relative; text-align: center; padding: 80px 20px 72px; animation: fadeUp 0.45s ease both; overflow: hidden; }
   .vn-cs-glow { position: absolute; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; }
@@ -1485,6 +1575,7 @@ const styles = `
     .pm-steps { grid-template-columns: 1fr; gap: 10px; }
     .vn-price-range-pills { gap: 4px; }
     .vn-price-pill { font-size: 11px; padding: 5px 10px; }
+    .vn-load-more-btn { padding: 12px 24px; font-size: 13px; }
   }
   @media (max-width: 900px) {
     .vn-hiw-steps { grid-template-columns: repeat(2, 1fr); }
