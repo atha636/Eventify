@@ -887,7 +887,7 @@ export default function Vendors() {
               <div className="vn-hiw-label">For Clients</div>
               <div className="vn-hiw-steps">
                 {[
-                  { n: "01", icon: "🔍", title: "Browse & Filter",     desc: "Search 20+ verified vendors by category, city, budget, and availability date." },
+                  { n: "01", icon: "🔍", title: "Browse & Filter",     desc: "Search 200+ verified vendors by category, city, budget, and availability date." },
                   { n: "02", icon: "💬", title: "Get Instant Quotes",  desc: "Send enquiries to multiple vendors at once. Compare packages — all in one dashboard." },
                   { n: "03", icon: "🔒", title: "Secure Your Booking", desc: "Confirm your vendor with a secure deposit held in escrow until event completion." },
                   { n: "04", icon: "🎉", title: "Enjoy Your Event",    desc: "Your vendor arrives prepared. Leave a verified review and get cashback on your next booking." },
