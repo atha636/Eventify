@@ -296,7 +296,7 @@ export default function VendorDetail() {
 
   const [vendor,          setVendor]          = useState(null);
   const [selectedDate,    setSelectedDate]    = useState("");
-  const [selectedPackage, setSelectedPackage] = useState(null);
+  const [selectedPackage, setSelectedPackage] = useState(0);
   const [selectedSlot,    setSelectedSlot]    = useState("");   // decor
   const [selectedPlan,    setSelectedPlan]    = useState("100");
   const [loading,         setLoading]         = useState(false);
@@ -375,38 +375,40 @@ export default function VendorDetail() {
     setShowDetailsModal(true);
   };
 
-  const handleDetailsConfirm = async (userDetails) => {
-    const token = localStorage.getItem("token");
-    setLoading(true);
-    try {
-      const pkg = !isDecor ? vendor.packages[selectedPackage] : null;
+ const handleDetailsConfirm = async (userDetails) => {
+  const token = localStorage.getItem("token");
+  setLoading(true);
 
-      await API.post(
-        "/bookings",
-        {
-          vendorId:     vendor._id,
-          date:         selectedDate,
-          // Package-based (photography etc.)
-          packageName:  pkg?.name  || null,
-          packagePrice: pkg?.price || null,
-          // Decor-specific
-          timeSlot:     isDecor ? selectedSlot : null,
-          price:        isDecor ? vendor.price  : null,
-          userDetails,
-          paymentPlan:  selectedPlan,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setShowDetailsModal(false);
-      setShowWaitModal(true);
-    } catch (err) {
-      console.error(err);
-      setDateWarning(err.response?.data?.error || "Failed to create booking");
-      setShowDetailsModal(false);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const packageName = isDecor
+    ? (selectedSlot || vendor.title || "Decor Service")
+    : vendor.packages[selectedPackage]?.name;
+
+  const packagePrice = isDecor
+    ? vendor.price
+    : vendor.packages[selectedPackage]?.price;
+
+  if (!packagePrice || packagePrice <= 0) {
+    setDateWarning("Invalid package price. Please select a valid package.");
+    setLoading(false);
+    return;
+  }
+
+  try {
+    await API.post(
+      "/bookings",
+      { vendorId: vendor._id, date: selectedDate, packageName, packagePrice, userDetails, paymentPlan: selectedPlan },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    setShowDetailsModal(false);
+    setShowWaitModal(true);
+  } catch (err) {
+    console.error(err);
+    setDateWarning(err.response?.data?.error || "Failed to create booking");
+    setShowDetailsModal(false);
+  } finally {
+    setLoading(false);
+  }
+};
 
   if (!vendor) {
     return (
