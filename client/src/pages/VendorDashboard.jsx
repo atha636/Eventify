@@ -558,7 +558,6 @@ export default function VendorDashboard() {
   const [legalModal,    setLegalModal]    = useState(null);
   const [serviceTypeFilter, setServiceTypeFilter] = useState("all");
 
-  // ── Pagination state ──
   const [svcVisibleCount, setSvcVisibleCount] = useState(pageSize);
   const [bkgVisibleCount, setBkgVisibleCount] = useState(pageSize);
 
@@ -569,14 +568,8 @@ export default function VendorDashboard() {
     setToast({ message, type });
   }, []);
 
-  // Reset counts when filters or pageSize change
-  useEffect(() => {
-    setSvcVisibleCount(pageSize);
-  }, [serviceTypeFilter, pageSize]);
-
-  useEffect(() => {
-    setBkgVisibleCount(pageSize);
-  }, [filter, searchQuery, pageSize]);
+  useEffect(() => { setSvcVisibleCount(pageSize); }, [serviceTypeFilter, pageSize]);
+  useEffect(() => { setBkgVisibleCount(pageSize); }, [filter, searchQuery, pageSize]);
 
   useEffect(() => {
     const isOpen = popupBooking || detailBooking || undoTarget || showAvailCal || legalModal;
@@ -664,7 +657,6 @@ export default function VendorDashboard() {
     showToast("Service removed.", "info");
   };
 
-  // ── Bookings filter + search ──
   const statusFiltered = filter === "all" ? bookings : bookings.filter((b) => b.status === filter);
   const filtered = searchQuery.trim()
     ? statusFiltered.filter((b) => {
@@ -681,7 +673,6 @@ export default function VendorDashboard() {
   };
   const pendingDcrCount = bookings.filter((b) => b.dateChangeRequest?.status === "pending").length;
 
-  // ── Services filtered by type ──
   const filteredServices = useMemo(() =>
     serviceTypeFilter === "all" ? services : services.filter((s) => s.serviceType === serviceTypeFilter),
     [services, serviceTypeFilter]
@@ -694,7 +685,6 @@ export default function VendorDashboard() {
 
   const activeServiceTypeTabs = SERVICE_TYPE_FILTERS.filter((t) => t.key === "all" || serviceTypeCounts[t.key] > 0);
 
-  // ── Services pagination ──
   const visibleServices = useMemo(() => filteredServices.slice(0, svcVisibleCount), [filteredServices, svcVisibleCount]);
   const svcHasMore  = svcVisibleCount < filteredServices.length;
   const svcRemaining = filteredServices.length - svcVisibleCount;
@@ -704,7 +694,6 @@ export default function VendorDashboard() {
     setTimeout(() => { svcLoadMoreRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }); }, 100);
   };
 
-  // ── Bookings pagination ──
   const visibleBookings = useMemo(() => filtered.slice(0, bkgVisibleCount), [filtered, bkgVisibleCount]);
   const bkgHasMore   = bkgVisibleCount < filtered.length;
   const bkgRemaining = filtered.length - bkgVisibleCount;
@@ -740,9 +729,11 @@ export default function VendorDashboard() {
         {showAvailCal && services.length > 0 && (<AvailabilityCalendar services={services} onClose={() => setShowAvailCal(false)} />)}
         {legalModal && <LegalModal type={legalModal} onClose={() => setLegalModal(null)} />}
 
+        {/* Decorative background */}
         <div className="vd-bg-ornament" aria-hidden="true">
           <div className="vd-bg-circle vd-bg-circle-1" />
           <div className="vd-bg-circle vd-bg-circle-2" />
+          <div className="vd-bg-grain" />
         </div>
 
         <main id="vd-main-content" className="vd-body">
@@ -750,7 +741,10 @@ export default function VendorDashboard() {
           {/* ── HEADER ── */}
           <header className="vd-header" role="banner">
             <div className="vd-header-left">
-              <p className="vd-eyebrow">Vendor Portal</p>
+              <div className="vd-eyebrow-wrap">
+                <span className="vd-eyebrow-dot" aria-hidden="true" />
+                <p className="vd-eyebrow">Vendor Portal</p>
+              </div>
               <h1 className="vd-title">{vendorName ? `${vendorName}'s Dashboard` : "Dashboard"}</h1>
               <p className="vd-subtitle">Manage your bookings and services</p>
               <div className="vd-avail-section">
@@ -770,22 +764,30 @@ export default function VendorDashboard() {
                 </button>
               </div>
             </div>
-            <a href="/add-service" className="vd-add-btn" aria-label="Add a new service">+ Add New Service</a>
+            <a href="/add-service" className="vd-add-btn" aria-label="Add a new service">
+              <span className="vd-add-btn-plus">+</span>
+              Add New Service
+            </a>
           </header>
 
           {/* ── STATS ── */}
           <section aria-label="Booking statistics">
             <div className="vd-stats" role="list">
               {[
-                { label: "Total Bookings", value: counts.all,      icon: "📋", color: "#0e0c0a" },
-                { label: "Pending",        value: counts.pending,  icon: "⏳", color: "#c9a84c" },
-                { label: "Approved",       value: counts.approved, icon: "✓",  color: "#2d6a4f" },
-                { label: "Rejected",       value: counts.rejected, icon: "✕",  color: "#b85c5c" },
-              ].map((s) => (
-                <div key={s.label} className="vd-stat-card" role="listitem">
-                  <span className="vd-stat-icon" aria-hidden="true">{s.icon}</span>
-                  <span className="vd-stat-value" style={{ color: s.color }}>{s.value}</span>
-                  <span className="vd-stat-label">{s.label}</span>
+                { label: "Total Bookings", value: counts.all,      icon: "📋", color: "#0e0c0a",  accent: "rgba(14,12,10,0.06)"   },
+                { label: "Pending",        value: counts.pending,  icon: "⏳", color: "#c9a84c",  accent: "rgba(201,168,76,0.08)" },
+                { label: "Approved",       value: counts.approved, icon: "✓",  color: "#2d6a4f",  accent: "rgba(45,106,79,0.08)"  },
+                { label: "Rejected",       value: counts.rejected, icon: "✕",  color: "#b85c5c",  accent: "rgba(184,92,92,0.08)"  },
+              ].map((s, i) => (
+                <div key={s.label} className="vd-stat-card" role="listitem" style={{ animationDelay: `${i * 0.07}s` }}>
+                  <div className="vd-stat-icon-bg" style={{ background: s.accent }}>
+                    <span className="vd-stat-icon" aria-hidden="true" style={{ color: s.color }}>{s.icon}</span>
+                  </div>
+                  <div className="vd-stat-info">
+                    <span className="vd-stat-value" style={{ color: s.color }}>{s.value}</span>
+                    <span className="vd-stat-label">{s.label}</span>
+                  </div>
+                  <div className="vd-stat-trend" aria-hidden="true" style={{ background: s.accent, color: s.color }} />
                 </div>
               ))}
             </div>
@@ -794,8 +796,11 @@ export default function VendorDashboard() {
           {/* ── DCR ALERT ── */}
           {pendingDcrCount > 0 && (
             <div className="vd-dcr-alert" role="alert" onClick={() => { const first = bookings.find((b) => b.dateChangeRequest?.status === "pending"); if (first) setPopupBooking(first); }} tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { const first = bookings.find((b) => b.dateChangeRequest?.status === "pending"); if (first) setPopupBooking(first); } }}>
-              <span className="vd-dcr-alert-icon" aria-hidden="true">📅</span>
-              <div><strong>{pendingDcrCount} client{pendingDcrCount !== 1 ? "s" : ""}</strong>{" "}want{pendingDcrCount === 1 ? "s" : ""} to change their booking details</div>
+              <div className="vd-dcr-alert-icon-wrap" aria-hidden="true">📅</div>
+              <div>
+                <strong>{pendingDcrCount} client{pendingDcrCount !== 1 ? "s" : ""}</strong>
+                {" "}want{pendingDcrCount === 1 ? "s" : ""} to change their booking details
+              </div>
               <span className="vd-dcr-alert-cta" aria-hidden="true">Review →</span>
             </div>
           )}
@@ -810,7 +815,6 @@ export default function VendorDashboard() {
               <a href="/add-service" className="vd-section-add" aria-label="Add a new service">+ New Service</a>
             </div>
 
-            {/* Service type filter tabs */}
             {!loadingS && services.length > 0 && activeServiceTypeTabs.length > 1 && (
               <div className="vd-svc-type-tabs" role="tablist" aria-label="Filter services by type">
                 {activeServiceTypeTabs.map(({ key, label, emoji }) => (
@@ -850,8 +854,6 @@ export default function VendorDashboard() {
                     </div>
                   ))}
                 </div>
-
-                {/* Services load more */}
                 {svcHasMore ? (
                   <div ref={svcLoadMoreRef}>
                     <LoadMoreBtn onLoadMore={handleSvcLoadMore} remaining={svcRemaining} loading={false} label="services" />
@@ -904,6 +906,8 @@ export default function VendorDashboard() {
                     const hasDcr  = dcr?.status === "pending";
                     return (
                       <li key={b._id} className={`vd-booking-card ${hasDcr ? "vd-booking-card-dcr" : ""}`} style={{ animationDelay: `${Math.min(i * 0.06, 0.5)}s` }}>
+                        {/* Status accent bar */}
+                        <div className="vd-booking-card-bar" style={{ background: meta.color }} aria-hidden="true" />
                         <button className="vd-booking-card-btn" onClick={() => setDetailBooking(b)} aria-label={`View details for ${b.userId?.name || "Unknown Client"}'s booking`}>
                           <div className="vd-booking-left">
                             <div className="vd-avatar" aria-hidden="true">{b.userId?.name?.charAt(0)?.toUpperCase() || "?"}</div>
@@ -957,7 +961,6 @@ export default function VendorDashboard() {
                   })}
                 </ol>
 
-                {/* Bookings load more */}
                 {bkgHasMore ? (
                   <div ref={bkgLoadMoreRef}>
                     <LoadMoreBtn onLoadMore={handleBkgLoadMore} remaining={bkgRemaining} loading={false} label="bookings" />
@@ -1005,10 +1008,14 @@ const styles = `
   .vd-skip-link { position: fixed; top: -100%; left: 16px; background: var(--ink); color: var(--white); padding: 10px 18px; border-radius: 0 0 8px 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; text-decoration: none; z-index: 9999; transition: top 0.2s; outline: 2px solid var(--gold); }
   .vd-skip-link:focus { top: 0; }
   .vd-root { font-family: 'DM Sans', sans-serif; background: var(--cream); min-height: 100vh; color: var(--ink); position: relative; overflow-x: hidden; }
+
+  /* ── BACKGROUND ── */
   .vd-bg-ornament { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
-  .vd-bg-circle { position: absolute; border-radius: 50%; background: radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 70%); }
-  .vd-bg-circle-1 { width: 700px; height: 700px; top: -200px; right: -200px; }
-  .vd-bg-circle-2 { width: 500px; height: 500px; bottom: 10%; left: -150px; }
+  .vd-bg-circle { position: absolute; border-radius: 50%; }
+  .vd-bg-circle-1 { width: 800px; height: 800px; top: -250px; right: -250px; background: radial-gradient(circle, rgba(201,168,76,0.07) 0%, transparent 65%); }
+  .vd-bg-circle-2 { width: 600px; height: 600px; bottom: 5%; left: -200px; background: radial-gradient(circle, rgba(201,168,76,0.05) 0%, transparent 65%); }
+  .vd-bg-grain { position: absolute; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E"); opacity: 0.4; }
+
   .vd-body { position: relative; z-index: 1; width: 100%; max-width: 1200px; margin: 0 auto; padding: 48px 32px 80px; }
 
   /* ── TOAST ── */
@@ -1111,7 +1118,8 @@ const styles = `
   .bd-pay-time  { font-size: 11.5px; color: var(--muted); }
   .bd-pay-amount { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 600; color: var(--green); flex-shrink: 0; }
   .bd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
-  .bd-info-block { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 5px; }
+  .bd-info-block { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 5px; transition: border-color 0.2s; }
+  .bd-info-block:hover { border-color: rgba(201,168,76,0.35); }
   .bd-info-label { font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
   .bd-info-value { font-size: 13.5px; color: var(--ink); font-weight: 500; }
   .bd-section-title { font-size: 10px; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
@@ -1170,43 +1178,50 @@ const styles = `
 
   /* ── HEADER ── */
   .vd-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; flex-wrap: wrap; gap: 20px; animation: fadeUp 0.5s ease both; }
-  .vd-eyebrow { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+  .vd-header-left { flex: 1; }
+  .vd-eyebrow-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .vd-eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); animation: goldPulse 2.5s ease infinite; flex-shrink: 0; }
+  .vd-eyebrow { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); }
   .vd-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 300; color: var(--ink); line-height: 1.1; margin-bottom: 6px; text-shadow: 0 1px 0 rgba(255,255,255,0.6); }
   .vd-subtitle { font-size: 13.5px; color: var(--muted); }
-  .vd-add-btn { display: inline-block; padding: 12px 24px; background: var(--ink); color: var(--white); text-decoration: none; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; letter-spacing: 0.03em; transition: all 0.22s ease; white-space: nowrap; }
-  .vd-add-btn:hover { background: var(--gold); color: var(--ink); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(201,168,76,0.3); }
-  .vd-avail-section { display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+  .vd-add-btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: var(--ink); color: var(--white); text-decoration: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; letter-spacing: 0.03em; transition: all 0.22s ease; white-space: nowrap; box-shadow: 0 2px 10px rgba(14,12,10,0.15); }
+  .vd-add-btn:hover { background: var(--gold); color: var(--ink); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(201,168,76,0.35); }
+  .vd-add-btn-plus { font-size: 18px; line-height: 1; font-weight: 300; }
+  .vd-avail-section { display: flex; align-items: center; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
   .vd-avail-text { font-size: 13px; color: var(--muted); font-style: italic; }
-  .vd-avail-btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; background: var(--white); border: 1px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; color: var(--ink); cursor: pointer; transition: all 0.22s; white-space: nowrap; }
-  .vd-avail-btn:hover:not(:disabled) { background: rgba(201,168,76,0.07); border-color: var(--gold); color: var(--gold); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(201,168,76,0.15); }
+  .vd-avail-btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; background: var(--white); border: 1px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; color: var(--ink); cursor: pointer; transition: all 0.22s; white-space: nowrap; box-shadow: var(--shadow-sm); }
+  .vd-avail-btn:hover:not(:disabled) { background: rgba(201,168,76,0.07); border-color: var(--gold); color: var(--gold); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(201,168,76,0.2); }
   .vd-avail-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .vd-avail-btn-icon { font-size: 1rem; line-height: 1; }
 
   /* ── STATS ── */
-  .vd-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; animation: fadeUp 0.5s ease 0.1s both; }
+  .vd-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
   @media (max-width: 800px) { .vd-stats { grid-template-columns: repeat(2, 1fr); } }
-  .vd-stat-card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 22px 20px; display: flex; flex-direction: column; gap: 6px; transition: box-shadow 0.2s, transform 0.2s; box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), var(--shadow-sm); }
-  .vd-stat-card:hover { box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), var(--shadow-md); transform: translateY(-2px); }
-  .vd-stat-icon { font-size: 1.4rem; }
-  .vd-stat-value { font-family: 'Cormorant Garamond', serif; font-size: 2.4rem; font-weight: 600; line-height: 1; }
-  .vd-stat-label { font-size: 11.5px; color: var(--muted); }
+  .vd-stat-card { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 22px 20px; display: flex; align-items: center; gap: 16px; transition: box-shadow 0.25s, transform 0.25s, border-color 0.25s; box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), var(--shadow-sm); animation: fadeUp 0.5s ease both; position: relative; overflow: hidden; }
+  .vd-stat-card::after { content: ''; position: absolute; bottom: 0; right: 0; width: 60px; height: 60px; border-radius: 50%; opacity: 0; transition: opacity 0.3s; }
+  .vd-stat-card:hover { box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), var(--shadow-md); transform: translateY(-3px); border-color: rgba(201,168,76,0.3); }
+  .vd-stat-icon-bg { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .vd-stat-icon { font-size: 1.3rem; }
+  .vd-stat-info { flex: 1; }
+  .vd-stat-value { font-family: 'Cormorant Garamond', serif; font-size: 2.4rem; font-weight: 600; line-height: 1; display: block; }
+  .vd-stat-label { font-size: 11.5px; color: var(--muted); margin-top: 3px; display: block; }
 
   /* ── DCR ALERT ── */
-  .vd-dcr-alert { display: flex; align-items: center; gap: 12px; background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.28); border-radius: 12px; padding: 14px 18px; margin-bottom: 32px; cursor: pointer; transition: background 0.2s; font-size: 13.5px; color: var(--ink); animation: fadeUp 0.4s ease both; }
-  .vd-dcr-alert:hover { background: rgba(201,168,76,0.14); }
-  .vd-dcr-alert-icon { font-size: 1.3rem; flex-shrink: 0; }
+  .vd-dcr-alert { display: flex; align-items: center; gap: 14px; background: rgba(201,168,76,0.07); border: 1px solid rgba(201,168,76,0.28); border-radius: 14px; padding: 16px 20px; margin-bottom: 36px; cursor: pointer; transition: all 0.2s; font-size: 13.5px; color: var(--ink); animation: fadeUp 0.4s ease both; }
+  .vd-dcr-alert:hover { background: rgba(201,168,76,0.12); border-color: rgba(201,168,76,0.4); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(201,168,76,0.12); }
+  .vd-dcr-alert-icon-wrap { width: 36px; height: 36px; border-radius: 50%; background: rgba(201,168,76,0.12); border: 1px solid rgba(201,168,76,0.25); display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
   .vd-dcr-alert-cta { margin-left: auto; color: var(--gold); font-weight: 500; font-size: 13px; white-space: nowrap; }
 
   /* ── SECTIONS ── */
-  .vd-section { margin-bottom: 56px; animation: fadeUp 0.5s ease 0.15s both; }
-  .vd-section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
-  .vd-section-title { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 600; color: var(--ink); margin-bottom: 3px; }
+  .vd-section { margin-bottom: 60px; animation: fadeUp 0.5s ease 0.15s both; }
+  .vd-section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+  .vd-section-title { font-family: 'Cormorant Garamond', serif; font-size: 1.75rem; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
   .vd-section-sub { font-size: 12.5px; color: var(--muted); }
-  .vd-section-add { font-size: 12.5px; color: var(--gold); text-decoration: none; font-weight: 500; border: 1px solid var(--border); padding: 6px 14px; border-radius: 6px; transition: all 0.2s; white-space: nowrap; }
-  .vd-section-add:hover { background: rgba(201,168,76,0.07); border-color: var(--gold); }
+  .vd-section-add { font-size: 12.5px; color: var(--gold); text-decoration: none; font-weight: 500; border: 1px solid rgba(201,168,76,0.3); padding: 7px 16px; border-radius: 7px; transition: all 0.2s; white-space: nowrap; background: rgba(201,168,76,0.04); }
+  .vd-section-add:hover { background: rgba(201,168,76,0.1); border-color: var(--gold); }
 
   /* ── SERVICE TYPE FILTER TABS ── */
-  .vd-svc-type-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .vd-svc-type-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
   .vd-svc-type-tab { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--white); font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--muted); cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
   .vd-svc-type-tab:hover { border-color: var(--gold); color: var(--ink); background: rgba(201,168,76,0.04); }
   .vd-svc-type-tab.active { background: var(--ink); color: var(--white); border-color: var(--ink); font-weight: 500; box-shadow: 0 2px 10px rgba(14,12,10,0.15); }
@@ -1219,13 +1234,13 @@ const styles = `
   @media (max-width: 900px) { .vd-svc-grid { grid-template-columns: repeat(2, 1fr); } }
   @media (max-width: 560px) { .vd-svc-grid { grid-template-columns: 1fr; } }
   .vd-svc-card-wrapper { animation: fadeUp 0.45s ease both; }
-  .vd-svc-empty { background: var(--white); border: 1px dashed rgba(201,168,76,0.35); border-radius: 12px; padding: 48px 24px; text-align: center; }
-  .vd-svc-empty-icon { font-size: 2.2rem; display: block; margin-bottom: 12px; }
-  .vd-svc-empty-title { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
+  .vd-svc-empty { background: var(--white); border: 1px dashed rgba(201,168,76,0.35); border-radius: 16px; padding: 56px 24px; text-align: center; }
+  .vd-svc-empty-icon { font-size: 2.5rem; display: block; margin-bottom: 14px; }
+  .vd-svc-empty-title { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
   .vd-svc-empty-sub { font-size: 13px; color: var(--muted); }
 
   /* ── LOAD MORE ── */
-  .vd-load-more-wrap { display: flex; flex-direction: column; align-items: center; padding: 32px 20px 0; gap: 14px; }
+  .vd-load-more-wrap { display: flex; flex-direction: column; align-items: center; padding: 36px 20px 0; gap: 14px; }
   .vd-load-more-btn { display: inline-flex; align-items: center; gap: 10px; padding: 13px 32px; background: var(--white); border: 1.5px solid rgba(201,168,76,0.35); border-radius: 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; color: var(--ink); cursor: pointer; transition: all 0.25s ease; position: relative; overflow: hidden; box-shadow: 0 4px 20px rgba(14,12,10,0.06); }
   .vd-load-more-btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(201,168,76,0.06) 0%, transparent 60%); opacity: 0; transition: opacity 0.25s; }
   .vd-load-more-btn:hover { border-color: var(--gold); box-shadow: 0 8px 32px rgba(201,168,76,0.18); transform: translateY(-2px); }
@@ -1237,16 +1252,16 @@ const styles = `
   .vd-load-hint { text-align: center; font-size: 11.5px; color: var(--muted); margin-top: 32px; letter-spacing: 0.12em; text-transform: uppercase; }
 
   /* ── SEARCH BAR ── */
-  .vd-search-wrap { position: relative; display: flex; align-items: center; margin-bottom: 16px; background: var(--white); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s; }
+  .vd-search-wrap { position: relative; display: flex; align-items: center; margin-bottom: 16px; background: var(--white); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s; box-shadow: var(--shadow-sm); }
   .vd-search-wrap:focus-within { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.12); }
   .vd-search-icon { position: absolute; left: 14px; font-size: 14px; pointer-events: none; opacity: 0.5; }
-  .vd-search-input { width: 100%; padding: 11px 40px 11px 40px; background: none; border: none; outline: none; font-family: 'DM Sans', sans-serif; font-size: 13.5px; color: var(--ink); }
+  .vd-search-input { width: 100%; padding: 12px 40px 12px 42px; background: none; border: none; outline: none; font-family: 'DM Sans', sans-serif; font-size: 13.5px; color: var(--ink); }
   .vd-search-input::placeholder { color: var(--muted); opacity: 0.7; }
   .vd-search-clear { position: absolute; right: 12px; background: none; border: none; cursor: pointer; font-size: 11px; color: var(--muted); width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background 0.2s, color 0.2s; }
   .vd-search-clear:hover { background: rgba(14,12,10,0.07); color: var(--ink); }
 
   /* ── TABS ── */
-  .vd-tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .vd-tabs { display: flex; gap: 4px; margin-bottom: 22px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
   .vd-tab { display: flex; align-items: center; gap: 7px; padding: 10px 18px; background: none; border: none; border-bottom: 2px solid transparent; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--muted); cursor: pointer; transition: all 0.2s; margin-bottom: -1px; text-transform: capitalize; }
   .vd-tab:hover { color: var(--ink); }
   .vd-tab.active { color: var(--ink); border-bottom-color: var(--gold); font-weight: 500; }
@@ -1254,35 +1269,36 @@ const styles = `
   .vd-tab.active .vd-tab-count { background: var(--ink); color: var(--white); border-color: var(--ink); }
 
   /* ── BOOKING CARDS ── */
-  .vd-bookings { display: flex; flex-direction: column; gap: 12px; }
-  .vd-booking-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; display: flex; justify-content: space-between; align-items: stretch; animation: fadeUp 0.45s ease both; transition: box-shadow 0.25s, border-color 0.25s, transform 0.2s; overflow: hidden; }
-  .vd-booking-card:hover { box-shadow: var(--shadow-md); border-color: rgba(201,168,76,0.4); transform: translateY(-1px); }
+  .vd-bookings { display: flex; flex-direction: column; gap: 10px; }
+  .vd-booking-card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; display: flex; justify-content: space-between; align-items: stretch; animation: fadeUp 0.45s ease both; transition: box-shadow 0.25s, border-color 0.25s, transform 0.2s; overflow: hidden; position: relative; }
+  .vd-booking-card:hover { box-shadow: var(--shadow-md); border-color: rgba(201,168,76,0.4); transform: translateY(-2px); }
   .vd-booking-card-dcr { border-color: rgba(201,168,76,0.4) !important; box-shadow: 0 0 0 2px rgba(201,168,76,0.12) !important; }
-  .vd-booking-card-btn { flex: 1; background: none; border: none; text-align: left; cursor: pointer; padding: 22px 20px 22px 24px; display: flex; align-items: flex-start; gap: 0; transition: background 0.2s; min-width: 0; }
-  .vd-booking-card-btn:hover { background: rgba(201,168,76,0.03); }
-  .vd-booking-left { display: flex; align-items: flex-start; gap: 16px; flex: 1; min-width: 0; }
-  .vd-avatar { width: 46px; height: 46px; background: var(--ink); color: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 600; flex-shrink: 0; }
+  .vd-booking-card-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; opacity: 0.7; }
+  .vd-booking-card-btn { flex: 1; background: none; border: none; text-align: left; cursor: pointer; padding: 20px 18px 20px 26px; display: flex; align-items: flex-start; gap: 0; transition: background 0.2s; min-width: 0; }
+  .vd-booking-card-btn:hover { background: rgba(201,168,76,0.02); }
+  .vd-booking-left { display: flex; align-items: flex-start; gap: 14px; flex: 1; min-width: 0; }
+  .vd-avatar { width: 44px; height: 44px; background: var(--ink); color: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; font-weight: 600; flex-shrink: 0; box-shadow: 0 2px 8px rgba(14,12,10,0.15); }
   .vd-booking-info { flex: 1; min-width: 0; }
   .vd-booking-name { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
-  .vd-booking-email { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
-  .vd-booking-meta { display: flex; gap: 14px; flex-wrap: wrap; }
-  .vd-meta-item { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
-  .vd-user-details { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+  .vd-booking-email { font-size: 11.5px; color: var(--muted); margin-bottom: 8px; }
+  .vd-booking-meta { display: flex; gap: 12px; flex-wrap: wrap; }
+  .vd-meta-item { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; }
+  .vd-user-details { display: flex; flex-direction: column; gap: 3px; margin-top: 8px; }
   .vd-detail-chip { font-size: 11.5px; color: #6b6358; line-height: 1.4; max-width: 320px; }
-  .vd-booking-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; padding: 22px 20px 22px 12px; border-left: 1px solid rgba(201,168,76,0.1); }
+  .vd-booking-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; padding: 20px 18px 20px 12px; border-left: 1px solid rgba(201,168,76,0.1); }
   .vd-status-badge { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 12px; border-radius: 20px; white-space: nowrap; }
   .vd-pay-chip { font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 20px; white-space: nowrap; display: flex; align-items: center; gap: 4px; }
   .vd-view-hint { font-size: 11px; color: var(--gold); font-weight: 500; white-space: nowrap; opacity: 0.8; }
   .vd-actions { display: flex; gap: 8px; }
-  .vd-accept-btn { padding: 9px 18px; background: rgba(45,106,79,0.1); color: #2d6a4f; border: 1px solid rgba(45,106,79,0.3); border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; min-width: 90px; justify-content: center; }
-  .vd-accept-btn:hover:not(:disabled) { background: #2d6a4f; color: var(--white); border-color: #2d6a4f; }
-  .vd-reject-btn { padding: 9px 18px; background: rgba(184,92,92,0.08); color: #b85c5c; border: 1px solid rgba(184,92,92,0.25); border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; min-width: 90px; justify-content: center; }
-  .vd-reject-btn:hover:not(:disabled) { background: #b85c5c; color: var(--white); border-color: #b85c5c; }
+  .vd-accept-btn { padding: 8px 16px; background: rgba(45,106,79,0.1); color: #2d6a4f; border: 1px solid rgba(45,106,79,0.3); border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; min-width: 88px; justify-content: center; }
+  .vd-accept-btn:hover:not(:disabled) { background: #2d6a4f; color: var(--white); border-color: #2d6a4f; transform: translateY(-1px); }
+  .vd-reject-btn { padding: 8px 16px; background: rgba(184,92,92,0.08); color: #b85c5c; border: 1px solid rgba(184,92,92,0.25); border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; min-width: 88px; justify-content: center; }
+  .vd-reject-btn:hover:not(:disabled) { background: #b85c5c; color: var(--white); border-color: #b85c5c; transform: translateY(-1px); }
   .vd-accept-btn.loading, .vd-reject-btn.loading { opacity: 0.6; pointer-events: none; }
   .vd-accept-btn:disabled, .vd-reject-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .vd-undo-btn { padding: 7px 14px; background: none; color: var(--muted); border: 1px solid var(--border); border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 12px; cursor: pointer; transition: all 0.2s; }
   .vd-undo-btn:hover { border-color: var(--gold); color: var(--ink); }
-  .vd-dcr-pill { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; padding: 8px 12px; background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.25); border-radius: 8px; font-size: 12px; color: #8a6f1e; cursor: pointer; transition: background 0.2s; font-weight: 500; }
+  .vd-dcr-pill { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; padding: 8px 12px; background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.25); border-radius: 8px; font-size: 12px; color: #8a6f1e; cursor: pointer; transition: background 0.2s; font-weight: 500; }
   .vd-dcr-pill:hover { background: rgba(201,168,76,0.14); }
   .vd-dcr-pill-detail { font-weight: 400; color: var(--muted); }
   .vd-dcr-pill-cta { margin-left: auto; color: var(--gold); font-weight: 600; }
@@ -1292,10 +1308,10 @@ const styles = `
   .vd-clear-search-btn:hover { background: rgba(201,168,76,0.08); border-color: var(--gold); }
 
   /* ── SKELETONS / LOADING / EMPTY ── */
-  .vd-loading { display: flex; flex-direction: column; gap: 12px; }
-  .vd-skeleton { height: 88px; border-radius: 12px; background: linear-gradient(90deg, #ede8e0 25%, #e5dfd4 50%, #ede8e0 75%); background-size: 200% 100%; animation: shimmer 1.4s ease infinite; }
+  .vd-loading { display: flex; flex-direction: column; gap: 10px; }
+  .vd-skeleton { height: 88px; border-radius: 14px; background: linear-gradient(90deg, #ede8e0 25%, #e5dfd4 50%, #ede8e0 75%); background-size: 200% 100%; animation: shimmer 1.4s ease infinite; }
   .vd-skeleton-card { height: 280px; }
-  .vd-empty { text-align: center; padding: 72px 20px; }
+  .vd-empty { text-align: center; padding: 72px 20px; background: var(--white); border: 1px dashed var(--border); border-radius: 16px; }
   .vd-empty-icon { font-size: 3rem; margin-bottom: 16px; }
   .vd-empty h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
   .vd-empty p { font-size: 13.5px; color: var(--muted); }
@@ -1320,10 +1336,10 @@ const styles = `
   .lm-close-btn:hover { background: #2a2420; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(14,12,10,0.2); }
 
   /* ── FOOTER ── */
-  .vd-footer-bar { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding: 20px 32px; border-top: 1px solid rgba(201,168,76,0.15); background: rgba(245,240,232,0.8); backdrop-filter: blur(8px); }
+  .vd-footer-bar { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding: 22px 32px; border-top: 1px solid rgba(201,168,76,0.15); background: rgba(245,240,232,0.9); backdrop-filter: blur(8px); }
   .vd-footer-text { font-size: 11.5px; color: var(--muted); }
   .vd-footer-links { display: flex; gap: 20px; }
-  .vd-footer-link { font-size: 11.5px; color: var(--muted); text-decoration: none; transition: color 0.2s; background: none; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .vd-footer-link { font-size: 11.5px; color: var(--muted); text-decoration: none; transition: color 0.2s; background: none; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; padding: 4px 0; }
   .vd-footer-link:hover { color: var(--gold); }
 
   /* ── RESPONSIVE ── */
@@ -1353,4 +1369,5 @@ const styles = `
   @keyframes spin      { to { transform: rotate(360deg); } }
   @keyframes shimmer   { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
   @keyframes bounceDown { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+  @keyframes goldPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.75); } }
 `;
