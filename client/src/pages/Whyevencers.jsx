@@ -50,8 +50,15 @@ function ParticleCanvas() {
     const resize = () => { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; };
     resize();
     window.addEventListener("resize", resize);
-    for (let i = 0; i < 35; i++) {
-      particles.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, r: Math.random() * 1.4 + 0.3, dx: (Math.random() - 0.5) * 0.25, dy: (Math.random() - 0.5) * 0.25, o: Math.random() * 0.45 + 0.1 });
+    for (let i = 0; i < 40; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 1.6 + 0.3,
+        dx: (Math.random() - 0.5) * 0.22,
+        dy: (Math.random() - 0.5) * 0.22,
+        o: Math.random() * 0.4 + 0.08,
+      });
     }
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -81,36 +88,36 @@ const GALLERY_PHOTOS = [
 ];
 
 const CLIENT_REASONS = [
-  { icon: "✦", title: "Verified Vendors Only", desc: "Every vendor on Evencers goes through a rigorous vetting process — background checks, portfolio reviews, and client references. You'll never deal with unreliable surprises on your special day." },
-  { icon: "⚡", title: "Instant Booking", desc: "No endless phone calls or back-and-forth emails. Browse packages, compare pricing, and confirm your booking in minutes — with real-time availability and instant confirmation." },
-  { icon: "💎", title: "Curated Quality", desc: "Our team personally evaluates every vendor for service quality, professionalism, and value. Only the best 15% of applicants make it onto our platform." },
-  { icon: "🛡", title: "Booking Protection", desc: "Your payment is secure until the service is delivered. Our escrow system ensures vendors are paid only after you're satisfied, giving you complete peace of mind." },
-  { icon: "🎯", title: "All in One Place", desc: "Photography, decoration, catering, music, florals, and venues — everything you need for your event, curated under one roof. No juggling 10 different contacts." },
-  { icon: "⭐", title: "Dedicated Support", desc: "Our concierge team is available 6 days a week to help you plan, troubleshoot, or answer any question — from first inquiry to post-event follow-up." },
+  { icon: "✦", title: "Verified Vendors Only",       desc: "Every vendor on Evencers goes through a rigorous vetting process — background checks, portfolio reviews, and client references. You'll never deal with unreliable surprises on your special day." },
+  { icon: "⚡", title: "Instant Booking",             desc: "No endless phone calls or back-and-forth emails. Browse packages, compare pricing, and confirm your booking in minutes — with real-time availability and instant confirmation." },
+  { icon: "💎", title: "Curated Quality",             desc: "Our team personally evaluates every vendor for service quality, professionalism, and value. Only the best 15% of applicants make it onto our platform." },
+  { icon: "🛡", title: "Booking Protection",          desc: "Your payment is secure until the service is delivered. Our escrow system ensures vendors are paid only after you're satisfied, giving you complete peace of mind." },
+  { icon: "🎯", title: "All in One Place",            desc: "Photography, decoration, catering, music, florals, and venues — everything you need for your event, curated under one roof. No juggling 10 different contacts." },
+  { icon: "⭐", title: "Dedicated Support",           desc: "Our concierge team is available 6 days a week to help you plan, troubleshoot, or answer any question — from first inquiry to post-event follow-up." },
 ];
 
 const VENDOR_REASONS = [
-  { icon: "📈", title: "Grow Your Business", desc: "Get discovered by thousands of event planners actively searching for services like yours. Our SEO-optimized platform puts your portfolio in front of the right clients at the right time." },
-  { icon: "💰", title: "Guaranteed Payments", desc: "No more chasing invoices. Payments are processed securely through our platform and deposited directly to your account within 48 hours of service completion." },
-  { icon: "🗓", title: "Smart Booking Calendar", desc: "Manage your availability, block out dates, and handle multiple bookings from a single dashboard. Automated reminders mean fewer no-shows and wasted time." },
-  { icon: "📊", title: "Detailed Analytics", desc: "Understand how clients find you, which services are most popular, and how your ratings compare — with actionable insights to help you grow month after month." },
-  { icon: "🤝", title: "Community & Network", desc: "Join India's fastest-growing event professional network. Collaborate, refer clients, and build relationships with top photographers, decorators, and caterers." },
-  { icon: "🏆", title: "Verified Badge", desc: "Earn the Evencers Verified badge that signals trust and professionalism to clients. Top performers get featured placement and priority in search results." },
+  { icon: "📈", title: "Grow Your Business",         desc: "Get discovered by thousands of event planners actively searching for services like yours. Our SEO-optimized platform puts your portfolio in front of the right clients at the right time." },
+  { icon: "💰", title: "Guaranteed Payments",        desc: "No more chasing invoices. Payments are processed securely through our platform and deposited directly to your account within 48 hours of service completion." },
+  { icon: "🗓", title: "Smart Booking Calendar",     desc: "Manage your availability, block out dates, and handle multiple bookings from a single dashboard. Automated reminders mean fewer no-shows and wasted time." },
+  { icon: "📊", title: "Detailed Analytics",         desc: "Understand how clients find you, which services are most popular, and how your ratings compare — with actionable insights to help you grow month after month." },
+  { icon: "🤝", title: "Community & Network",        desc: "Join India's fastest-growing event professional network. Collaborate, refer clients, and build relationships with top photographers, decorators, and caterers." },
+  { icon: "🏆", title: "Verified Badge",             desc: "Earn the Evencers Verified badge that signals trust and professionalism to clients. Top performers get featured placement and priority in search results." },
 ];
 
 const TESTIMONIALS = [
-  { name: "Meera & Arjun", event: "Wedding · Delhi", text: "We booked our photographer, decorator, and caterer through Evencers in a single afternoon. The quality of every vendor was exceptional.", avatar: "M", stars: 5 },
-  { name: "Sunita Kapoor", event: "Birthday · Chandigarh", text: "I was skeptical at first, but the Evencers team personally helped me find the perfect florist within my budget. Absolutely magical event.", avatar: "S", stars: 5 },
-  { name: "Raj Events Co.", event: "Corporate · Delhi", text: "As a corporate client, reliability is everything. Every vendor delivered on time, on budget, and beyond expectations.", avatar: "R", stars: 5 },
-  { name: "Pooja Photography", event: "Vendor since 2026", text: "My bookings doubled within 3 months of joining Evencers. The dashboard is clean, payments are always on time, and the clients are serious.", avatar: "P", stars: 5, isVendor: true },
-  { name: "Bloom & Petal Florals", event: "Vendor since 2026", text: "Evencers helped us reach clients we never could have found on our own. The verified badge alone increased our conversion rate significantly.", avatar: "B", stars: 5, isVendor: true },
+  { name: "Meera & Arjun",    event: "Wedding · Delhi",           text: "We booked our photographer, decorator, and caterer through Evencers in a single afternoon. The quality of every vendor was exceptional.",                          avatar: "M", stars: 5 },
+  { name: "Sunita Kapoor",    event: "Birthday · Chandigarh",     text: "I was skeptical at first, but the Evencers team personally helped me find the perfect florist within my budget. Absolutely magical event.",                          avatar: "S", stars: 5 },
+  { name: "Raj Events Co.",   event: "Corporate · Delhi",         text: "As a corporate client, reliability is everything. Every vendor delivered on time, on budget, and beyond expectations.",                                             avatar: "R", stars: 5 },
+  { name: "Pooja Photography",event: "Vendor since 2026",         text: "My bookings doubled within 3 months of joining Evencers. The dashboard is clean, payments are always on time, and the clients are serious.",                        avatar: "P", stars: 5, isVendor: true },
+  { name: "Bloom & Petal",    event: "Vendor since 2026",         text: "Evencers helped us reach clients we never could have found on our own. The verified badge alone increased our conversion rate significantly.",                        avatar: "B", stars: 5, isVendor: true },
 ];
 
 const STATS = [
-  { num: "10", suffix: "K+", label: "Happy Clients", icon: "🎉" },
-  { num: "200", suffix: "+", label: "Verified Vendors", icon: "✓" },
-  { num: "4", suffix: ".9★", label: "Average Rating", icon: "⭐" },
-  { num: "4", suffix: "+", label: "Cities Served", icon: "📍" },
+  { num: "10",  suffix: "K+",  label: "Happy Clients",    icon: "🎉" },
+  { num: "200", suffix: "+",   label: "Verified Vendors", icon: "✓"  },
+  { num: "4",   suffix: ".9★", label: "Average Rating",   icon: "⭐" },
+  { num: "4",   suffix: "+",   label: "Cities Served",    icon: "📍" },
 ];
 
 export default function WhyEvencers() {
@@ -122,6 +129,7 @@ export default function WhyEvencers() {
   const [galleryRef, galleryVisible] = useReveal(0.1);
   const [testRef, testVisible] = useReveal(0.1);
   const [ctaRef, ctaVisible] = useReveal(0.1);
+  const [processRef, processVisible] = useReveal(0.1);
   const [activeTab, setActiveTab] = useState("clients");
 
   useEffect(() => {
@@ -170,6 +178,11 @@ export default function WhyEvencers() {
                 Join as Vendor
               </button>
             </div>
+            <div className="we-hero-trust-row" aria-hidden="true">
+              <span className="we-trust-pill">🔒 Secure Payments</span>
+              <span className="we-trust-pill">✓ Verified Vendors</span>
+              <span className="we-trust-pill">⚡ Instant Booking</span>
+            </div>
           </div>
 
           {/* Floating badge cards */}
@@ -209,21 +222,37 @@ export default function WhyEvencers() {
             <p className="we-section-eyebrow">Built for everyone</p>
             <h2 className="we-section-title">Why Evencers Wins Every Time</h2>
             <p className="we-section-sub">Whether you're planning your dream event or growing your vendor business, we've built something extraordinary for you.</p>
-            <div className="we-tabs">
-              <button className={`we-tab ${activeTab === "clients" ? "we-tab-active" : ""}`} onClick={() => setActiveTab("clients")}>
+            <div className="we-tabs" role="tablist">
+              <button
+                role="tab"
+                aria-selected={activeTab === "clients"}
+                className={`we-tab ${activeTab === "clients" ? "we-tab-active" : ""}`}
+                onClick={() => setActiveTab("clients")}
+              >
                 <span>👑</span> For Clients
               </button>
-              <button className={`we-tab ${activeTab === "vendors" ? "we-tab-active" : ""}`} onClick={() => setActiveTab("vendors")}>
+              <button
+                role="tab"
+                aria-selected={activeTab === "vendors"}
+                className={`we-tab ${activeTab === "vendors" ? "we-tab-active" : ""}`}
+                onClick={() => setActiveTab("vendors")}
+              >
                 <span>🎯</span> For Vendors
               </button>
             </div>
           </div>
 
           {/* Client Reasons */}
-          <div className={`we-reasons-grid ${activeTab === "clients" ? "we-tab-panel-active" : "we-tab-panel-hidden"}`} ref={clientRef}>
+          <div
+            className={`we-reasons-grid ${activeTab === "clients" ? "we-tab-panel-active" : "we-tab-panel-hidden"}`}
+            ref={clientRef}
+            role="tabpanel"
+          >
             {CLIENT_REASONS.map((r, i) => (
               <div key={i} className={`we-reason-card we-reveal ${clientVisible ? "we-revealed" : ""}`} style={{ transitionDelay: `${i * 0.08}s` }}>
-                <div className="we-reason-icon">{r.icon}</div>
+                <div className="we-reason-icon-wrap">
+                  <span className="we-reason-icon">{r.icon}</span>
+                </div>
                 <h3 className="we-reason-title">{r.title}</h3>
                 <p className="we-reason-desc">{r.desc}</p>
               </div>
@@ -231,10 +260,16 @@ export default function WhyEvencers() {
           </div>
 
           {/* Vendor Reasons */}
-          <div className={`we-reasons-grid ${activeTab === "vendors" ? "we-tab-panel-active" : "we-tab-panel-hidden"}`} ref={vendorRef}>
+          <div
+            className={`we-reasons-grid ${activeTab === "vendors" ? "we-tab-panel-active" : "we-tab-panel-hidden"}`}
+            ref={vendorRef}
+            role="tabpanel"
+          >
             {VENDOR_REASONS.map((r, i) => (
               <div key={i} className={`we-reason-card we-reason-card-vendor we-reveal ${vendorVisible ? "we-revealed" : ""}`} style={{ transitionDelay: `${i * 0.08}s` }}>
-                <div className="we-reason-icon">{r.icon}</div>
+                <div className="we-reason-icon-wrap we-reason-icon-wrap-vendor">
+                  <span className="we-reason-icon">{r.icon}</span>
+                </div>
                 <h3 className="we-reason-title">{r.title}</h3>
                 <p className="we-reason-desc">{r.desc}</p>
               </div>
@@ -243,7 +278,7 @@ export default function WhyEvencers() {
         </section>
 
         {/* ── PROCESS ── */}
-        <section className="we-process-section">
+        <section className="we-process-section" ref={processRef}>
           <div className="we-process-bg">
             <div className="we-process-orb1" />
             <div className="we-process-orb2" />
@@ -252,15 +287,20 @@ export default function WhyEvencers() {
             <div className="we-tab-header">
               <p className="we-section-eyebrow" style={{ color: "var(--gold)" }}>Simple steps</p>
               <h2 className="we-section-title" style={{ color: "var(--cream)" }}>From Idea to Unforgettable</h2>
+              <p className="we-section-sub" style={{ color: "rgba(122,114,101,0.7)" }}>Your event, your way — in four simple steps</p>
             </div>
             <div className="we-process-steps">
               {[
                 { n: "01", icon: "🔍", title: "Discover", desc: "Browse hundreds of verified vendors by category, location, and budget. Read genuine reviews from real clients." },
-                { n: "02", icon: "💬", title: "Connect", desc: "View full portfolios, compare packages, and reach out to vendors directly through our secure messaging system." },
-                { n: "03", icon: "⚡", title: "Book", desc: "Confirm your booking instantly with secure payment. Receive a digital booking confirmation within minutes." },
-                { n: "04", icon: "🎉", title: "Celebrate", desc: "Sit back and enjoy your flawlessly executed event. Our support team is on standby if you need anything." },
+                { n: "02", icon: "💬", title: "Connect",  desc: "View full portfolios, compare packages, and reach out to vendors directly through our secure messaging system." },
+                { n: "03", icon: "⚡", title: "Book",     desc: "Confirm your booking instantly with secure payment. Receive a digital booking confirmation within minutes." },
+                { n: "04", icon: "🎉", title: "Celebrate",desc: "Sit back and enjoy your flawlessly executed event. Our support team is on standby if you need anything." },
               ].map((s, i) => (
-                <div key={s.n} className="we-process-step">
+                <div
+                  key={s.n}
+                  className={`we-process-step we-reveal ${processVisible ? "we-revealed" : ""}`}
+                  style={{ transitionDelay: `${i * 0.12}s` }}
+                >
                   <div className="we-ps-num">{s.n}</div>
                   <div className="we-ps-icon-wrap">{s.icon}</div>
                   <h4>{s.title}</h4>
@@ -299,10 +339,11 @@ export default function WhyEvencers() {
         </section>
 
         {/* ── COMPARISON TABLE ── */}
-        <section className="we-section">
+        <section className="we-section we-compare-section">
           <div className="we-tab-header">
             <p className="we-section-eyebrow">See the difference</p>
             <h2 className="we-section-title">Evencers vs. Traditional Planning</h2>
+            <p className="we-section-sub">Everything you'd want — and nothing you wouldn't.</p>
           </div>
           <div className="we-compare-table">
             <div className="we-compare-header">
@@ -315,15 +356,15 @@ export default function WhyEvencers() {
               </div>
             </div>
             {[
-              ["Verified vendors", true, false],
-              ["Instant booking", true, false],
-              ["Secure payments", true, false],
-              ["Transparent pricing", true, false],
-              ["24/7 support", true, false],
-              ["Portfolio + reviews", true, false],
-              ["All categories in one place", true, false],
-              ["Post-event protection", true, false],
-            ].map(([feat, us, them], i) => (
+              "Verified vendors",
+              "Instant booking",
+              "Secure payments",
+              "Transparent pricing",
+              "6-day support",
+              "Portfolio + reviews",
+              "All categories in one place",
+              "Post-event protection",
+            ].map((feat, i) => (
               <div key={i} className={`we-compare-row ${i % 2 === 0 ? "we-compare-row-alt" : ""}`}>
                 <div className="we-compare-col we-compare-feat">{feat}</div>
                 <div className="we-compare-col we-compare-us-val">
@@ -335,6 +376,9 @@ export default function WhyEvencers() {
               </div>
             ))}
           </div>
+          <p style={{ textAlign: "center", fontSize: "12px", color: "var(--muted)", marginTop: "16px" }}>
+            No commitments. No hidden fees. Cancel anytime.
+          </p>
         </section>
 
         {/* ── TESTIMONIALS ── */}
@@ -342,15 +386,22 @@ export default function WhyEvencers() {
           <div className={`we-tab-header we-reveal ${testVisible ? "we-revealed" : ""}`}>
             <p className="we-section-eyebrow">Real stories</p>
             <h2 className="we-section-title">Loved by Clients & Vendors</h2>
+            <p className="we-section-sub">Don't just take our word for it — hear from the people who matter most.</p>
           </div>
           <div className="we-testimonials">
             {TESTIMONIALS.map((t, i) => (
-              <div key={i} className={`we-testimonial ${t.isVendor ? "we-testimonial-vendor" : ""} we-reveal ${testVisible ? "we-revealed" : ""}`} style={{ transitionDelay: `${i * 0.1}s` }}>
+              <div
+                key={i}
+                className={`we-testimonial ${t.isVendor ? "we-testimonial-vendor" : ""} we-reveal ${testVisible ? "we-revealed" : ""}`}
+                style={{ transitionDelay: `${i * 0.1}s` }}
+              >
                 {t.isVendor && <span className="we-vendor-badge">✦ Vendor</span>}
                 <div className="we-t-stars">{"★".repeat(t.stars)}</div>
                 <p className="we-t-text">"{t.text}"</p>
                 <div className="we-t-author">
-                  <div className="we-t-avatar">{t.avatar}</div>
+                  <div className="we-t-avatar" style={{ background: t.isVendor ? "rgba(201,168,76,0.2)" : "var(--gold)" }}>
+                    {t.avatar}
+                  </div>
                   <div>
                     <span className="we-t-name">{t.name}</span>
                     <span className="we-t-event">{t.event}</span>
@@ -365,13 +416,16 @@ export default function WhyEvencers() {
         <section className="we-cta" ref={ctaRef}>
           <div className="we-cta-orb1" />
           <div className="we-cta-orb2" />
+          <div className="we-cta-grid" aria-hidden="true" />
           <div className={`we-cta-inner we-reveal ${ctaVisible ? "we-revealed" : ""}`}>
             <span className="we-eyebrow-pill" style={{ marginBottom: "20px" }}>
               <span className="we-dot" />
               Ready to begin?
             </span>
             <h2 className="we-cta-title">Your perfect event starts <em>here.</em></h2>
-            <p className="we-cta-sub">Join over 12K clients and 200+ vendors who trust Evencers to deliver extraordinary celebrations across India.</p>
+            <p className="we-cta-sub">
+              Join over 12K clients and 200+ vendors who trust Evencers to deliver extraordinary celebrations across India.
+            </p>
             <div className="we-cta-btns">
               <button className="we-btn-primary we-btn-large" onClick={() => navigate("/vendors")}>
                 Find Vendors <span>→</span>
@@ -379,6 +433,13 @@ export default function WhyEvencers() {
               <button className="we-btn-ghost we-btn-large" onClick={() => navigate("/register?role=vendor")}>
                 List Your Services
               </button>
+            </div>
+            <div className="we-cta-footnote">
+              <span>🛡 Booking Protection</span>
+              <span className="we-cta-fn-sep">·</span>
+              <span>⚡ Instant Confirmation</span>
+              <span className="we-cta-fn-sep">·</span>
+              <span>🇮🇳 Made in India</span>
             </div>
           </div>
         </section>
@@ -388,7 +449,7 @@ export default function WhyEvencers() {
           <div className="we-seo-inner">
             <h2>India's Premier Event Planning Platform</h2>
             <p>
-              Evencers is India's most trusted event planning marketplace, connecting clients with verified professionals for <strong>weddings</strong>, <strong>birthday parties</strong>, <strong>corporate events</strong>, <strong>anniversaries</strong>, and more. 
+              Evencers is India's most trusted event planning marketplace, connecting clients with verified professionals for <strong>weddings</strong>, <strong>birthday parties</strong>, <strong>corporate events</strong>, <strong>anniversaries</strong>, and more.
               Our platform features verified <strong>wedding photographers</strong>, <strong>event decorators</strong>, <strong>catering services</strong>, <strong>DJs and musicians</strong>, <strong>floral designers</strong>, and <strong>event venues</strong> across <strong>Delhi</strong>, <strong>Chandigarh</strong>, and expanding cities across India.
               Whether you're a client searching for reliable vendors or a professional looking to grow your event business, Evencers provides the tools, trust, and technology to make every celebration extraordinary.
             </p>
@@ -454,12 +515,26 @@ const styles = `
   .we-hero-title em { font-style: italic; color: var(--gold-light); }
   .we-hero-sub { font-size: 14.5px; color: rgba(245,240,232,0.6); line-height: 1.8; margin-bottom: 38px; max-width: 500px; margin-left: auto; margin-right: auto; }
 
-  .we-hero-cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-  .we-btn-primary { background: var(--gold); color: var(--ink); border: none; border-radius: 10px; padding: 13px 28px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: transform 0.25s, box-shadow 0.25s; -webkit-tap-highlight-color: transparent; }
+  .we-hero-cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 28px; }
+
+  .we-hero-trust-row {
+    display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+    animation: heroEnter 0.8s 0.35s cubic-bezier(.22,1,.36,1) both;
+  }
+  .we-trust-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; color: rgba(245,240,232,0.4); letter-spacing: 0.05em;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(201,168,76,0.1);
+    padding: 5px 12px; border-radius: 20px;
+  }
+
+  .we-btn-primary { background: var(--gold); color: var(--ink); border: none; border-radius: 10px; padding: 13px 28px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: transform 0.25s, box-shadow 0.25s; -webkit-tap-highlight-color: transparent; position: relative; overflow: hidden; }
+  .we-btn-primary::after { content: ''; position: absolute; inset: 0; background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.22) 50%, transparent 70%); transform: translateX(-100%); transition: transform 0.4s; }
   .we-btn-primary:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(201,168,76,0.4); }
+  .we-btn-primary:hover::after { transform: translateX(100%); }
   .we-btn-primary:active { transform: scale(0.97); }
-  .we-btn-ghost { background: rgba(255,255,255,0.06); color: var(--cream); border: 1px solid rgba(245,240,232,0.2); border-radius: 10px; padding: 13px 28px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 400; cursor: pointer; transition: border-color 0.2s, color 0.2s, transform 0.2s; -webkit-tap-highlight-color: transparent; }
-  .we-btn-ghost:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-2px); }
+  .we-btn-ghost { background: rgba(255,255,255,0.06); color: var(--cream); border: 1px solid rgba(245,240,232,0.2); border-radius: 10px; padding: 13px 28px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 400; cursor: pointer; transition: border-color 0.2s, color 0.2s, transform 0.2s, background 0.2s; -webkit-tap-highlight-color: transparent; }
+  .we-btn-ghost:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-2px); background: rgba(201,168,76,0.06); }
   .we-btn-ghost:active { transform: scale(0.97); }
   .we-btn-large { padding: 16px 36px; font-size: 15px; }
 
@@ -481,9 +556,16 @@ const styles = `
   /* ── STATS BAR ── */
   .we-stats-bar { display: grid; grid-template-columns: repeat(4,1fr); background: var(--white); border-bottom: 1px solid var(--border); }
   @media (max-width: 600px) { .we-stats-bar { grid-template-columns: repeat(2,1fr); } }
-  .we-stat { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 28px 16px; text-align: center; border-right: 1px solid var(--border); transition: background 0.3s; }
-  .we-stat:last-child { border-right: none; }
+  .we-stat { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 28px 16px; text-align: center; border-right: 1px solid var(--border); transition: background 0.3s; position: relative; overflow: hidden; cursor: default; }
+  .we-stat::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 0; height: 2px; background: var(--gold); transition: width 0.4s cubic-bezier(.22,1,.36,1); }
   .we-stat:hover { background: var(--surface); }
+  .we-stat:hover::after { width: 50%; }
+  .we-stat:last-child { border-right: none; }
+  @media (max-width: 600px) {
+    .we-stat:nth-child(2) { border-right: none; }
+    .we-stat:nth-child(3) { border-right: 1px solid var(--border); border-top: 1px solid var(--border); }
+    .we-stat:nth-child(4) { border-top: 1px solid var(--border); }
+  }
   .we-stat-icon { font-size: 1.4rem; }
   .we-stat-num { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.5rem, 4vw, 2.2rem); font-weight: 600; color: var(--gold); letter-spacing: -0.02em; }
   .we-stat-label { font-size: 11px; color: var(--muted); letter-spacing: 0.05em; }
@@ -517,7 +599,17 @@ const styles = `
   .we-reason-card-vendor .we-reason-title { color: var(--cream); }
   .we-reason-card-vendor .we-reason-desc { color: rgba(122,114,101,0.8); }
   .we-reason-card-vendor:hover { border-color: rgba(201,168,76,0.5); box-shadow: 0 16px 48px rgba(0,0,0,0.3); }
-  .we-reason-icon { font-size: 1.8rem; margin-bottom: 14px; display: block; }
+
+  .we-reason-icon-wrap {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.15);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 16px; font-size: 1.3rem;
+    transition: background 0.3s, transform 0.3s;
+  }
+  .we-reason-card:hover .we-reason-icon-wrap { background: rgba(201,168,76,0.14); transform: scale(1.08) rotate(-4deg); }
+  .we-reason-icon-wrap-vendor { background: rgba(201,168,76,0.08); border-color: rgba(201,168,76,0.18); }
+  .we-reason-icon { display: block; }
   .we-reason-title { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
   .we-reason-desc { font-size: 13px; color: var(--muted); line-height: 1.75; }
 
@@ -531,10 +623,12 @@ const styles = `
   @media (max-width: 760px) { .we-process-steps { grid-template-columns: 1fr 1fr; gap: 32px 0; } }
   @media (max-width: 440px) { .we-process-steps { grid-template-columns: 1fr; } }
 
-  .we-process-step { padding: 28px 20px 28px 0; border-top: 1px solid rgba(201,168,76,0.15); position: relative; }
-  .we-ps-num { font-family: 'Cormorant Garamond', serif; font-size: 3rem; font-weight: 300; color: rgba(201,168,76,0.18); line-height: 1; margin-bottom: 14px; display: block; }
+  .we-process-step { padding: 28px 20px 28px 0; border-top: 1px solid rgba(201,168,76,0.15); position: relative; transition: border-color 0.3s; }
+  .we-process-step:hover { border-color: rgba(201,168,76,0.5); }
+  .we-ps-num { font-family: 'Cormorant Garamond', serif; font-size: 3rem; font-weight: 300; color: rgba(201,168,76,0.18); line-height: 1; margin-bottom: 14px; display: block; transition: color 0.3s; }
+  .we-process-step:hover .we-ps-num { color: rgba(201,168,76,0.35); }
   .we-ps-icon-wrap { width: 48px; height: 48px; border-radius: 12px; background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.18); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: 14px; transition: all 0.3s; }
-  .we-process-step:hover .we-ps-icon-wrap { background: rgba(201,168,76,0.15); transform: scale(1.06); }
+  .we-process-step:hover .we-ps-icon-wrap { background: rgba(201,168,76,0.15); transform: scale(1.06) rotate(-4deg); }
   .we-process-step h4 { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 600; color: var(--cream); margin-bottom: 8px; }
   .we-process-step p { font-size: 13px; color: var(--muted); line-height: 1.7; }
   .we-ps-connector { position: absolute; right: -10px; top: 54px; font-size: 18px; color: rgba(201,168,76,0.3); z-index: 2; }
@@ -547,14 +641,15 @@ const styles = `
 
   .we-gallery-item { position: relative; border-radius: 14px; overflow: hidden; aspect-ratio: 4/3; cursor: pointer; }
   .we-gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s cubic-bezier(.22,1,.36,1); display: block; }
-  .we-gallery-item:hover img { transform: scale(1.06); }
-  .we-gallery-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(14,12,10,0.7) 0%, transparent 50%); display: flex; align-items: flex-end; padding: 16px; opacity: 0; transition: opacity 0.3s; }
+  .we-gallery-item:hover img { transform: scale(1.07); }
+  .we-gallery-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(14,12,10,0.75) 0%, transparent 55%); display: flex; align-items: flex-end; padding: 16px; opacity: 0; transition: opacity 0.3s; }
   .we-gallery-item:hover .we-gallery-overlay { opacity: 1; }
   .we-gallery-label { font-size: 12px; font-weight: 500; color: var(--gold-light); letter-spacing: 0.08em; }
   .we-gallery-note { text-align: center; font-size: 11px; color: var(--muted); margin-top: 16px; font-style: italic; }
 
   /* ── COMPARISON TABLE ── */
-  .we-compare-table { max-width: 680px; margin: 0 auto; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .we-compare-section { background: var(--surface); border-radius: 0; }
+  .we-compare-table { max-width: 680px; margin: 0 auto; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.04); }
   .we-compare-header { display: grid; grid-template-columns: 2fr 1fr 1fr; background: var(--ink); }
   .we-compare-col { padding: 14px 20px; display: flex; align-items: center; justify-content: center; }
   .we-compare-blank { justify-content: flex-start; }
@@ -567,8 +662,8 @@ const styles = `
   .we-compare-feat { padding: 14px 20px; font-size: 13px; color: var(--ink); display: flex; align-items: center; justify-content: flex-start; }
   .we-compare-us-val, .we-compare-them-val { padding: 14px 20px; display: flex; align-items: center; justify-content: center; }
   .we-compare-us-val { background: rgba(201,168,76,0.04); border-left: 1px solid rgba(201,168,76,0.12); border-right: 1px solid rgba(201,168,76,0.12); }
-  .we-check { width: 24px; height: 24px; border-radius: 50%; background: rgba(52,211,153,0.12); border: 1px solid rgba(52,211,153,0.3); color: #34d399; font-size: 13px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
-  .we-cross { width: 24px; height: 24px; border-radius: 50%; background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.25); color: #f87171; font-size: 13px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+  .we-check { width: 26px; height: 26px; border-radius: 50%; background: rgba(52,211,153,0.12); border: 1px solid rgba(52,211,153,0.3); color: #34d399; font-size: 13px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+  .we-cross { width: 26px; height: 26px; border-radius: 50%; background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.25); color: #f87171; font-size: 13px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
 
   /* ── TESTIMONIALS ── */
   .we-testimonials { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
@@ -586,19 +681,26 @@ const styles = `
   .we-t-stars { color: var(--gold); font-size: 11px; letter-spacing: 2px; }
   .we-t-text { font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-style: italic; color: var(--ink); line-height: 1.7; flex: 1; }
   .we-t-author { display: flex; align-items: center; gap: 10px; }
-  .we-t-avatar { width: 38px; height: 38px; background: var(--gold); color: var(--ink); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 700; flex-shrink: 0; }
+  .we-t-avatar { width: 38px; height: 38px; color: var(--ink); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 700; flex-shrink: 0; }
   .we-t-name { display: block; font-size: 13px; font-weight: 500; color: var(--ink); }
   .we-t-event { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .we-testimonial-vendor .we-t-name { color: var(--cream); }
 
   /* ── CTA ── */
   .we-cta { position: relative; overflow: hidden; text-align: center; padding: 100px 20px; background: var(--ink); }
   .we-cta-orb1 { position: absolute; width: 450px; height: 450px; border-radius: 50%; background: var(--gold); opacity: 0.08; top: 50%; left: 50%; transform: translate(-50%,-50%); filter: blur(110px); animation: orbPulse 7s ease-in-out infinite alternate; }
   .we-cta-orb2 { position: absolute; width: 280px; height: 280px; border-radius: 50%; background: #7b5ea7; opacity: 0.09; top: 10%; right: 8%; filter: blur(90px); }
+  .we-cta-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(201,168,76,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(201,168,76,0.03) 1px, transparent 1px); background-size: 60px 60px; mask-image: radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, transparent 70%); pointer-events: none; }
   .we-cta-inner { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; }
   .we-cta-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.2rem, 5vw, 3.6rem); font-weight: 300; color: var(--white); margin: 14px 0 16px; }
   .we-cta-title em { font-style: italic; color: var(--gold-light); }
   .we-cta-sub { font-size: 14px; color: rgba(245,240,232,0.5); max-width: 420px; line-height: 1.75; margin-bottom: 36px; }
-  .we-cta-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .we-cta-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 24px; }
+  .we-cta-footnote {
+    display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; align-items: center;
+    font-size: 11.5px; color: rgba(245,240,232,0.28);
+  }
+  .we-cta-fn-sep { color: rgba(201,168,76,0.2); }
 
   /* ── SEO BLOCK ── */
   .we-seo-block { background: var(--surface); border-top: 1px solid var(--border); padding: 36px 20px; }
@@ -614,6 +716,12 @@ const styles = `
     .we-compare-table { font-size: 12px; }
     .we-compare-feat { font-size: 12px; padding: 12px 14px; }
     .we-compare-col { padding: 12px 14px; }
+    .we-cta-btns { flex-direction: column; align-items: center; }
+    .we-btn-large { width: 100%; max-width: 300px; justify-content: center; }
+    .we-cta-footnote { flex-direction: column; gap: 8px; }
+    .we-cta-fn-sep { display: none; }
+    .we-hero-trust-row { gap: 6px; }
+    .we-trust-pill { font-size: 10px; padding: 4px 10px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
