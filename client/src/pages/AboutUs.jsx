@@ -55,7 +55,7 @@ function MarqueeStrip() {
   const items = [
     "200+ Verified Vendors", "★ 4.9 Rated", "4+ Cities",
     "Weddings", "Birthdays", "Corporate Events", "Anniversaries",
-    "Delhi · Chandigarh ", "Instant Booking", "12k+ Happy Clients",
+    "Delhi · Chandigarh", "Instant Booking", "12k+ Happy Clients",
   ];
   const doubled = [...items, ...items];
   return (
@@ -67,6 +67,32 @@ function MarqueeStrip() {
           </span>
         ))}
       </div>
+    </div>
+  );
+}
+
+// ── Tilt Card ──
+function TiltCard({ children, className, style }) {
+  const cardRef = useRef(null);
+  const handleMouseMove = (e) => {
+    const card = cardRef.current;
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const cx = rect.width / 2;
+    const cy = rect.height / 2;
+    const rotateX = ((y - cy) / cy) * -5;
+    const rotateY = ((x - cx) / cx) * 5;
+    card.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-5px)`;
+  };
+  const handleMouseLeave = () => {
+    if (cardRef.current) cardRef.current.style.transform = "";
+  };
+  return (
+    <div ref={cardRef} className={className} style={{ ...style, transition: "transform 0.15s ease" }}
+      onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
+      {children}
     </div>
   );
 }
@@ -93,17 +119,17 @@ export default function AboutUs() {
   ];
 
   const team = [
-    { initial: "A", name: "Akarsh Gupta",   role: "founder & CEO",            desc: "Passionate about making luxury events accessible to everyone in India.",     gradient: "135deg, #c9a84c 0%, #e8d5a3 100%" },
-    { initial: "A", name: "Akarsh Gupta",   role: "Head of Vendor Relations",  desc: "Bridging the gap between talented vendors and clients who deserve them.",   gradient: "135deg, #a78bfa 0%, #c4b5fd 100%" },
-    { initial: "A", name: "Atharv Patidar", role: "Co-founder & CTO",          desc: "Building the infrastructure that makes seamless bookings possible at scale.", gradient: "135deg, #34d399 0%, #6ee7b7 100%" },
-    { initial: "A", name: "Atharv Patidar", role: "Head of Design",            desc: "Ensuring every touchpoint feels as beautiful as the events we support.",    gradient: "135deg, #f87171 0%, #fca5a5 100%" },
+    { initial: "AK", name: "Akarsh Gupta",   role: "Founder & CEO",            desc: "Passionate about making luxury events accessible to everyone in India.",      gradient: "135deg, #c9a84c 0%, #e8d5a3 100%" },
+    { initial: "AK", name: "Akarsh Gupta",   role: "Head of Vendor Relations",  desc: "Bridging the gap between talented vendors and clients who deserve them.",    gradient: "135deg, #a78bfa 0%, #c4b5fd 100%" },
+    { initial: "AT", name: "Atharv Patidar", role: "Co-founder & CTO",          desc: "Building the infrastructure that makes seamless bookings possible at scale.", gradient: "135deg, #34d399 0%, #6ee7b7 100%" },
+    { initial: "AT", name: "Atharv Patidar", role: "Head of Design",            desc: "Ensuring every touchpoint feels as beautiful as the events we support.",     gradient: "135deg, #f87171 0%, #fca5a5 100%" },
   ];
 
   const timeline = [
-    { year: "2025",       title: "The Frustration",  desc: "Our founders tried planning a Delhi corporate event. Three weeks. Dozens of calls. Mediocre results. The idea was born." },
-    { year: "Early 2026", title: "First 10 Vendors", desc: "We manually onboarded 10 Delhi vendors we personally trusted. First client booked within 48 hours." },
-    { year: "Mid 2027",   title: "Expanding Cities", desc: "Mumbai. Bangalore. Hyderabad. We hit 1500+ verified vendors and 30k+ happy clients." },
-    { year: "2028",       title: "All of India",     desc: "50+ cities. 10k+ vendors. 120k+ clients. And we're just getting started." },
+    { year: "2025",       title: "The Frustration",  desc: "Our founders tried planning a Delhi corporate event. Three weeks. Dozens of calls. Mediocre results. The idea was born.", icon: "💡" },
+    { year: "Early 2026", title: "First 10 Vendors", desc: "We manually onboarded 10 Delhi vendors we personally trusted. First client booked within 48 hours.",                       icon: "🌱" },
+    { year: "Mid 2027",   title: "Expanding Cities", desc: "Mumbai. Bangalore. Hyderabad. We hit 1,500+ verified vendors and 30k+ happy clients.",                                     icon: "🚀" },
+    { year: "2028",       title: "All of India",     desc: "50+ cities. 10k+ vendors. 120k+ clients. And we're just getting started.",                                                  icon: "🏆" },
   ];
 
   return (
@@ -177,10 +203,10 @@ export default function AboutUs() {
         <section className="au-stats-section" ref={statsRef} aria-label="Platform statistics">
           <div className="au-stats-grid">
             {[
-              { num: "10", suffix: "K+",   label: "Happy Clients",   sub: "across India",      icon: "👥" },
-              { num: "200",  suffix: "+",   label: "Verified Vendors", sub: "manually screened", icon: "✓" },
-              { num: "4",   suffix: "+",   label: "Cities",           sub: "and growing fast",  icon: "📍" },
-              { num: "4",   suffix: ".9★", label: "Average Rating",   sub: "from real clients", icon: "★" },
+              { num: "10", suffix: "K+",   label: "Happy Clients",    sub: "across India",       icon: "👥" },
+              { num: "200",  suffix: "+",  label: "Verified Vendors",  sub: "manually screened",  icon: "✓"  },
+              { num: "4",   suffix: "+",   label: "Cities",            sub: "and growing fast",   icon: "📍" },
+              { num: "4",   suffix: ".9★", label: "Average Rating",    sub: "from real clients",  icon: "★"  },
             ].map((s, i) => (
               <div
                 key={i}
@@ -223,12 +249,14 @@ export default function AboutUs() {
               <div className="au-mission-badges">
                 <span className="au-badge">🎊 30+ events powered weekly</span>
                 <span className="au-badge">⚡ 3 min avg. booking time</span>
+                <span className="au-badge">🛡 100% payment protected</span>
               </div>
             </div>
 
             <div className={`au-mission-visual au-reveal ${missionVisible ? "au-revealed" : ""}`} style={{ transitionDelay: "0.18s" }}>
               <div className="au-mv-bg-ring au-ring1" aria-hidden="true" />
               <div className="au-mv-bg-ring au-ring2" aria-hidden="true" />
+              <div className="au-mv-bg-ring au-ring3" aria-hidden="true" />
               <div className="au-mv-center" aria-hidden="true">
                 <span className="au-mv-big">200+</span>
                 <span className="au-mv-sub">verified vendors</span>
@@ -266,7 +294,9 @@ export default function AboutUs() {
                   className={`au-timeline-item au-reveal ${timelineVisible ? "au-revealed" : ""}`}
                   style={{ transitionDelay: `${i * 0.14}s` }}
                 >
-                  <div className="au-tl-dot" aria-hidden="true" />
+                  <div className="au-tl-dot" aria-hidden="true">
+                    <span className="au-tl-dot-icon">{item.icon}</span>
+                  </div>
                   <div className="au-tl-year">{item.year}</div>
                   <div className="au-tl-content">
                     <h3 className="au-tl-title">{item.title}</h3>
@@ -288,16 +318,17 @@ export default function AboutUs() {
             </div>
             <div className="au-values-grid">
               {values.map((v, i) => (
-                <article
+                <TiltCard
                   key={i}
                   className={`au-value-card au-reveal ${valuesVisible ? "au-revealed" : ""}`}
                   style={{ transitionDelay: `${i * 0.08}s`, "--v-accent": v.accent }}
                 >
                   <div className="au-value-glow" style={{ background: v.accent }} aria-hidden="true" />
+                  <div className="au-value-accent-line" style={{ background: v.accent }} aria-hidden="true" />
                   <span className="au-value-emoji" aria-hidden="true">{v.emoji}</span>
                   <h3 className="au-value-title">{v.title}</h3>
                   <p className="au-value-desc">{v.desc}</p>
-                </article>
+                </TiltCard>
               ))}
             </div>
           </div>
@@ -320,30 +351,37 @@ export default function AboutUs() {
               </p>
               <ul className="au-vendor-perks">
                 {[
-                  "Free listing with verified badge",
-                  "Instant booking notifications",
-                  "Dashboard to manage all inquiries",
-                  "Minimum commission on your first 10 bookings",
-                  "Dedicated vendor support team",
-                ].map((perk, i) => (
+                  ["Free listing with verified badge", "✓"],
+                  ["Instant booking notifications", "✓"],
+                  ["Dashboard to manage all inquiries", "✓"],
+                  ["Minimum commission on your first 10 bookings", "✓"],
+                  ["Dedicated vendor support team", "✓"],
+                ].map(([perk, check], i) => (
                   <li key={i} className="au-vendor-perk">
-                    <span className="au-perk-check" aria-hidden="true">✓</span>
+                    <span className="au-perk-check" aria-hidden="true">{check}</span>
                     {perk}
                   </li>
                 ))}
               </ul>
-              <button className="au-btn-primary" onClick={() => navigate("/register")}>
-                Join as a Vendor <span className="au-btn-arrow">→</span>
-              </button>
+              <div className="au-vendor-cta-row">
+                <button className="au-btn-primary" onClick={() => navigate("/register")}>
+                  Join as a Vendor <span className="au-btn-arrow">→</span>
+                </button>
+                <button className="au-btn-ghost-dark" onClick={() => navigate("/vendors")}>
+                  See All Vendors
+                </button>
+              </div>
             </div>
             <div className={`au-vendor-stats au-reveal ${vendorVisible ? "au-revealed" : ""}`} style={{ transitionDelay: "0.2s" }}>
               {[
-                { num: "200",  suffix: "+",   label: "Active Vendors",     icon: "🏪" },
-                { num: "94",  suffix: "%",   label: "Vendor Satisfaction", icon: "💛" },
-                { num: "48",  suffix: "hr",  label: "Avg. First Booking",  icon: "⚡" },
+                { num: "200",  suffix: "+",   label: "Active Vendors",     icon: "🏪", color: "#c9a84c" },
+                { num: "94",  suffix: "%",   label: "Vendor Satisfaction", icon: "💛", color: "#34d399" },
+                { num: "48",  suffix: "hr",  label: "Avg. First Booking",  icon: "⚡", color: "#a78bfa" },
               ].map((s, i) => (
-                <div key={i} className="au-vendor-stat">
-                  <span className="au-vs-icon" aria-hidden="true">{s.icon}</span>
+                <div key={i} className="au-vendor-stat" style={{ "--vs-color": s.color }}>
+                  <div className="au-vs-icon-wrap">
+                    <span className="au-vs-icon" aria-hidden="true">{s.icon}</span>
+                  </div>
                   <span className="au-vs-num">
                     <Counter target={s.num} suffix={s.suffix} />
                   </span>
@@ -369,6 +407,7 @@ export default function AboutUs() {
                   className={`au-team-card au-reveal ${teamVisible ? "au-revealed" : ""}`}
                   style={{ transitionDelay: `${i * 0.1}s` }}
                 >
+                  <div className="au-team-card-shine" aria-hidden="true" />
                   <div className="au-team-avatar-wrap">
                     <div
                       className="au-team-avatar"
@@ -408,6 +447,13 @@ export default function AboutUs() {
               <button className="au-btn-ghost au-btn-lg" onClick={() => navigate("/vendors")}>
                 Browse Vendors
               </button>
+            </div>
+            <div className="au-cta-trust">
+              <span className="au-cta-trust-item">🔒 No credit card required</span>
+              <span className="au-cta-trust-sep">·</span>
+              <span className="au-cta-trust-item">⚡ Setup in 2 minutes</span>
+              <span className="au-cta-trust-sep">·</span>
+              <span className="au-cta-trust-item">🇮🇳 Made in India</span>
             </div>
           </div>
         </section>
@@ -450,8 +496,6 @@ const styles = `
     --border: rgba(201,168,76,0.2);
     --surface: #faf7f2;
     --white: #ffffff;
-
-    /* ─── Timeline column width — change ONE variable to fix everywhere ─── */
     --tl-year-w: 150px;
   }
 
@@ -614,10 +658,17 @@ const styles = `
     font-size: 13.5px; font-weight: 500; cursor: pointer;
     transition: transform 0.25s, box-shadow 0.25s;
     -webkit-tap-highlight-color: transparent;
+    position: relative; overflow: hidden;
+  }
+  .au-btn-primary::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.25) 50%, transparent 70%);
+    transform: translateX(-100%); transition: transform 0.4s;
   }
   .au-btn-primary:active { transform: scale(0.97); }
   @media (hover:hover) {
     .au-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(201,168,76,0.38); }
+    .au-btn-primary:hover::after { transform: translateX(100%); }
     .au-btn-primary:hover .au-btn-arrow { transform: translateX(5px); }
   }
   .au-btn-arrow { display: inline-block; transition: transform 0.25s; }
@@ -627,13 +678,26 @@ const styles = `
     padding: 13px 28px; background: transparent; color: var(--white);
     border: 1px solid rgba(245,240,232,0.2); border-radius: 10px;
     font-family: 'DM Sans', sans-serif; font-size: 13.5px; font-weight: 500; cursor: pointer;
-    transition: border-color 0.2s, color 0.2s, transform 0.2s;
+    transition: border-color 0.2s, color 0.2s, transform 0.2s, background 0.2s;
     -webkit-tap-highlight-color: transparent;
   }
   .au-btn-ghost:active { transform: scale(0.97); }
   @media (hover:hover) {
-    .au-btn-ghost:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-2px); }
+    .au-btn-ghost:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-2px); background: rgba(201,168,76,0.06); }
   }
+
+  .au-btn-ghost-dark {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 28px; background: transparent; color: rgba(245,240,232,0.7);
+    border: 1px solid rgba(201,168,76,0.22); border-radius: 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 13.5px; font-weight: 400; cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, transform 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  @media (hover:hover) {
+    .au-btn-ghost-dark:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-2px); }
+  }
+
   .au-btn-lg { padding: 15px 34px; font-size: 14px; }
 
   /* ── MARQUEE ── */
@@ -675,6 +739,7 @@ const styles = `
     display: flex; flex-direction: column; align-items: center; gap: 3px;
     position: relative; overflow: hidden;
     transition: background 0.3s;
+    cursor: default;
   }
   .au-stat-card::after {
     content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
@@ -740,10 +805,10 @@ const styles = `
     background: var(--white); border: 1px solid var(--border);
     border-radius: 24px; padding: 7px 16px;
     font-weight: 500;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
   }
   @media (hover:hover) {
-    .au-badge:hover { border-color: var(--gold); box-shadow: 0 4px 14px rgba(201,168,76,0.12); }
+    .au-badge:hover { border-color: var(--gold); box-shadow: 0 4px 14px rgba(201,168,76,0.12); transform: translateY(-1px); }
   }
 
   .au-mission-visual {
@@ -757,6 +822,7 @@ const styles = `
   }
   .au-ring1 { width: 280px; height: 280px; animation: auSpin 30s linear infinite; }
   .au-ring2 { width: 380px; height: 380px; animation: auSpin 50s linear infinite reverse; opacity: 0.6; }
+  .au-ring3 { width: 470px; height: 470px; animation: auSpin 70s linear infinite; opacity: 0.3; }
   @keyframes auSpin { from{transform:translate(-50%,-50%) rotate(0)} to{transform:translate(-50%,-50%) rotate(360deg)} }
 
   .au-mv-center {
@@ -779,6 +845,10 @@ const styles = `
     display: flex; flex-direction: column; align-items: center; gap: 3px;
     font-size: 10px; color: var(--muted); font-weight: 500;
     box-shadow: 0 4px 16px rgba(14,12,10,0.07);
+    transition: box-shadow 0.3s, border-color 0.3s, transform 0.3s;
+  }
+  @media (hover:hover) {
+    .au-mv-orbit:hover { box-shadow: 0 8px 24px rgba(201,168,76,0.15); border-color: var(--gold); }
   }
   .au-mv-orbit span:first-child { font-size: 1.2rem; }
   .au-orb-card1 { top: 6%; left: 18%; animation: auFloat1 6s ease-in-out infinite; }
@@ -789,12 +859,11 @@ const styles = `
     .au-mission-visual { height: 280px; }
     .au-ring1 { width: 200px; height: 200px; }
     .au-ring2 { width: 270px; height: 270px; }
+    .au-ring3 { width: 340px; height: 340px; }
     .au-mv-center { width: 110px; height: 110px; }
   }
 
-  /* ══════════════════════════════════════════════
-     TIMELINE — fixed year column
-  ══════════════════════════════════════════════ */
+  /* ── TIMELINE ── */
   .au-timeline-section {
     background: var(--ink); padding: 84px 20px;
     position: relative; overflow: hidden;
@@ -810,65 +879,60 @@ const styles = `
     display: flex; flex-direction: column; gap: 0;
   }
 
-  /*
-   * The vertical line and dot are anchored to --tl-year-w.
-   * Changing that one variable fixes everything at once.
-   */
   .au-timeline-line {
     position: absolute;
-    left: var(--tl-year-w);      /* was hardcoded 110px */
+    left: var(--tl-year-w);
     top: 0; bottom: 0; width: 1px;
     background: linear-gradient(to bottom, transparent, rgba(201,168,76,0.3) 10%, rgba(201,168,76,0.3) 90%, transparent);
   }
 
   .au-timeline-item {
     display: grid;
-    grid-template-columns: var(--tl-year-w) 1fr;  /* was hardcoded 110px */
-    gap: 0 28px; padding: 0 0 44px; position: relative; align-items: start;
+    grid-template-columns: var(--tl-year-w) 1fr;
+    gap: 0 28px; padding: 0 0 48px; position: relative; align-items: start;
   }
   .au-timeline-item:last-child { padding-bottom: 0; }
 
   .au-tl-dot {
     position: absolute;
-    /* centre the dot on the line: line is at --tl-year-w, dot is 15px wide */
-    left: calc(var(--tl-year-w) - 7px);  /* was hardcoded 103px */
-    top: 5px;
-    width: 15px; height: 15px; border-radius: 50%;
-    background: var(--gold); border: 3px solid var(--ink);
-    box-shadow: 0 0 0 1px rgba(201,168,76,0.4), 0 0 16px rgba(201,168,76,0.3);
-    z-index: 2;
+    left: calc(var(--tl-year-w) - 18px);
+    top: 2px;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--ink); border: 2px solid rgba(201,168,76,0.4);
+    box-shadow: 0 0 0 4px rgba(201,168,76,0.08), 0 0 20px rgba(201,168,76,0.2);
+    z-index: 2; display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.3s, box-shadow 0.3s;
   }
+  .au-timeline-item:hover .au-tl-dot {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 6px rgba(201,168,76,0.12), 0 0 28px rgba(201,168,76,0.35);
+  }
+  .au-tl-dot-icon { font-size: 14px; line-height: 1; }
 
   .au-tl-year {
     font-family: 'Cormorant Garamond', serif;
     font-size: 1rem; font-weight: 500; color: var(--gold);
     text-align: right;
-    /* pull the text slightly left of the dot so it never overlaps */
-    padding-right: 20px;
-    line-height: 1.4; padding-top: 2px;
-    /* prevent wrapping on desktop for "Early 2026" etc. */
+    padding-right: 28px;
+    line-height: 1.4; padding-top: 8px;
     white-space: nowrap;
   }
 
-  .au-tl-content { padding-left: 14px; }
+  .au-tl-content { padding-left: 14px; padding-top: 6px; }
   .au-tl-title {
     font-family: 'Cormorant Garamond', serif;
     font-size: 1.3rem; font-weight: 600; color: var(--cream); margin-bottom: 8px;
+    transition: color 0.3s;
   }
+  .au-timeline-item:hover .au-tl-title { color: var(--gold-light); }
   .au-tl-desc { font-size: 13.5px; color: rgba(245,240,232,0.48); line-height: 1.75; }
 
-  /* Mobile: collapse to single-column stacked layout */
   @media (max-width: 560px) {
     .au-timeline-line { left: 14px; }
-    .au-tl-dot { left: 7px; }
-    .au-timeline-item {
-      grid-template-columns: 1fr;
-      padding-left: 36px;
-    }
-    .au-tl-year {
-      text-align: left; font-size: 0.85rem;
-      padding-right: 0; white-space: normal;
-    }
+    .au-tl-dot { left: -4px; width: 28px; height: 28px; }
+    .au-tl-dot-icon { font-size: 11px; }
+    .au-timeline-item { grid-template-columns: 1fr; padding-left: 42px; }
+    .au-tl-year { text-align: left; font-size: 0.85rem; padding-right: 0; white-space: normal; }
     .au-tl-content { padding-left: 0; }
   }
 
@@ -883,8 +947,12 @@ const styles = `
   .au-value-card {
     background: var(--white); border: 1px solid var(--border);
     border-radius: 16px; padding: 28px 24px;
-    transition: transform 0.3s cubic-bezier(.22,1,.36,1), box-shadow 0.3s, border-color 0.3s;
+    transition: box-shadow 0.3s, border-color 0.3s;
     position: relative; overflow: hidden; cursor: default;
+  }
+  .au-value-accent-line {
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    opacity: 0; transition: opacity 0.3s;
   }
   .au-value-glow {
     position: absolute; top: -32px; right: -32px;
@@ -893,8 +961,9 @@ const styles = `
     transition: opacity 0.4s;
   }
   @media (hover:hover) {
-    .au-value-card:hover { border-color: var(--v-accent, var(--gold)); transform: translateY(-5px); box-shadow: 0 18px 42px rgba(0,0,0,0.08); }
+    .au-value-card:hover { border-color: var(--v-accent, var(--gold)); box-shadow: 0 18px 42px rgba(0,0,0,0.08); }
     .au-value-card:hover .au-value-glow { opacity: 0.28; }
+    .au-value-card:hover .au-value-accent-line { opacity: 1; }
     .au-value-card:hover .au-value-emoji { transform: scale(1.18) rotate(-6deg); }
   }
   .au-value-emoji { font-size: 2rem; display: block; margin-bottom: 14px; transition: transform 0.3s cubic-bezier(.22,1,.36,1); }
@@ -931,12 +1000,21 @@ const styles = `
   .au-vendor-perk {
     display: flex; align-items: center; gap: 12px;
     font-size: 13.5px; color: rgba(245,240,232,0.68); line-height: 1.5;
+    padding: 10px 14px; border-radius: 8px;
+    transition: background 0.2s;
+  }
+  @media (hover:hover) {
+    .au-vendor-perk:hover { background: rgba(201,168,76,0.06); }
   }
   .au-perk-check {
     width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
     background: rgba(201,168,76,0.14); border: 1px solid rgba(201,168,76,0.32);
     display: inline-flex; align-items: center; justify-content: center;
     font-size: 10px; color: var(--gold);
+  }
+
+  .au-vendor-cta-row {
+    display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
   }
 
   .au-vendor-stats {
@@ -950,11 +1028,23 @@ const styles = `
     position: relative; overflow: hidden;
     transition: background 0.3s;
   }
+  .au-vendor-stat::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: var(--vs-color, var(--gold)); opacity: 0;
+    transition: opacity 0.3s;
+  }
   .au-vendor-stat:last-child { border-bottom: none; }
   @media (hover:hover) {
     .au-vendor-stat:hover { background: rgba(201,168,76,0.04); }
+    .au-vendor-stat:hover::before { opacity: 1; }
   }
-  .au-vs-icon { font-size: 1.1rem; margin-bottom: 4px; opacity: 0.6; }
+  .au-vs-icon-wrap {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.15);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 8px;
+  }
+  .au-vs-icon { font-size: 1rem; }
   .au-vs-num {
     font-family: 'Cormorant Garamond', serif;
     font-size: 2.6rem; font-weight: 600; color: var(--gold); line-height: 1;
@@ -976,6 +1066,13 @@ const styles = `
     transition: transform 0.3s cubic-bezier(.22,1,.36,1), box-shadow 0.3s, border-color 0.3s;
     position: relative; overflow: hidden;
   }
+  .au-team-card-shine {
+    position: absolute; top: -60px; left: -60px; right: -60px; height: 120px;
+    background: linear-gradient(135deg, rgba(201,168,76,0.08) 0%, transparent 60%);
+    pointer-events: none; border-radius: 50%;
+    transform: translateY(-100%);
+    transition: transform 0.5s cubic-bezier(.22,1,.36,1);
+  }
   .au-team-card::before {
     content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
     background: linear-gradient(90deg, transparent, var(--gold), transparent);
@@ -987,14 +1084,19 @@ const styles = `
       box-shadow: 0 18px 42px rgba(201,168,76,0.1);
     }
     .au-team-card:hover::before { opacity: 1; }
+    .au-team-card:hover .au-team-card-shine { transform: translateY(0); }
   }
 
   .au-team-avatar-wrap { position: relative; margin-bottom: 8px; }
   .au-team-avatar {
     width: 68px; height: 68px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-family: 'Cormorant Garamond', serif; font-size: 1.7rem; font-weight: 600;
+    font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 600;
     color: var(--ink); position: relative; z-index: 1;
+    transition: transform 0.3s cubic-bezier(.22,1,.36,1);
+  }
+  @media (hover:hover) {
+    .au-team-card:hover .au-team-avatar { transform: scale(1.08); }
   }
   .au-team-avatar-ring {
     position: absolute; inset: -4px; border-radius: 50%;
@@ -1048,7 +1150,12 @@ const styles = `
     font-size: 13.5px; color: rgba(245,240,232,0.44); margin-bottom: 40px;
     line-height: 1.8;
   }
-  .au-cta-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .au-cta-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 28px; }
+  .au-cta-trust {
+    display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+  }
+  .au-cta-trust-item { font-size: 11.5px; color: rgba(245,240,232,0.32); }
+  .au-cta-trust-sep { font-size: 11px; color: rgba(201,168,76,0.2); }
 
   /* ── FOOTER ── */
   .au-footer {
@@ -1092,13 +1199,18 @@ const styles = `
     .au-footer-sep { display: none; }
     .au-values-grid { gap: 12px; }
     .au-team-grid { gap: 14px; }
+    .au-vendor-cta-row { flex-direction: column; }
+    .au-btn-ghost-dark { width: 100%; justify-content: center; }
+    .au-cta-trust { flex-direction: column; gap: 8px; }
+    .au-cta-trust-sep { display: none; }
   }
 
   /* ── Reduced motion ── */
   @media (prefers-reduced-motion: reduce) {
     .au-reveal { transition: none; }
     .au-orb, .au-eyebrow-dot, .au-fc-a, .au-fc-b, .au-fc-c { animation: none; }
-    .au-ring1, .au-ring2, .au-team-avatar-ring { animation: none; }
+    .au-ring1, .au-ring2, .au-ring3, .au-team-avatar-ring { animation: none; }
     .au-scroll-line { animation: none; }
+    .au-marquee-track { animation: none; }
   }
 `;
