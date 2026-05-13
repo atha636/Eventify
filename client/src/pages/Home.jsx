@@ -275,7 +275,7 @@ export default function Home() {
 
           <div className="hm-hero-stats">
             {[
-              { num: "10", suffix: "K+",   label: "Happy Clients" },
+              { num: "11", suffix: "K+",   label: "Happy Clients" },
               { num: "200",  suffix: "+",   label: "Vendors"       },
               { num: "4",   suffix: "+",   label: "Cities"        },
               { num: "4",   suffix: ".9★", label: "Rating"        },
