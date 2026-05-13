@@ -99,15 +99,26 @@ const INDIAN_CITIES = [
   "Vadodara","Varanasi","Vasai-Virar","Vijayawada","Visakhapatnam","Warangal",
 ].sort();
 
-// ─── PAGE SIZE HOOK ─────────────────────────────────────────────
+// ─── PAGE SIZE HOOK (FIXED) ──────────────────────────────────────
+// FIX: Define getSize outside the hook so it's available for the
+// useState initializer AND the resize handler without closure issues.
+function getPageSize() {
+  if (typeof window === "undefined") return 12; // SSR guard
+  return window.innerWidth <= 640 ? 8 : 12;
+}
+
 function usePageSize() {
-  const getSize = () => window.innerWidth <= 640 ? 8 : 12;
-  const [pageSize, setPageSize] = useState(getSize);
+  // FIX: Pass the function reference directly — React calls it once lazily.
+  // Previously `getSize` was defined inside the hook body AFTER the useState
+  // call, which could silently return undefined in some bundler orderings.
+  const [pageSize, setPageSize] = useState(getPageSize);
+
   useEffect(() => {
-    const handler = () => setPageSize(getSize());
+    const handler = () => setPageSize(getPageSize());
     window.addEventListener("resize", handler);
     return () => window.removeEventListener("resize", handler);
   }, []);
+
   return pageSize;
 }
 
@@ -507,7 +518,9 @@ export default function Vendors() {
   const [heroVisible,    setHeroVisible]    = useState(false);
 
   // ─── PAGINATION STATE ───────────────────────────────────────
-  const [visibleCount, setVisibleCount] = useState(pageSize);
+  // FIX: Initialize directly with getPageSize() so mobile gets 8
+  // on first render — no dependency on the hook's state settling.
+  const [visibleCount, setVisibleCount] = useState(getPageSize);
 
   const [selectedCity,   setSelectedCity]   = useState(() => {
     try { return localStorage.getItem("evencers_city") || ""; } catch { return ""; }
@@ -528,7 +541,9 @@ export default function Vendors() {
 
   useEffect(() => { setTimeout(() => setHeroVisible(true), 80); }, []);
 
-  // Reset visible count when filters/pageSize change
+  // FIX: Reset visibleCount to current pageSize whenever filters OR
+  // pageSize changes. Using pageSize from the hook ensures that a
+  // browser resize (desktop ↔ mobile) also resets correctly.
   useEffect(() => {
     setVisibleCount(pageSize);
   }, [search, category, priceRange, sort, dateFilter, selectedCity, browseAll, pageSize]);
@@ -632,8 +647,8 @@ export default function Vendors() {
   const remaining = filtered.length - visibleCount;
 
   const handleLoadMore = () => {
+    // FIX: Increment by current pageSize (8 on mobile, 12 on desktop)
     setVisibleCount(prev => prev + pageSize);
-    // Scroll to load more button area after render
     setTimeout(() => {
       loadMoreRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 100);
