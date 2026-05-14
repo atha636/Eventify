@@ -79,7 +79,7 @@ const TRUST_STATS = [
   { value: "200+",  label: "Verified Vendors"  },
   { value: "100+",  label: "Events Completed"  },
   { value: "4.9★", label: "Avg. Rating"       },
-  { value: "4+",   label: "Cities Covered"    },
+  { value: "6+",   label: "Cities Covered"    },
 ];
 
 const INDIAN_CITIES = [
