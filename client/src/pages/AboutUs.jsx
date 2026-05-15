@@ -53,7 +53,7 @@ function Counter({ target, suffix = "" }) {
 // ── Marquee Strip ──
 function MarqueeStrip() {
   const items = [
-    "200+ Verified Vendors", "★ 4.9 Rated", "4+ Cities",
+    "200+ Verified Vendors", "★ 4.9 Rated", "6+ Cities",
     "Weddings", "Birthdays", "Corporate Events", "Anniversaries",
     "Delhi · Chandigarh", "Instant Booking", "12k+ Happy Clients",
   ];
