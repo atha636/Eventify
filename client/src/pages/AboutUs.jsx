@@ -118,11 +118,26 @@ export default function AboutUs() {
     { emoji: "🔒", title: "Safe & Secure",       desc: "Payments, data, and communication are all protected. Your peace of mind is our promise.",          accent: "#38bdf8" },
   ];
 
+  // ── UPDATED TEAM with real photos ──
   const team = [
-    { initial: "AK", name: "Akarsh Gupta",   role: "Founder & CEO",            desc: "Passionate about making luxury events accessible to everyone in India.",      gradient: "135deg, #c9a84c 0%, #e8d5a3 100%" },
-    { initial: "AK", name: "Akarsh Gupta",   role: "Head of Vendor Relations",  desc: "Bridging the gap between talented vendors and clients who deserve them.",    gradient: "135deg, #a78bfa 0%, #c4b5fd 100%" },
-    { initial: "AT", name: "Atharv Patidar", role: "Co-founder & CTO",          desc: "Building the infrastructure that makes seamless bookings possible at scale.", gradient: "135deg, #34d399 0%, #6ee7b7 100%" },
-    { initial: "AT", name: "Atharv Patidar", role: "Head of Design",            desc: "Ensuring every touchpoint feels as beautiful as the events we support.",     gradient: "135deg, #f87171 0%, #fca5a5 100%" },
+    {
+      name: "Akarsh Gupta",
+      role: "Founder & CEO",
+      desc: "Passionate about making luxury events accessible to everyone in India.",
+      photo: "/images/akarsh.jpg",
+      gradient: "135deg, #c9a84c 0%, #e8d5a3 100%",
+      initial: "AK",
+      accentColor: "#c9a84c",
+    },
+    {
+      name: "Atharv Patidar",
+      role: "Co-founder & CTO",
+      desc: "Building the infrastructure that makes seamless bookings possible at scale.",
+      photo: "/images/atharv.jpg",
+      gradient: "135deg, #34d399 0%, #6ee7b7 100%",
+      initial: "AT",
+      accentColor: "#34d399",
+    },
   ];
 
   const timeline = [
@@ -405,22 +420,58 @@ export default function AboutUs() {
                 <article
                   key={i}
                   className={`au-team-card au-reveal ${teamVisible ? "au-revealed" : ""}`}
-                  style={{ transitionDelay: `${i * 0.1}s` }}
+                  style={{ transitionDelay: `${i * 0.14}s` }}
                 >
                   <div className="au-team-card-shine" aria-hidden="true" />
+
+                  {/* Gold top bar with member accent */}
+                  <div
+                    className="au-team-top-bar"
+                    style={{ background: `linear-gradient(90deg, ${member.accentColor}, transparent)` }}
+                    aria-hidden="true"
+                  />
+
                   <div className="au-team-avatar-wrap">
                     <div
-                      className="au-team-avatar"
-                      style={{ background: `linear-gradient(${member.gradient})` }}
-                      aria-label={member.name}
+                      className="au-team-photo-ring"
+                      style={{ "--ring-color": member.accentColor }}
                     >
-                      {member.initial}
+                      <img
+                        src={member.photo}
+                        alt={`Photo of ${member.name}`}
+                        className="au-team-photo"
+                        onError={(e) => {
+                          // Fallback to initials if image not found
+                          e.target.style.display = "none";
+                          e.target.parentElement.classList.add("au-photo-fallback");
+                          e.target.parentElement.setAttribute("data-initial", member.initial);
+                        }}
+                      />
                     </div>
-                    <div className="au-team-avatar-ring" aria-hidden="true" />
+
+                    {/* Decorative pulse ring */}
+                    <div
+                      className="au-team-pulse-ring"
+                      style={{ "--ring-color": member.accentColor }}
+                      aria-hidden="true"
+                    />
                   </div>
+
                   <h3 className="au-team-name">{member.name}</h3>
-                  <span className="au-team-role">{member.role}</span>
+                  <span
+                    className="au-team-role"
+                    style={{ color: member.accentColor }}
+                  >
+                    {member.role}
+                  </span>
                   <p className="au-team-desc">{member.desc}</p>
+
+                  {/* Bottom accent line on hover */}
+                  <div
+                    className="au-team-bottom-glow"
+                    style={{ background: member.accentColor }}
+                    aria-hidden="true"
+                  />
                 </article>
               ))}
             </div>
@@ -1051,71 +1102,155 @@ const styles = `
   }
   .au-vs-label { font-size: 12.5px; color: rgba(245,240,232,0.42); letter-spacing: 0.05em; }
 
-  /* ── TEAM ── */
-  .au-team-section { background: var(--surface); border-top: 1px solid var(--border); }
-  .au-team-grid {
-    display: grid; grid-template-columns: repeat(4,1fr); gap: 18px;
+  /* ═══════════════════════════════════════════
+     ── TEAM SECTION (Updated with real photos)
+  ═══════════════════════════════════════════ */
+  .au-team-section {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
   }
-  @media (max-width: 900px) { .au-team-grid { grid-template-columns: repeat(2,1fr); } }
-  @media (max-width: 480px) { .au-team-grid { grid-template-columns: 1fr; } }
+
+  /* 2-column grid centered, max 760px wide */
+  .au-team-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 28px;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  @media (max-width: 560px) {
+    .au-team-grid { grid-template-columns: 1fr; max-width: 360px; }
+  }
 
   .au-team-card {
-    background: var(--white); border: 1px solid var(--border);
-    border-radius: 16px; padding: 32px 22px 26px; text-align: center;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px 28px 30px;
+    text-align: center;
     display: flex; flex-direction: column; align-items: center; gap: 6px;
-    transition: transform 0.3s cubic-bezier(.22,1,.36,1), box-shadow 0.3s, border-color 0.3s;
+    transition: transform 0.35s cubic-bezier(.22,1,.36,1), box-shadow 0.35s, border-color 0.35s;
     position: relative; overflow: hidden;
-  }
-  .au-team-card-shine {
-    position: absolute; top: -60px; left: -60px; right: -60px; height: 120px;
-    background: linear-gradient(135deg, rgba(201,168,76,0.08) 0%, transparent 60%);
-    pointer-events: none; border-radius: 50%;
-    transform: translateY(-100%);
-    transition: transform 0.5s cubic-bezier(.22,1,.36,1);
-  }
-  .au-team-card::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, transparent, var(--gold), transparent);
-    opacity: 0; transition: opacity 0.3s;
-  }
-  @media (hover:hover) {
-    .au-team-card:hover {
-      border-color: var(--gold); transform: translateY(-5px);
-      box-shadow: 0 18px 42px rgba(201,168,76,0.1);
-    }
-    .au-team-card:hover::before { opacity: 1; }
-    .au-team-card:hover .au-team-card-shine { transform: translateY(0); }
+    cursor: default;
   }
 
-  .au-team-avatar-wrap { position: relative; margin-bottom: 8px; }
-  .au-team-avatar {
-    width: 68px; height: 68px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 600;
-    color: var(--ink); position: relative; z-index: 1;
-    transition: transform 0.3s cubic-bezier(.22,1,.36,1);
+  /* Gold shimmer line across top */
+  .au-team-top-bar {
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    opacity: 0.6;
+    transition: opacity 0.35s;
   }
+
+  /* Bottom glow on hover */
+  .au-team-bottom-glow {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+    opacity: 0;
+    transition: opacity 0.35s;
+  }
+
+  /* Diagonal shine sweep */
+  .au-team-card-shine {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(201,168,76,0.05) 0%, transparent 55%);
+    opacity: 0;
+    transition: opacity 0.35s;
+    pointer-events: none;
+  }
+
   @media (hover:hover) {
-    .au-team-card:hover .au-team-avatar { transform: scale(1.08); }
+    .au-team-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 24px 56px rgba(201,168,76,0.12), 0 4px 16px rgba(0,0,0,0.06);
+      border-color: rgba(201,168,76,0.35);
+    }
+    .au-team-card:hover .au-team-card-shine { opacity: 1; }
+    .au-team-card:hover .au-team-top-bar { opacity: 1; }
+    .au-team-card:hover .au-team-bottom-glow { opacity: 0.5; }
+    .au-team-card:hover .au-team-photo-ring { transform: scale(1.04); }
+    .au-team-card:hover .au-team-photo { filter: grayscale(0%) contrast(1.05) brightness(1.02); }
+    .au-team-card:hover .au-team-pulse-ring { opacity: 0.6; transform: scale(1.12); }
   }
-  .au-team-avatar-ring {
-    position: absolute; inset: -4px; border-radius: 50%;
-    border: 1px solid rgba(201,168,76,0.25); z-index: 0;
-    animation: auRingPulse 3s ease-in-out infinite;
+
+  /* Avatar wrapper — positions photo ring + pulse ring */
+  .au-team-avatar-wrap {
+    position: relative;
+    width: 110px; height: 110px;
+    margin-bottom: 12px;
+    display: flex; align-items: center; justify-content: center;
   }
-  @keyframes auRingPulse {
-    0%,100% { transform: scale(1); opacity: 0.6; }
-    50% { transform: scale(1.08); opacity: 0.2; }
+
+  /* Gradient ring around photo */
+  .au-team-photo-ring {
+    width: 104px; height: 104px;
+    border-radius: 50%;
+    padding: 3px;
+    background: linear-gradient(
+      135deg,
+      var(--ring-color, var(--gold)) 0%,
+      rgba(201,168,76,0.15) 60%,
+      var(--ring-color, var(--gold)) 100%
+    );
+    position: relative; z-index: 1;
+    box-shadow:
+      0 0 0 4px rgba(201,168,76,0.06),
+      0 8px 32px rgba(201,168,76,0.2);
+    transition: transform 0.35s cubic-bezier(.22,1,.36,1), box-shadow 0.35s;
   }
+
+  /* The actual photo */
+  .au-team-photo {
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+    filter: grayscale(10%) contrast(1.03);
+    transition: filter 0.4s ease, transform 0.35s cubic-bezier(.22,1,.36,1);
+  }
+
+  /* Fallback initials if image fails to load */
+  .au-team-photo-ring.au-photo-fallback {
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--ring-color, var(--gold)) 0%, rgba(201,168,76,0.5) 100%);
+  }
+  .au-team-photo-ring.au-photo-fallback::after {
+    content: attr(data-initial);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.6rem; font-weight: 600; color: var(--ink);
+  }
+  .au-team-photo-ring.au-photo-fallback img { display: none; }
+
+  /* Pulse ring behind photo */
+  .au-team-pulse-ring {
+    position: absolute; inset: -6px;
+    border-radius: 50%;
+    border: 1.5px solid var(--ring-color, var(--gold));
+    opacity: 0.25;
+    animation: auTeamPulse 3s ease-in-out infinite;
+    transition: opacity 0.35s, transform 0.35s;
+    z-index: 0;
+  }
+  @keyframes auTeamPulse {
+    0%,100% { transform: scale(1); opacity: 0.25; }
+    50%      { transform: scale(1.06); opacity: 0.1; }
+  }
+
   .au-team-name {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 1.15rem; font-weight: 600; color: var(--ink); margin-top: 4px;
+    font-size: 1.35rem; font-weight: 600; color: var(--ink);
+    margin-top: 4px; letter-spacing: -0.01em;
   }
+
   .au-team-role {
-    font-size: 10.5px; color: var(--gold); letter-spacing: 0.1em;
+    font-size: 10px; letter-spacing: 0.14em;
     text-transform: uppercase; font-weight: 500;
+    margin-bottom: 2px;
   }
-  .au-team-desc { font-size: 12.5px; color: var(--muted); line-height: 1.65; margin-top: 6px; }
+
+  .au-team-desc {
+    font-size: 13px; color: var(--muted); line-height: 1.68;
+    margin-top: 6px; max-width: 240px;
+  }
 
   /* ── CTA ── */
   .au-cta {
@@ -1198,7 +1333,7 @@ const styles = `
     .au-btn-lg { width: 100%; max-width: 300px; justify-content: center; }
     .au-footer-sep { display: none; }
     .au-values-grid { gap: 12px; }
-    .au-team-grid { gap: 14px; }
+    .au-team-grid { gap: 16px; }
     .au-vendor-cta-row { flex-direction: column; }
     .au-btn-ghost-dark { width: 100%; justify-content: center; }
     .au-cta-trust { flex-direction: column; gap: 8px; }
@@ -1209,7 +1344,7 @@ const styles = `
   @media (prefers-reduced-motion: reduce) {
     .au-reveal { transition: none; }
     .au-orb, .au-eyebrow-dot, .au-fc-a, .au-fc-b, .au-fc-c { animation: none; }
-    .au-ring1, .au-ring2, .au-ring3, .au-team-avatar-ring { animation: none; }
+    .au-ring1, .au-ring2, .au-ring3, .au-team-pulse-ring { animation: none; }
     .au-scroll-line { animation: none; }
     .au-marquee-track { animation: none; }
   }
