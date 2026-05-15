@@ -277,7 +277,7 @@ export default function Home() {
             {[
               { num: "12", suffix: "K+",   label: "Happy Clients" },
               { num: "200",  suffix: "+",   label: "Vendors"       },
-              { num: "5",   suffix: "+",   label: "Cities"        },
+              { num: "6",   suffix: "+",   label: "Cities"        },
               { num: "4",   suffix: ".9★", label: "Rating"        },
             ].map((s, i) => (
               <div key={i} className="hm-hero-stat">
