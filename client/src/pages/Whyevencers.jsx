@@ -114,7 +114,7 @@ const TESTIMONIALS = [
 ];
 
 const STATS = [
-  { num: "10",  suffix: "K+",  label: "Happy Clients",    icon: "🎉" },
+  { num: "12",  suffix: "K+",  label: "Happy Clients",    icon: "🎉" },
   { num: "200", suffix: "+",   label: "Verified Vendors", icon: "✓"  },
   { num: "4",   suffix: ".9★", label: "Average Rating",   icon: "⭐" },
   { num: "4",   suffix: "+",   label: "Cities Served",    icon: "📍" },
