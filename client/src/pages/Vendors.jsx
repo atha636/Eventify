@@ -690,7 +690,7 @@ export default function Vendors() {
           <div className="vn-hero-orb vn-orb3" aria-hidden="true" />
           <div className="vn-float-card vn-fc-left vn-fc-1" aria-hidden="true">
             <span className="vn-fc-icon">👥</span>
-            <div className="vn-fc-text"><span className="vn-fc-val">10k+</span><span className="vn-fc-label">Happy Clients</span></div>
+            <div className="vn-fc-text"><span className="vn-fc-val">12k+</span><span className="vn-fc-label">Happy Clients</span></div>
           </div>
           <div className="vn-float-card vn-fc-right vn-fc-2" aria-hidden="true">
             <span className="vn-fc-icon">🏆</span>
