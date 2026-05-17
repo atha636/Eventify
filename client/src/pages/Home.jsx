@@ -1182,7 +1182,7 @@ const styles = `
   .hm-footer-bottom-links { display: flex; gap: 20px; flex-wrap: wrap; justify-content: flex-end; }
   @media (max-width: 560px) { .hm-footer-bottom-links { justify-content: center; } }
   .hm-footer-bottom-link {
-    font-size: 11px; color: rgba(122,114,101,0.38); text-decoration: none;
+    font-size: 11px; color: rgba(201,168,76,0.55); text-decoration: none;
     letter-spacing: 0.04em; transition: color 0.2s; -webkit-tap-highlight-color: transparent;
   }
   @media (hover: hover) { .hm-footer-bottom-link:hover { color: rgba(201,168,76,0.6); } }
