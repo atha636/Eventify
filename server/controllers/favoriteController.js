@@ -4,10 +4,16 @@ const Vendor = require("../models/Vendor");
 // GET /api/favorites — get all favorited vendors for logged-in user
 exports.getFavorites = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).populate(
-      "favorites",
-      "title serviceType location images packages rating vendorName"
-    );
+    const user = await User.findById(req.user.id).populate({
+      path: "favorites",
+      select:
+        "title serviceType location locations images packages rating vendorName price timeSlots vendorId isApproved",
+      populate: {
+        path: "vendorId",
+        select: "isVendorVerified",
+      },
+    });
+
     if (!user) return res.status(404).json({ error: "User not found" });
 
     res.json(user.favorites || []);
@@ -34,12 +40,10 @@ exports.toggleFavorite = async (req, res) => {
     );
 
     if (alreadyFavorited) {
-      // Remove from favorites
       user.favorites = user.favorites.filter(
         (id) => id.toString() !== vendorId
       );
     } else {
-      // Add to favorites
       user.favorites.push(vendorId);
     }
 
