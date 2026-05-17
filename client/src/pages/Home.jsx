@@ -264,7 +264,7 @@ export default function Home() {
             <div className="hm-float-card hm-fc2">
               <span className="hm-fc-emoji">🎨</span>
               <span className="hm-fc-label">Decor</span>
-              <span className="hm-fc-sub">150+ vendors</span>
+              <span className="hm-fc-sub">140+ vendors</span>
             </div>
             <div className="hm-float-card hm-fc3">
               <span className="hm-fc-check">✓</span>
