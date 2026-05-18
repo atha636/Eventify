@@ -77,7 +77,7 @@ const SORT_OPTIONS = [
 
 const TRUST_STATS = [
   { value: "200+",  label: "Verified Vendors"  },
-  { value: "100+",  label: "Events Completed"  },
+  { value: "120+",  label: "Events Completed"  },
   { value: "4.9★", label: "Avg. Rating"       },
   { value: "6+",   label: "Cities Covered"    },
 ];
