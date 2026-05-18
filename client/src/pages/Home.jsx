@@ -130,9 +130,147 @@ function Typewriter({ words }) {
   );
 }
 
+// ── Policy Popup ──
+function PolicyPopup({ policy, onClose }) {
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handleKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      document.body.style.overflow = "";
+    };
+  }, [onClose]);
+
+  const content = {
+    "Privacy Policy": {
+      icon: "🔒",
+      sections: [
+        {
+          title: "Information We Collect",
+          text: "We collect information you provide directly to us, such as your name, email address, phone number, and event details when you register or book a vendor through Evencers. We also collect usage data, device information, and cookies to improve your experience.",
+        },
+        {
+          title: "How We Use Your Information",
+          text: "Your information is used to connect you with verified vendors, process bookings, send confirmations and updates, provide customer support, and improve our platform. We do not sell your personal information to third parties.",
+        },
+        {
+          title: "Data Security",
+          text: "We implement industry-standard security measures to protect your personal data. All transactions are encrypted. However, no method of transmission over the internet is 100% secure.",
+        },
+        {
+          title: "Cookies",
+          text: "We use cookies to enhance your browsing experience, remember your preferences, and analyze site traffic. You can control cookie settings through your browser.",
+        },
+        {
+          title: "Contact Us",
+          text: "For any privacy-related concerns, please contact us at admineventify2005@gmail.com or call +91 70230 17517.",
+        },
+      ],
+    },
+    "Terms of Service": {
+      icon: "📋",
+      sections: [
+        {
+          title: "Acceptance of Terms",
+          text: "By accessing and using Evencers, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our platform.",
+        },
+        {
+          title: "Use of Platform",
+          text: "Evencers is a marketplace connecting event planners with vendors. You agree to use the platform only for lawful purposes. You must be at least 18 years of age to use our services.",
+        },
+        {
+          title: "Vendor Listings",
+          text: "All vendors on Evencers are independently verified by our team. However, Evencers does not guarantee the quality, safety, or legality of services offered. Users are encouraged to review vendors carefully before booking.",
+        },
+        {
+          title: "Bookings & Payments",
+          text: "All bookings made through Evencers are subject to vendor availability and confirmation. Payment terms are as agreed between the user and the vendor at the time of booking.",
+        },
+        {
+          title: "Limitation of Liability",
+          text: "Evencers shall not be liable for any indirect, incidental, or consequential damages arising from the use of our platform or services provided by vendors.",
+        },
+        {
+          title: "Modifications",
+          text: "We reserve the right to modify these terms at any time. Continued use of the platform after changes constitutes acceptance of the new terms.",
+        },
+      ],
+    },
+    "Refund Policy": {
+      icon: "💰",
+      sections: [
+        {
+          title: "Cancellation by User",
+          text: "If you cancel a booking more than 7 days before the event date, you are eligible for a full refund. Cancellations made 3–7 days before the event will receive a 50% refund. No refund is applicable for cancellations within 48 hours of the event.",
+        },
+        {
+          title: "Cancellation by Vendor",
+          text: "If a vendor cancels your confirmed booking, you will receive a full refund within 5–7 business days. Evencers will also assist you in finding an alternative vendor at no additional charge.",
+        },
+        {
+          title: "Refund Process",
+          text: "Refunds are processed to the original payment method. Processing time may vary between 5–10 business days depending on your bank or payment provider.",
+        },
+        {
+          title: "Disputes",
+          text: "In case of any dispute regarding services rendered, please contact our support team within 48 hours of the event. We will mediate between you and the vendor to reach a fair resolution.",
+        },
+        {
+          title: "Non-Refundable Items",
+          text: "Platform convenience fees and booking confirmation charges are non-refundable once a booking is confirmed.",
+        },
+        {
+          title: "Contact for Refunds",
+          text: "To initiate a refund or for any refund-related queries, please reach out to admineventify2005@gmail.com with your booking ID and reason for cancellation.",
+        },
+      ],
+    },
+  };
+
+  const data = content[policy];
+
+  return (
+    <div className="pp-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label={policy}>
+      <div className="pp-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="pp-header">
+          <div className="pp-header-left">
+            <span className="pp-icon">{data.icon}</span>
+            <div>
+              <p className="pp-eyebrow">Evencers</p>
+              <h2 className="pp-title">{policy}</h2>
+            </div>
+          </div>
+          <button className="pp-close" onClick={onClose} aria-label="Close">✕</button>
+        </div>
+        <div className="pp-body">
+          <p className="pp-last-updated">Last updated: January 2026</p>
+          {data.sections.map((s, i) => (
+            <div key={i} className="pp-section">
+              <h3 className="pp-section-title">
+                <span className="pp-section-num">{String(i + 1).padStart(2, "0")}</span>
+                {s.title}
+              </h3>
+              <p className="pp-section-text">{s.text}</p>
+            </div>
+          ))}
+          <div className="pp-footer-note">
+            <span className="pp-footer-note-icon">✉</span>
+            <span>Questions? Contact us at <a href="mailto:admineventify2005@gmail.com">admineventify2005@gmail.com</a></span>
+          </div>
+        </div>
+        <div className="pp-modal-footer">
+          <button className="pp-accept-btn" onClick={onClose}>I Understand</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
+  const [activePolicy, setActivePolicy] = useState(null);
 
   useEffect(() => {
     document.title = "Evencers – India's Premier Event Planning Platform";
@@ -194,11 +332,9 @@ export default function Home() {
               India's Premier Event Platform
             </span>
             <h1 className="hm-hero-title">
-              {/* Hidden static text for SEO */}
               <span className="hm-sr-only">
                 India's Premier Event Planning Platform – Every great event deserves greatness
               </span>
-              {/* Visible animated text */}
               <span aria-hidden="true">
                 Every great event<br />
                 <em>deserves </em>
@@ -245,7 +381,6 @@ export default function Home() {
                 <span
                   key={t.label}
                   className="hm-pill"
-                  // ✅ Pills also go to category page
                   onClick={() => navigate(`/category/${t.cat}`)}
                 >
                   {t.label}
@@ -303,7 +438,6 @@ export default function Home() {
               <div
                 key={s.type}
                 className={`hm-service-card hm-reveal ${servicesVisible ? "hm-revealed" : ""}`}
-                // ✅ THIS IS THE FIX — was /vendors?cat= now /category/:type
                 onClick={() => navigate(`/category/${s.type}`)}
                 style={{ transitionDelay: `${i * 0.07}s`, "--card-accent": s.color }}
                 role="button"
@@ -490,7 +624,6 @@ export default function Home() {
                   <li key={s.cat}>
                     <span
                       className="hm-footer-list-link"
-                      // ✅ Footer service links also go to category page
                       onClick={() => navigate(`/category/${s.cat}`)}
                       style={{ cursor: "pointer" }}
                     >
@@ -563,13 +696,24 @@ export default function Home() {
             </p>
             <div className="hm-footer-bottom-links">
               {["Privacy Policy", "Terms of Service", "Refund Policy"].map((l) => (
-                <a key={l} href="#" className="hm-footer-bottom-link">{l}</a>
+                <button
+                  key={l}
+                  className="hm-footer-bottom-link"
+                  onClick={() => setActivePolicy(l)}
+                >
+                  {l}
+                </button>
               ))}
             </div>
           </div>
         </footer>
 
         {user && <CustomerCarePopup />}
+
+        {/* ── POLICY POPUP ── */}
+        {activePolicy && (
+          <PolicyPopup policy={activePolicy} onClose={() => setActivePolicy(null)} />
+        )}
       </div>
     </>
   );
@@ -1182,10 +1326,12 @@ const styles = `
   .hm-footer-bottom-links { display: flex; gap: 20px; flex-wrap: wrap; justify-content: flex-end; }
   @media (max-width: 560px) { .hm-footer-bottom-links { justify-content: center; } }
   .hm-footer-bottom-link {
-    font-size: 11px; color: rgba(201,168,76,0.55); text-decoration: none;
+    font-size: 11px; color: rgba(201,168,76,0.55);
+    background: none; border: none; padding: 0; cursor: pointer;
     letter-spacing: 0.04em; transition: color 0.2s; -webkit-tap-highlight-color: transparent;
+    font-family: 'DM Sans', sans-serif;
   }
-  @media (hover: hover) { .hm-footer-bottom-link:hover { color: rgba(201,168,76,0.6); } }
+  @media (hover: hover) { .hm-footer-bottom-link:hover { color: rgba(201,168,76,0.85); } }
 
   /* ── MOBILE ── */
   @media (max-width: 480px) {
@@ -1216,5 +1362,150 @@ const styles = `
     position: absolute; width: 1px; height: 1px;
     padding: 0; margin: -1px; overflow: hidden;
     clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+
+  /* ── POLICY POPUP ── */
+  .pp-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(14,12,10,0.85); backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    animation: ppFadeIn 0.25s cubic-bezier(.22,1,.36,1) both;
+  }
+  @keyframes ppFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .pp-modal {
+    background: #0f0d0b;
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 20px;
+    width: 100%; max-width: 600px;
+    max-height: 85vh;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(201,168,76,0.08);
+    animation: ppSlideUp 0.3s cubic-bezier(.22,1,.36,1) both;
+  }
+  @keyframes ppSlideUp {
+    from { opacity: 0; transform: translateY(24px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .pp-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 24px 20px;
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+    background: rgba(201,168,76,0.03);
+    flex-shrink: 0;
+  }
+  .pp-header-left { display: flex; align-items: center; gap: 14px; }
+  .pp-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; flex-shrink: 0;
+  }
+  .pp-eyebrow {
+    font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 3px;
+  }
+  .pp-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.3rem; font-weight: 600; color: var(--cream);
+    letter-spacing: 0.01em;
+  }
+  .pp-close {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(245,240,232,0.5); font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  @media (hover: hover) {
+    .pp-close:hover { background: rgba(201,168,76,0.1); border-color: rgba(201,168,76,0.3); color: var(--gold); }
+  }
+  .pp-close:active { transform: scale(0.93); }
+
+  .pp-body {
+    flex: 1; overflow-y: auto; padding: 24px;
+    scrollbar-width: thin; scrollbar-color: rgba(201,168,76,0.2) transparent;
+  }
+  .pp-body::-webkit-scrollbar { width: 4px; }
+  .pp-body::-webkit-scrollbar-track { background: transparent; }
+  .pp-body::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.2); border-radius: 4px; }
+
+  .pp-last-updated {
+    font-size: 10.5px; color: rgba(122,114,101,0.5);
+    letter-spacing: 0.05em; margin-bottom: 22px;
+    padding-bottom: 14px; border-bottom: 1px solid rgba(201,168,76,0.07);
+  }
+
+  .pp-section {
+    margin-bottom: 22px; padding-bottom: 22px;
+    border-bottom: 1px solid rgba(201,168,76,0.06);
+  }
+  .pp-section:last-of-type { border-bottom: none; margin-bottom: 16px; }
+
+  .pp-section-title {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem; font-weight: 600; color: var(--gold-light);
+    margin-bottom: 10px;
+  }
+  .pp-section-num {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 9px; font-weight: 500;
+    color: var(--gold); opacity: 0.6; letter-spacing: 0.1em;
+    flex-shrink: 0;
+  }
+  .pp-section-text {
+    font-size: 13px; color: rgba(122,114,101,0.8); line-height: 1.8;
+    padding-left: 24px;
+  }
+
+  .pp-footer-note {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(201,168,76,0.05); border: 1px solid rgba(201,168,76,0.1);
+    border-radius: 10px; padding: 14px 16px;
+    font-size: 12px; color: rgba(122,114,101,0.65);
+    margin-top: 8px;
+  }
+  .pp-footer-note-icon { font-size: 14px; flex-shrink: 0; }
+  .pp-footer-note a {
+    color: var(--gold); text-decoration: none;
+  }
+  @media (hover: hover) {
+    .pp-footer-note a:hover { text-decoration: underline; }
+  }
+
+  .pp-modal-footer {
+    padding: 16px 24px 20px;
+    border-top: 1px solid rgba(201,168,76,0.1);
+    background: rgba(201,168,76,0.02);
+    flex-shrink: 0;
+  }
+  .pp-accept-btn {
+    width: 100%; padding: 13px;
+    background: var(--gold); color: var(--ink);
+    border: none; border-radius: 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 13.5px; font-weight: 500;
+    cursor: pointer; transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    letter-spacing: 0.02em;
+  }
+  .pp-accept-btn:active { transform: scale(0.98); }
+  @media (hover: hover) {
+    .pp-accept-btn:hover { opacity: 0.9; box-shadow: 0 8px 24px rgba(201,168,76,0.3); }
+  }
+
+  @media (max-width: 480px) {
+    .pp-modal { border-radius: 16px; max-height: 90vh; }
+    .pp-header { padding: 18px 18px 16px; }
+    .pp-body { padding: 18px; }
+    .pp-modal-footer { padding: 14px 18px 18px; }
+    .pp-title { font-size: 1.15rem; }
   }
 `;
