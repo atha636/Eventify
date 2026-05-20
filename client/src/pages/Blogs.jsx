@@ -108,9 +108,40 @@ function PostCard({ post, index, visible, onNavigate }) {
   );
 }
 
+// ── POPUP MODAL ──
+function Modal({ open, onClose, title, children }) {
+  useEffect(() => {
+    if (open) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
+  if (!open) return null;
+
+  return (
+    <div className="bl-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label={title}>
+      <div className="bl-modal-box" onClick={e => e.stopPropagation()}>
+        <div className="bl-modal-header">
+          <h2 className="bl-modal-title">{title}</h2>
+          <button className="bl-modal-close" onClick={onClose} aria-label="Close">✕</button>
+        </div>
+        <div className="bl-modal-body">{children}</div>
+        <div className="bl-modal-footer">
+          <button className="bl-btn-primary" onClick={onClose}>Got it</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Blogs() {
   useSEO();
   const navigate = useNavigate();
+
+  // Popup state
+  const [popup, setPopup] = useState(null); // 'privacy' | 'contact'
+  const openPopup = (type) => setPopup(type);
+  const closePopup = () => setPopup(null);
 
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -134,11 +165,78 @@ export default function Blogs() {
     return matchCat && matchSearch;
   });
 
+  // ── Footer nav handler ──
+  const handleFooterNav = (label) => {
+    if (label === "Home")    { navigate("/");        return; }
+    if (label === "Vendors") { navigate("/vendors"); return; }
+    if (label === "Blog")    { navigate("/blog");    return; }
+    if (label === "About")   { navigate("/about");   return; }
+    if (label === "Privacy") { openPopup("privacy"); return; }
+    if (label === "Contact") { openPopup("contact"); return; }
+  };
+
   return (
     <>
       <style>{styles}</style>
       <div className="bl-root">
         <Navbar />
+
+        {/* ── PRIVACY POPUP ── */}
+        <Modal open={popup === "privacy"} onClose={closePopup} title="Privacy Policy">
+          <p className="bl-modal-updated">Last updated: January 2026</p>
+          <h3 className="bl-modal-section-title">Information We Collect</h3>
+          <p>We collect information you provide when registering, booking vendors, or contacting us — including your name, email, phone number, and event details. We also collect usage data to improve our platform.</p>
+          <h3 className="bl-modal-section-title">How We Use Your Data</h3>
+          <p>Your data is used solely to connect you with verified vendors, process bookings, send you updates about your events, and improve our services. We never sell your personal information to third parties.</p>
+          <h3 className="bl-modal-section-title">Data Security</h3>
+          <p>All payments are processed through PCI-compliant gateways. Your personal information is encrypted and stored securely. We use industry-standard SSL encryption across our entire platform.</p>
+          <h3 className="bl-modal-section-title">Cookies</h3>
+          <p>We use cookies to keep you logged in, remember your preferences, and analyse platform usage. You can disable cookies in your browser settings at any time.</p>
+          <h3 className="bl-modal-section-title">Your Rights</h3>
+          <p>You may request access to, correction of, or deletion of your personal data at any time by contacting us at <a href="mailto:admineventify2005@gmail.com" className="bl-modal-link">admineventify2005@gmail.com</a>.</p>
+          <h3 className="bl-modal-section-title">Contact</h3>
+          <p>For privacy-related concerns, reach us at <a href="mailto:admineventify2005@gmail.com" className="bl-modal-link">admineventify2005@gmail.com</a> or call <a href="tel:+917023017517" className="bl-modal-link">+91 70230 17517</a>.</p>
+        </Modal>
+
+        {/* ── CONTACT POPUP ── */}
+        <Modal open={popup === "contact"} onClose={closePopup} title="Contact Us">
+          <p style={{ color: "rgba(245,240,232,0.55)", fontSize: "14px", lineHeight: "1.7", marginBottom: "24px" }}>
+            We're a small, passionate team and we read every message. Reach out — we'd love to hear from you.
+          </p>
+          <div className="bl-contact-cards">
+            <a href="mailto:admineventify2005@gmail.com" className="bl-contact-card">
+              <span className="bl-contact-icon">✉</span>
+              <div>
+                <div className="bl-contact-label">Email Us</div>
+                <div className="bl-contact-value">admineventify2005@gmail.com</div>
+              </div>
+            </a>
+            <a href="tel:+917023017517" className="bl-contact-card">
+              <span className="bl-contact-icon">📞</span>
+              <div>
+                <div className="bl-contact-label">Call Us</div>
+                <div className="bl-contact-value">+91 70230 17517</div>
+              </div>
+            </a>
+            <a href="https://wa.me/917023017517?text=Hello%20Evencers%20Support" target="_blank" rel="noreferrer noopener" className="bl-contact-card">
+              <span className="bl-contact-icon">💬</span>
+              <div>
+                <div className="bl-contact-label">WhatsApp</div>
+                <div className="bl-contact-value">Chat with our support team</div>
+              </div>
+            </a>
+          </div>
+          <div className="bl-contact-hours">
+            <span className="bl-contact-icon">🕐</span>
+            <div>
+              <div className="bl-contact-label">Working Hours</div>
+              <div className="bl-contact-value">Monday – Saturday · 10:00 AM – 7:00 PM IST</div>
+            </div>
+          </div>
+          <p style={{ fontSize: "12px", color: "rgba(245,240,232,0.3)", marginTop: "20px", textAlign: "center" }}>
+            We typically respond within 2–4 business hours.
+          </p>
+        </Modal>
 
         {/* ── HERO ── */}
         <header className="bl-hero">
@@ -428,14 +526,20 @@ export default function Blogs() {
         {/* ── FOOTER ── */}
         <footer className="bl-footer" role="contentinfo">
           <div className="bl-footer-logo">
-  <Logo />
-  EVENCERS
-</div>
+            <Logo />
+            EVENCERS
+          </div>
           <p className="bl-footer-tagline">India's trusted event vendor platform</p>
           <p className="bl-footer-copy">© 2026 Evencers. Crafted with care in India.</p>
           <nav className="bl-footer-links" aria-label="Footer navigation">
             {["Home", "Vendors", "Blog", "About", "Privacy", "Contact"].map((l) => (
-              <a key={l} href="#" className="bl-footer-link">{l}</a>
+              <button
+                key={l}
+                onClick={() => handleFooterNav(l)}
+                className="bl-footer-link"
+              >
+                {l}
+              </button>
             ))}
           </nav>
         </footer>
@@ -477,6 +581,135 @@ const styles = `
     will-change: opacity, transform;
   }
   .bl-revealed { opacity: 1; transform: translateY(0); }
+
+  /* ══════════════════════════════════════
+     ── MODAL POPUP ──
+  ══════════════════════════════════════ */
+  .bl-modal-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(10,8,6,0.82);
+    backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    animation: blModalFadeIn 0.22s cubic-bezier(.22,1,.36,1);
+  }
+  @keyframes blModalFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .bl-modal-box {
+    background: #16130f;
+    border: 1px solid rgba(201,168,76,0.22);
+    border-radius: 20px;
+    width: 100%; max-width: 560px;
+    max-height: 82vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,168,76,0.08);
+    animation: blModalSlideUp 0.28s cubic-bezier(.22,1,.36,1);
+    overflow: hidden;
+  }
+  @keyframes blModalSlideUp {
+    from { opacity: 0; transform: translateY(24px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .bl-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 28px 18px;
+    border-bottom: 1px solid rgba(201,168,76,0.12);
+    flex-shrink: 0;
+    background: linear-gradient(135deg, rgba(201,168,76,0.06) 0%, transparent 60%);
+  }
+
+  .bl-modal-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.5rem; font-weight: 600; color: var(--gold-light);
+    letter-spacing: -0.01em;
+  }
+
+  .bl-modal-close {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(245,240,232,0.06); border: 1px solid rgba(245,240,232,0.1);
+    color: rgba(245,240,232,0.5); font-size: 12px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+  }
+  .bl-modal-close:hover {
+    background: rgba(201,168,76,0.12); color: var(--gold); border-color: rgba(201,168,76,0.3);
+  }
+
+  .bl-modal-body {
+    padding: 24px 28px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex; flex-direction: column; gap: 0;
+    scrollbar-width: thin; scrollbar-color: rgba(201,168,76,0.2) transparent;
+  }
+  .bl-modal-body::-webkit-scrollbar { width: 4px; }
+  .bl-modal-body::-webkit-scrollbar-track { background: transparent; }
+  .bl-modal-body::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.2); border-radius: 2px; }
+
+  .bl-modal-body p {
+    font-size: 13.5px; color: rgba(245,240,232,0.55); line-height: 1.82;
+    margin-bottom: 18px;
+  }
+
+  .bl-modal-updated {
+    font-size: 11px !important; color: rgba(201,168,76,0.5) !important;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 20px !important;
+  }
+
+  .bl-modal-section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem; font-weight: 600; color: var(--cream);
+    margin-bottom: 8px; margin-top: 4px;
+    padding-left: 10px;
+    border-left: 2px solid rgba(201,168,76,0.5);
+  }
+
+  .bl-modal-link {
+    color: var(--gold); text-decoration: none; border-bottom: 1px solid rgba(201,168,76,0.3);
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .bl-modal-link:hover { color: var(--gold-light); border-color: var(--gold-light); }
+
+  .bl-modal-footer {
+    padding: 16px 28px 22px;
+    border-top: 1px solid rgba(201,168,76,0.1);
+    display: flex; justify-content: flex-end;
+    flex-shrink: 0;
+  }
+
+  /* Contact popup cards */
+  .bl-contact-cards {
+    display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px;
+  }
+  .bl-contact-card {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 18px; border-radius: 12px;
+    background: rgba(201,168,76,0.05); border: 1px solid rgba(201,168,76,0.14);
+    text-decoration: none;
+    transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  }
+  .bl-contact-card:hover {
+    background: rgba(201,168,76,0.1); border-color: rgba(201,168,76,0.3);
+    transform: translateX(4px);
+  }
+  .bl-contact-icon { font-size: 1.3rem; flex-shrink: 0; }
+  .bl-contact-label {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--gold); font-weight: 500; margin-bottom: 3px;
+  }
+  .bl-contact-value { font-size: 13px; color: rgba(245,240,232,0.7); }
+  .bl-contact-hours {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 18px; border-radius: 12px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(245,240,232,0.06);
+    margin-top: 10px;
+  }
 
   /* ── HERO ── */
   .bl-hero {
@@ -954,21 +1187,42 @@ const styles = `
   .bl-nl-btn { flex-shrink: 0; }
   .bl-nl-note { font-size: 11px; color: rgba(245,240,232,0.25); }
 
-  /* ── FOOTER ── */
+  /* ══════════════════════════════════════
+     ── FOOTER — Brightened (matches AboutUs)
+  ══════════════════════════════════════ */
   .bl-footer {
-    background: #0a0806; padding: 36px 20px; text-align: center;
-    display: flex; flex-direction: column; gap: 12px; align-items: center;
-    border-top: 1px solid rgba(201,168,76,0.1);
+    background: #110e0b;
+    padding: 44px 20px 36px; text-align: center;
+    display: flex; flex-direction: column; gap: 14px; align-items: center;
+    border-top: 1px solid rgba(201,168,76,0.18);
   }
+
   .bl-footer-logo {
     font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600;
     color: var(--gold); letter-spacing: 0.2em; text-transform: uppercase;
+    display: flex; align-items: center; gap: 8px;
   }
-  .bl-footer-tagline { font-size: 11.5px; color: rgba(122,114,101,0.55); }
-  .bl-footer-copy { font-size: 11px; color: rgba(122,114,101,0.4); }
-  .bl-footer-links { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+
+  /* ↑ Brightened from 0.55 → 0.78 */
+  .bl-footer-tagline { font-size: 12px; color: rgba(245,240,232,0.78); font-weight: 400; }
+
+  /* ↑ Brightened from 0.4 → 0.6 */
+  .bl-footer-copy { font-size: 11.5px; color: rgba(245,240,232,0.6); }
+
+  .bl-footer-links {
+    display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-top: 4px;
+  }
+
+  /* Footer links are now <button> elements */
   .bl-footer-link {
-    font-size: 12px; color: var(--muted); text-decoration: none; transition: color 0.2s;
+    font-size: 12.5px;
+    /* ↑ Brightened from muted (#7a7265) → clearly readable */
+    color: rgba(245,240,232,0.62);
+    background: none; border: none; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-weight: 400;
+    padding: 2px 0;
+    transition: color 0.2s;
+    text-decoration: none;
   }
   .bl-footer-link:hover { color: var(--gold); }
 
@@ -979,6 +1233,10 @@ const styles = `
     .bl-content-wrap { padding: 32px 16px 48px; }
     .bl-nl-form { flex-direction: column; }
     .bl-nl-btn { width: 100%; justify-content: center; }
+    .bl-modal-box { border-radius: 16px; }
+    .bl-modal-header { padding: 18px 20px 14px; }
+    .bl-modal-body { padding: 20px; }
+    .bl-modal-footer { padding: 14px 20px 18px; }
   }
 
   /* ── Reduced motion ── */
@@ -988,5 +1246,6 @@ const styles = `
     .bl-fc-a, .bl-fc-b, .bl-fc-c { animation: none; }
     .bl-marquee-track { animation: none; }
     .bl-nl-orb1 { animation: none; }
+    .bl-modal-box, .bl-modal-overlay { animation: none; }
   }
 `;
