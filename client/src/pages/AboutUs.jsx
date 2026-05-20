@@ -97,9 +97,40 @@ function TiltCard({ children, className, style }) {
   );
 }
 
+// ── POPUP MODAL ──
+function Modal({ open, onClose, title, children }) {
+  useEffect(() => {
+    if (open) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
+  if (!open) return null;
+
+  return (
+    <div className="au-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label={title}>
+      <div className="au-modal-box" onClick={e => e.stopPropagation()}>
+        <div className="au-modal-header">
+          <h2 className="au-modal-title">{title}</h2>
+          <button className="au-modal-close" onClick={onClose} aria-label="Close">✕</button>
+        </div>
+        <div className="au-modal-body">{children}</div>
+        <div className="au-modal-footer">
+          <button className="au-btn-primary" onClick={onClose}>Got it</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AboutUs() {
   useSEO();
   const navigate = useNavigate();
+
+  // Popup state
+  const [popup, setPopup] = useState(null); // 'privacy' | 'terms' | 'contact'
+  const openPopup = (type) => setPopup(type);
+  const closePopup = () => setPopup(null);
 
   const [missionRef, missionVisible] = useReveal();
   const [valuesRef, valuesVisible] = useReveal();
@@ -118,7 +149,6 @@ export default function AboutUs() {
     { emoji: "🔒", title: "Safe & Secure",       desc: "Payments, data, and communication are all protected. Your peace of mind is our promise.",          accent: "#38bdf8" },
   ];
 
-  // ── UPDATED TEAM with real photos ──
   const team = [
     {
       name: "Akarsh Gupta",
@@ -147,11 +177,97 @@ export default function AboutUs() {
     { year: "2028",       title: "All of India",     desc: "50+ cities. 10k+ vendors. 120k+ clients. And we're just getting started.",                                                  icon: "🏆" },
   ];
 
+  // ── Footer nav handler ──
+  const handleFooterNav = (label) => {
+    if (label === "Home") { navigate("/"); return; }
+    if (label === "Vendors") { navigate("/vendors"); return; }
+    if (label === "About") { navigate("/about"); return; }
+    if (label === "Privacy") { openPopup("privacy"); return; }
+    if (label === "Terms") { openPopup("terms"); return; }
+    if (label === "Contact") { openPopup("contact"); return; }
+  };
+
   return (
     <>
       <style>{styles}</style>
       <div className="au-root">
         <Navbar />
+
+        {/* ── PRIVACY POPUP ── */}
+        <Modal open={popup === "privacy"} onClose={closePopup} title="Privacy Policy">
+          <p className="au-modal-updated">Last updated: January 2026</p>
+          <h3 className="au-modal-section-title">Information We Collect</h3>
+          <p>We collect information you provide when registering, booking vendors, or contacting us — including your name, email, phone number, and event details. We also collect usage data to improve our platform.</p>
+          <h3 className="au-modal-section-title">How We Use Your Data</h3>
+          <p>Your data is used solely to connect you with verified vendors, process bookings, send you updates about your events, and improve our services. We never sell your personal information to third parties.</p>
+          <h3 className="au-modal-section-title">Data Security</h3>
+          <p>All payments are processed through PCI-compliant gateways. Your personal information is encrypted and stored securely. We use industry-standard SSL encryption across our entire platform.</p>
+          <h3 className="au-modal-section-title">Cookies</h3>
+          <p>We use cookies to keep you logged in, remember your preferences, and analyse platform usage. You can disable cookies in your browser settings at any time.</p>
+          <h3 className="au-modal-section-title">Your Rights</h3>
+          <p>You may request access to, correction of, or deletion of your personal data at any time by contacting us at <a href="mailto:admineventify2005@gmail.com" className="au-modal-link">admineventify2005@gmail.com</a>.</p>
+          <h3 className="au-modal-section-title">Contact</h3>
+          <p>For privacy-related concerns, reach us at <a href="mailto:admineventify2005@gmail.com" className="au-modal-link">admineventify2005@gmail.com</a> or call <a href="tel:+917023017517" className="au-modal-link">+91 70230 17517</a>.</p>
+        </Modal>
+
+        {/* ── TERMS POPUP ── */}
+        <Modal open={popup === "terms"} onClose={closePopup} title="Terms of Service">
+          <p className="au-modal-updated">Effective: January 2026</p>
+          <h3 className="au-modal-section-title">1. Acceptance of Terms</h3>
+          <p>By accessing or using Evencers, you agree to be bound by these Terms of Service. If you do not agree, please do not use our platform.</p>
+          <h3 className="au-modal-section-title">2. Use of the Platform</h3>
+          <p>Evencers is a marketplace connecting event clients with verified vendors. You may use the platform only for lawful purposes and in accordance with these terms. You are responsible for maintaining the confidentiality of your account credentials.</p>
+          <h3 className="au-modal-section-title">3. Bookings & Payments</h3>
+          <p>All bookings made through Evencers are subject to vendor availability and confirmation. Payments are processed securely. Cancellation and refund policies vary by vendor and are displayed clearly before booking confirmation.</p>
+          <h3 className="au-modal-section-title">4. Vendor Listings</h3>
+          <p>All vendors listed on Evencers are manually verified by our team. However, Evencers is not liable for the quality or delivery of services provided by individual vendors. Disputes should be raised within 48 hours of the event.</p>
+          <h3 className="au-modal-section-title">5. Intellectual Property</h3>
+          <p>All content, branding, and technology on Evencers is the property of Evencers and may not be reproduced without written permission.</p>
+          <h3 className="au-modal-section-title">6. Limitation of Liability</h3>
+          <p>Evencers shall not be liable for any indirect, incidental, or consequential damages arising from use of the platform. Our total liability shall not exceed the booking amount in question.</p>
+          <h3 className="au-modal-section-title">7. Governing Law</h3>
+          <p>These terms are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of courts in Chandigarh, India.</p>
+        </Modal>
+
+        {/* ── CONTACT POPUP ── */}
+        <Modal open={popup === "contact"} onClose={closePopup} title="Contact Us">
+          <p style={{ color: "rgba(245,240,232,0.55)", fontSize: "14px", lineHeight: "1.7", marginBottom: "24px" }}>
+            We're a small, passionate team and we read every message. Reach out — we'd love to hear from you.
+          </p>
+          <div className="au-contact-cards">
+            <a href="mailto:admineventify2005@gmail.com" className="au-contact-card">
+              <span className="au-contact-icon">✉</span>
+              <div>
+                <div className="au-contact-label">Email Us</div>
+                <div className="au-contact-value">admineventify2005@gmail.com</div>
+              </div>
+            </a>
+            <a href="tel:+917023017517" className="au-contact-card">
+              <span className="au-contact-icon">📞</span>
+              <div>
+                <div className="au-contact-label">Call Us</div>
+                <div className="au-contact-value">+91 70230 17517</div>
+              </div>
+            </a>
+            <a href="https://wa.me/917023017517?text=Hello%20Evencers%20Support" target="_blank" rel="noreferrer noopener" className="au-contact-card">
+              <span className="au-contact-icon">💬</span>
+              <div>
+                <div className="au-contact-label">WhatsApp</div>
+                <div className="au-contact-value">Chat with our support team</div>
+              </div>
+            </a>
+          </div>
+          <div className="au-contact-hours">
+            <span className="au-contact-hours-icon">🕐</span>
+            <div>
+              <div className="au-contact-label">Working Hours</div>
+              <div className="au-contact-value">Monday – Saturday · 10:00 AM – 7:00 PM IST</div>
+            </div>
+          </div>
+          <p style={{ fontSize: "12px", color: "rgba(245,240,232,0.3)", marginTop: "20px", textAlign: "center" }}>
+            We typically respond within 2–4 business hours.
+          </p>
+        </Modal>
 
         {/* ── HERO ── */}
         <header className="au-hero">
@@ -423,14 +539,11 @@ export default function AboutUs() {
                   style={{ transitionDelay: `${i * 0.14}s` }}
                 >
                   <div className="au-team-card-shine" aria-hidden="true" />
-
-                  {/* Gold top bar with member accent */}
                   <div
                     className="au-team-top-bar"
                     style={{ background: `linear-gradient(90deg, ${member.accentColor}, transparent)` }}
                     aria-hidden="true"
                   />
-
                   <div className="au-team-avatar-wrap">
                     <div
                       className="au-team-photo-ring"
@@ -441,32 +554,23 @@ export default function AboutUs() {
                         alt={`Photo of ${member.name}`}
                         className="au-team-photo"
                         onError={(e) => {
-                          // Fallback to initials if image not found
                           e.target.style.display = "none";
                           e.target.parentElement.classList.add("au-photo-fallback");
                           e.target.parentElement.setAttribute("data-initial", member.initial);
                         }}
                       />
                     </div>
-
-                    {/* Decorative pulse ring */}
                     <div
                       className="au-team-pulse-ring"
                       style={{ "--ring-color": member.accentColor }}
                       aria-hidden="true"
                     />
                   </div>
-
                   <h3 className="au-team-name">{member.name}</h3>
-                  <span
-                    className="au-team-role"
-                    style={{ color: member.accentColor }}
-                  >
+                  <span className="au-team-role" style={{ color: member.accentColor }}>
                     {member.role}
                   </span>
                   <p className="au-team-desc">{member.desc}</p>
-
-                  {/* Bottom accent line on hover */}
                   <div
                     className="au-team-bottom-glow"
                     style={{ background: member.accentColor }}
@@ -516,7 +620,13 @@ export default function AboutUs() {
           <p className="au-footer-copy">© 2025 Evencers. Crafted with care in India.</p>
           <nav className="au-footer-links" aria-label="Footer navigation">
             {["Home", "Vendors", "About", "Privacy", "Terms", "Contact"].map((l) => (
-              <a key={l} href="#" className="au-footer-link">{l}</a>
+              <button
+                key={l}
+                onClick={() => handleFooterNav(l)}
+                className="au-footer-link"
+              >
+                {l}
+              </button>
             ))}
           </nav>
           <address className="au-footer-contact">
@@ -566,6 +676,136 @@ const styles = `
     will-change: opacity, transform;
   }
   .au-revealed { opacity: 1; transform: translateY(0); }
+
+  /* ══════════════════════════════════════
+     ── MODAL POPUP ──
+  ══════════════════════════════════════ */
+  .au-modal-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(10,8,6,0.82);
+    backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    animation: auModalFadeIn 0.22s cubic-bezier(.22,1,.36,1);
+  }
+  @keyframes auModalFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .au-modal-box {
+    background: #16130f;
+    border: 1px solid rgba(201,168,76,0.22);
+    border-radius: 20px;
+    width: 100%; max-width: 560px;
+    max-height: 82vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,168,76,0.08);
+    animation: auModalSlideUp 0.28s cubic-bezier(.22,1,.36,1);
+    overflow: hidden;
+  }
+  @keyframes auModalSlideUp {
+    from { opacity: 0; transform: translateY(24px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .au-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 28px 18px;
+    border-bottom: 1px solid rgba(201,168,76,0.12);
+    flex-shrink: 0;
+    background: linear-gradient(135deg, rgba(201,168,76,0.06) 0%, transparent 60%);
+  }
+
+  .au-modal-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.5rem; font-weight: 600; color: var(--gold-light);
+    letter-spacing: -0.01em;
+  }
+
+  .au-modal-close {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(245,240,232,0.06); border: 1px solid rgba(245,240,232,0.1);
+    color: rgba(245,240,232,0.5); font-size: 12px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+  }
+  .au-modal-close:hover {
+    background: rgba(201,168,76,0.12); color: var(--gold); border-color: rgba(201,168,76,0.3);
+  }
+
+  .au-modal-body {
+    padding: 24px 28px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex; flex-direction: column; gap: 0;
+    scrollbar-width: thin; scrollbar-color: rgba(201,168,76,0.2) transparent;
+  }
+  .au-modal-body::-webkit-scrollbar { width: 4px; }
+  .au-modal-body::-webkit-scrollbar-track { background: transparent; }
+  .au-modal-body::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.2); border-radius: 2px; }
+
+  .au-modal-body p {
+    font-size: 13.5px; color: rgba(245,240,232,0.55); line-height: 1.82;
+    margin-bottom: 18px;
+  }
+
+  .au-modal-updated {
+    font-size: 11px !important; color: rgba(201,168,76,0.5) !important;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 20px !important;
+  }
+
+  .au-modal-section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem; font-weight: 600; color: var(--cream);
+    margin-bottom: 8px; margin-top: 4px;
+    padding-left: 10px;
+    border-left: 2px solid rgba(201,168,76,0.5);
+  }
+
+  .au-modal-link {
+    color: var(--gold); text-decoration: none; border-bottom: 1px solid rgba(201,168,76,0.3);
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .au-modal-link:hover { color: var(--gold-light); border-color: var(--gold-light); }
+
+  .au-modal-footer {
+    padding: 16px 28px 22px;
+    border-top: 1px solid rgba(201,168,76,0.1);
+    display: flex; justify-content: flex-end;
+    flex-shrink: 0;
+  }
+
+  /* Contact popup cards */
+  .au-contact-cards {
+    display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px;
+  }
+  .au-contact-card {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 18px; border-radius: 12px;
+    background: rgba(201,168,76,0.05); border: 1px solid rgba(201,168,76,0.14);
+    text-decoration: none;
+    transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  }
+  .au-contact-card:hover {
+    background: rgba(201,168,76,0.1); border-color: rgba(201,168,76,0.3);
+    transform: translateX(4px);
+  }
+  .au-contact-icon { font-size: 1.3rem; flex-shrink: 0; }
+  .au-contact-label {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--gold); font-weight: 500; margin-bottom: 3px;
+  }
+  .au-contact-value { font-size: 13px; color: rgba(245,240,232,0.7); }
+  .au-contact-hours {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 18px; border-radius: 12px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(245,240,232,0.06);
+    margin-top: 10px;
+  }
+  .au-contact-hours-icon { font-size: 1.3rem; flex-shrink: 0; }
 
   /* ── HERO ── */
   .au-hero {
@@ -1102,15 +1342,11 @@ const styles = `
   }
   .au-vs-label { font-size: 12.5px; color: rgba(245,240,232,0.42); letter-spacing: 0.05em; }
 
-  /* ═══════════════════════════════════════════
-     ── TEAM SECTION (Updated with real photos)
-  ═══════════════════════════════════════════ */
+  /* ── TEAM SECTION ── */
   .au-team-section {
     background: var(--surface);
     border-top: 1px solid var(--border);
   }
-
-  /* 2-column grid centered, max 760px wide */
   .au-team-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -1133,30 +1369,19 @@ const styles = `
     position: relative; overflow: hidden;
     cursor: default;
   }
-
-  /* Gold shimmer line across top */
   .au-team-top-bar {
     position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    opacity: 0.6;
-    transition: opacity 0.35s;
+    opacity: 0.6; transition: opacity 0.35s;
   }
-
-  /* Bottom glow on hover */
   .au-team-bottom-glow {
     position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
-    opacity: 0;
-    transition: opacity 0.35s;
+    opacity: 0; transition: opacity 0.35s;
   }
-
-  /* Diagonal shine sweep */
   .au-team-card-shine {
     position: absolute; inset: 0;
     background: linear-gradient(135deg, rgba(201,168,76,0.05) 0%, transparent 55%);
-    opacity: 0;
-    transition: opacity 0.35s;
-    pointer-events: none;
+    opacity: 0; transition: opacity 0.35s; pointer-events: none;
   }
-
   @media (hover:hover) {
     .au-team-card:hover {
       transform: translateY(-8px);
@@ -1170,45 +1395,24 @@ const styles = `
     .au-team-card:hover .au-team-photo { filter: grayscale(0%) contrast(1.05) brightness(1.02); }
     .au-team-card:hover .au-team-pulse-ring { opacity: 0.6; transform: scale(1.12); }
   }
-
-  /* Avatar wrapper — positions photo ring + pulse ring */
   .au-team-avatar-wrap {
-    position: relative;
-    width: 110px; height: 110px;
+    position: relative; width: 110px; height: 110px;
     margin-bottom: 12px;
     display: flex; align-items: center; justify-content: center;
   }
-
-  /* Gradient ring around photo */
   .au-team-photo-ring {
-    width: 104px; height: 104px;
-    border-radius: 50%;
-    padding: 3px;
-    background: linear-gradient(
-      135deg,
-      var(--ring-color, var(--gold)) 0%,
-      rgba(201,168,76,0.15) 60%,
-      var(--ring-color, var(--gold)) 100%
-    );
+    width: 104px; height: 104px; border-radius: 50%; padding: 3px;
+    background: linear-gradient(135deg, var(--ring-color, var(--gold)) 0%, rgba(201,168,76,0.15) 60%, var(--ring-color, var(--gold)) 100%);
     position: relative; z-index: 1;
-    box-shadow:
-      0 0 0 4px rgba(201,168,76,0.06),
-      0 8px 32px rgba(201,168,76,0.2);
+    box-shadow: 0 0 0 4px rgba(201,168,76,0.06), 0 8px 32px rgba(201,168,76,0.2);
     transition: transform 0.35s cubic-bezier(.22,1,.36,1), box-shadow 0.35s;
   }
-
-  /* The actual photo */
   .au-team-photo {
-    width: 100%; height: 100%;
-    border-radius: 50%;
-    object-fit: cover;
-    object-position: center top;
-    display: block;
+    width: 100%; height: 100%; border-radius: 50%;
+    object-fit: cover; object-position: center top; display: block;
     filter: grayscale(10%) contrast(1.03);
     transition: filter 0.4s ease, transform 0.35s cubic-bezier(.22,1,.36,1);
   }
-
-  /* Fallback initials if image fails to load */
   .au-team-photo-ring.au-photo-fallback {
     display: flex; align-items: center; justify-content: center;
     background: linear-gradient(135deg, var(--ring-color, var(--gold)) 0%, rgba(201,168,76,0.5) 100%);
@@ -1219,34 +1423,25 @@ const styles = `
     font-size: 1.6rem; font-weight: 600; color: var(--ink);
   }
   .au-team-photo-ring.au-photo-fallback img { display: none; }
-
-  /* Pulse ring behind photo */
   .au-team-pulse-ring {
-    position: absolute; inset: -6px;
-    border-radius: 50%;
+    position: absolute; inset: -6px; border-radius: 50%;
     border: 1.5px solid var(--ring-color, var(--gold));
-    opacity: 0.25;
-    animation: auTeamPulse 3s ease-in-out infinite;
-    transition: opacity 0.35s, transform 0.35s;
-    z-index: 0;
+    opacity: 0.25; animation: auTeamPulse 3s ease-in-out infinite;
+    transition: opacity 0.35s, transform 0.35s; z-index: 0;
   }
   @keyframes auTeamPulse {
     0%,100% { transform: scale(1); opacity: 0.25; }
     50%      { transform: scale(1.06); opacity: 0.1; }
   }
-
   .au-team-name {
     font-family: 'Cormorant Garamond', serif;
     font-size: 1.35rem; font-weight: 600; color: var(--ink);
     margin-top: 4px; letter-spacing: -0.01em;
   }
-
   .au-team-role {
     font-size: 10px; letter-spacing: 0.14em;
-    text-transform: uppercase; font-weight: 500;
-    margin-bottom: 2px;
+    text-transform: uppercase; font-weight: 500; margin-bottom: 2px;
   }
-
   .au-team-desc {
     font-size: 13px; color: var(--muted); line-height: 1.68;
     margin-top: 6px; max-width: 240px;
@@ -1272,8 +1467,7 @@ const styles = `
   .au-cta-lines {
     position: absolute; inset: 0;
     background-image: linear-gradient(rgba(201,168,76,0.03) 1px, transparent 1px);
-    background-size: 100% 40px;
-    pointer-events: none;
+    background-size: 100% 40px; pointer-events: none;
   }
   .au-cta-inner { position: relative; z-index: 1; max-width: 600px; margin: 0 auto; }
   .au-cta-title {
@@ -1282,46 +1476,69 @@ const styles = `
     margin: 12px 0 16px; line-height: 1.1; letter-spacing: -0.01em;
   }
   .au-cta-sub {
-    font-size: 13.5px; color: rgba(245,240,232,0.44); margin-bottom: 40px;
-    line-height: 1.8;
+    font-size: 13.5px; color: rgba(245,240,232,0.44); margin-bottom: 40px; line-height: 1.8;
   }
   .au-cta-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 28px; }
-  .au-cta-trust {
-    display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
-  }
+  .au-cta-trust { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
   .au-cta-trust-item { font-size: 11.5px; color: rgba(245,240,232,0.32); }
   .au-cta-trust-sep { font-size: 11px; color: rgba(201,168,76,0.2); }
 
-  /* ── FOOTER ── */
+  /* ══════════════════════════════════════
+     ── FOOTER — Brightened ──
+  ══════════════════════════════════════ */
   .au-footer {
-    background: #0a0806; padding: 38px 20px; text-align: center;
-    display: flex; flex-direction: column; gap: 12px; align-items: center;
-    border-top: 1px solid rgba(201,168,76,0.1);
+    background: #110e0b;
+    padding: 44px 20px 36px; text-align: center;
+    display: flex; flex-direction: column; gap: 14px; align-items: center;
+    border-top: 1px solid rgba(201,168,76,0.18);
   }
+
   .au-footer-logo {
     font-family: 'Cormorant Garamond', serif;
     font-size: 1.1rem; font-weight: 600; color: var(--gold);
     letter-spacing: 0.2em; text-transform: uppercase;
     display: flex; align-items: center; gap: 8px;
   }
-  .au-footer-tagline { font-size: 11.5px; color: rgba(122,114,101,0.55); }
-  .au-footer-copy { font-size: 11px; color: rgba(122,114,101,0.4); }
-  .au-footer-links { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+
+  /* ↑ Brightened from 0.55 → 0.78 */
+  .au-footer-tagline { font-size: 12px; color: rgba(245,240,232,0.78); font-weight: 400; }
+
+  /* ↑ Brightened from 0.4 → 0.6 */
+  .au-footer-copy { font-size: 11.5px; color: rgba(245,240,232,0.6); }
+
+  .au-footer-links { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
+
+  /* Footer links are now <button> elements styled as links */
   .au-footer-link {
-    font-size: 12px; color: var(--muted); text-decoration: none; transition: color 0.2s;
+    font-size: 12.5px;
+    /* ↑ Brightened from muted (#7a7265) → lighter */
+    color: rgba(245,240,232,0.62);
+    background: none; border: none; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-weight: 400;
+    padding: 2px 0;
+    transition: color 0.2s;
+    text-decoration: none;
   }
   .au-footer-link:hover { color: var(--gold); }
+
   .au-footer-contact {
     display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center;
-    border-top: 1px solid rgba(201,168,76,0.08); padding-top: 12px; width: 100%;
+    border-top: 1px solid rgba(201,168,76,0.12); padding-top: 16px; width: 100%;
     font-style: normal;
   }
+
   .au-footer-contact-link {
-    font-size: 12px; color: var(--muted); text-decoration: none; transition: color 0.2s;
+    font-size: 12.5px;
+    /* ↑ Brightened */
+    color: rgba(245,240,232,0.62);
+    text-decoration: none; transition: color 0.2s;
   }
   .au-footer-contact-link:hover { color: var(--gold); }
-  .au-footer-sep { color: rgba(201,168,76,0.25); font-size: 12px; }
-  .au-footer-hours { font-size: 11px; color: rgba(122,114,101,0.38); letter-spacing: 0.05em; }
+
+  .au-footer-sep { color: rgba(201,168,76,0.35); font-size: 12px; }
+
+  /* ↑ Brightened from 0.38 → 0.55 */
+  .au-footer-hours { font-size: 11.5px; color: rgba(245,240,232,0.55); letter-spacing: 0.05em; }
 
   /* ── MOBILE ── */
   @media (max-width: 480px) {
@@ -1338,6 +1555,10 @@ const styles = `
     .au-btn-ghost-dark { width: 100%; justify-content: center; }
     .au-cta-trust { flex-direction: column; gap: 8px; }
     .au-cta-trust-sep { display: none; }
+    .au-modal-box { border-radius: 16px; }
+    .au-modal-header { padding: 18px 20px 14px; }
+    .au-modal-body { padding: 20px; }
+    .au-modal-footer { padding: 14px 20px 18px; }
   }
 
   /* ── Reduced motion ── */
@@ -1347,5 +1568,6 @@ const styles = `
     .au-ring1, .au-ring2, .au-ring3, .au-team-pulse-ring { animation: none; }
     .au-scroll-line { animation: none; }
     .au-marquee-track { animation: none; }
+    .au-modal-box, .au-modal-overlay { animation: none; }
   }
 `;
