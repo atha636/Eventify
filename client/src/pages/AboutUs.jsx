@@ -334,7 +334,7 @@ export default function AboutUs() {
         <section className="au-stats-section" ref={statsRef} aria-label="Platform statistics">
           <div className="au-stats-grid">
             {[
-              { num: "10", suffix: "K+",   label: "Happy Clients",    sub: "across India",       icon: "👥" },
+              { num: "12", suffix: "K+",   label: "Happy Clients",    sub: "across India",       icon: "👥" },
               { num: "200",  suffix: "+",  label: "Verified Vendors",  sub: "manually screened",  icon: "✓"  },
               { num: "6",   suffix: "+",   label: "Cities",            sub: "and growing fast",   icon: "📍" },
               { num: "4",   suffix: ".9★", label: "Average Rating",    sub: "from real clients",  icon: "★"  },
