@@ -174,7 +174,7 @@ export default function AboutUs() {
     { year: "2025",       title: "The Frustration",  desc: "Our founders tried planning a Delhi corporate event. Three weeks. Dozens of calls. Mediocre results. The idea was born.", icon: "💡" },
     { year: "Early 2026", title: "First 10 Vendors", desc: "We manually onboarded 10 Delhi vendors we personally trusted. First client booked within 48 hours.",                       icon: "🌱" },
     { year: "Mid 2027",   title: "Expanding Cities", desc: "Mumbai. Bangalore. Hyderabad. We hit 1,500+ verified vendors and 30k+ happy clients.",                                     icon: "🚀" },
-    { year: "2028",       title: "All of India",     desc: "50+ cities. 10k+ vendors. 120k+ clients. And we're just getting started.",                                                  icon: "🏆" },
+    { year: "2028",       title: "All of India",     desc: "50+ cities. 12k+ vendors. 120k+ clients. And we're just getting started.",                                                  icon: "🏆" },
   ];
 
   // ── Footer nav handler ──
