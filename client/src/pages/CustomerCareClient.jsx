@@ -110,8 +110,6 @@ const QUICK_CHIPS = [
   "Vendor rejected me",
 ];
 
-// FIX: Updated match arrays to include exact chip text phrases
-// so every chip maps to a real response and nothing falls through to the fallback.
 const BOT_RESPONSES = [
   {
     match: [
@@ -207,7 +205,6 @@ const BOT_RESPONSES = [
     match: ["contact", "email", "phone", "call", "reach", "support team"],
     reply: `Here's how to reach our support team:\n\n📧 **Email:** admineventify2005@gmail.com\n📞 **Phone:** +91 70230 17517\n🕐 **Hours:** Mon–Sat, 10 AM – 7 PM IST\n\nFor fastest response, email us with your booking ID and we'll get back within 24 hours! 💬`,
   },
-  // Catch-all "help" last so it won't swallow real queries
   {
     match: ["help"],
     reply: `Hello! 👋 I'm **Aria**, your Evencers support assistant.\n\nI'm here to help you with:\n📅 Bookings & scheduling\n💳 Payments & refunds\n🔄 Cancellations & changes\n🌟 Finding the right vendor\n\nWhat can I help you with today?`,
@@ -234,6 +231,119 @@ function formatMsg(text) {
       return `<span key="${i}">${formatted}</span>`;
     })
     .join("<br/>");
+}
+
+// ── CONTACT SUPPORT MODAL ────────────────────────────────────────────────────
+function ContactSupportModal({ open, onClose }) {
+  useEffect(() => {
+    const handler = (e) => { if (e.key === "Escape") onClose(); };
+    if (open) document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  const channels = [
+    {
+      id: "email",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" width="26" height="26">
+          <rect x="2" y="4" width="20" height="16" rx="3" />
+          <polyline points="2,4 12,13 22,4" />
+        </svg>
+      ),
+      label: "Email Support",
+      value: "admineventify2005@gmail.com",
+      sub: "Reply within 24 hours · Mon–Sat",
+      action: () => window.open("mailto:admineventify2005@gmail.com", "_blank"),
+      btnLabel: "Send Email",
+    },
+    {
+      id: "phone",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" width="26" height="26">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 3.08 4.18 2 2 0 0 1 5.07 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L9.09 9.91a16 16 0 0 0 5 5l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+        </svg>
+      ),
+      label: "Call Us",
+      value: "+91 70230 17517",
+      sub: "Mon – Sat · 10 AM – 7 PM IST",
+      action: () => window.open("tel:+917023017517", "_blank"),
+      btnLabel: "Call Now",
+    },
+    {
+      id: "whatsapp",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z" />
+        </svg>
+      ),
+      label: "WhatsApp",
+      value: "+91 70230 17517",
+      sub: "Quick replies · Usually within 1 hour",
+      action: () => window.open("https://wa.me/917023017517?text=Hi%20Evencers%20Support%2C%20I%20need%20help%20with%20my%20booking.", "_blank"),
+      btnLabel: "Open WhatsApp",
+      highlight: true,
+    },
+  ];
+
+  return (
+    <div className="csm-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="csm-modal" role="dialog" aria-modal="true" aria-label="Contact Support">
+        {/* Decorative orbs */}
+        <div className="csm-orb csm-orb1" />
+        <div className="csm-orb csm-orb2" />
+
+        {/* Header */}
+        <div className="csm-header">
+          <div className="csm-header-text">
+            <p className="csm-eyebrow">We're here for you</p>
+            <h2 className="csm-title">Contact Support</h2>
+            <p className="csm-sub">Choose how you'd like to reach us — we typically respond within hours.</p>
+          </div>
+          <button className="csm-close" onClick={onClose} aria-label="Close">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.2" width="14" height="14">
+              <line x1="2" y1="2" x2="14" y2="14" />
+              <line x1="14" y1="2" x2="2" y2="14" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Channel Cards */}
+        <div className="csm-channels">
+          {channels.map((ch) => (
+            <div key={ch.id} className={`csm-channel ${ch.highlight ? "highlight" : ""}`}>
+              <div className="csm-channel-left">
+                <div className={`csm-channel-icon ${ch.id}`}>{ch.icon}</div>
+                <div className="csm-channel-info">
+                  <p className="csm-channel-label">{ch.label}</p>
+                  <p className="csm-channel-value">{ch.value}</p>
+                  <p className="csm-channel-sub">{ch.sub}</p>
+                </div>
+              </div>
+              <button className={`csm-channel-btn ${ch.highlight ? "primary" : ""}`} onClick={ch.action}>
+                {ch.btnLabel}
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" width="13" height="13">
+                  <line x1="3" y1="8" x2="13" y2="8" />
+                  <polyline points="9,4 13,8 9,12" />
+                </svg>
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer note */}
+        <p className="csm-footer-note">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" width="13" height="13" style={{flexShrink:0}}>
+            <circle cx="8" cy="8" r="6" />
+            <line x1="8" y1="7" x2="8" y2="11" />
+            <circle cx="8" cy="5" r="0.5" fill="currentColor" />
+          </svg>
+          For urgent booking issues, WhatsApp is the fastest channel. Have your Booking ID ready.
+        </p>
+      </div>
+    </div>
+  );
 }
 
 // ── AI CHAT WIDGET ───────────────────────────────────────────────────────────
@@ -410,6 +520,7 @@ export default function CustomerCareClient() {
   const [openItem, setOpenItem] = useState(null);
   const [openCategory, setOpenCategory] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [contactModalOpen, setContactModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const toggle = (key) => setOpenItem(openItem === key ? null : key);
@@ -434,6 +545,9 @@ export default function CustomerCareClient() {
 
       {/* AI CHAT WIDGET */}
       <AIChatWidget />
+
+      {/* CONTACT SUPPORT MODAL */}
+      <ContactSupportModal open={contactModalOpen} onClose={() => setContactModalOpen(false)} />
 
       <div className="cc-root">
         {/* HERO */}
@@ -632,12 +746,10 @@ export default function CustomerCareClient() {
             Our support team is here for you. Send us a message and we'll get
             back to you within 24 hours.
           </p>
+          {/* ── UPDATED: now opens the modal instead of mailto ── */}
           <button
             className="cc-cta-btn"
-            onClick={() =>
-              (window.location.href =
-                "mailto:admineventify2005@gmail.com")
-            }
+            onClick={() => setContactModalOpen(true)}
           >
             Contact Support →
           </button>
@@ -830,14 +942,12 @@ const styles = `
     100% { transform: scale(1.55); opacity: 0;   }
   }
 
-  /* ── FIX: Chat window — no clipping on any screen size ── */
   .cc-chat-window {
     position: fixed;
     bottom: 100px;
     right: 28px;
     z-index: 8999;
     width: 370px;
-    /* prevent the window from ever going off-screen left */
     max-width: calc(100vw - 20px);
     max-height: 560px;
     background: var(--white);
@@ -857,7 +967,6 @@ const styles = `
     transform: scale(1) translateY(0); opacity: 1; pointer-events: auto;
   }
 
-  /* Mobile: snap to safe edges */
   @media (max-width: 480px) {
     .cc-chat-window {
       right: 12px;
@@ -1019,4 +1128,175 @@ const styles = `
   .cc-chat-send:disabled { opacity: 0.45; cursor: not-allowed; }
 
   @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+
+  /* ════════════════════════════════════════════════
+     CONTACT SUPPORT MODAL
+  ════════════════════════════════════════════════ */
+
+  .csm-overlay {
+    position: fixed; inset: 0; z-index: 10000;
+    background: rgba(14,12,10,0.72);
+    backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    animation: csmOverlayIn 0.25s ease both;
+  }
+  @keyframes csmOverlayIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .csm-modal {
+    position: relative; overflow: hidden;
+    background: var(--ink);
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 20px;
+    width: 100%; max-width: 500px;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,168,76,0.08);
+    animation: csmModalIn 0.32s cubic-bezier(.34,1.2,.64,1) both;
+    padding: 36px 32px 28px;
+  }
+  @keyframes csmModalIn {
+    from { opacity: 0; transform: scale(0.92) translateY(24px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  /* Decorative orbs inside modal */
+  .csm-orb {
+    position: absolute; border-radius: 50%;
+    filter: blur(80px); opacity: 0.12; pointer-events: none;
+  }
+  .csm-orb1 { width: 260px; height: 260px; background: var(--gold); top: -80px; right: -60px; }
+  .csm-orb2 { width: 200px; height: 200px; background: #4a3f7a; bottom: -60px; left: -40px; }
+
+  /* Header */
+  .csm-header {
+    position: relative; z-index: 1;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 16px; margin-bottom: 28px;
+  }
+  .csm-eyebrow {
+    font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 8px; display: block;
+  }
+  .csm-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem; font-weight: 300; color: var(--white); line-height: 1.1;
+    margin-bottom: 8px;
+  }
+  .csm-sub {
+    font-size: 13px; color: rgba(245,240,232,0.5); line-height: 1.65;
+  }
+  .csm-close {
+    flex-shrink: 0; margin-top: 4px;
+    width: 30px; height: 30px; border-radius: 50%;
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(245,240,232,0.55); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .csm-close:hover { background: rgba(255,255,255,0.14); color: var(--white); }
+
+  /* Channel cards */
+  .csm-channels {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column; gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .csm-channel {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    padding: 16px 18px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(201,168,76,0.14);
+    border-radius: 12px;
+    transition: background 0.22s, border-color 0.22s, transform 0.22s;
+  }
+  .csm-channel:hover {
+    background: rgba(255,255,255,0.07);
+    border-color: rgba(201,168,76,0.3);
+    transform: translateX(3px);
+  }
+  .csm-channel.highlight {
+    background: rgba(37,211,102,0.07);
+    border-color: rgba(37,211,102,0.25);
+  }
+  .csm-channel.highlight:hover {
+    background: rgba(37,211,102,0.12);
+    border-color: rgba(37,211,102,0.45);
+  }
+
+  .csm-channel-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+
+  .csm-channel-icon {
+    width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(201,168,76,0.12); color: var(--gold);
+    border: 1px solid rgba(201,168,76,0.18);
+    transition: background 0.2s;
+  }
+  .csm-channel-icon.whatsapp {
+    background: rgba(37,211,102,0.1); color: #25d366;
+    border-color: rgba(37,211,102,0.2);
+  }
+  .csm-channel-icon.phone {
+    background: rgba(99,179,237,0.1); color: #63b3ed;
+    border-color: rgba(99,179,237,0.2);
+  }
+
+  .csm-channel-info { min-width: 0; }
+  .csm-channel-label {
+    font-size: 13px; font-weight: 500; color: var(--white);
+    margin-bottom: 2px;
+  }
+  .csm-channel-value {
+    font-size: 12.5px; color: var(--gold);
+    margin-bottom: 2px; font-weight: 400;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .csm-channel.highlight .csm-channel-value { color: #25d366; }
+  .csm-channel.phone .csm-channel-value,
+  .csm-channel-icon.phone ~ .csm-channel-info .csm-channel-value { color: #63b3ed; }
+  .csm-channel-sub { font-size: 11px; color: rgba(245,240,232,0.38); }
+
+  .csm-channel-btn {
+    flex-shrink: 0;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 16px; border-radius: 8px;
+    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
+    background: rgba(201,168,76,0.12); color: var(--gold);
+    border: 1px solid rgba(201,168,76,0.25);
+    cursor: pointer; white-space: nowrap;
+    transition: all 0.22s;
+  }
+  .csm-channel-btn:hover {
+    background: var(--gold); color: var(--ink);
+    border-color: var(--gold); transform: translateY(-1px);
+  }
+  .csm-channel-btn.primary {
+    background: rgba(37,211,102,0.12); color: #25d366;
+    border-color: rgba(37,211,102,0.3);
+  }
+  .csm-channel-btn.primary:hover {
+    background: #25d366; color: #0e0c0a;
+    border-color: #25d366;
+  }
+
+  /* Footer note */
+  .csm-footer-note {
+    position: relative; z-index: 1;
+    display: flex; align-items: flex-start; gap: 7px;
+    font-size: 11.5px; color: rgba(245,240,232,0.35);
+    line-height: 1.6;
+    padding-top: 16px;
+    border-top: 1px solid rgba(201,168,76,0.1);
+  }
+
+  @media (max-width: 540px) {
+    .csm-modal { padding: 28px 20px 22px; border-radius: 16px; }
+    .csm-channel { flex-direction: column; align-items: flex-start; }
+    .csm-channel-btn { width: 100%; justify-content: center; }
+    .csm-title { font-size: 1.6rem; }
+  }
 `;
