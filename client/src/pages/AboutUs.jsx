@@ -308,7 +308,7 @@ export default function AboutUs() {
 
           <div className="au-hero-floats" aria-hidden="true">
             <div className="au-float-card au-fc-a">
-              <span className="au-fc-num">100+</span>
+              <span className="au-fc-num">12k+</span>
               <span className="au-fc-label">Happy Clients</span>
             </div>
             <div className="au-float-card au-fc-b">
