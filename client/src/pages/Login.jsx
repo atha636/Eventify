@@ -121,7 +121,7 @@ function LegalPopup({ type, onClose }) {
 
           <div className="lp-footer">
             <p className="lp-footer-note">
-              Questions? Contact us at <a href="mailto:legal@evencers.com" className="lp-footer-link">legal@evencers.com</a>
+              Questions? Contact us at <a href="mailto:admineventify2005@gmail.com" className="lp-footer-link">admineventify2005@gmail.com</a>
             </p>
             <button className="lp-close-btn" onClick={onClose}>
               I Understand
