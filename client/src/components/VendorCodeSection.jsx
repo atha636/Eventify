@@ -1,11 +1,3 @@
-// VendorCodeSection.jsx
-//
-// Always visible in the vendor dashboard — shows the coupon code permanently.
-// Drop this into VendorDashboard.jsx right after the <header> block.
-//
-// Import at top of VendorDashboard.jsx:
-//   import VendorCodeSection from "../components/VendorCodeSection";
-// Then render: <VendorCodeSection />
 
 import { useState } from "react";
 
