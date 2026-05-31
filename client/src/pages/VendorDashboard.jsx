@@ -3,6 +3,9 @@ import API from "../services/api";
 import Navbar from "../components/Navbar";
 import ServiceCard from "../components/ServiceCard";
 import Logo from "../components/Logo";
+import VendorCodeSection from "../components/VendorCodeSection";
+import VendorCouponModal from "../components/VendorCouponModal";
+
 
 // ─────────────────────────────────────────────────────────────
 // PAGE SIZE HOOK
@@ -728,6 +731,7 @@ export default function VendorDashboard() {
         {undoTarget && (<ConfirmUndoPopup bookingName={undoTarget.userId?.name} onConfirm={handleConfirmUndo} onCancel={handleCancelUndo} confirming={confirming} />)}
         {showAvailCal && services.length > 0 && (<AvailabilityCalendar services={services} onClose={() => setShowAvailCal(false)} />)}
         {legalModal && <LegalModal type={legalModal} onClose={() => setLegalModal(null)} />}
+          <VendorCouponModal />
 
         {/* Decorative background */}
         <div className="vd-bg-ornament" aria-hidden="true">
@@ -770,8 +774,11 @@ export default function VendorDashboard() {
             </a>
           </header>
 
-          {/* ── STATS ── */}
-          <section aria-label="Booking statistics">
+{/* ── VENDOR CODE SECTION ── */}
+<VendorCodeSection />
+
+{/* ── STATS ── */}
+<section aria-label="Booking statistics">
             <div className="vd-stats" role="list">
               {[
                 { label: "Total Bookings", value: counts.all,      icon: "📋", color: "#0e0c0a",  accent: "rgba(14,12,10,0.06)"   },

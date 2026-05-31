@@ -2,10 +2,156 @@ import { useState, useEffect, useRef } from "react";
 import API from "../services/api";
 import { GoogleLogin } from "@react-oauth/google";
 import Logo from "../components/Logo";
-const OTP_WINDOW_MS = 60 * 1000; // 1 minute
+
+const OTP_WINDOW_MS = 60 * 1000;
 const MAX_OTP_SENDS = 3;
 
-// ── Full-screen Google sign-in loading overlay ──────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// VENDOR CODE POPUP
+// Shows ONCE ever (first registration only) — uses localStorage flag.
+// ─────────────────────────────────────────────────────────────
+function VendorCodePopup({ code, name, onContinue }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  };
+
+  const chars = code ? code.split("") : [];
+
+  return (
+    <>
+      <style>{popupStyles}</style>
+      <div className="vc-overlay" role="dialog" aria-modal="true" aria-labelledby="vc-title">
+        <div className="vc-modal">
+          <div className="vc-orb vc-orb-1" aria-hidden="true" />
+          <div className="vc-orb vc-orb-2" aria-hidden="true" />
+
+          <div className="vc-icon-wrap" aria-hidden="true">
+            <div className="vc-icon-ring" />
+            <span className="vc-icon-inner">◈</span>
+          </div>
+
+          <p className="vc-eyebrow">Vendor Identity</p>
+          <h2 id="vc-title" className="vc-title">Your Vendor Code</h2>
+          <p className="vc-sub">
+            {name ? (
+              <>Welcome, <strong>{name}</strong>! Your account is live.</>
+            ) : (
+              "Your vendor account is now active."
+            )}
+            <br />Share this code with clients — they get{" "}
+            <strong>zero brokerage</strong> on their first transaction with you.
+          </p>
+
+          <div className="vc-code-row" aria-label={`Your vendor code is ${code}`}>
+            {chars.map((ch, i) => (
+              <div
+                key={i}
+                className={`vc-digit ${isNaN(ch) ? "vc-digit-alpha" : "vc-digit-num"}`}
+                style={{ animationDelay: `${0.05 + i * 0.06}s` }}
+              >
+                {ch}
+              </div>
+            ))}
+          </div>
+
+          <button
+            className={`vc-copy-btn ${copied ? "vc-copied" : ""}`}
+            onClick={handleCopy}
+            aria-live="polite"
+          >
+            {copied ? (
+              <><span className="vc-copy-icon">✓</span> Copied!</>
+            ) : (
+              <><span className="vc-copy-icon">⎘</span> Copy Code</>
+            )}
+          </button>
+
+          <div className="vc-note">
+            <span className="vc-note-icon" aria-hidden="true">ℹ</span>
+            <p>
+              Share this code freely — clients enter it at checkout for free brokerage.
+              Find it anytime in your Vendor Dashboard under <em>My Coupon</em>.
+            </p>
+          </div>
+
+          <button className="vc-continue-btn" onClick={onContinue}>
+            Continue to Dashboard
+            <span className="vc-arrow" aria-hidden="true">→</span>
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+const popupStyles = `
+  .vc-overlay {
+    position: fixed; inset: 0; z-index: 9000;
+    background: rgba(14,12,10,0.72);
+    backdrop-filter: blur(12px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    animation: vcFadeIn 0.3s ease both;
+  }
+  @keyframes vcFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .vc-modal {
+    position: relative;
+    background: #faf7f2;
+    border: 1px solid rgba(201,168,76,0.28);
+    border-radius: 24px;
+    padding: 48px 40px 40px;
+    width: min(460px, 96vw);
+    text-align: center;
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(14,12,10,0.22), 0 2px 0 rgba(255,255,255,0.6) inset;
+    animation: vcPopUp 0.38s cubic-bezier(0.34,1.2,0.64,1) both;
+  }
+  @keyframes vcPopUp {
+    from { opacity: 0; transform: translateY(24px) scale(0.95); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .vc-orb { position: absolute; border-radius: 50%; pointer-events: none; }
+  .vc-orb-1 { width: 280px; height: 280px; top: -120px; right: -80px; background: radial-gradient(circle, rgba(201,168,76,0.1) 0%, transparent 70%); }
+  .vc-orb-2 { width: 200px; height: 200px; bottom: -80px; left: -60px; background: radial-gradient(circle, rgba(201,168,76,0.07) 0%, transparent 70%); }
+  .vc-icon-wrap { position: relative; width: 68px; height: 68px; margin: 0 auto 24px; display: flex; align-items: center; justify-content: center; }
+  .vc-icon-ring { position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid rgba(201,168,76,0.35); animation: vcRingPulse 3s ease-in-out infinite; }
+  @keyframes vcRingPulse { 0%,100%{transform:scale(1);opacity:0.5} 50%{transform:scale(1.08);opacity:1} }
+  .vc-icon-inner { font-size: 1.8rem; color: #c9a84c; position: relative; z-index: 1; width: 52px; height: 52px; background: rgba(201,168,76,0.1); border-radius: 50%; border: 1px solid rgba(201,168,76,0.25); display: flex; align-items: center; justify-content: center; }
+  .vc-eyebrow { font-size: 10.5px; letter-spacing: 0.22em; text-transform: uppercase; color: #c9a84c; margin-bottom: 8px; font-family: 'DM Sans', sans-serif; }
+  .vc-title { font-family: 'Cormorant Garamond', serif; font-size: 1.9rem; font-weight: 600; color: #0e0c0a; margin-bottom: 12px; line-height: 1.1; }
+  .vc-sub { font-size: 13px; color: #7a7265; line-height: 1.7; margin-bottom: 32px; font-family: 'DM Sans', sans-serif; }
+  .vc-sub strong { color: #0e0c0a; font-weight: 500; }
+  .vc-code-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; }
+  .vc-digit { width: 52px; height: 60px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 1.9rem; font-weight: 600; animation: vcDigitPop 0.45s cubic-bezier(0.34,1.3,0.64,1) both; opacity: 0; animation-fill-mode: forwards; }
+  @keyframes vcDigitPop { from{opacity:0;transform:translateY(10px) scale(0.85)} to{opacity:1;transform:translateY(0) scale(1)} }
+  .vc-digit-alpha { background: #0e0c0a; color: #c9a84c; border: 1px solid rgba(201,168,76,0.3); box-shadow: 0 4px 16px rgba(14,12,10,0.18), inset 0 1px 0 rgba(255,255,255,0.05); }
+  .vc-digit-num { background: #ffffff; color: #0e0c0a; border: 1.5px solid rgba(201,168,76,0.3); box-shadow: 0 2px 10px rgba(14,12,10,0.08); }
+  .vc-copy-btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 22px; background: transparent; border: 1px solid rgba(201,168,76,0.35); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; color: #7a7265; cursor: pointer; transition: all 0.22s ease; margin-bottom: 28px; }
+  .vc-copy-btn:hover { border-color: #c9a84c; color: #c9a84c; background: rgba(201,168,76,0.06); }
+  .vc-copy-btn.vc-copied { border-color: #2d6a4f; color: #2d6a4f; background: rgba(45,106,79,0.06); }
+  .vc-copy-icon { font-size: 14px; line-height: 1; }
+  .vc-note { display: flex; align-items: flex-start; gap: 10px; background: rgba(201,168,76,0.06); border: 1px solid rgba(201,168,76,0.18); border-radius: 10px; padding: 12px 16px; text-align: left; margin-bottom: 28px; }
+  .vc-note-icon { font-size: 14px; color: #c9a84c; flex-shrink: 0; margin-top: 1px; }
+  .vc-note p { font-size: 12px; color: #7a7265; line-height: 1.65; font-family: 'DM Sans', sans-serif; }
+  .vc-note em { font-style: italic; color: #0e0c0a; }
+  .vc-continue-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 15px 24px; background: #0e0c0a; color: #ffffff; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; letter-spacing: 0.03em; cursor: pointer; transition: all 0.24s ease; }
+  .vc-continue-btn:hover { background: #c9a84c; color: #0e0c0a; box-shadow: 0 8px 28px rgba(201,168,76,0.32); transform: translateY(-1px); }
+  .vc-arrow { font-size: 16px; transition: transform 0.2s; }
+  .vc-continue-btn:hover .vc-arrow { transform: translateX(4px); }
+  @media (max-width: 480px) {
+    .vc-modal { padding: 36px 24px 32px; }
+    .vc-digit { width: 44px; height: 54px; font-size: 1.6rem; }
+    .vc-code-row { gap: 6px; }
+  }
+`;
+
+// ── Full-screen Google sign-in loading overlay ──
 function GoogleLoadingOverlay({ name }) {
   return (
     <div className="gl-overlay">
@@ -40,30 +186,64 @@ export default function Register() {
   const [maxReached, setMaxReached] = useState(false);
   const [verifySuccess, setVerifySuccess] = useState(false);
 
-  // ── Google loading state ──
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleUserName, setGoogleUserName] = useState("");
 
+  // Vendor code popup state
+  const [vendorCodePopup, setVendorCodePopup] = useState(null);
+
   const otpRefs = useRef([]);
 
-  // ─── SHARED REDIRECT HELPER ──────────────────────────────────────────
-  // New vendors (hasSeenWelcome === false) → /vendor/welcome
-  // All other roles / returning vendors    → /
+  // ── Shared redirect helper ──
   const redirectAfterAuth = (user) => {
     if (user.role === "vendor" && user.hasSeenWelcome === false) {
       window.location.href = "/vendor/welcome";
+    } else if (user.role === "vendor") {
+      window.location.href = "/vendor-dashboard";
     } else {
       window.location.href = "/";
     }
   };
-  // ────────────────────────────────────────────────────────────────────
 
-  // ─── RESTORE STATE FROM LOCALSTORAGE ────────────────────────────────
+  // ── After auth: show vendor code popup for NEW vendors only ──
+  const handleAuthSuccess = (user, token) => {
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(user));
+
+    if (user.role === "vendor" && user.vendorCode && !user.hasSeenWelcome) {
+      setGoogleLoading(false);
+      setVendorCodePopup({ code: user.vendorCode, name: user.name, user });
+    } else {
+      redirectAfterAuth(user);
+    }
+  };
+
+  // ── Dismiss popup: mark as seen permanently, call backend ──
+  const handlePopupContinue = async () => {
+    localStorage.setItem("vendorCodeSeen", "1");
+    const updatedUser = { ...vendorCodePopup.user, hasSeenWelcome: true };
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+
+    try {
+      await API.post(
+        "/auth/vendor/seen-welcome",
+        {},
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      );
+    } catch (e) {
+      // non-fatal
+    }
+
+    setVendorCodePopup(null);
+    redirectAfterAuth(vendorCodePopup.user);
+  };
+
+  // ── Restore state from localStorage ──
   useEffect(() => {
-    const savedStep = localStorage.getItem("otp_step");
-    const savedEmail = localStorage.getItem("otp_email");
-    const savedExpiry = localStorage.getItem("otp_resend_expiry");
-    const savedCount = parseInt(localStorage.getItem("otp_send_count") || "0", 10);
+    const savedStep         = localStorage.getItem("otp_step");
+    const savedEmail        = localStorage.getItem("otp_email");
+    const savedExpiry       = localStorage.getItem("otp_resend_expiry");
+    const savedCount        = parseInt(localStorage.getItem("otp_send_count") || "0", 10);
     const savedWindowExpiry = localStorage.getItem("otp_window_expiry");
 
     if (savedStep === "otp" && savedEmail) {
@@ -72,7 +252,6 @@ export default function Register() {
       setOtpSendCount(savedCount);
 
       const now = Date.now();
-
       if (savedWindowExpiry) {
         const winExp = parseInt(savedWindowExpiry, 10);
         if (now < winExp) {
@@ -81,11 +260,9 @@ export default function Register() {
         } else {
           localStorage.setItem("otp_send_count", "0");
           localStorage.removeItem("otp_window_expiry");
-          setOtpSendCount(0);
-          setMaxReached(false);
+          setOtpSendCount(0); setMaxReached(false);
         }
       }
-
       if (savedExpiry) {
         const remaining = Math.ceil((parseInt(savedExpiry, 10) - now) / 1000);
         if (remaining > 0) { setTimer(remaining); setCanResend(false); }
@@ -94,7 +271,7 @@ export default function Register() {
     }
   }, []);
 
-  // ─── 30s RESEND COUNTDOWN ────────────────────────────────────────────
+  // ── 30s resend countdown ──
   useEffect(() => {
     if (step !== "otp" || timer <= 0) return;
     const interval = setInterval(() => {
@@ -106,7 +283,7 @@ export default function Register() {
     return () => clearInterval(interval);
   }, [timer, step]);
 
-  // ─── 1-MIN WINDOW COUNTDOWN ──────────────────────────────────────────
+  // ── 1-min window countdown ──
   useEffect(() => {
     if (!windowExpiry) return;
     const tick = () => {
@@ -116,28 +293,24 @@ export default function Register() {
         setOtpSendCount(0); setCanResend(true);
         localStorage.setItem("otp_send_count", "0");
         localStorage.removeItem("otp_window_expiry");
-      } else {
-        setWindowTimer(remaining);
-      }
+      } else { setWindowTimer(remaining); }
     };
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
   }, [windowExpiry]);
 
-  // ─── FOCUS FIRST OTP INPUT ON STEP CHANGE ───────────────────────────
+  // ── Focus first OTP input ──
   useEffect(() => {
     if (step === "otp") setTimeout(() => otpRefs.current[0]?.focus(), 100);
   }, [step]);
 
-  // ─── SEND OTP / REGISTER ─────────────────────────────────────────────
+  // ── Send OTP / Register ──
   const sendOtp = async (isResend = false) => {
     if (!data.name || !data.email || !data.password) {
-      setError("Please fill in all fields.");
-      return;
+      setError("Please fill in all fields."); return;
     }
-    setError("");
-    setLoading(true);
+    setError(""); setLoading(true);
     try {
       await API.post("/auth/register", data);
       const now = Date.now();
@@ -165,12 +338,10 @@ export default function Register() {
       localStorage.setItem("otp_step", "otp");
     } catch (err) {
       setError(err?.response?.data?.msg || "Failed to send OTP. Try again.");
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
-  // ─── OTP INPUT HANDLING ──────────────────────────────────────────────
+  // ── OTP input handling ──
   const handleOtpChange = (index, value) => {
     if (!/^\d*$/.test(value)) return;
     const newOtp = [...otp];
@@ -178,45 +349,40 @@ export default function Register() {
     setOtp(newOtp);
     if (value && index < 5) otpRefs.current[index + 1]?.focus();
   };
-
   const handleOtpKeyDown = (index, e) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) otpRefs.current[index - 1]?.focus();
-    if (e.key === "ArrowLeft" && index > 0) otpRefs.current[index - 1]?.focus();
+    if (e.key === "ArrowLeft"  && index > 0) otpRefs.current[index - 1]?.focus();
     if (e.key === "ArrowRight" && index < 5) otpRefs.current[index + 1]?.focus();
   };
-
   const handleOtpPaste = (e) => {
     const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
     if (pasted.length === 6) { setOtp(pasted.split("")); otpRefs.current[5]?.focus(); }
   };
 
-  // ─── VERIFY OTP ──────────────────────────────────────────────────────
+  // ── Verify OTP ──
   const handleVerify = async () => {
     const otpString = otp.join("");
     if (otpString.length < 6) { setError("Please enter the complete 6-digit code."); return; }
     setLoading(true); setError("");
     try {
       const res = await API.post("/auth/verify-otp", { email: data.email, otp: otpString });
+
       localStorage.removeItem("otp_step");
       localStorage.removeItem("otp_email");
       localStorage.removeItem("otp_resend_expiry");
       localStorage.removeItem("otp_send_count");
       localStorage.removeItem("otp_window_expiry");
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
+
       setVerifySuccess(true);
-      // ── Use shared redirect: new vendors go to /vendor/welcome ──
-      setTimeout(() => redirectAfterAuth(res.data.user), 1200);
+      setTimeout(() => handleAuthSuccess(res.data.user, res.data.token), 800);
     } catch (err) {
       setError(err?.response?.data?.msg || "Invalid OTP. Please try again.");
       setOtp(["", "", "", "", "", ""]);
       otpRefs.current[0]?.focus();
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
-  // ─── GOOGLE LOGIN ────────────────────────────────────────────────────
+  // ── Google login ──
   const handleGoogleSuccess = async (credentialResponse) => {
     setGoogleLoading(true);
     setError("");
@@ -227,12 +393,7 @@ export default function Register() {
       });
       const userName = res.data.user?.name || "";
       setGoogleUserName(userName);
-
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-
-      // ── Use shared redirect: new vendors go to /vendor/welcome ──
-      setTimeout(() => redirectAfterAuth(res.data.user), 1000);
+      handleAuthSuccess(res.data.user, res.data.token);
     } catch {
       setGoogleLoading(false);
       setError("Google signup failed. Please try again.");
@@ -246,8 +407,17 @@ export default function Register() {
     <>
       <style>{styles}</style>
 
-      {/* ── Google loading overlay — shown on top of everything ── */}
-      {googleLoading && <GoogleLoadingOverlay name={googleUserName} />}
+      {/* ── Vendor Code Popup (first registration only) ── */}
+      {vendorCodePopup && (
+        <VendorCodePopup
+          code={vendorCodePopup.code}
+          name={vendorCodePopup.name}
+          onContinue={handlePopupContinue}
+        />
+      )}
+
+      {/* ── Google loading overlay ── */}
+      {googleLoading && !vendorCodePopup && <GoogleLoadingOverlay name={googleUserName} />}
 
       <div className="rg-root">
         {/* LEFT PANEL */}
@@ -292,7 +462,7 @@ export default function Register() {
                   </h2>
                   <p className="otp-subtitle">
                     {verifySuccess
-                      ? "Redirecting you now…"
+                      ? "Setting up your account…"
                       : <><span>We sent a 6-digit code to</span><br /><strong>{data.email}</strong></>
                     }
                   </p>
@@ -302,7 +472,7 @@ export default function Register() {
                   <>
                     <div className="otp-attempt-bar">
                       {[...Array(MAX_OTP_SENDS)].map((_, i) => (
-                        <div key={i} className={`otp-attempt-dot ${i < otpSendCount ? "used" : ""}`} title={i < otpSendCount ? "OTP sent" : "Available"} />
+                        <div key={i} className={`otp-attempt-dot ${i < otpSendCount ? "used" : ""}`} />
                       ))}
                       <span className="otp-attempt-label">{otpSendCount}/{MAX_OTP_SENDS} sends used</span>
                     </div>
@@ -312,7 +482,7 @@ export default function Register() {
                         <span className="otp-lockout-icon">⏳</span>
                         <div>
                           <p className="otp-lockout-title">Maximum OTPs reached</p>
-                          <p className="otp-lockout-sub">You can request a new code in <strong>{windowTimer}s</strong></p>
+                          <p className="otp-lockout-sub">Resend in <strong>{windowTimer}s</strong></p>
                         </div>
                       </div>
                     )}
@@ -370,7 +540,12 @@ export default function Register() {
                     </div>
 
                     <div className="otp-change-email">
-                      <button className="otp-change-btn" onClick={() => { setStep("register"); setOtp(["", "", "", "", "", ""]); setError(""); localStorage.removeItem("otp_step"); }}>
+                      <button className="otp-change-btn" onClick={() => {
+                        setStep("register");
+                        setOtp(["", "", "", "", "", ""]);
+                        setError("");
+                        localStorage.removeItem("otp_step");
+                      }}>
                         ← Change email address
                       </button>
                     </div>
@@ -448,29 +623,14 @@ export default function Register() {
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,300&family=DM+Sans:wght@300;400;500&display=swap');
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --ink: #0e0c0a;
-    --cream: #f5f0e8;
-    --gold: #c9a84c;
-    --gold-light: #e8d5a3;
-    --muted: #7a7265;
-    --border: rgba(201,168,76,0.22);
-    --surface: #faf7f2;
-    --error: #b85c5c;
-    --success: #2d6a4f;
-    --white: #ffffff;
+    --ink: #0e0c0a; --cream: #f5f0e8; --gold: #c9a84c; --gold-light: #e8d5a3;
+    --muted: #7a7265; --border: rgba(201,168,76,0.22); --surface: #faf7f2;
+    --error: #b85c5c; --success: #2d6a4f; --white: #ffffff;
   }
-
   .rg-root { display:grid; grid-template-columns:1fr 1fr; min-height:100vh; font-family:'DM Sans',sans-serif; }
-  @media(max-width:780px){
-    .rg-root{grid-template-columns:1fr}
-    .rg-left{display:none}
-  }
-
-  /* ─── LEFT ─── */
+  @media(max-width:780px){ .rg-root{grid-template-columns:1fr} .rg-left{display:none} }
   .rg-left { background:var(--ink); position:relative; overflow:hidden; display:flex; align-items:center; padding:60px 56px; }
   .rg-left-inner { position:relative; z-index:2; }
   .rg-logo { font-family:'Cormorant Garamond',serif; font-size:1.3rem; font-weight:600; color:var(--gold); letter-spacing:0.18em; text-transform:uppercase; margin-bottom:64px; }
@@ -482,18 +642,14 @@ const styles = `
   .rg-orb { position:absolute; border-radius:50%; filter:blur(80px); opacity:0.18; pointer-events:none; }
   .rg-orb1 { width:400px; height:400px; background:var(--gold); top:-100px; right:-120px; }
   .rg-orb2 { width:300px; height:300px; background:#8b5c8b; bottom:-80px; left:-60px; }
-
-  /* ─── RIGHT ─── */
   .rg-right { background:var(--cream); display:flex; align-items:center; justify-content:center; padding:48px 32px; }
   .rg-card { width:100%; max-width:420px; background:var(--white); border:1px solid var(--border); border-radius:16px; padding:44px 40px; box-shadow:0 12px 48px rgba(14,12,10,0.07); animation:fadeUp 0.5s ease both; }
   .rg-card-header { margin-bottom:28px; }
   .rg-card-header h1 { font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:600; color:var(--ink); margin-bottom:6px; }
   .rg-card-header p { font-size:13px; color:var(--muted); }
-
   .rg-role-toggle { display:grid; grid-template-columns:1fr 1fr; gap:8px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:5px; margin-bottom:28px; }
   .rg-role-btn { padding:10px; border:none; border-radius:6px; background:transparent; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--muted); cursor:pointer; transition:all 0.22s ease; font-weight:400; }
   .rg-role-btn.active { background:var(--white); color:var(--ink); font-weight:500; box-shadow:0 2px 10px rgba(14,12,10,0.08); border:1px solid var(--border); }
-
   .rg-fields { display:flex; flex-direction:column; gap:18px; margin-bottom:22px; }
   .rg-field { display:flex; flex-direction:column; gap:7px; }
   .rg-field label { font-size:11px; font-weight:500; letter-spacing:0.13em; text-transform:uppercase; color:var(--muted); }
@@ -504,7 +660,6 @@ const styles = `
   .rg-input-wrap input::placeholder { color:#bbb4a8; }
   .rg-eye { background:none; border:none; cursor:pointer; font-size:14px; padding:0; line-height:1; flex-shrink:0; }
   .rg-error { font-size:12.5px; color:var(--error); background:rgba(184,92,92,0.07); border:1px solid rgba(184,92,92,0.2); border-radius:6px; padding:10px 14px; margin-bottom:16px; }
-
   .rg-submit { width:100%; padding:15px; background:var(--ink); color:var(--white); border:none; border-radius:7px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; letter-spacing:0.04em; cursor:pointer; transition:all 0.25s ease; display:flex; align-items:center; justify-content:center; margin-bottom:16px; min-height:50px; opacity:0.5; }
   .rg-submit.ready,.rg-submit:not([disabled]) { opacity:1; }
   .rg-submit:hover:not(:disabled) { background:var(--gold); color:var(--ink); box-shadow:0 6px 24px rgba(201,168,76,0.3); transform:translateY(-1px); }
@@ -513,99 +668,25 @@ const styles = `
   .rg-terms { font-size:11.5px; color:var(--muted); text-align:center; line-height:1.6; }
   .rg-link { color:var(--gold); text-decoration:none; font-weight:500; }
   .rg-link:hover { text-decoration:underline; }
-
-  /* Google divider & wrapper */
   .rg-divider-label { text-align:center; margin-bottom:10px; font-size:12px; color:var(--muted); }
   .rg-google-wrap { transition:opacity 0.3s ease; display:flex; justify-content:center; }
   .rg-google-faded { opacity:0.4; pointer-events:none; }
-
-  /* ─── GOOGLE LOADING OVERLAY ─── */
-  .gl-overlay {
-    position: fixed; inset: 0; z-index: 9999;
-    background: rgba(245,240,232,0.92);
-    backdrop-filter: blur(12px);
-    display: flex; align-items: center; justify-content: center;
-    animation: glFadeIn 0.3s ease both;
-  }
+  .gl-overlay { position:fixed; inset:0; z-index:9999; background:rgba(245,240,232,0.92); backdrop-filter:blur(12px); display:flex; align-items:center; justify-content:center; animation:glFadeIn 0.3s ease both; }
   @keyframes glFadeIn { from{opacity:0} to{opacity:1} }
-
-  .gl-card {
-    background: var(--white);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 48px 44px;
-    text-align: center;
-    max-width: 340px; width: 90%;
-    box-shadow: 0 24px 64px rgba(14,12,10,0.12);
-    animation: glPopIn 0.38s cubic-bezier(0.34,1.3,0.64,1) both;
-  }
-  @keyframes glPopIn {
-    from { opacity:0; transform:scale(0.9) translateY(16px); }
-    to   { opacity:1; transform:scale(1) translateY(0); }
-  }
-
-  .gl-icon-ring {
-    position: relative;
-    width: 72px; height: 72px;
-    margin: 0 auto 24px;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .gl-spinner-ring {
-    position: absolute; inset: 0;
-    border-radius: 50%;
-    border: 2.5px solid rgba(201,168,76,0.2);
-    border-top-color: var(--gold);
-    animation: glSpin 0.9s linear infinite;
-  }
-  @keyframes glSpin { to { transform: rotate(360deg); } }
-
-  .gl-g-letter {
-    width: 52px; height: 52px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #4285F4, #34A853, #FBBC05, #EA4335);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.5rem; font-weight: 600; color: white;
-    box-shadow: 0 4px 16px rgba(66,133,244,0.25);
-    animation: glPulseRing 2s ease-in-out infinite;
-  }
-  @keyframes glPulseRing {
-    0%, 100% { box-shadow: 0 4px 16px rgba(66,133,244,0.25); }
-    50% { box-shadow: 0 4px 28px rgba(66,133,244,0.45); }
-  }
-
-  .gl-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.6rem; font-weight: 600; color: var(--ink);
-    margin-bottom: 6px; letter-spacing: 0.01em;
-  }
-  .gl-name {
-    font-size: 13px; color: var(--gold); font-weight: 500;
-    margin-bottom: 6px;
-  }
-  .gl-sub {
-    font-size: 12.5px; color: var(--muted); line-height: 1.6;
-    margin-bottom: 24px;
-  }
-
-  .gl-dots {
-    display: flex; justify-content: center; gap: 8px;
-  }
-  .gl-dots span {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: var(--gold); opacity: 0.3;
-    animation: glDotBounce 1.2s ease-in-out infinite;
-  }
-  .gl-dots span:nth-child(1) { animation-delay: 0s; }
-  .gl-dots span:nth-child(2) { animation-delay: 0.2s; }
-  .gl-dots span:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes glDotBounce {
-    0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
-    40% { opacity: 1; transform: scale(1.2); }
-  }
-
-  /* ─── OTP SECTION ─── */
-  .otp-wrapper { animation: fadeUp 0.45s ease both; }
+  .gl-card { background:var(--white); border:1px solid var(--border); border-radius:20px; padding:48px 44px; text-align:center; max-width:340px; width:90%; box-shadow:0 24px 64px rgba(14,12,10,0.12); animation:glPopIn 0.38s cubic-bezier(0.34,1.3,0.64,1) both; }
+  @keyframes glPopIn { from{opacity:0;transform:scale(0.9) translateY(16px)} to{opacity:1;transform:scale(1) translateY(0)} }
+  .gl-icon-ring { position:relative; width:72px; height:72px; margin:0 auto 24px; display:flex; align-items:center; justify-content:center; }
+  .gl-spinner-ring { position:absolute; inset:0; border-radius:50%; border:2.5px solid rgba(201,168,76,0.2); border-top-color:var(--gold); animation:glSpin 0.9s linear infinite; }
+  @keyframes glSpin { to{transform:rotate(360deg)} }
+  .gl-g-letter { width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg,#4285F4,#34A853,#FBBC05,#EA4335); display:flex; align-items:center; justify-content:center; font-family:'Cormorant Garamond',serif; font-size:1.5rem; font-weight:600; color:white; box-shadow:0 4px 16px rgba(66,133,244,0.25); }
+  .gl-title { font-family:'Cormorant Garamond',serif; font-size:1.6rem; font-weight:600; color:var(--ink); margin-bottom:6px; }
+  .gl-name { font-size:13px; color:var(--gold); font-weight:500; margin-bottom:6px; }
+  .gl-sub { font-size:12.5px; color:var(--muted); line-height:1.6; margin-bottom:24px; }
+  .gl-dots { display:flex; justify-content:center; gap:8px; }
+  .gl-dots span { width:7px; height:7px; border-radius:50%; background:var(--gold); opacity:0.3; animation:glDotBounce 1.2s ease-in-out infinite; }
+  .gl-dots span:nth-child(1){animation-delay:0s} .gl-dots span:nth-child(2){animation-delay:0.2s} .gl-dots span:nth-child(3){animation-delay:0.4s}
+  @keyframes glDotBounce { 0%,80%,100%{opacity:0.3;transform:scale(0.8)} 40%{opacity:1;transform:scale(1.2)} }
+  .otp-wrapper { animation:fadeUp 0.45s ease both; }
   .otp-header { text-align:center; margin-bottom:28px; }
   .otp-icon-ring { position:relative; width:68px; height:68px; margin:0 auto 18px; background:linear-gradient(135deg,rgba(201,168,76,0.12),rgba(201,168,76,0.04)); border:1.5px solid var(--border); border-radius:50%; display:flex; align-items:center; justify-content:center; }
   .otp-icon-envelope { font-size:26px; }
@@ -614,53 +695,41 @@ const styles = `
   .otp-title { font-family:'Cormorant Garamond',serif; font-size:1.75rem; font-weight:600; color:var(--ink); margin-bottom:8px; }
   .otp-subtitle { font-size:13px; color:var(--muted); line-height:1.6; }
   .otp-subtitle strong { color:var(--ink); font-weight:500; }
-
   .otp-attempt-bar { display:flex; align-items:center; gap:8px; justify-content:center; margin-bottom:22px; }
   .otp-attempt-dot { width:10px; height:10px; border-radius:50%; border:1.5px solid var(--border); background:var(--surface); transition:all 0.3s ease; }
   .otp-attempt-dot.used { background:var(--gold); border-color:var(--gold); box-shadow:0 0 6px rgba(201,168,76,0.4); }
   .otp-attempt-label { font-size:11px; color:var(--muted); letter-spacing:0.06em; margin-left:4px; }
-
   .otp-lockout { display:flex; align-items:flex-start; gap:12px; background:rgba(184,92,92,0.06); border:1px solid rgba(184,92,92,0.18); border-radius:10px; padding:14px 16px; margin-bottom:20px; }
   .otp-lockout-icon { font-size:20px; flex-shrink:0; margin-top:1px; }
   .otp-lockout-title { font-size:13px; font-weight:500; color:var(--error); margin-bottom:3px; }
   .otp-lockout-sub { font-size:12px; color:var(--muted); }
   .otp-lockout-sub strong { color:var(--ink); }
-
   .otp-boxes { display:flex; justify-content:center; gap:10px; margin-bottom:14px; }
   .otp-box { width:52px; height:60px; text-align:center; font-family:'Cormorant Garamond',serif; font-size:1.8rem; font-weight:600; color:var(--ink); background:var(--surface); border:1.5px solid var(--border); border-radius:10px; outline:none; transition:all 0.2s ease; caret-color:var(--gold); }
   .otp-box:focus { border-color:var(--gold); background:#fff; box-shadow:0 0 0 3px rgba(201,168,76,0.12),0 4px 16px rgba(201,168,76,0.1); transform:translateY(-2px); }
   .otp-box.filled { border-color:rgba(201,168,76,0.5); background:linear-gradient(135deg,#fff 60%,rgba(201,168,76,0.05)); }
   .otp-box.shake { animation:shake 0.4s ease; }
-
   .otp-progress-track { height:2px; background:rgba(201,168,76,0.12); border-radius:999px; margin-bottom:18px; overflow:hidden; }
   .otp-progress-fill { height:100%; background:linear-gradient(90deg,var(--gold-light),var(--gold)); border-radius:999px; transition:width 0.3s ease; }
-
   .otp-error { font-size:12.5px; color:var(--error); background:rgba(184,92,92,0.07); border:1px solid rgba(184,92,92,0.2); border-radius:6px; padding:10px 14px; margin-bottom:16px; text-align:center; }
-
   .otp-btn-inner { display:flex; align-items:center; justify-content:center; gap:8px; }
   .otp-btn-arrow { transition:transform 0.2s ease; }
   .rg-submit:hover .otp-btn-arrow { transform:translateX(4px); }
-
   .otp-resend-row { display:flex; align-items:center; justify-content:center; gap:8px; font-size:12.5px; color:var(--muted); margin-bottom:16px; }
-  .otp-resend-label { color:var(--muted); }
-  .otp-resend-btn { background:none; border:none; color:var(--gold); font-family:'DM Sans',sans-serif; font-size:12.5px; font-weight:500; cursor:pointer; padding:0; text-decoration:underline; transition:opacity 0.2s; }
+  .otp-resend-btn { background:none; border:none; color:var(--gold); font-family:'DM Sans',sans-serif; font-size:12.5px; font-weight:500; cursor:pointer; padding:0; text-decoration:underline; }
   .otp-resend-btn:hover { opacity:0.75; }
   .otp-resend-locked { font-size:12px; color:var(--error); font-weight:500; }
-
   .otp-timer-badge { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); }
   .otp-timer-ring { width:20px; height:20px; display:inline-block; }
   .otp-ring-svg { width:100%; height:100%; transform:rotate(-90deg); }
   .otp-ring-track { fill:none; stroke:rgba(201,168,76,0.15); stroke-width:4; }
   .otp-ring-progress { fill:none; stroke:var(--gold); stroke-width:4; stroke-linecap:round; transition:stroke-dasharray 1s linear; }
-
   .otp-change-email { text-align:center; }
   .otp-change-btn { background:none; border:none; font-family:'DM Sans',sans-serif; font-size:12px; color:var(--muted); cursor:pointer; padding:0; transition:color 0.2s; }
   .otp-change-btn:hover { color:var(--ink); }
-
-  /* ─── ANIMATIONS ─── */
-  @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes spin { to{transform:rotate(360deg)} }
-  @keyframes pulse { 0%,100%{transform:scale(1);opacity:0.6} 50%{transform:scale(1.12);opacity:0.2} }
-  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px)} 40%{transform:translateX(5px)} 60%{transform:translateX(-3px)} 80%{transform:translateX(3px)} }
-  @keyframes successPop { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
+  @keyframes fadeUp    { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes spin      { to{transform:rotate(360deg)} }
+  @keyframes pulse     { 0%,100%{transform:scale(1);opacity:0.6} 50%{transform:scale(1.12);opacity:0.2} }
+  @keyframes shake     { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px)} 40%{transform:translateX(5px)} 60%{transform:translateX(-3px)} 80%{transform:translateX(3px)} }
+  @keyframes successPop{ from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
 `;

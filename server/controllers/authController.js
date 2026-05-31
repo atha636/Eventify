@@ -11,6 +11,22 @@ const {
 } = require("../utils/sendEmail");
 
 // ─────────────────────────────────────────
+// HELPER — generate a unique vendor code
+// Format: first 2 letters of name (uppercase) + 4 random digits
+// e.g. "AT8273" for "Atharv Patidar"
+// ─────────────────────────────────────────
+function generateVendorCode(name) {
+  const prefix = (name || "VN")
+    .replace(/[^a-zA-Z]/g, "")   // letters only
+    .slice(0, 2)
+    .toUpperCase()
+    .padEnd(2, "V");              // always 2 chars
+
+  const suffix = String(Math.floor(1000 + Math.random() * 9000)); // 4 digits
+  return prefix + suffix;
+}
+
+// ─────────────────────────────────────────
 // REGISTER
 // ─────────────────────────────────────────
 exports.register = async (req, res) => {
@@ -29,6 +45,10 @@ exports.register = async (req, res) => {
     }
 
     const hashed = await bcrypt.hash(password, 10);
+
+    // Generate vendor code now so it's ready when OTP is verified
+    const vendorCode = role === "vendor" ? generateVendorCode(name) : null;
+
     await User.create({
       name, email,
       password: hashed,
@@ -36,9 +56,9 @@ exports.register = async (req, res) => {
       otp,
       otpExpires: Date.now() + 5 * 60 * 1000,
       isVerified: false,
-      // Vendors start as pending verification and haven't seen the welcome screen
       isProfileVerified: role === "vendor" ? "pending" : "approved",
-      hasSeenWelcome:    role === "vendor" ? false : true, // ← NEW
+      hasSeenWelcome:    role === "vendor" ? false : true,
+      vendorCode,
     });
 
     await sendOTP(email, otp);
@@ -81,7 +101,7 @@ exports.verifyOTP = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
-    // user object returned here includes hasSeenWelcome — frontend uses it to redirect
+    // user object returned here includes vendorCode & hasSeenWelcome — frontend uses both
     res.json({ msg: "Account verified", token, user });
   } catch (err) {
     res.status(500).json(err);
@@ -102,8 +122,14 @@ exports.login = async (req, res) => {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ msg: "Invalid credentials" });
 
+    // ── Backfill vendorCode for older vendors who don't have one yet ──
+    if (user.role === "vendor" && !user.vendorCode) {
+      user.vendorCode = generateVendorCode(user.name);
+      await user.save();
+    }
+
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
-    // user object returned here includes hasSeenWelcome — frontend uses it to redirect
+    // user object returned here includes vendorCode & hasSeenWelcome — frontend uses both
     res.json({ token, user });
   } catch (err) {
     res.status(500).json(err);
@@ -125,6 +151,7 @@ exports.googleLogin = async (req, res) => {
     if (!user) {
       // ── NEW USER: use the role they selected on the register page ──
       const assignedRole = role === "vendor" ? "vendor" : "user";
+      const vendorCode   = assignedRole === "vendor" ? generateVendorCode(name) : null;
 
       user = await User.create({
         name,
@@ -134,7 +161,8 @@ exports.googleLogin = async (req, res) => {
         role: assignedRole,
         isVerified: true,
         isProfileVerified: assignedRole === "vendor" ? "pending" : "approved",
-        hasSeenWelcome:    assignedRole === "vendor" ? false : true, // ← NEW
+        hasSeenWelcome:    assignedRole === "vendor" ? false : true,
+        vendorCode,
       });
 
       // Notify admin if a new vendor registers via Google
@@ -146,11 +174,17 @@ exports.googleLogin = async (req, res) => {
           adminEmail,
         }).catch((e) => console.error("Admin notify error (non-fatal):", e.message));
       }
+    } else {
+      // ── EXISTING USER: backfill vendorCode if missing ──
+      if (user.role === "vendor" && !user.vendorCode) {
+        user.vendorCode = generateVendorCode(user.name);
+        await user.save();
+      }
     }
     // ── EXISTING USER: keep their stored role — do NOT overwrite ──
 
     const jwtToken = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
-    // user object returned here includes hasSeenWelcome — frontend uses it to redirect
+    // user object returned here includes vendorCode & hasSeenWelcome — frontend uses both
     res.json({ token: jwtToken, user });
   } catch (err) {
     console.error("Google Login Error:", err);
@@ -285,9 +319,6 @@ exports.changePassword = async (req, res) => {
 // MARK VENDOR WELCOME SEEN
 // POST /api/auth/vendor/seen-welcome
 // ─────────────────────────────────────────
-// Called once by VendorWelcome.jsx when the vendor
-// clicks "Go to my Dashboard". Sets hasSeenWelcome = true
-// so they go straight to the dashboard on all future logins.
 exports.markVendorWelcomeSeen = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);

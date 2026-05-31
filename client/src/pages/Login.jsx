@@ -3,6 +3,275 @@ import API from "../services/api";
 import { GoogleLogin } from "@react-oauth/google";
 import Logo from "../components/Logo";
 
+// ─────────────────────────────────────────────────────────────
+// VENDOR CODE POPUP
+// Shows ONCE ever (first login only) — uses localStorage flag.
+// ─────────────────────────────────────────────────────────────
+function VendorCodePopup({ code, name, onContinue }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard not available — silently ignore
+    }
+  };
+
+  const chars = code ? code.split("") : [];
+
+  return (
+    <>
+      <style>{popupStyles}</style>
+      <div className="vc-overlay" role="dialog" aria-modal="true" aria-labelledby="vc-title">
+        <div className="vc-modal">
+
+          <div className="vc-orb vc-orb-1" aria-hidden="true" />
+          <div className="vc-orb vc-orb-2" aria-hidden="true" />
+
+          <div className="vc-icon-wrap" aria-hidden="true">
+            <div className="vc-icon-ring" />
+            <span className="vc-icon-inner">◈</span>
+          </div>
+
+          <p className="vc-eyebrow">Vendor Identity</p>
+          <h2 id="vc-title" className="vc-title">Your Vendor Code</h2>
+          <p className="vc-sub">
+            {name ? (
+              <>Welcome, <strong>{name}</strong>! Your account is live.</>
+            ) : (
+              "Your vendor account is now active."
+            )}
+            <br />Share this code with clients — they get{" "}
+            <strong>zero brokerage</strong> on their first transaction with you.
+          </p>
+
+          <div className="vc-code-row" aria-label={`Your vendor code is ${code}`}>
+            {chars.map((ch, i) => (
+              <div
+                key={i}
+                className={`vc-digit ${isNaN(ch) ? "vc-digit-alpha" : "vc-digit-num"}`}
+                style={{ animationDelay: `${0.05 + i * 0.06}s` }}
+              >
+                {ch}
+              </div>
+            ))}
+          </div>
+
+          <button
+            className={`vc-copy-btn ${copied ? "vc-copied" : ""}`}
+            onClick={handleCopy}
+            aria-live="polite"
+          >
+            {copied ? (
+              <><span className="vc-copy-icon">✓</span> Copied!</>
+            ) : (
+              <><span className="vc-copy-icon">⎘</span> Copy Code</>
+            )}
+          </button>
+
+          <div className="vc-note">
+            <span className="vc-note-icon" aria-hidden="true">ℹ</span>
+            <p>
+              Share this code freely — clients enter it at checkout for free brokerage.
+              Find it anytime in your Vendor Dashboard under <em>My Coupon</em>.
+            </p>
+          </div>
+
+          <button className="vc-continue-btn" onClick={onContinue}>
+            Got it — Go to Dashboard
+            <span className="vc-arrow" aria-hidden="true">→</span>
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+const popupStyles = `
+  .vc-overlay {
+    position: fixed; inset: 0; z-index: 9000;
+    background: rgba(14,12,10,0.72);
+    backdrop-filter: blur(12px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    animation: vcFadeIn 0.3s ease both;
+  }
+  @keyframes vcFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .vc-modal {
+    position: relative;
+    background: #faf7f2;
+    border: 1px solid rgba(201,168,76,0.28);
+    border-radius: 24px;
+    padding: 48px 40px 40px;
+    width: min(460px, 96vw);
+    text-align: center;
+    overflow: hidden;
+    box-shadow:
+      0 32px 80px rgba(14,12,10,0.22),
+      0 2px 0 rgba(255,255,255,0.6) inset;
+    animation: vcPopUp 0.38s cubic-bezier(0.34,1.2,0.64,1) both;
+  }
+  @keyframes vcPopUp {
+    from { opacity: 0; transform: translateY(24px) scale(0.95); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .vc-orb { position: absolute; border-radius: 50%; pointer-events: none; }
+  .vc-orb-1 {
+    width: 280px; height: 280px;
+    top: -120px; right: -80px;
+    background: radial-gradient(circle, rgba(201,168,76,0.1) 0%, transparent 70%);
+  }
+  .vc-orb-2 {
+    width: 200px; height: 200px;
+    bottom: -80px; left: -60px;
+    background: radial-gradient(circle, rgba(201,168,76,0.07) 0%, transparent 70%);
+  }
+
+  .vc-icon-wrap {
+    position: relative;
+    width: 68px; height: 68px;
+    margin: 0 auto 24px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .vc-icon-ring {
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    border: 1.5px solid rgba(201,168,76,0.35);
+    animation: vcRingPulse 3s ease-in-out infinite;
+  }
+  @keyframes vcRingPulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50%       { transform: scale(1.08); opacity: 1; }
+  }
+  .vc-icon-inner {
+    font-size: 1.8rem; color: #c9a84c;
+    position: relative; z-index: 1;
+    display: flex; align-items: center; justify-content: center;
+    width: 52px; height: 52px;
+    background: rgba(201,168,76,0.1);
+    border-radius: 50%;
+    border: 1px solid rgba(201,168,76,0.25);
+  }
+
+  .vc-eyebrow {
+    font-size: 10.5px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: #c9a84c; margin-bottom: 8px;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .vc-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.9rem; font-weight: 600; color: #0e0c0a;
+    margin-bottom: 12px; line-height: 1.1;
+  }
+  .vc-sub {
+    font-size: 13px; color: #7a7265; line-height: 1.7;
+    margin-bottom: 32px; font-family: 'DM Sans', sans-serif;
+  }
+  .vc-sub strong { color: #0e0c0a; font-weight: 500; }
+
+  .vc-code-row {
+    display: flex; justify-content: center; gap: 8px;
+    margin-bottom: 20px;
+  }
+  .vc-digit {
+    width: 52px; height: 60px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.9rem; font-weight: 600;
+    animation: vcDigitPop 0.45s cubic-bezier(0.34,1.3,0.64,1) both;
+    opacity: 0;
+    animation-fill-mode: forwards;
+  }
+  @keyframes vcDigitPop {
+    from { opacity: 0; transform: translateY(10px) scale(0.85); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .vc-digit-alpha {
+    background: #0e0c0a; color: #c9a84c;
+    border: 1px solid rgba(201,168,76,0.3);
+    box-shadow: 0 4px 16px rgba(14,12,10,0.18), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  .vc-digit-num {
+    background: #ffffff; color: #0e0c0a;
+    border: 1.5px solid rgba(201,168,76,0.3);
+    box-shadow: 0 2px 10px rgba(14,12,10,0.08);
+  }
+
+  .vc-copy-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 22px;
+    background: transparent;
+    border: 1px solid rgba(201,168,76,0.35);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 500; color: #7a7265;
+    cursor: pointer;
+    transition: all 0.22s ease;
+    margin-bottom: 28px;
+  }
+  .vc-copy-btn:hover {
+    border-color: #c9a84c; color: #c9a84c;
+    background: rgba(201,168,76,0.06);
+  }
+  .vc-copy-btn.vc-copied {
+    border-color: #2d6a4f; color: #2d6a4f;
+    background: rgba(45,106,79,0.06);
+  }
+  .vc-copy-icon { font-size: 14px; line-height: 1; }
+
+  .vc-note {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: rgba(201,168,76,0.06);
+    border: 1px solid rgba(201,168,76,0.18);
+    border-radius: 10px;
+    padding: 12px 16px;
+    text-align: left;
+    margin-bottom: 28px;
+  }
+  .vc-note-icon {
+    font-size: 14px; color: #c9a84c; flex-shrink: 0; margin-top: 1px;
+  }
+  .vc-note p {
+    font-size: 12px; color: #7a7265; line-height: 1.65;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .vc-note em { font-style: italic; color: #0e0c0a; }
+
+  .vc-continue-btn {
+    width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 15px 24px;
+    background: #0e0c0a; color: #ffffff;
+    border: none; border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 500; letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: all 0.24s ease;
+  }
+  .vc-continue-btn:hover {
+    background: #c9a84c; color: #0e0c0a;
+    box-shadow: 0 8px 28px rgba(201,168,76,0.32);
+    transform: translateY(-1px);
+  }
+  .vc-arrow { font-size: 16px; transition: transform 0.2s; }
+  .vc-continue-btn:hover .vc-arrow { transform: translateX(4px); }
+
+  @media (max-width: 480px) {
+    .vc-modal { padding: 36px 24px 32px; }
+    .vc-digit { width: 44px; height: 54px; font-size: 1.6rem; }
+    .vc-code-row { gap: 6px; }
+  }
+`;
+
+// ─────────────────────────────────────────────────────────────
+// MAIN LOGIN PAGE
+// ─────────────────────────────────────────────────────────────
 export default function Login() {
   const [data, setData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
@@ -10,17 +279,49 @@ export default function Login() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
+  // Vendor code popup state
+  const [vendorCodePopup, setVendorCodePopup] = useState(null);
+
   // ── Redirect logic ──────────────────────────────────────────
-  // New vendors (hasSeenWelcome === false) → /vendor/welcome
-  // Returning vendors / all other roles              → /
   const redirectAfterLogin = (user) => {
     if (user.role === "vendor" && user.hasSeenWelcome === false) {
       window.location.href = "/vendor/welcome";
+    } else if (user.role === "vendor") {
+      window.location.href = "/vendor-dashboard";
     } else {
       window.location.href = "/";
     }
   };
-  // ────────────────────────────────────────────────────────────
+
+  // ── After storing token, decide whether to show vendor code popup ──
+  // Only shows if vendor has NEVER seen it before (localStorage flag)
+  const handleLoginSuccess = (user, token) => {
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(user));
+
+    if (user.role === "vendor" && user.vendorCode && !user.hasSeenWelcome) {
+      setVendorCodePopup({ code: user.vendorCode, name: user.name, user });
+    } else {
+      setSuccess(true);
+      setTimeout(() => redirectAfterLogin(user), 1200);
+    }
+  };
+
+  // ── Dismiss popup: mark as seen permanently, call backend ──
+  const handlePopupContinue = async () => {
+  localStorage.setItem("vendorCodeSeen", "1");
+  const updatedUser = { ...vendorCodePopup.user, hasSeenWelcome: true };
+  localStorage.setItem("user", JSON.stringify(updatedUser));
+  try {
+    await API.post(
+      "/auth/vendor/seen-welcome",
+      {},
+      { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+    );
+  } catch (e) {}
+  setVendorCodePopup(null);
+  redirectAfterLogin(vendorCodePopup.user);
+};
 
   const handleSubmit = async () => {
     if (!data.email || !data.password) {
@@ -31,10 +332,7 @@ export default function Login() {
     setLoading(true);
     try {
       const res = await API.post("/auth/login", data);
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-      setSuccess(true);
-      setTimeout(() => redirectAfterLogin(res.data.user), 1200);
+      handleLoginSuccess(res.data.user, res.data.token);
     } catch (err) {
       setError(err?.response?.data?.msg || "Invalid credentials. Please try again.");
     } finally {
@@ -47,9 +345,19 @@ export default function Login() {
   return (
     <>
       <style>{styles}</style>
+
+      {/* ── Vendor Code Popup (first login only) ── */}
+      {vendorCodePopup && (
+        <VendorCodePopup
+          code={vendorCodePopup.code}
+          name={vendorCodePopup.name}
+          onContinue={handlePopupContinue}
+        />
+      )}
+
       <div className="lg-root">
 
-        {/* LEFT PANEL — hidden on mobile */}
+        {/* LEFT PANEL */}
         <div className="lg-left">
           <div className="lg-left-inner">
             <div className="lg-logo"><Logo /> Evencers</div>
@@ -61,7 +369,7 @@ export default function Login() {
             <div className="lg-stats">
               {[
                 { num: "100+", label: "Happy Clients" },
-                { num: "20+", label: "Verified Vendors" },
+                { num: "20+",  label: "Verified Vendors" },
                 { num: "4.9★", label: "Avg. Rating" },
               ].map((s, i) => (
                 <div key={i} className="lg-stat">
@@ -158,9 +466,7 @@ export default function Login() {
                         onSuccess={async (credentialResponse) => {
                           try {
                             const res = await API.post("/auth/google", { token: credentialResponse.credential });
-                            localStorage.setItem("token", res.data.token);
-                            localStorage.setItem("user", JSON.stringify(res.data.user));
-                            redirectAfterLogin(res.data.user);
+                            handleLoginSuccess(res.data.user, res.data.token);
                           } catch (err) {
                             console.error("Google login error:", err);
                             setError("Google login failed");
