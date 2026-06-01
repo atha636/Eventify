@@ -297,7 +297,7 @@ export default function Home() {
   ];
 
   const testimonials = [
-    { name: "Rani S.",   event: "Wedding · Delhi",       text: "Found our photographer and decorator within an hour. Absolutely seamless experience.", avatar: "P" },
+    { name: "Rani S.",   event: "Wedding · Delhi",       text: "Found our Photographer and Decorator within an hour. Absolutely seamless experience.", avatar: "P" },
     { name: "Rohan M.",   event: "Corporate · Delhi",     text: "The vendor quality is exceptional. Our product launch was a massive success.",         avatar: "R" },
     { name: "Ananya K.",  event: "Birthday · Chandigarh", text: "I was overwhelmed planning alone. Evencers made it feel effortless and fun.",           avatar: "A" },
   ];
