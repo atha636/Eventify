@@ -160,7 +160,7 @@ function PolicyPopup({ policy, onClose }) {
         },
         {
           title: "Cookies",
-          text: "We use cookies to enhance your browsing experience, remember your preferences, and analyze site traffic. You can control cookie settings through your browser.",
+          text: "We use cookies to enhance your browsing Experience, remember your preferences, and analyze site traffic. You can control cookie settings through your browser.",
         },
         {
           title: "Contact Us",
