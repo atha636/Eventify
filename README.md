@@ -125,5 +125,4 @@ This project is licensed under the MIT License.
 **Atharv Patidar**
 
 * MERN Stack Developer
-* GitHub: https://github.com/yourusername
-* LinkedIn: https://linkedin.com/in/yourprofile
+* 
