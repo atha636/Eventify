@@ -69,7 +69,7 @@ evencers/
 ### Clone Repository
 
 ```bash
-git clone https://github.com/yourusername/evencers.git
+
 ```
 
 ### Navigate to Project
@@ -89,9 +89,7 @@ npm install
 Create a `.env` file and add:
 
 ```env
-PORT=5000
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_secret_key
+
 ```
 
 ### Run Development Server
