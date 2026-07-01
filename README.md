@@ -1,3 +1,5 @@
+## Copyright & LicensingWrite: "© 2026 [Atharv Patidar]. All rights reserved. This repository is strictly for portfolio evaluation and interview review. No part of this code may be copied, modified, or redistributed without explicit permission."
+
 # 🎉 Evencers
 
 Evencers is a modern event management platform that helps users discover, create, manage, and participate in events seamlessly. The platform provides an intuitive user experience for attendees, organizers, vendors, and service providers.
