@@ -134,7 +134,6 @@ export default function AboutUs() {
 
   const [missionRef, missionVisible] = useReveal();
   const [valuesRef, valuesVisible] = useReveal();
-  const [teamRef, teamVisible] = useReveal();
   const [statsRef, statsVisible] = useReveal();
   const [ctaRef, ctaVisible] = useReveal();
   const [vendorRef, vendorVisible] = useReveal();
@@ -147,27 +146,6 @@ export default function AboutUs() {
     { emoji: "💛", title: "People Over Profit", desc: "We care deeply about both clients and vendors. Fair pricing, fair exposure, fair treatment.",      accent: "#c9a84c" },
     { emoji: "🌏", title: "India-First",         desc: "Built in India, for Indian celebrations. We understand our culture, our chaos, our joy.",          accent: "#f87171" },
     { emoji: "🔒", title: "Safe & Secure",       desc: "Payments, data, and communication are all protected. Your peace of mind is our promise.",          accent: "#38bdf8" },
-  ];
-
-  const team = [
-    {
-      name: "Akarsh Gupta",
-      role: "Founder & CEO",
-      desc: "Passionate about making luxury events accessible to everyone in India.",
-      photo: "/images/akarsh.jpg",
-      gradient: "135deg, #c9a84c 0%, #e8d5a3 100%",
-      initial: "AK",
-      accentColor: "#c9a84c",
-    },
-    {
-      name: "Atharv Patidar",
-      role: "Co-founder & CTO",
-      desc: "Building the infrastructure that makes seamless bookings possible at scale.",
-      photo: "/images/atharv.jpg",
-      gradient: "135deg, #34d399 0%, #6ee7b7 100%",
-      initial: "AT",
-      accentColor: "#34d399",
-    },
   ];
 
   const timeline = [
@@ -518,65 +496,6 @@ export default function AboutUs() {
                   </span>
                   <span className="au-vs-label">{s.label}</span>
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── TEAM ── */}
-        <section className="au-team-section" ref={teamRef} aria-labelledby="team-heading">
-          <div className="au-section-wrap">
-            <div className={`au-section-header au-reveal ${teamVisible ? "au-revealed" : ""}`}>
-              <p className="au-eyebrow">The people behind Evencers</p>
-              <h2 id="team-heading" className="au-section-title">Meet the Team</h2>
-              <p className="au-section-sub">A small, passionate team building India's best event platform</p>
-            </div>
-            <div className="au-team-grid">
-              {team.map((member, i) => (
-                <article
-                  key={i}
-                  className={`au-team-card au-reveal ${teamVisible ? "au-revealed" : ""}`}
-                  style={{ transitionDelay: `${i * 0.14}s` }}
-                >
-                  <div className="au-team-card-shine" aria-hidden="true" />
-                  <div
-                    className="au-team-top-bar"
-                    style={{ background: `linear-gradient(90deg, ${member.accentColor}, transparent)` }}
-                    aria-hidden="true"
-                  />
-                  <div className="au-team-avatar-wrap">
-                    <div
-                      className="au-team-photo-ring"
-                      style={{ "--ring-color": member.accentColor }}
-                    >
-                      <img
-                        src={member.photo}
-                        alt={`Photo of ${member.name}`}
-                        className="au-team-photo"
-                        onError={(e) => {
-                          e.target.style.display = "none";
-                          e.target.parentElement.classList.add("au-photo-fallback");
-                          e.target.parentElement.setAttribute("data-initial", member.initial);
-                        }}
-                      />
-                    </div>
-                    <div
-                      className="au-team-pulse-ring"
-                      style={{ "--ring-color": member.accentColor }}
-                      aria-hidden="true"
-                    />
-                  </div>
-                  <h3 className="au-team-name">{member.name}</h3>
-                  <span className="au-team-role" style={{ color: member.accentColor }}>
-                    {member.role}
-                  </span>
-                  <p className="au-team-desc">{member.desc}</p>
-                  <div
-                    className="au-team-bottom-glow"
-                    style={{ background: member.accentColor }}
-                    aria-hidden="true"
-                  />
-                </article>
               ))}
             </div>
           </div>
@@ -1342,111 +1261,6 @@ const styles = `
   }
   .au-vs-label { font-size: 12.5px; color: rgba(245,240,232,0.42); letter-spacing: 0.05em; }
 
-  /* ── TEAM SECTION ── */
-  .au-team-section {
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-  }
-  .au-team-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 28px;
-    max-width: 760px;
-    margin: 0 auto;
-  }
-  @media (max-width: 560px) {
-    .au-team-grid { grid-template-columns: 1fr; max-width: 360px; }
-  }
-
-  .au-team-card {
-    background: var(--white);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 36px 28px 30px;
-    text-align: center;
-    display: flex; flex-direction: column; align-items: center; gap: 6px;
-    transition: transform 0.35s cubic-bezier(.22,1,.36,1), box-shadow 0.35s, border-color 0.35s;
-    position: relative; overflow: hidden;
-    cursor: default;
-  }
-  .au-team-top-bar {
-    position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    opacity: 0.6; transition: opacity 0.35s;
-  }
-  .au-team-bottom-glow {
-    position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
-    opacity: 0; transition: opacity 0.35s;
-  }
-  .au-team-card-shine {
-    position: absolute; inset: 0;
-    background: linear-gradient(135deg, rgba(201,168,76,0.05) 0%, transparent 55%);
-    opacity: 0; transition: opacity 0.35s; pointer-events: none;
-  }
-  @media (hover:hover) {
-    .au-team-card:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 24px 56px rgba(201,168,76,0.12), 0 4px 16px rgba(0,0,0,0.06);
-      border-color: rgba(201,168,76,0.35);
-    }
-    .au-team-card:hover .au-team-card-shine { opacity: 1; }
-    .au-team-card:hover .au-team-top-bar { opacity: 1; }
-    .au-team-card:hover .au-team-bottom-glow { opacity: 0.5; }
-    .au-team-card:hover .au-team-photo-ring { transform: scale(1.04); }
-    .au-team-card:hover .au-team-photo { filter: grayscale(0%) contrast(1.05) brightness(1.02); }
-    .au-team-card:hover .au-team-pulse-ring { opacity: 0.6; transform: scale(1.12); }
-  }
-  .au-team-avatar-wrap {
-    position: relative; width: 110px; height: 110px;
-    margin-bottom: 12px;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .au-team-photo-ring {
-    width: 104px; height: 104px; border-radius: 50%; padding: 3px;
-    background: linear-gradient(135deg, var(--ring-color, var(--gold)) 0%, rgba(201,168,76,0.15) 60%, var(--ring-color, var(--gold)) 100%);
-    position: relative; z-index: 1;
-    box-shadow: 0 0 0 4px rgba(201,168,76,0.06), 0 8px 32px rgba(201,168,76,0.2);
-    transition: transform 0.35s cubic-bezier(.22,1,.36,1), box-shadow 0.35s;
-  }
-  .au-team-photo {
-    width: 100%; height: 100%; border-radius: 50%;
-    object-fit: cover; object-position: center top; display: block;
-    filter: grayscale(10%) contrast(1.03);
-    transition: filter 0.4s ease, transform 0.35s cubic-bezier(.22,1,.36,1);
-  }
-  .au-team-photo-ring.au-photo-fallback {
-    display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, var(--ring-color, var(--gold)) 0%, rgba(201,168,76,0.5) 100%);
-  }
-  .au-team-photo-ring.au-photo-fallback::after {
-    content: attr(data-initial);
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.6rem; font-weight: 600; color: var(--ink);
-  }
-  .au-team-photo-ring.au-photo-fallback img { display: none; }
-  .au-team-pulse-ring {
-    position: absolute; inset: -6px; border-radius: 50%;
-    border: 1.5px solid var(--ring-color, var(--gold));
-    opacity: 0.25; animation: auTeamPulse 3s ease-in-out infinite;
-    transition: opacity 0.35s, transform 0.35s; z-index: 0;
-  }
-  @keyframes auTeamPulse {
-    0%,100% { transform: scale(1); opacity: 0.25; }
-    50%      { transform: scale(1.06); opacity: 0.1; }
-  }
-  .au-team-name {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.35rem; font-weight: 600; color: var(--ink);
-    margin-top: 4px; letter-spacing: -0.01em;
-  }
-  .au-team-role {
-    font-size: 10px; letter-spacing: 0.14em;
-    text-transform: uppercase; font-weight: 500; margin-bottom: 2px;
-  }
-  .au-team-desc {
-    font-size: 13px; color: var(--muted); line-height: 1.68;
-    margin-top: 6px; max-width: 240px;
-  }
-
   /* ── CTA ── */
   .au-cta {
     position: relative; overflow: hidden; text-align: center;
@@ -1550,7 +1364,6 @@ const styles = `
     .au-btn-lg { width: 100%; max-width: 300px; justify-content: center; }
     .au-footer-sep { display: none; }
     .au-values-grid { gap: 12px; }
-    .au-team-grid { gap: 16px; }
     .au-vendor-cta-row { flex-direction: column; }
     .au-btn-ghost-dark { width: 100%; justify-content: center; }
     .au-cta-trust { flex-direction: column; gap: 8px; }
