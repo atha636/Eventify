@@ -5,6 +5,7 @@ import Navbar from "../components/Navbar";
 import BookingDetailsModal from "../components/BookingDetailsModal";
 import BookingWaitModal from "../components/BookingWaitModal";
 import Logo from "../components/Logo";
+import ReviewsSection from "../components/ReviewsSection";
 
 // ── Share Modal ───────────────────────────────────────────────────────────────
 function ShareModal({ vendor, onClose }) {
@@ -688,6 +689,13 @@ export default function VendorDetail() {
                 </div>
               </div>
             )}
+
+            {/* ── Reviews ── */}
+            <ReviewsSection
+              vendorId={vendor._id}
+              isLoggedIn={!!localStorage.getItem("token")}
+              isOwner={isVendor && vendor.vendorId === user?.id}
+            />
           </main>
         </div>
       </div>

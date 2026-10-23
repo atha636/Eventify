@@ -476,6 +476,9 @@ export default function ServiceCard({ vendor, showDelete = false, onDeleted }) {
               <div className="sc-rating">
                 <span className="sc-star">★</span>
                 <span>{vendor.rating}</span>
+                {vendor.reviewCount > 0 && (
+                  <span className="sc-rating-count">({vendor.reviewCount})</span>
+                )}
               </div>
             )}
           </div>
@@ -857,6 +860,9 @@ const cardStyles = `
     background: var(--surface); border: 1px solid var(--border);
     border-radius: 20px; padding: 3px 8px; flex-shrink: 0;
     white-space: nowrap; height: fit-content;
+  }
+  .sc-rating-count {
+    color: var(--muted, #7a7265); font-weight: 400; font-size: 11px;
   }
   .sc-star { color: var(--gold); font-size: 11px; }
 
