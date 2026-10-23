@@ -49,7 +49,12 @@ const serviceSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
-    rating: { type: Number },
+
+    // ── Reviews aggregate (kept in sync by reviewController) ──
+    // `rating` = average of all Review docs for this vendor, rounded to 1dp.
+    // `reviewCount` = how many reviews make up that average.
+    rating:      { type: Number },
+    reviewCount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

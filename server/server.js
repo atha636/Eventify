@@ -149,10 +149,11 @@ app.use("/api/auth",          authLimiter, require("./routes/authRoutes"));
 // Admin routes → global limiter already applied
 app.use("/api/admin",         require("./routes/adminRoutes"));
 
-// Vendor / booking / favorites
+// Vendor / booking / favorites / reviews
 app.use("/api/vendors",       require("./routes/vendorRoutes"));
 app.use("/api/bookings",      require("./routes/bookingRoutes"));
 app.use("/api/favorites",     favoriteRoutes);
+app.use("/api/reviews",       require("./routes/reviewRoutes"));
 
 // Notifications → own generous limiter (polled frequently by Navbar)
 app.use("/api/notifications", notificationLimiter, notificationRoutes);
