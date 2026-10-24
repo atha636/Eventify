@@ -58,7 +58,14 @@ exports.addService = async (req, res) => {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    if (user.role === "vendor" && user.isProfileVerified !== "approved") {
+    // ── BUG FIX: this previously only checked verification status when
+    // role === "vendor", so a plain "user"-role account could call this
+    // route directly and create a vendor listing under their own id.
+    // Must require role === "vendor" outright, THEN check verification.
+    if (user.role !== "vendor") {
+      return res.status(403).json({ error: "Only vendor accounts can add services." });
+    }
+    if (user.isProfileVerified !== "approved") {
       const statusMsg = {
         pending:  "Your vendor profile is still under review. You can add services once approved by the admin.",
         rejected: "Your vendor profile has been rejected. Please contact support.",
@@ -202,9 +209,25 @@ exports.editService = async (req, res) => {
 };
 
 // Legacy
+// SECURITY: previously spread the entire req.body into Vendor.create(),
+// which let any authenticated caller inject fields like isApproved,
+// rating or reviewCount. Whitelist only the fields this endpoint is
+// meant to accept.
 exports.createVendor = async (req, res) => {
   try {
-    const vendor = await Vendor.create({ ...req.body, vendorId: req.user.id });
+    const { serviceType, title, description, location, locations, price, packages, timeSlots, images } = req.body;
+    const vendor = await Vendor.create({
+      vendorId: req.user.id,
+      serviceType,
+      title,
+      description,
+      location,
+      locations,
+      price,
+      packages,
+      timeSlots,
+      images,
+    });
     res.json(vendor);
   } catch (err) {
     res.status(500).json({ error: err.message });

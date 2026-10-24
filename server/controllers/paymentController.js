@@ -193,6 +193,16 @@ exports.verifyPayment = async (req, res) => {
     const payment = await Payment.findById(paymentId);
     if (!payment) return res.status(404).json({ error: "Payment record not found" });
 
+    // Defense-in-depth: the HMAC check above already proves this is a
+    // genuine Razorpay payment for this exact order, but confirm the
+    // order also belongs to the caller before mutating anything.
+    if (payment.userId.toString() !== req.user.id) {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+    if (payment.status === "paid") {
+      return res.status(400).json({ error: "This payment has already been verified." });
+    }
+
     payment.paymentId         = razorpayPaymentId;
     payment.razorpaySignature = razorpaySignature;
     payment.status            = "paid";

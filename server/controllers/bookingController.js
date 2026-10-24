@@ -58,7 +58,9 @@ async function createNotification({ userId, type, title, message, bookingId }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // CREATE BOOKING
 // POST /api/bookings
-// Body: { vendorId, date, packageName, packagePrice, userDetails, paymentPlan }
+// Body: { vendorId, date, packageName, userDetails, paymentPlan }
+// NOTE: packagePrice is intentionally NOT read from the client — the real
+// price is looked up server-side from the vendor's own packages/price.
 // ─────────────────────────────────────────────────────────────────────────────
 exports.createBooking = async (req, res) => {
   try {
@@ -66,7 +68,6 @@ exports.createBooking = async (req, res) => {
       vendorId,
       date,
       packageName,
-      packagePrice,
       userDetails,
       paymentPlan = "100",   // default to full payment
     } = req.body;
@@ -76,31 +77,79 @@ exports.createBooking = async (req, res) => {
       return res.status(400).json({ error: "Invalid payment plan. Choose 25, 75, or 100." });
     }
 
-    // ── Vendor must exist ────────────────────────────────────────
+    // ── Date sanity ────────────────────────────────────────────────
+    const parsedDate = new Date(date);
+    if (!date || isNaN(parsedDate.getTime())) {
+      return res.status(400).json({ error: "A valid date is required." });
+    }
+    const todayMidnight = new Date(); todayMidnight.setHours(0, 0, 0, 0);
+    if (parsedDate < todayMidnight) {
+      return res.status(400).json({ error: "Event date can't be in the past." });
+    }
+
+    // ── Vendor must exist and be approved/live ────────────────────
     const vendor = await Vendor.findById(vendorId).populate("vendorId");
     if (!vendor) return res.status(404).json({ error: "Vendor not found" });
+    if (!vendor.isApproved) {
+      return res.status(400).json({ error: "This service isn't currently available for booking." });
+    }
+
+    // ── SECURITY: never trust packagePrice from the client ─────────
+    // The old code took req.body.packagePrice as-is and used it to size
+    // every installment and Razorpay order — a client could book any
+    // package for ₹1 by editing the request. Recompute the real price
+    // from the vendor's own stored packages / flat price instead.
+    const isDecorVendor = vendor.serviceType === "decor";
+    let resolvedPrice;
+    let resolvedPackageName = packageName;
+
+    if (isDecorVendor) {
+      resolvedPrice = vendor.price;
+      resolvedPackageName = packageName || vendor.title || "Decor Service";
+    } else {
+      const matchedPkg = vendor.packages?.find((p) => p.name === packageName);
+      if (!matchedPkg) {
+        return res.status(400).json({ error: "Selected package no longer exists for this vendor." });
+      }
+      resolvedPrice = matchedPkg.price;
+      resolvedPackageName = matchedPkg.name;
+    }
+
+    if (!resolvedPrice || resolvedPrice <= 0) {
+      return res.status(400).json({ error: "This service doesn't have a valid price set." });
+    }
+
+    // ── Vendor-blocked dates ─────────────────────────────────────
+    const dayStart = new Date(parsedDate); dayStart.setHours(0, 0, 0, 0);
+    const dayEnd   = new Date(dayStart);   dayEnd.setDate(dayEnd.getDate() + 1);
+    const blocked = (vendor.availability || []).some(
+      (a) => !a.available && a.date >= dayStart && a.date < dayEnd
+    );
+    if (blocked) {
+      return res.status(409).json({ error: "This vendor isn't available on the selected date." });
+    }
 
     // ── Prevent duplicate pending bookings ───────────────────────
     const existing = await Booking.findOne({
       userId:   req.user.id,
       vendorId,
-      date:     new Date(date),
+      date:     parsedDate,
       status:   { $in: ["pending", "approved"] },
     });
     if (existing) {
       return res.status(409).json({ error: "You already have an active booking for this vendor on that date." });
     }
 
-    // ── Build installments ───────────────────────────────────────
-    const installments = buildInstallments(paymentPlan, packagePrice);
+    // ── Build installments (server-resolved price only) ──────────
+    const installments = buildInstallments(paymentPlan, resolvedPrice);
 
     // ── Create booking ───────────────────────────────────────────
     const booking = await Booking.create({
       userId:       req.user.id,
       vendorId,
-      packageName,
-      packagePrice: Number(packagePrice),
-      date:         new Date(date),
+      packageName:  resolvedPackageName,
+      packagePrice: resolvedPrice,
+      date:         parsedDate,
       status:       "pending",
       userDetails:  {
         name:    userDetails?.name    || "",
@@ -139,14 +188,14 @@ exports.createBooking = async (req, res) => {
             userId:    vendorUser._id,
             type:      "booking_received",
             title:     "New Booking Request",
-            message:   `${user?.name || "A client"} wants to book "${packageName}" for ${new Date(date).toLocaleDateString("en-IN")}`,
+            message:   `${user?.name || "A client"} wants to book "${booking.packageName}" for ${booking.date.toLocaleDateString("en-IN")}`,
             bookingId: booking._id,
           });
 
           if (vendorUser.email) {
             await sendEmail({
               to:      vendorUser.email,
-              subject: `New Booking Request — ${packageName}`,
+              subject: `New Booking Request — ${booking.packageName}`,
               text: [
                 `Hello ${vendorUser.name},`,
                 ``,
@@ -154,8 +203,8 @@ exports.createBooking = async (req, res) => {
                 ``,
                 `Customer : ${user?.name}`,
                 `Phone    : ${userDetails?.phone || "—"}`,
-                `Package  : ${packageName}`,
-                `Date     : ${new Date(date).toLocaleDateString("en-IN")}`,
+                `Package  : ${booking.packageName}`,
+                `Date     : ${booking.date.toLocaleDateString("en-IN")}`,
                 `Address  : ${userDetails?.address || "—"}`,
                 ``,
                 `Payment Plan : ${planLabel}`,
@@ -175,7 +224,7 @@ exports.createBooking = async (req, res) => {
             userId:    user._id,
             type:      "payment_pending",
             title:     "Booking Request Sent",
-            message:   `Your booking for "${packageName}" with ${vendor.title} has been sent. Awaiting vendor confirmation.`,
+            message:   `Your booking for "${booking.packageName}" with ${vendor.title} has been sent. Awaiting vendor confirmation.`,
             bookingId: booking._id,
           });
 
@@ -188,8 +237,8 @@ exports.createBooking = async (req, res) => {
                 ``,
                 `Your booking request has been sent to ${vendor.title}.`,
                 ``,
-                `Package  : ${packageName}`,
-                `Date     : ${new Date(date).toLocaleDateString("en-IN")}`,
+                `Package  : ${booking.packageName}`,
+                `Date     : ${booking.date.toLocaleDateString("en-IN")}`,
                 ``,
                 `Payment Plan : ${planLabel}`,
                 `Amount due now (after vendor approves) : ₹${firstAmount.toLocaleString("en-IN")}`,
