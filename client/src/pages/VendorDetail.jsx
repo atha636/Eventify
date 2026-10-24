@@ -395,9 +395,11 @@ export default function VendorDetail() {
   }
 
   try {
+    // Note: packagePrice is NOT sent — the server resolves the real price
+    // from the vendor's own stored packages, so it can't be tampered with.
     await API.post(
       "/bookings",
-      { vendorId: vendor._id, date: selectedDate, packageName, packagePrice, userDetails, paymentPlan: selectedPlan },
+      { vendorId: vendor._id, date: selectedDate, packageName, userDetails, paymentPlan: selectedPlan },
       { headers: { Authorization: `Bearer ${token}` } }
     );
     setShowDetailsModal(false);
