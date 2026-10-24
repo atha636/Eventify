@@ -60,9 +60,14 @@ exports.getStats = async (req, res) => {
       Booking.countDocuments({ status: "pending" }),
       User.countDocuments({ role: "vendor", isProfileVerified: "pending" }),
     ]);
+    // BUG FIX: this summed the FULL packagePrice of every "approved"
+    // booking, even though most payment plans only collect 25-75% up
+    // front — it overstated revenue by counting money that was never
+    // actually paid. Sum what's actually been collected (totalPaid)
+    // instead, across any booking that has received a payment.
     const revenueAgg = await Booking.aggregate([
-      { $match: { status: "approved" } },
-      { $group: { _id: null, total: { $sum: "$packagePrice" } } },
+      { $match: { totalPaid: { $gt: 0 } } },
+      { $group: { _id: null, total: { $sum: "$totalPaid" } } },
     ]);
     const totalRevenue   = revenueAgg[0]?.total || 0;
     const recentBookings = await Booking.find()

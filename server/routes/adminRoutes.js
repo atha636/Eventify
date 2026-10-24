@@ -1,6 +1,22 @@
-const express = require("express");
-const router  = express.Router();
+const express   = require("express");
+const rateLimit = require("express-rate-limit");
+const router    = express.Router();
 const { adminAuth } = require("../middleware/authMiddleware");
+
+// ── Strict limiter for the two public admin auth endpoints ───────────
+// BUG FIX: these previously only sat behind the generous global limiter
+// (300 req/15min in prod) — the same brute-force protection /api/auth
+// gets (10 req/15min) belongs here too, arguably more so since an admin
+// account is a higher-value target. Scoped to just login/register so it
+// doesn't throttle normal admin-dashboard polling.
+const isDev = process.env.NODE_ENV !== "production";
+const adminAuthLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: isDev ? 100 : 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many attempts. Try again in 15 minutes." },
+});
 
 const {
   adminRegister,
@@ -23,8 +39,8 @@ const {
 } = require("../controllers/adminController");
 
 // ── Auth (public) ────────────────────────────────────────────────
-router.post("/register", adminRegister);
-router.post("/login",    adminLogin);
+router.post("/register", adminAuthLimiter, adminRegister);
+router.post("/login",    adminAuthLimiter, adminLogin);
 
 // ── Dashboard stats ──────────────────────────────────────────────
 router.get("/stats", adminAuth, getStats);
