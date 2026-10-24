@@ -147,6 +147,9 @@ const notificationRoutes  = require("./routes/notificationRoutes");
 app.use("/api/auth",          authLimiter, require("./routes/authRoutes"));
 
 // Admin routes → global limiter already applied
+// (admin login/register get their own strict limiter inside adminRoutes.js
+// itself, rather than applying authLimiter to this whole mount — the rest
+// of the admin dashboard is polled too often for a 10-req/15min cap)
 app.use("/api/admin",         require("./routes/adminRoutes"));
 
 // Vendor / booking / favorites / reviews

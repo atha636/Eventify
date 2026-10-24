@@ -30,9 +30,24 @@ function generateVendorCode(name) {
 // REGISTER
 // ─────────────────────────────────────────
 exports.register = async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password } = req.body;
+
+  // ── SECURITY: never trust `role` from the client as-is ──────────
+  // Without this, POST { role: "admin" } to this PUBLIC endpoint would
+  // create a fully privileged admin account. Only "user" / "vendor"
+  // are ever self-selectable here; admins are provisioned separately
+  // via adminController.adminRegister (which requires ADMIN_SECRET).
+  const role = req.body.role === "vendor" ? "vendor" : "user";
+
+  if (!name?.trim() || !email?.trim() || !password) {
+    return res.status(400).json({ msg: "Name, email and password are required" });
+  }
+  if (password.length < 6) {
+    return res.status(400).json({ msg: "Password must be at least 6 characters" });
+  }
+
   try {
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     if (existingUser) {
@@ -238,6 +253,13 @@ exports.verifyResetOTP = async (req, res) => {
 // ─────────────────────────────────────────
 exports.resetPassword = async (req, res) => {
   const { resetToken, newPassword } = req.body;
+
+  // ── Same minimum as changePassword — was missing here, letting a
+  //    reset set a 1-character password while change-password enforced 6 ──
+  if (!newPassword || newPassword.length < 6) {
+    return res.status(400).json({ msg: "New password must be at least 6 characters" });
+  }
+
   try {
     let decoded;
     try { decoded = jwt.verify(resetToken, process.env.JWT_SECRET); }
