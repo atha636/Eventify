@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import ProfilePopup from "./ProfilePopup";
 import NotificationPanel from "./NotificationPanel";
+import TempPasswordBanner from "./TempPasswordBanner";
 import API from "../services/api";
 import logo from "../assets/logo.png";
 
@@ -26,6 +27,7 @@ export default function Navbar() {
   const [hidden, setHidden]               = useState(false);
   const [menuOpen, setMenuOpen]           = useState(false);
   const [profileOpen, setProfileOpen]     = useState(false);
+  const [profileInitialTab, setProfileInitialTab] = useState("profile");
   const [notifOpen, setNotifOpen]         = useState(false);
   const [unreadCount, setUnreadCount]     = useState(0);
 
@@ -40,6 +42,10 @@ export default function Navbar() {
   const isUser   = user?.role === "user";
   const isVendor = user?.role === "vendor";
   const canReceiveNotifs = isUser || isVendor;
+
+  // ── Temp-password banner (admin-created accounts) ──────────────────
+  const [mustChangePassword, setMustChangePassword] = useState(!!user?.mustChangePassword);
+  const openChangePassword = () => { setProfileInitialTab("password"); setProfileOpen(true); };
 
   useEffect(() => {
     if (!token || !canReceiveNotifs) return;
@@ -242,11 +248,18 @@ export default function Navbar() {
         </div>
       </nav>
 
+      {/* ── TEMP PASSWORD BANNER (admin-created accounts) ── */}
+      {token && mustChangePassword && (
+        <TempPasswordBanner onChangePasswordClick={openChangePassword} />
+      )}
+
       {/* ── PROFILE POPUP ── */}
       {profileOpen && (
         <ProfilePopup
-          onClose={() => setProfileOpen(false)}
+          onClose={() => { setProfileOpen(false); setProfileInitialTab("profile"); }}
           onLogoutRequest={() => { setProfileOpen(false); setShowLogoutConfirm(true); }}
+          initialTab={profileInitialTab}
+          onPasswordChanged={() => setMustChangePassword(false)}
         />
       )}
 

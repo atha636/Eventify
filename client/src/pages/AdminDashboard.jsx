@@ -219,6 +219,109 @@ function ServiceDetailModal({ service, onClose, onTitleUpdated, onImageDeleted, 
   );
 }
 
+// ── Add Vendor Modal ─────────────────────────────────────────────
+// Admin hand-onboards a vendor: name/email/phone + optional photo.
+// A temp password is generated server-side and emailed to the vendor —
+// it's never shown here, since it only ever exists in that one email.
+function AddVendorModal({ onClose, onCreated, showToast }) {
+  const [name, setName]   = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError]   = useState("");
+
+  const handlePhotoChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const handleSubmit = async () => {
+    setError("");
+    if (!name.trim())  return setError("Name is required.");
+    if (!email.trim()) return setError("Email is required.");
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) return setError("Enter a valid email address.");
+
+    setSaving(true);
+    try {
+      const form = new FormData();
+      form.append("name", name.trim());
+      form.append("email", email.trim());
+      if (phone.trim()) form.append("phone", phone.trim());
+      if (photoFile) form.append("photo", photoFile);
+
+      const res = await API.post("/admin/vendors", form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      showToast(`Vendor "${res.data.vendor.name}" created — login details emailed.`, "success");
+      onCreated(res.data.vendor);
+      onClose();
+    } catch (err) {
+      setError(err?.response?.data?.msg || "Failed to create vendor.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="ad-overlay" onClick={onClose}>
+      <div className="ad-dialog" style={{ maxWidth: 440 }} onClick={(e) => e.stopPropagation()}>
+        <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.4rem", marginBottom: 6 }}>Add Vendor</h3>
+        <p style={{ fontSize: 12.5, color: "var(--muted)", marginBottom: 20, lineHeight: 1.6 }}>
+          Creates an already-approved vendor account. A temporary password is generated and emailed to them — they'll be asked to change it on first login.
+        </p>
+
+        {error && (
+          <div style={{ background: "rgba(184,92,92,0.08)", border: "1px solid rgba(184,92,92,0.25)", color: "#b85c5c", fontSize: 12.5, borderRadius: 8, padding: "9px 12px", marginBottom: 14 }}>
+            {error}
+          </div>
+        )}
+
+        {/* Photo picker */}
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+          <label
+            htmlFor="av-photo-input"
+            style={{
+              width: 56, height: 56, borderRadius: "50%", flexShrink: 0, cursor: "pointer",
+              background: photoPreview ? `url(${photoPreview}) center/cover` : "var(--surface)",
+              border: "1.5px dashed var(--border)", display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 11, color: "var(--muted)", textAlign: "center",
+            }}
+          >
+            {!photoPreview && "Photo"}
+          </label>
+          <input id="av-photo-input" type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: "none" }} />
+          <span style={{ fontSize: 11.5, color: "var(--muted)" }}>Optional. JPG/PNG/WebP, up to 5MB.</span>
+        </div>
+
+        <div style={{ marginBottom: 12 }}>
+          <label className="ad-svc-field-label" style={{ display: "block", marginBottom: 6 }}>Full Name</label>
+          <input className="ad-svc-input" style={{ width: "100%", boxSizing: "border-box" }} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Priya Sharma" autoFocus />
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <label className="ad-svc-field-label" style={{ display: "block", marginBottom: 6 }}>Email</label>
+          <input className="ad-svc-input" style={{ width: "100%", boxSizing: "border-box" }} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="vendor@example.com" />
+        </div>
+        <div style={{ marginBottom: 20 }}>
+          <label className="ad-svc-field-label" style={{ display: "block", marginBottom: 6 }}>Phone (optional)</label>
+          <input className="ad-svc-input" style={{ width: "100%", boxSizing: "border-box" }} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91 98765 43210" />
+        </div>
+
+        <div className="ad-dialog-btns">
+          <button className="ad-action-btn ad-action-ok" style={{ flex: 1, padding: "10px 16px" }} onClick={handleSubmit} disabled={saving}>
+            {saving ? "Creating…" : "Create Vendor & Send Email"}
+          </button>
+          <button className="ad-btn ad-btn-ghost" onClick={onClose} disabled={saving}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   useAdminGuard();
   const navigate = useNavigate();
@@ -233,6 +336,7 @@ export default function AdminDashboard() {
   const [sidebarOpen,     setSidebarOpen]     = useState(false);
   const [rejectTarget,    setRejectTarget]    = useState(null);
   const [svcDetailTarget, setSvcDetailTarget] = useState(null);
+  const [showAddVendor,   setShowAddVendor]   = useState(false);
 
   const [loadingTab,    setLoadingTab]    = useState(false);
   const [loadingStats,  setLoadingStats]  = useState(false);
@@ -400,6 +504,16 @@ export default function AdminDashboard() {
   const handleImageDeleted = (serviceId, newImages) => {
     setServices((s) => s.map((x) => x._id === serviceId ? { ...x, images: newImages } : x));
     if (svcDetailTarget?._id === serviceId) setSvcDetailTarget((prev) => ({ ...prev, images: newImages }));
+  };
+
+  // New vendor account created by admin — drop it into the Users list
+  // immediately so it's visible without a refetch.
+  const handleVendorCreated = (vendor) => {
+    setUsers((u) => [
+      { ...vendor, role: "vendor", isVerified: true, createdAt: vendor.createdAt || new Date().toISOString() },
+      ...u,
+    ]);
+    fetchStats();
   };
 
   const logout = () => { localStorage.removeItem("token"); localStorage.removeItem("user"); navigate("/admin/login"); };
@@ -688,9 +802,14 @@ export default function AdminDashboard() {
           {/* ══ USERS ══ */}
           {tab === "users" && (
             <div className="ad-content">
+              <div className="ad-section-header-row">
+                <div className="ad-section-meta" style={{ marginBottom: 0 }}>{users.length} users found</div>
+                <button className="ad-add-vendor-btn" onClick={() => setShowAddVendor(true)}>
+                  + Add Vendor
+                </button>
+              </div>
               {loadingTab ? <Spinner /> : (
                 <>
-                  <div className="ad-section-meta">{users.length} users found</div>
                   <div className="ad-table-wrap ad-desktop-only">
                     <table className="ad-table">
                       <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Verified</th><th>Joined</th><th>Actions</th></tr></thead>
@@ -886,6 +1005,14 @@ export default function AdminDashboard() {
         />
       )}
 
+      {showAddVendor && (
+        <AddVendorModal
+          onClose={() => setShowAddVendor(false)}
+          onCreated={handleVendorCreated}
+          showToast={showToast}
+        />
+      )}
+
       {toast.msg && (
         <div className={`ad-toast ${toast.type === "error" ? "ad-toast-error" : toast.type === "success" ? "ad-toast-success" : ""}`}>
           {toast.type === "error"   && <span className="ad-toast-icon">✕</span>}
@@ -928,6 +1055,14 @@ const styles = `
   .ad-mobile-logout { display: none; background: none; border: none; font-size: 18px; cursor: pointer; color: #b85c5c; padding: 6px 10px; border-radius: 6px; }
   .ad-content { padding: 28px 32px 32px; }
   .ad-section-meta { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+  .ad-section-header-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .ad-add-vendor-btn {
+    font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 500;
+    background: var(--ink); color: #fff; border: none; border-radius: 7px;
+    padding: 9px 16px; cursor: pointer; transition: background 0.2s;
+    white-space: nowrap;
+  }
+  .ad-add-vendor-btn:hover { background: var(--gold); color: var(--ink); }
 
   /* ── Info banner ── */
   .ad-info-banner { display: flex; align-items: flex-start; gap: 10px; background: rgba(60,100,200,0.06); border: 1px solid rgba(60,100,200,0.15); border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; font-size: 12.5px; color: var(--muted); line-height: 1.6; }

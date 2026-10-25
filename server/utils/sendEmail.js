@@ -275,6 +275,31 @@ const sendVendorNewBookingEmail = async (vendorUser, booking, user, payment) => 
   });
 };
 
+// ── Admin created a vendor account directly — send login + temp password ────
+const sendVendorAccountCreatedEmail = async ({ vendorName, vendorEmail, tempPassword, vendorCode }) => {
+  await sendEmail({
+    to: vendorEmail,
+    subject: "Your Evencers Vendor Account Has Been Created",
+    html: wrap(`
+      <h2 style="font-size:1.4rem;color:#0e0c0a;margin-bottom:8px;">Welcome to Evencers, ${vendorName}!</h2>
+      <p style="color:#7a7265;font-size:14px;line-height:1.7;margin-bottom:20px;">
+        Our admin team has created a vendor account for you on Evencers. You're already approved — log in below and start adding your services.
+      </p>
+      <div style="background:#fff;border:1px solid rgba(201,168,76,0.25);border-radius:10px;padding:18px;margin-bottom:16px;">
+        ${row("Email", vendorEmail)}
+        ${row("Temporary Password", `<span style="font-family:monospace;font-size:14px;font-weight:700;letter-spacing:0.05em;color:#0e0c0a;">${tempPassword}</span>`)}
+        ${vendorCode ? row("Vendor Code", vendorCode) : ""}
+      </div>
+      <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:8px;padding:14px;margin-bottom:20px;">
+        <p style="font-size:12.5px;color:#0e0c0a;margin:0;line-height:1.6;">
+          ⚠ This is a <strong>temporary password</strong>. For security, please change it right after logging in — go to <strong>Profile → Password</strong>.
+        </p>
+      </div>
+      ${goldBtn(`${process.env.FRONTEND_URL || "https://eventfiy.vercel.app"}/login`, "Log In to Evencers →")}
+    `),
+  });
+};
+
 // ── 7. Event confirmation nudge to vendor/user ───────────────────────────────
 const sendEventConfirmationNudge = async (toEmail, toName, booking, role) => {
   const dashUrl = role === "vendor"
@@ -307,4 +332,5 @@ module.exports = {
   sendFinalPaymentRequestEmail,
   sendVendorNewBookingEmail,
   sendEventConfirmationNudge,
+  sendVendorAccountCreatedEmail,
 };
