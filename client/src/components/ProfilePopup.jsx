@@ -2,10 +2,12 @@ import { useState, useRef, useEffect } from "react";
 import API from "../services/api";
 
 // onLogoutRequest: called when user clicks "Log Out" — parent (Navbar) handles the confirmation modal
-export default function ProfilePopup({ onClose, onLogoutRequest }) {
+// initialTab: "profile" | "password" — lets the temp-password banner jump straight to the Password tab
+// onPasswordChanged: called after a successful password change, so Navbar can dismiss its banner
+export default function ProfilePopup({ onClose, onLogoutRequest, initialTab = "profile", onPasswordChanged }) {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-  const [tab, setTab]             = useState("profile"); // "profile" | "password"
+  const [tab, setTab]             = useState(initialTab); // "profile" | "password"
   const [name, setName]           = useState(user.name || "");
   const [email, setEmail]         = useState(user.email || "");
   const [currentPw, setCurrentPw] = useState("");
@@ -53,9 +55,17 @@ export default function ProfilePopup({ onClose, onLogoutRequest }) {
     if (newPw !== confirmPw) return showMsg("Passwords do not match.", "error");
     setLoading(true);
     try {
-      await API.put("/auth/change-password", { currentPassword: currentPw, newPassword: newPw });
+      const res = await API.put("/auth/change-password", { currentPassword: currentPw, newPassword: newPw });
       setCurrentPw(""); setNewPw(""); setConfirmPw("");
       showMsg("Password changed successfully!");
+
+      // Clear the "temporary password" flag locally so the banner
+      // disappears without needing a page reload.
+      if (res.data?.clearedTempPasswordFlag) {
+        const updated = { ...user, mustChangePassword: false };
+        localStorage.setItem("user", JSON.stringify(updated));
+        onPasswordChanged?.();
+      }
     } catch (err) {
       showMsg(err.response?.data?.msg || "Failed to change password.", "error");
     } finally {
@@ -126,6 +136,11 @@ export default function ProfilePopup({ onClose, onLogoutRequest }) {
         {/* ── Password Tab ── */}
         {tab === "password" && (
           <div className="pp-body">
+            {user.mustChangePassword && (
+              <div className="pp-temp-notice">
+                ⚠ You're using a temporary password set by admin. Please change it now.
+              </div>
+            )}
             <div className="pp-field">
               <label className="pp-label">Current Password</label>
               <input className="pp-input" type="password" value={currentPw} onChange={(e) => setCurrentPw(e.target.value)} placeholder="••••••••" />
@@ -234,6 +249,12 @@ const styles = `
   }
   .pp-msg-success { background: rgba(58,138,98,0.08); color: #2d6a4f; border: 1px solid rgba(58,138,98,0.2); }
   .pp-msg-error   { background: rgba(184,92,92,0.08); color: #b85c5c; border: 1px solid rgba(184,92,92,0.2); }
+
+  .pp-temp-notice {
+    background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.3);
+    color: #8a6a1f; font-size: 11.5px; line-height: 1.5;
+    border-radius: 8px; padding: 9px 12px; margin-bottom: 14px;
+  }
 
   /* Body */
   .pp-body { padding: 16px 16px 4px; }
