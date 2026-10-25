@@ -4,10 +4,13 @@ const Booking      = require("../models/Booking");
 const Notification = require("../models/Notification");
 const bcrypt       = require("bcryptjs");
 const jwt          = require("jsonwebtoken");
+const crypto       = require("crypto");
 const {
   sendVendorVerificationResult,
+  sendVendorAccountCreatedEmail,
   sendEmail,
 } = require("../utils/sendEmail");
+const { generateVendorCode } = require("./authController");
 
 // ─────────────────────────────────────────
 // ADMIN REGISTER (secret-key protected)
@@ -481,6 +484,102 @@ exports.toggleVendorVerified = async (req, res) => {
     });
   } catch (err) {
     console.error("TOGGLE VENDOR VERIFIED ERROR:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// ADMIN — CREATE VENDOR ACCOUNT DIRECTLY
+// POST /api/admin/vendors
+// multipart/form-data: name, email, phone?, photo? (single file)
+//
+// Admin onboards a vendor by hand (e.g. offline-signed partner) —
+// skips the OTP/self-registration flow entirely:
+//   • account is created already verified + profile-approved
+//   • a random temp password is generated, hashed, and stored
+//   • the PLAIN temp password is emailed to the vendor (shown once)
+//   • mustChangePassword = true, so the frontend nags them to set
+//     their own password on first login
+// ═══════════════════════════════════════════════════════════════
+
+// 12-char temp password, URL/email-safe, no ambiguous look-alike chars.
+function generateTempPassword() {
+  const charset = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+  const bytes   = crypto.randomBytes(12);
+  let out = "";
+  for (let i = 0; i < 12; i++) out += charset[bytes[i] % charset.length];
+  return out;
+}
+
+exports.createVendorByAdmin = async (req, res) => {
+  try {
+    const { name, email, phone } = req.body;
+
+    if (!name?.trim() || !email?.trim()) {
+      return res.status(400).json({ msg: "Name and email are required." });
+    }
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const existing = await User.findOne({ email: normalizedEmail });
+    if (existing) {
+      return res.status(400).json({ msg: "A user with this email already exists." });
+    }
+
+    const tempPassword = generateTempPassword();
+    const hashed        = await bcrypt.hash(tempPassword, 10);
+    const vendorCode     = generateVendorCode(name);
+
+    const vendor = await User.create({
+      name:  name.trim(),
+      email: normalizedEmail,
+      phone: phone?.trim() || "",
+      password: hashed,
+      role: "vendor",
+
+      // Admin is hand-onboarding this vendor — treat them as already
+      // vetted, so they can log in and add services right away.
+      isVerified: true,
+      isProfileVerified: "approved",
+      hasSeenWelcome: false,
+      vendorCode,
+
+      avatar: req.file ? req.file.path : "",
+
+      addedByAdmin: true,
+      mustChangePassword: true,
+    });
+
+    // ── Email the temp password (plaintext — this is the only time
+    //    it's ever visible anywhere, including to admin) ──────────
+    setImmediate(async () => {
+      try {
+        await sendVendorAccountCreatedEmail({
+          vendorName:   vendor.name,
+          vendorEmail:  vendor.email,
+          tempPassword,
+          vendorCode,
+        });
+      } catch (e) {
+        console.error("sendVendorAccountCreatedEmail error (non-fatal):", e.message);
+      }
+    });
+
+    res.status(201).json({
+      msg: "Vendor account created. Login details emailed to the vendor.",
+      vendor: {
+        _id:               vendor._id,
+        name:              vendor.name,
+        email:             vendor.email,
+        phone:             vendor.phone,
+        avatar:            vendor.avatar,
+        vendorCode:        vendor.vendorCode,
+        role:              vendor.role,
+        isProfileVerified: vendor.isProfileVerified,
+        createdAt:         vendor.createdAt,
+      },
+    });
+  } catch (err) {
+    console.error("CREATE VENDOR BY ADMIN ERROR:", err);
     res.status(500).json({ msg: "Server error" });
   }
 };

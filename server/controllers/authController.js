@@ -27,6 +27,22 @@ function generateVendorCode(name) {
 }
 
 // ─────────────────────────────────────────
+// HELPER — strip sensitive fields before sending a user doc to the client
+// BUG FIX: login/verifyOTP/googleLogin previously sent the full Mongoose
+// user document — including the bcrypt password hash and any live OTP —
+// straight to the browser, where it got stored as-is in localStorage.
+// ─────────────────────────────────────────
+function toSafeUser(userDoc) {
+  const obj = userDoc.toObject ? userDoc.toObject() : { ...userDoc };
+  delete obj.password;
+  delete obj.otp;
+  delete obj.otpExpires;
+  delete obj.resetOtp;
+  delete obj.resetOtpExpires;
+  return obj;
+}
+
+// ─────────────────────────────────────────
 // REGISTER
 // ─────────────────────────────────────────
 exports.register = async (req, res) => {
@@ -117,7 +133,7 @@ exports.verifyOTP = async (req, res) => {
       { expiresIn: "7d" }
     );
     // user object returned here includes vendorCode & hasSeenWelcome — frontend uses both
-    res.json({ msg: "Account verified", token, user });
+    res.json({ msg: "Account verified", token, user: toSafeUser(user) });
   } catch (err) {
     res.status(500).json(err);
   }
@@ -145,7 +161,7 @@ exports.login = async (req, res) => {
 
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
     // user object returned here includes vendorCode & hasSeenWelcome — frontend uses both
-    res.json({ token, user });
+    res.json({ token, user: toSafeUser(user) });
   } catch (err) {
     res.status(500).json(err);
   }
@@ -200,7 +216,7 @@ exports.googleLogin = async (req, res) => {
 
     const jwtToken = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
     // user object returned here includes vendorCode & hasSeenWelcome — frontend uses both
-    res.json({ token: jwtToken, user });
+    res.json({ token: jwtToken, user: toSafeUser(user) });
   } catch (err) {
     console.error("Google Login Error:", err);
     res.status(500).json({ msg: "Google login failed" });
@@ -329,8 +345,17 @@ exports.changePassword = async (req, res) => {
     if (!match) return res.status(400).json({ msg: "Current password is incorrect" });
 
     user.password = await bcrypt.hash(newPassword, 10);
+
+    // Clears the "temporary password" banner once they set their own.
+    const hadTempPassword = user.mustChangePassword;
+    user.mustChangePassword = false;
+
     await user.save();
-    res.json({ msg: "Password changed successfully" });
+    res.json({
+      msg: "Password changed successfully",
+      mustChangePassword: false,
+      clearedTempPasswordFlag: hadTempPassword,
+    });
   } catch (err) {
     console.error("CHANGE PASSWORD ERROR:", err);
     res.status(500).json({ msg: "Server error" });
@@ -362,3 +387,7 @@ exports.markVendorWelcomeSeen = async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 };
+
+// Exported so adminController can reuse the same vendor-code format
+// when admin creates a vendor account directly.
+exports.generateVendorCode = generateVendorCode;

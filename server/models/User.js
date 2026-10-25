@@ -75,7 +75,20 @@ const userSchema = new mongoose.Schema({
   favorites: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: "Vendor"
-  }]
+  }],
+  // ──────────────────────────────────────────────────────────────────
+
+  // ── Profile photo + phone (optional, filled by user or admin) ─────
+  avatar: { type: String, default: "" },
+  phone:  { type: String, default: "" },
+  // ──────────────────────────────────────────────────────────────────
+
+  // ── Admin-created accounts ─────────────────────────────────────────
+  // When admin creates a vendor account directly, a temp password is
+  // generated and emailed to them. mustChangePassword forces the
+  // frontend to show a banner until they set their own password.
+  addedByAdmin:       { type: Boolean, default: false },
+  mustChangePassword: { type: Boolean, default: false },
   // ──────────────────────────────────────────────────────────────────
 }, { timestamps: true });
 
