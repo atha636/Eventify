@@ -583,3 +583,133 @@ exports.createVendorByAdmin = async (req, res) => {
     res.status(500).json({ msg: "Server error" });
   }
 };
+
+// ═══════════════════════════════════════════════════════════════
+// ADMIN — ADD A SERVICE ON BEHALF OF A VENDOR
+// POST /api/admin/services
+// multipart/form-data:
+//   vendorId     — the vendor's User _id (required)
+//   serviceType, title, description, locations (JSON array)
+//   decor:      price, timeSlots (JSON array)
+//   non-decor:  packages (JSON array of {name, price, features[]})
+//   images[]    — up to 15 files
+//
+// Mirrors vendorController.addService, but the vendor is chosen by the
+// admin instead of taken from the logged-in user, and it's never gated
+// on profile-verification status — admin creating it IS the approval.
+// Publishes immediately (isApproved: true) and shows up in that
+// vendor's "My Services" list and on the public /vendors page exactly
+// like a vendor-added one.
+// ═══════════════════════════════════════════════════════════════
+exports.addServiceForVendor = async (req, res) => {
+  try {
+    const { vendorId } = req.body;
+    if (!vendorId) return res.status(400).json({ msg: "vendorId is required." });
+
+    const vendorUser = await User.findById(vendorId);
+    if (!vendorUser) return res.status(404).json({ msg: "Vendor not found." });
+    if (vendorUser.role !== "vendor") {
+      return res.status(400).json({ msg: "Selected user is not a vendor account." });
+    }
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ msg: "At least one image is required." });
+    }
+
+    const title       = req.body.title?.trim();
+    const description = req.body.description?.trim();
+    const serviceType = req.body.serviceType?.toLowerCase().trim();
+    if (!title)       return res.status(400).json({ msg: "Title is required." });
+    if (!description) return res.status(400).json({ msg: "Description is required." });
+    if (!serviceType) return res.status(400).json({ msg: "Service type is required." });
+
+    // ── Parse locations ──
+    let locations = [];
+    if (req.body.locations) {
+      try { locations = JSON.parse(req.body.locations); }
+      catch { locations = []; }
+    }
+    if (!Array.isArray(locations) || locations.length === 0) {
+      return res.status(400).json({ msg: "At least one location is required." });
+    }
+
+    // ── Parse packages (non-decor) ──
+    let packages = [];
+    if (req.body.packages) {
+      try { packages = JSON.parse(req.body.packages); }
+      catch { return res.status(400).json({ msg: "Invalid packages format." }); }
+    }
+
+    // ── Parse timeSlots (decor) ──
+    let timeSlots = [];
+    if (req.body.timeSlots) {
+      try { timeSlots = JSON.parse(req.body.timeSlots); }
+      catch { timeSlots = []; }
+    }
+
+    const isDecor = serviceType === "decor";
+    if (isDecor) {
+      if (!req.body.price || Number(req.body.price) <= 0) {
+        return res.status(400).json({ msg: "A valid price is required for a decor service." });
+      }
+      if (timeSlots.length === 0) {
+        return res.status(400).json({ msg: "At least one time slot is required for a decor service." });
+      }
+    } else {
+      if (!Array.isArray(packages) || packages.length === 0) {
+        return res.status(400).json({ msg: "At least one package is required." });
+      }
+      for (const p of packages) {
+        if (!p.price || Number(p.price) <= 0) {
+          return res.status(400).json({ msg: `Please enter a price for package "${p.name || "—"}".` });
+        }
+      }
+    }
+
+    const imageUrls = req.files.map((f) => f.path);
+
+    const service = await Vendor.create({
+      vendorId:    vendorUser._id,
+      vendorName:  vendorUser.name,
+      serviceType,
+      title,
+      description,
+
+      location:  locations[0] || "",
+      locations,
+
+      packages,
+      timeSlots,
+      price:      req.body.price ? Number(req.body.price) : undefined,
+      images:     imageUrls,
+      isApproved: true,
+    });
+
+    // ── Notify + email the vendor that admin added this for them ───
+    setImmediate(async () => {
+      try {
+        await Notification.create({
+          userId:    vendorUser._id,
+          type:      "service_updated",
+          title:     "A Service Was Added to Your Account",
+          message:   `Admin has added a new service "${service.title}" to your account. It's live on Evencers now.`,
+          bookingId: null,
+        });
+        if (vendorUser.email) {
+          await sendEmail({
+            to:      vendorUser.email,
+            subject: "A New Service Was Added to Your Evencers Account ✅",
+            text:    `Hello ${vendorUser.name},\n\nOur admin team has added a new service to your account:\n\n"${service.title}"\n\nIt's live on Evencers now — you can edit it anytime from your Vendor Dashboard.\n\n- Evencers Team`,
+          });
+        }
+      } catch (e) {
+        console.error("addServiceForVendor notification error (non-fatal):", e.message);
+      }
+    });
+
+    res.status(201).json({ msg: "Service added and published.", service });
+  } catch (err) {
+    console.error("ADD SERVICE FOR VENDOR ERROR:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
