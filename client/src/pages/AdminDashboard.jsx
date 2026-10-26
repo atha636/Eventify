@@ -322,6 +322,275 @@ function AddVendorModal({ onClose, onCreated, showToast }) {
   );
 }
 
+// ── Add Service Modal (admin) ───────────────────────────────────────
+// Admin picks an existing vendor, fills out the same fields a vendor
+// would on AddService.jsx (condensed), and publishes it straight to
+// that vendor's account — live immediately, shows up in their "My
+// Services" and on /vendors just like a vendor-added listing.
+const ADMIN_SERVICE_TYPES = [
+  { value: "decor",       label: "Decor",       available: true  },
+  { value: "photography", label: "Photography", available: true  },
+  { value: "catering",    label: "Catering",    available: false },
+  { value: "music",       label: "Music & DJ",  available: false },
+  { value: "florals",     label: "Florals",     available: false },
+  { value: "venues",      label: "Venues",      available: false },
+];
+const ADMIN_TIME_SLOTS = [
+  "Morning (8AM – 12PM)",
+  "Afternoon (12PM – 4PM)",
+  "Evening (4PM – 8PM)",
+  "Full Day (8AM – 8PM)",
+];
+
+function AddServiceModal({ onClose, onCreated, showToast }) {
+  const [vendors,        setVendors]        = useState([]);
+  const [loadingVendors, setLoadingVendors]  = useState(true);
+  const [vendorId,       setVendorId]        = useState("");
+
+  const [serviceType, setServiceType] = useState("decor");
+  const [title,       setTitle]       = useState("");
+  const [description, setDescription] = useState("");
+  const [locationsStr, setLocationsStr] = useState(""); // comma-separated
+
+  const [decorPrice,    setDecorPrice]    = useState("");
+  const [selectedSlots, setSelectedSlots] = useState([]);
+
+  const [packages, setPackages] = useState([{ name: "Basic", price: "", featuresStr: "" }]);
+
+  const [images,   setImages]   = useState([]);
+  const [previews, setPreviews] = useState([]);
+
+  const [saving, setSaving] = useState(false);
+  const [error,  setError]  = useState("");
+
+  const isDecor = serviceType === "decor";
+
+  // Vendor dropdown — reuse the vendor-verifications listing (role:
+  // "vendor" only, any status) rather than adding a brand new endpoint.
+  useEffect(() => {
+    API.get("/admin/vendor-verifications?status=all")
+      .then((r) => setVendors(r.data || []))
+      .catch(() => showToast("Failed to load vendor list.", "error"))
+      .finally(() => setLoadingVendors(false));
+  }, [showToast]);
+
+  const toggleSlot = (slot) =>
+    setSelectedSlots((prev) => (prev.includes(slot) ? prev.filter((s) => s !== slot) : [...prev, slot]));
+
+  const addPackageRow    = () => { if (packages.length >= 4) return; setPackages([...packages, { name: "", price: "", featuresStr: "" }]); };
+  const removePackageRow = (i) => setPackages(packages.filter((_, idx) => idx !== i));
+  const updatePackageRow = (i, field, val) => { const u = [...packages]; u[i][field] = val; setPackages(u); };
+
+  const handleImages = (files) => {
+    const valid = Array.from(files).filter((f) => f.type.startsWith("image/")).slice(0, 15 - images.length);
+    if (!valid.length) return;
+    setImages((prev) => [...prev, ...valid]);
+    setPreviews((prev) => [...prev, ...valid.map((f) => URL.createObjectURL(f))]);
+  };
+  const removeImage = (i) => {
+    URL.revokeObjectURL(previews[i]);
+    setImages((prev) => prev.filter((_, idx) => idx !== i));
+    setPreviews((prev) => prev.filter((_, idx) => idx !== i));
+  };
+
+  const validate = () => {
+    if (!vendorId)            return "Please select a vendor.";
+    if (!title.trim())        return "Please enter a service title.";
+    if (!description.trim())  return "Please add a description.";
+    const locations = locationsStr.split(",").map((l) => l.trim()).filter(Boolean);
+    if (locations.length === 0) return "Please enter at least one location (comma-separated).";
+    if (images.length === 0)  return "Please upload at least 1 image.";
+    if (isDecor) {
+      if (!decorPrice || Number(decorPrice) <= 0) return "Please enter a valid price.";
+      if (selectedSlots.length === 0) return "Please select at least one time slot.";
+    } else {
+      for (const p of packages) {
+        if (!p.name.trim())  return "Every package needs a name.";
+        if (!p.price || Number(p.price) <= 0) return `Please enter a price for "${p.name}".`;
+      }
+    }
+    return null;
+  };
+
+  const handleSubmit = async () => {
+    const err = validate();
+    if (err) return setError(err);
+    setError(""); setSaving(true);
+
+    const locations = locationsStr.split(",").map((l) => l.trim()).filter(Boolean);
+    const form = new FormData();
+    form.append("vendorId", vendorId);
+    form.append("serviceType", serviceType);
+    form.append("title", title.trim());
+    form.append("description", description.trim());
+    form.append("locations", JSON.stringify(locations));
+
+    if (isDecor) {
+      form.append("price", decorPrice);
+      form.append("timeSlots", JSON.stringify(selectedSlots));
+    } else {
+      const pkgs = packages.map((p) => ({
+        name: p.name.trim(),
+        price: Number(p.price),
+        features: p.featuresStr.split(",").map((f) => f.trim()).filter(Boolean),
+      }));
+      form.append("packages", JSON.stringify(pkgs));
+    }
+    images.forEach((img) => form.append("images", img));
+
+    try {
+      const res = await API.post("/admin/services", form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      showToast(`Service "${res.data.service.title}" published & vendor notified.`, "success");
+      onCreated(res.data.service);
+      onClose();
+    } catch (err2) {
+      setError(err2?.response?.data?.msg || "Failed to add service.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="ad-overlay" onClick={onClose}>
+      <div className="ad-svc-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="ad-svc-modal-header">
+          <h2 className="ad-svc-modal-title">Add Service for a Vendor</h2>
+          <button className="ad-svc-modal-close" onClick={onClose}>✕</button>
+        </div>
+
+        {error && (
+          <div style={{ background: "rgba(184,92,92,0.08)", border: "1px solid rgba(184,92,92,0.25)", color: "#b85c5c", fontSize: 12.5, borderRadius: 8, padding: "9px 12px", marginBottom: 18 }}>
+            {error}
+          </div>
+        )}
+
+        {/* ── Vendor select ── */}
+        <div className="ad-svc-field">
+          <label className="ad-svc-field-label">Vendor</label>
+          {loadingVendors ? (
+            <p className="ad-svc-no-images">Loading vendors…</p>
+          ) : (
+            <select className="ad-svc-input" style={{ width: "100%" }} value={vendorId} onChange={(e) => setVendorId(e.target.value)}>
+              <option value="">— Select a vendor —</option>
+              {vendors.map((v) => (
+                <option key={v._id} value={v._id}>
+                  {v.name} — {v.email} {v.isProfileVerified !== "approved" ? `(${v.isProfileVerified})` : ""}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+
+        {/* ── Service type ── */}
+        <div className="ad-svc-field">
+          <label className="ad-svc-field-label">Service Type</label>
+          <select className="ad-svc-input" style={{ width: "100%" }} value={serviceType} onChange={(e) => setServiceType(e.target.value)}>
+            {ADMIN_SERVICE_TYPES.map((t) => (
+              <option key={t.value} value={t.value} disabled={!t.available}>
+                {t.label}{!t.available ? " (coming soon)" : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* ── Title / description ── */}
+        <div className="ad-svc-field">
+          <label className="ad-svc-field-label">Title</label>
+          <input className="ad-svc-input" style={{ width: "100%", boxSizing: "border-box" }} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Premium Wedding Decor" />
+        </div>
+        <div className="ad-svc-field">
+          <label className="ad-svc-field-label">Description</label>
+          <textarea className="ad-svc-input" style={{ width: "100%", boxSizing: "border-box", minHeight: 70, resize: "vertical", fontFamily: "'DM Sans', sans-serif" }} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What does this service include?" />
+        </div>
+
+        {/* ── Locations ── */}
+        <div className="ad-svc-field">
+          <label className="ad-svc-field-label">Locations (comma-separated)</label>
+          <input className="ad-svc-input" style={{ width: "100%", boxSizing: "border-box" }} value={locationsStr} onChange={(e) => setLocationsStr(e.target.value)} placeholder="Delhi, Gurgaon, Noida" />
+        </div>
+
+        {/* ── Decor: price + time slots ── */}
+        {isDecor ? (
+          <>
+            <div className="ad-svc-field">
+              <label className="ad-svc-field-label">Fixed Price (₹)</label>
+              <input className="ad-svc-input" style={{ width: "100%", boxSizing: "border-box" }} type="number" min="0" value={decorPrice} onChange={(e) => setDecorPrice(e.target.value)} placeholder="15000" />
+            </div>
+            <div className="ad-svc-field">
+              <label className="ad-svc-field-label">Time Slots</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {ADMIN_TIME_SLOTS.map((slot) => (
+                  <button
+                    type="button"
+                    key={slot}
+                    onClick={() => toggleSlot(slot)}
+                    style={{
+                      padding: "7px 12px", borderRadius: 20, fontSize: 12, cursor: "pointer",
+                      border: selectedSlots.includes(slot) ? "1px solid var(--gold)" : "1px solid var(--border)",
+                      background: selectedSlots.includes(slot) ? "rgba(201,168,76,0.12)" : "var(--surface)",
+                      color: "var(--ink)",
+                    }}
+                  >
+                    {slot}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : (
+          /* ── Non-decor: packages ── */
+          <div className="ad-svc-field">
+            <label className="ad-svc-field-label">Packages</label>
+            {packages.map((p, i) => (
+              <div key={i} style={{ border: "1px solid var(--border)", borderRadius: 8, padding: 12, marginBottom: 10 }}>
+                <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                  <input className="ad-svc-input" style={{ flex: 1 }} value={p.name} onChange={(e) => updatePackageRow(i, "name", e.target.value)} placeholder="Package name (e.g. Basic)" />
+                  <input className="ad-svc-input" style={{ width: 110 }} type="number" min="0" value={p.price} onChange={(e) => updatePackageRow(i, "price", e.target.value)} placeholder="Price ₹" />
+                  {packages.length > 1 && (
+                    <button className="ad-action-btn ad-action-danger" onClick={() => removePackageRow(i)}>✕</button>
+                  )}
+                </div>
+                <input className="ad-svc-input" style={{ width: "100%", boxSizing: "border-box" }} value={p.featuresStr} onChange={(e) => updatePackageRow(i, "featuresStr", e.target.value)} placeholder="Features, comma-separated (e.g. 4hr coverage, 200 edited photos)" />
+              </div>
+            ))}
+            {packages.length < 4 && (
+              <button className="ad-action-btn ad-action-ghost" onClick={addPackageRow}>+ Add Package</button>
+            )}
+          </div>
+        )}
+
+        {/* ── Images ── */}
+        <div className="ad-svc-field">
+          <label className="ad-svc-field-label">Images ({images.length})</label>
+          <label htmlFor="ad-svc-img-input" style={{ display: "block", border: "1.5px dashed var(--border)", borderRadius: 10, padding: 18, textAlign: "center", fontSize: 12.5, color: "var(--muted)", cursor: "pointer", marginBottom: images.length ? 10 : 0 }}>
+            Click to upload images (up to 15)
+          </label>
+          <input id="ad-svc-img-input" type="file" accept="image/*" multiple style={{ display: "none" }} onChange={(e) => handleImages(e.target.files)} />
+          {previews.length > 0 && (
+            <div className="ad-svc-images-grid">
+              {previews.map((src, i) => (
+                <div key={i} className="ad-svc-img-wrap">
+                  <img src={src} alt={`preview-${i}`} className="ad-svc-img" />
+                  <button className="ad-svc-img-delete" onClick={() => removeImage(i)} title="Remove">🗑</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="ad-dialog-btns" style={{ marginTop: 8 }}>
+          <button className="ad-action-btn ad-action-ok" style={{ flex: 1, padding: "10px 16px" }} onClick={handleSubmit} disabled={saving}>
+            {saving ? "Publishing…" : "Publish Service"}
+          </button>
+          <button className="ad-btn ad-btn-ghost" onClick={onClose} disabled={saving}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   useAdminGuard();
   const navigate = useNavigate();
@@ -337,6 +606,7 @@ export default function AdminDashboard() {
   const [rejectTarget,    setRejectTarget]    = useState(null);
   const [svcDetailTarget, setSvcDetailTarget] = useState(null);
   const [showAddVendor,   setShowAddVendor]   = useState(false);
+  const [showAddService,  setShowAddService]  = useState(false);
 
   const [loadingTab,    setLoadingTab]    = useState(false);
   const [loadingStats,  setLoadingStats]  = useState(false);
@@ -513,6 +783,13 @@ export default function AdminDashboard() {
       { ...vendor, role: "vendor", isVerified: true, createdAt: vendor.createdAt || new Date().toISOString() },
       ...u,
     ]);
+    fetchStats();
+  };
+
+  // New service published by admin on a vendor's behalf — drop it into
+  // the Services list immediately so it's visible without a refetch.
+  const handleServiceCreated = (service) => {
+    setServices((s) => [service, ...s]);
     fetchStats();
   };
 
@@ -857,9 +1134,14 @@ export default function AdminDashboard() {
           {/* ══ SERVICES ══ */}
           {tab === "services" && (
             <div className="ad-content">
+              <div className="ad-section-header-row">
+                <div className="ad-section-meta" style={{ marginBottom: 0 }}>{services.length} services found</div>
+                <button className="ad-add-vendor-btn" onClick={() => setShowAddService(true)}>
+                  + Add Service
+                </button>
+              </div>
               {loadingTab ? <Spinner /> : (
                 <>
-                  <div className="ad-section-meta">{services.length} services found</div>
                   <div className="ad-table-wrap ad-desktop-only">
                     <table className="ad-table">
                       <thead><tr><th>Title</th><th>Type</th><th>Vendor</th><th>Location</th><th>Status</th><th>Actions</th></tr></thead>
@@ -1009,6 +1291,14 @@ export default function AdminDashboard() {
         <AddVendorModal
           onClose={() => setShowAddVendor(false)}
           onCreated={handleVendorCreated}
+          showToast={showToast}
+        />
+      )}
+
+      {showAddService && (
+        <AddServiceModal
+          onClose={() => setShowAddService(false)}
+          onCreated={handleServiceCreated}
           showToast={showToast}
         />
       )}
