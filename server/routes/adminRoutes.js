@@ -2,14 +2,25 @@ const express   = require("express");
 const rateLimit = require("express-rate-limit");
 const router    = express.Router();
 const { adminAuth } = require("../middleware/authMiddleware");
+const uploadServiceImages = require("../middleware/upload");
 const { uploadAvatar } = require("../middleware/upload");
 
-// ── Multer wrapper (mirrors vendorRoutes.js's pattern) ─────────────
-// Surfaces multer errors as clean JSON instead of an unhandled 500.
+// ── Multer wrappers (mirror vendorRoutes.js's pattern) ──────────────
+// Surface multer errors as clean JSON instead of an unhandled 500.
 const uploadAvatarMiddleware = (req, res, next) => {
   uploadAvatar.single("photo")(req, res, (err) => {
     if (err) {
       console.error("ADMIN VENDOR PHOTO UPLOAD ERROR:", err.message);
+      return res.status(400).json({ msg: err.message });
+    }
+    next();
+  });
+};
+
+const uploadServiceImagesMiddleware = (req, res, next) => {
+  uploadServiceImages.array("images", 15)(req, res, (err) => {
+    if (err) {
+      console.error("ADMIN SERVICE IMAGES UPLOAD ERROR:", err.message);
       return res.status(400).json({ msg: err.message });
     }
     next();
@@ -50,6 +61,7 @@ const {
   verifyVendorProfile,
   toggleVendorVerified,       // ← NEW: trust badge toggle
   createVendorByAdmin,        // ← NEW: admin onboards a vendor directly
+  addServiceForVendor,        // ← NEW: admin adds a service for a chosen vendor
 } = require("../controllers/adminController");
 
 // ── Auth (public) ────────────────────────────────────────────────
@@ -71,6 +83,12 @@ router.put   ("/users/:id/role", adminAuth, updateUserRole);
 router.post("/vendors", adminAuth, uploadAvatarMiddleware, createVendorByAdmin);
 
 // ── Services ─────────────────────────────────────────────────────
+// POST /api/admin/services  (multipart: vendorId, serviceType, title,
+// description, locations(JSON), packages(JSON) OR price+timeSlots(JSON),
+// images[]) — admin publishes a service directly onto a chosen vendor's
+// account; shows up in their "My Services" and the public /vendors list
+// immediately, same as if the vendor had added it themselves.
+router.post ("/services",             adminAuth, uploadServiceImagesMiddleware, addServiceForVendor);
 router.get   ("/services",            adminAuth, getServices);
 router.delete("/services/:id",        adminAuth, deleteService);
 router.put   ("/services/:id/toggle", adminAuth, toggleServiceApproval);
