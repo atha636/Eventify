@@ -10,6 +10,7 @@ export default function ProfilePopup({ onClose, onLogoutRequest, initialTab = "p
   const [tab, setTab]             = useState(initialTab); // "profile" | "password"
   const [name, setName]           = useState(user.name || "");
   const [email, setEmail]         = useState(user.email || "");
+  const [phone, setPhone]         = useState(user.phone || "");
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw]         = useState("");
   const [confirmPw, setConfirmPw] = useState("");
@@ -37,8 +38,8 @@ export default function ProfilePopup({ onClose, onLogoutRequest, initialTab = "p
     if (!email.trim()) return showMsg("Email cannot be empty.", "error");
     setLoading(true);
     try {
-      const res = await API.put("/auth/update-profile", { name: name.trim(), email: email.trim() });
-      const updated = { ...user, name: res.data.user.name, email: res.data.user.email };
+      const res = await API.put("/auth/update-profile", { name: name.trim(), email: email.trim(), phone: phone.trim() });
+      const updated = { ...user, name: res.data.user.name, email: res.data.user.email, phone: res.data.user.phone };
       localStorage.setItem("user", JSON.stringify(updated));
       showMsg("Profile updated successfully!");
     } catch (err) {
@@ -125,6 +126,13 @@ export default function ProfilePopup({ onClose, onLogoutRequest, initialTab = "p
             <div className="pp-field">
               <label className="pp-label">Email Address</label>
               <input className="pp-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" />
+            </div>
+            <div className="pp-field">
+              <label className="pp-label">Phone Number</label>
+              <input className="pp-input" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91 98765 43210" />
+              {user.role === "vendor" && (
+                <p className="pp-field-hint">Shown to clients on your service pages so they can call you directly.</p>
+              )}
             </div>
             <button className="pp-btn-primary" onClick={handleUpdateProfile} disabled={loading}>
               {loading ? <span className="pp-spinner" /> : null}
@@ -270,6 +278,7 @@ const styles = `
   }
   .pp-input:focus { border-color: #c9a84c; box-shadow: 0 0 0 3px rgba(201,168,76,0.1); }
   .pp-input::placeholder { color: #bbb4a8; }
+  .pp-field-hint { font-size: 10.5px; color: #a09888; margin: 5px 2px 0; line-height: 1.4; }
   .pp-btn-primary {
     width: 100%; padding: 11px;
     background: #0e0c0a; color: #ffffff;

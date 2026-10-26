@@ -616,6 +616,18 @@ export default function VendorDetail() {
                 </div>
               )}
 
+              {/* ── Call Vendor ── */}
+              {vendor.vendorId?.phone && (
+                <a
+                  href={`tel:${vendor.vendorId.phone.replace(/[^0-9+]/g, "")}`}
+                  className="vd-call-btn"
+                  title={`Call ${vendor.vendorId.name || "vendor"}`}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="15" height="15"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                  Call Vendor — {vendor.vendorId.phone}
+                </a>
+              )}
+
               <div className="vd-divider" />
 
               {/* ── Time slot selector (decor only) ── */}
@@ -696,7 +708,7 @@ export default function VendorDetail() {
             <ReviewsSection
               vendorId={vendor._id}
               isLoggedIn={!!localStorage.getItem("token")}
-              isOwner={isVendor && vendor.vendorId === user?.id}
+              isOwner={isVendor && (vendor.vendorId?._id || vendor.vendorId) === user?.id}
             />
           </main>
         </div>
@@ -812,6 +824,8 @@ const styles = `
   .vd-panel-desc { font-size:13.5px;color:var(--muted);line-height:1.7;margin:0 0 16px;padding-left:0;list-style:none; }
   .vd-panel-locs { display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px; }
   .vd-panel-loc-pill { font-size:11.5px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:4px 10px; }
+  .vd-call-btn { display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;margin-top:12px;padding:11px;background:var(--surface);border:1px solid var(--gold-light);border-radius:8px;color:var(--ink);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;text-decoration:none;transition:all 0.2s; }
+  .vd-call-btn:hover { background:var(--gold-light);border-color:var(--gold); }
   .vd-divider { height:1px;background:var(--border);margin:24px 0; }
 
   /* ── Time Slot Selector ── */

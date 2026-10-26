@@ -302,18 +302,33 @@ exports.resetPassword = async (req, res) => {
 // PUT /api/auth/update-profile
 // ─────────────────────────────────────────
 exports.updateProfile = async (req, res) => {
-  const { name, email } = req.body;
+  const { name, email, phone } = req.body;
   if (!name?.trim() || !email?.trim()) {
     return res.status(400).json({ msg: "Name and email are required" });
   }
+
+  // ── Phone is optional, but validate it when provided so a vendor's
+  //    "Call Vendor" button never ends up with garbage on it ──────────
+  let cleanPhone;
+  if (phone !== undefined) {
+    const trimmed = phone.trim();
+    if (trimmed && !/^[0-9+\-\s()]{7,20}$/.test(trimmed)) {
+      return res.status(400).json({ msg: "Enter a valid phone number." });
+    }
+    cleanPhone = trimmed;
+  }
+
   try {
     const existing = await User.findOne({ email: email.toLowerCase().trim() });
     if (existing && existing._id.toString() !== req.user.id) {
       return res.status(400).json({ msg: "Email already in use by another account" });
     }
+    const update = { name: name.trim(), email: email.toLowerCase().trim() };
+    if (cleanPhone !== undefined) update.phone = cleanPhone;
+
     const user = await User.findByIdAndUpdate(
       req.user.id,
-      { name: name.trim(), email: email.toLowerCase().trim() },
+      update,
       { returnDocument: 'after', select: "-password -otp -otpExpires -resetOtp -resetOtpExpires" }
     );
     if (!user) return res.status(404).json({ msg: "User not found" });
