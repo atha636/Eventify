@@ -45,7 +45,11 @@ router.get("/available", getAvailableOnDate);
 // ── SINGLE VENDOR BY ID ──
 router.get("/single/:id", async (req, res) => {
   try {
-    const vendor = await Vendor.findById(req.params.id);
+    // populate phone (+ name/verified badge) so VendorDetail can show a
+    // "Call Vendor" button — not needed on the list endpoints, so those
+    // stay as they were.
+    const vendor = await Vendor.findById(req.params.id)
+      .populate("vendorId", "name phone isVendorVerified");
     if (!vendor) return res.status(404).json({ error: "Not found" });
     res.json(vendor);
   } catch (err) {
