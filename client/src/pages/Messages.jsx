@@ -65,6 +65,9 @@ export default function Messages() {
       // Opening/polling a thread clears its unread badge server-side —
       // reflect that locally too so the list doesn't lag behind.
       setConversations((prev) => prev.map((c) => (c._id === id ? { ...c, unreadCount: 0 } : c)));
+
+      // Server has now marked this thread read → refresh the navbar badge
+      window.dispatchEvent(new Event("chat-unread-changed"));
     } catch {
       if (!silent) setError("Couldn't load this conversation.");
     } finally {
