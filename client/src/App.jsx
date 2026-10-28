@@ -13,6 +13,7 @@ import ServiceGallery     from "./pages/ServiceGallery";
 import UserDashboard      from "./pages/UserDashboard";
 import Vendors            from "./pages/Vendors";
 import Favorites          from "./pages/Favorites";
+import Messages           from "./pages/Messages";
 import CustomerCareClient from "./pages/CustomerCareClient";
 import CustomerCareVendor from "./pages/CustomerCareVendor";
 import PaymentSuccess     from "./pages/PaymentSuccess";
@@ -63,6 +64,9 @@ export default function App() {
         {/* ── User ── */}
         <Route path="/my-bookings"             element={<UserDashboard />} />
         <Route path="/favourites"              element={<Favorites />} />
+
+        {/* ── Chat (both users and vendors) ── */}
+        <Route path="/messages"                element={<Messages />} />
 
         {/* ── Support ── */}
         <Route path="/customer-care"           element={<CustomerCareClient />} />

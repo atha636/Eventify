@@ -27,7 +27,10 @@ const notificationSchema = new mongoose.Schema({
 
   // ✅ ADD THESE TWO
   "vendor_verified",
-  "vendor_unverified"
+  "vendor_unverified",
+
+  // ── Chat ──
+  "message_received",
 ],
   required: true,
 },

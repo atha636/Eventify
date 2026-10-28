@@ -6,6 +6,7 @@ import BookingDetailsModal from "../components/BookingDetailsModal";
 import BookingWaitModal from "../components/BookingWaitModal";
 import Logo from "../components/Logo";
 import ReviewsSection from "../components/ReviewsSection";
+import { startConversation } from "../services/chatService";
 
 // ── Share Modal ───────────────────────────────────────────────────────────────
 function ShareModal({ vendor, onClose }) {
@@ -308,6 +309,7 @@ export default function VendorDetail() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showWaitModal,    setShowWaitModal]    = useState(false);
   const [showShareModal,   setShowShareModal]   = useState(false);
+  const [msgLoading,       setMsgLoading]        = useState(false);
 
   const user     = JSON.parse(localStorage.getItem("user") || "{}");
   const isVendor = user?.role === "vendor";
@@ -333,6 +335,10 @@ export default function VendorDetail() {
 
   // ── Derived: is this a decor service? ────────────────────────────────────
   const isDecor = vendor?.serviceType === "decor";
+
+  // Shared by the Reviews section and the "Message Vendor" button —
+  // true when the logged-in viewer IS the vendor who owns this listing.
+  const isOwnListing = isVendor && !!vendor && (vendor.vendorId?._id || vendor.vendorId) === user?.id;
 
   // ── Location display helper ───────────────────────────────────────────────
   // Support both new `locations` array and old `location` string
@@ -374,6 +380,23 @@ export default function VendorDetail() {
     if (isDecor && !selectedSlot)    { setDateWarning("Please select a time slot."); return; }
     setDateWarning("");
     setShowDetailsModal(true);
+  };
+
+  // ── Message Vendor ──────────────────────────────────────────────
+  const handleMessageVendor = async () => {
+    if (isOwnListing) return; // can't message your own listing
+    const token = localStorage.getItem("token");
+    if (!token) { setShowLoginModal(true); return; }
+    setMsgLoading(true);
+    try {
+      const res = await startConversation(vendor._id);
+      navigate(`/messages?c=${res.conversation._id}`);
+    } catch (err) {
+      console.error("Start conversation error:", err);
+      setDateWarning(typeof err === "string" ? err : "Couldn't start a conversation. Please try again.");
+    } finally {
+      setMsgLoading(false);
+    }
   };
 
  const handleDetailsConfirm = async (userDetails) => {
@@ -628,6 +651,20 @@ export default function VendorDetail() {
                 </a>
               )}
 
+              {/* ── Message Vendor ── */}
+              {!isOwnListing && (
+                <button
+                  type="button"
+                  className="vd-message-btn"
+                  onClick={handleMessageVendor}
+                  disabled={msgLoading}
+                  title={`Message ${vendor.vendorId?.name || "vendor"}`}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="15" height="15"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  {msgLoading ? "Starting chat…" : "Message Vendor"}
+                </button>
+              )}
+
               <div className="vd-divider" />
 
               {/* ── Time slot selector (decor only) ── */}
@@ -708,7 +745,7 @@ export default function VendorDetail() {
             <ReviewsSection
               vendorId={vendor._id}
               isLoggedIn={!!localStorage.getItem("token")}
-              isOwner={isVendor && (vendor.vendorId?._id || vendor.vendorId) === user?.id}
+              isOwner={isOwnListing}
             />
           </main>
         </div>
@@ -826,6 +863,9 @@ const styles = `
   .vd-panel-loc-pill { font-size:11.5px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:4px 10px; }
   .vd-call-btn { display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;margin-top:12px;padding:11px;background:var(--surface);border:1px solid var(--gold-light);border-radius:8px;color:var(--ink);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;text-decoration:none;transition:all 0.2s; }
   .vd-call-btn:hover { background:var(--gold-light);border-color:var(--gold); }
+  .vd-message-btn { display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;margin-top:10px;padding:11px;background:var(--ink);border:1px solid var(--ink);border-radius:8px;color:var(--white);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s; }
+  .vd-message-btn:hover:not(:disabled) { background:var(--gold);border-color:var(--gold);color:var(--ink); }
+  .vd-message-btn:disabled { opacity:0.65;cursor:not-allowed; }
   .vd-divider { height:1px;background:var(--border);margin:24px 0; }
 
   /* ── Time Slot Selector ── */

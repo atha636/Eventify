@@ -4,6 +4,7 @@ import ProfilePopup from "./ProfilePopup";
 import NotificationPanel from "./NotificationPanel";
 import TempPasswordBanner from "./TempPasswordBanner";
 import API from "../services/api";
+import { getUnreadChatCount } from "../services/chatService";
 import logo from "../assets/logo.png";
 
 export default function Navbar() {
@@ -30,6 +31,7 @@ export default function Navbar() {
   const [profileInitialTab, setProfileInitialTab] = useState("profile");
   const [notifOpen, setNotifOpen]         = useState(false);
   const [unreadCount, setUnreadCount]     = useState(0);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
 
   // ── Logout confirmation state (shared between mobile menu & ProfilePopup) ──
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -57,6 +59,20 @@ export default function Navbar() {
     };
     fetchCount();
     const interval = setInterval(fetchCount, 30000);
+    return () => clearInterval(interval);
+  }, [token, canReceiveNotifs]);
+
+  // ── Chat unread badge (both roles) ──────────────────────────────
+  useEffect(() => {
+    if (!token || !canReceiveNotifs) return;
+    const fetchChatCount = async () => {
+      try {
+        const res = await getUnreadChatCount();
+        setUnreadChatCount(res.unreadCount || 0);
+      } catch {}
+    };
+    fetchChatCount();
+    const interval = setInterval(fetchChatCount, 30000);
     return () => clearInterval(interval);
   }, [token, canReceiveNotifs]);
 
@@ -104,6 +120,17 @@ export default function Navbar() {
     </button>
   );
 
+  const ChatButton = () => (
+    <Link to="/messages" className="nb-bell-btn" title="Messages">
+      <span className="nb-bell-icon">💬</span>
+      {unreadChatCount > 0 && (
+        <span className="nb-bell-badge">
+          {unreadChatCount > 9 ? "9+" : unreadChatCount}
+        </span>
+      )}
+    </Link>
+  );
+
   return (
     <>
       <style>{styles}</style>
@@ -134,6 +161,7 @@ export default function Navbar() {
                 {isVendor && (
                   <>
                     <Link to="/vendor-dashboard" className="nb-ghost-btn">Dashboard</Link>
+                    <ChatButton />
                     <BellButton onClick={() => { setNotifOpen(o => !o); setProfileOpen(false); }} />
                   </>
                 )}
@@ -149,6 +177,7 @@ export default function Navbar() {
                       {isActive("/favourites") ? "♥" : "♡"}
                     </Link>
                     <Link to="/my-bookings" className="nb-ghost-btn">My Bookings</Link>
+                    <ChatButton />
                     <BellButton onClick={() => { setNotifOpen(o => !o); setProfileOpen(false); }} />
                   </>
                 )}
@@ -198,6 +227,9 @@ export default function Navbar() {
                 {isVendor && (
                   <>
                     <Link to="/vendor-dashboard" className="nb-mobile-link">Vendor Dashboard</Link>
+                    <Link to="/messages" className="nb-mobile-link" onClick={() => setMenuOpen(false)}>
+                      💬 Messages {unreadChatCount > 0 && `(${unreadChatCount})`}
+                    </Link>
                     <button
                       className="nb-mobile-link"
                       style={{ textAlign: "left" }}
@@ -213,6 +245,9 @@ export default function Navbar() {
                   <>
                     <Link to="/favourites"  className="nb-mobile-link">♡ My Favourites</Link>
                     <Link to="/my-bookings" className="nb-mobile-link">My Bookings</Link>
+                    <Link to="/messages" className="nb-mobile-link" onClick={() => setMenuOpen(false)}>
+                      💬 Messages {unreadChatCount > 0 && `(${unreadChatCount})`}
+                    </Link>
                     <button
                       className="nb-mobile-link"
                       style={{ textAlign: "left" }}

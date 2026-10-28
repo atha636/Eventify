@@ -133,6 +133,22 @@ const paymentLimiter = rateLimit({
   message: { error: "Too many payment requests. Please slow down." },
 });
 
+// ═══════════════════════════════════════════════════════════════
+// 🔐 CHAT RATE LIMITING — own generous bucket, same reasoning as
+//    notifications: an open chat thread polls for new messages and
+//    shouldn't eat into the global API quota.
+//    • Dev:  unlimited
+//    • Prod: 300 req / 5 min per IP (~1 req/sec, covers active polling)
+// ═══════════════════════════════════════════════════════════════
+const chatLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many chat requests. Please slow down." },
+  skip: () => isDev,
+});
+
 // ── Static uploads (local fallback only — use Cloudinary in prod) ──
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
@@ -163,6 +179,9 @@ app.use("/api/notifications", notificationLimiter, notificationRoutes);
 
 // Payment routes → dedicated payment limiter
 app.use("/api/payments",      paymentLimiter, paymentRoutes);
+
+// Chat → own generous limiter (polled while a thread is open)
+app.use("/api/chat",          chatLimiter, require("./routes/chatRoutes"));
 
 // ── Health check ─────────────────────────────────────────────
 app.get("/", (req, res) => res.json({ status: "ok", app: "Evencers API" }));
