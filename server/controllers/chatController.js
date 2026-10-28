@@ -5,10 +5,18 @@ const Vendor         = require("../models/Vendor");
 const User           = require("../models/User");
 const Notification   = require("../models/Notification");
 
+// ── Helper: get a plain string id from either a raw ObjectId or a populated doc ──
+function idOf(ref) {
+  if (!ref) return "";
+  return (ref._id || ref).toString();
+}
+
 // ── Helper: is this user the "userId" or "vendorId" side of a thread? ──
+// Works whether userId/vendorId are raw ObjectIds OR populated documents.
 function sideOf(conversation, myId) {
-  if (conversation.userId.toString() === myId)   return "user";
-  if (conversation.vendorId.toString() === myId) return "vendor";
+  const me = String(myId);
+  if (idOf(conversation.userId)   === me) return "user";
+  if (idOf(conversation.vendorId) === me) return "vendor";
   return null;
 }
 
@@ -104,6 +112,7 @@ exports.getMessages = async (req, res) => {
       .populate("serviceId", "title images");
     if (!conversation) return res.status(404).json({ error: "Conversation not found." });
 
+    // sideOf now handles populated documents correctly
     const side = sideOf(conversation, req.user.id);
     if (!side) return res.status(403).json({ error: "Unauthorized" });
 
@@ -116,9 +125,12 @@ exports.getMessages = async (req, res) => {
       { conversationId: conversation._id, senderId: { $ne: req.user.id }, isRead: false },
       { isRead: true }
     );
-    if (side === "user"   && conversation.unreadForUser   > 0) conversation.unreadForUser   = 0;
-    if (side === "vendor" && conversation.unreadForVendor > 0) conversation.unreadForVendor = 0;
-    await conversation.save();
+
+    // Use a direct update instead of .save() on a populated document
+    const unreadField = side === "user" ? "unreadForUser" : "unreadForVendor";
+    if (conversation[unreadField] > 0) {
+      await Conversation.updateOne({ _id: conversation._id }, { $set: { [unreadField]: 0 } });
+    }
 
     const iAmUser = side === "user";
     const other   = iAmUser ? conversation.vendorId : conversation.userId;
