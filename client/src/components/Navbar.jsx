@@ -65,16 +65,28 @@ export default function Navbar() {
   // ── Chat unread badge (both roles) ──────────────────────────────
   useEffect(() => {
     if (!token || !canReceiveNotifs) return;
+
     const fetchChatCount = async () => {
       try {
         const res = await getUnreadChatCount();
         setUnreadChatCount(res.unreadCount || 0);
       } catch {}
     };
+
     fetchChatCount();
     const interval = setInterval(fetchChatCount, 30000);
-    return () => clearInterval(interval);
-  }, [token, canReceiveNotifs]);
+
+    // refetch when the chat page marks messages as read
+    window.addEventListener("chat-unread-changed", fetchChatCount);
+    // refetch when the user comes back to the tab
+    window.addEventListener("focus", fetchChatCount);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("chat-unread-changed", fetchChatCount);
+      window.removeEventListener("focus", fetchChatCount);
+    };
+  }, [token, canReceiveNotifs, location.pathname, location.search]);
 
   useEffect(() => {
     const onScroll = () => {
