@@ -472,7 +472,7 @@ const styles = `
   .va-shell { max-width: 1100px; margin: 0 auto; padding: 96px 20px 48px; }
 
   .va-header { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
-  .va-title { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 600; margin: 0; }
+  .va-title { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 600; margin: 0; color: #0e0c0a !important; }
   .va-subtitle { margin: 4px 0 0; font-size: 13px; color: #7a7265; }
 
   .va-ranges { display: flex; gap: 4px; background: #fff; border: 1px solid rgba(201,168,76,0.22); border-radius: 22px; padding: 4px; flex-wrap: wrap; }
@@ -483,7 +483,7 @@ const styles = `
   .va-dim { opacity: 0.55; transition: opacity 0.15s; pointer-events: none; }
 
   .va-card { background: #fff; border: 1px solid rgba(201,168,76,0.2); border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; min-width: 0; }
-  .va-card-title { font-family: 'Cormorant Garamond', serif; font-size: 1.25rem; font-weight: 600; margin: 0; }
+  .va-card-title { font-family: 'Cormorant Garamond', serif; font-size: 1.35rem; font-weight: 700; margin: 0; color: #0e0c0a !important; opacity: 1; }
   .va-card-sub { font-size: 12px; color: #7a7265; margin: 2px 0 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .va-key { display: inline-flex; align-items: center; gap: 5px; }
   .va-key i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
