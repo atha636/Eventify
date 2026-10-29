@@ -183,6 +183,9 @@ app.use("/api/payments",      paymentLimiter, paymentRoutes);
 // Chat → own generous limiter (polled while a thread is open)
 app.use("/api/chat",          chatLimiter, require("./routes/chatRoutes"));
 
+// Vendor analytics dashboard (read-only aggregates, global limiter applies)
+app.use("/api/analytics",     require("./routes/analyticsRoutes"));
+
 // ── Health check ─────────────────────────────────────────────
 app.get("/", (req, res) => res.json({ status: "ok", app: "Evencers API" }));
 
