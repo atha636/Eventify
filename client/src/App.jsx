@@ -7,6 +7,7 @@ import Register           from "./pages/Register";
 import ForgotPassword     from "./pages/ForgotPassword";
 import VendorDetail       from "./pages/VendorDetail";
 import VendorDashboard    from "./pages/VendorDashboard";
+import VendorAnalytics    from "./pages/VendorAnalytics";
 import AddService         from "./pages/AddService";
 import EditService        from "./pages/EditService";
 import ServiceGallery     from "./pages/ServiceGallery";
@@ -55,6 +56,7 @@ export default function App() {
 
         {/* ── Vendor ── */}
         <Route path="/vendor-dashboard"        element={<VendorDashboard />} />
+        <Route path="/vendor-analytics"        element={<VendorAnalytics />} />
         <Route path="/vendor/welcome"          element={<VendorWelcome />} />
         <Route path="/add-service"             element={<AddService />} />
         <Route path="/edit-service/:id"        element={<EditService />} />

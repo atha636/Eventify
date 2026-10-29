@@ -173,6 +173,7 @@ export default function Navbar() {
                 {isVendor && (
                   <>
                     <Link to="/vendor-dashboard" className="nb-ghost-btn">Dashboard</Link>
+                    <Link to="/vendor-analytics" className="nb-ghost-btn">Analytics</Link>
                     <ChatButton />
                     <BellButton onClick={() => { setNotifOpen(o => !o); setProfileOpen(false); }} />
                   </>
@@ -239,6 +240,7 @@ export default function Navbar() {
                 {isVendor && (
                   <>
                     <Link to="/vendor-dashboard" className="nb-mobile-link">Vendor Dashboard</Link>
+                    <Link to="/vendor-analytics" className="nb-mobile-link">📊 Analytics</Link>
                     <Link to="/messages" className="nb-mobile-link" onClick={() => setMenuOpen(false)}>
                       💬 Messages {unreadChatCount > 0 && `(${unreadChatCount})`}
                     </Link>
