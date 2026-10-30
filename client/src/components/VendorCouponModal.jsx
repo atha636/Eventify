@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 
 export default function VendorCouponModal() {
@@ -135,7 +134,7 @@ const styles = `
 
   /* modal card */
   .vcm-modal {
-    background: #faf8f3;
+    background: var(--surface);
     border-radius: 20px;
     padding: 40px 36px 32px;
     max-width: 460px; width: 100%;
@@ -159,11 +158,11 @@ const styles = `
   .vcm-close {
     position: absolute; top: 14px; right: 16px;
     background: none; border: none;
-    font-size: 14px; color: #a09890;
+    font-size: 14px; color: var(--faint);
     cursor: pointer; padding: 4px 6px; border-radius: 6px;
     transition: color 0.2s, background 0.2s;
   }
-  .vcm-close:hover { color: #0e0c0a; background: rgba(14,12,10,0.06); }
+  .vcm-close:hover { color: var(--ink); background: rgba(14,12,10,0.06); }
 
   /* icon */
   .vcm-icon {
@@ -185,17 +184,17 @@ const styles = `
   .vcm-title {
     font-family: 'Cormorant Garamond', serif;
     font-size: 2rem; font-weight: 700;
-    color: #0e0c0a; text-align: center; margin-bottom: 8px;
+    color: var(--ink); text-align: center; margin-bottom: 8px;
   }
   .vcm-desc {
-    font-size: 13.5px; color: #7a7265; text-align: center;
+    font-size: 13.5px; color: var(--muted); text-align: center;
     line-height: 1.65; margin-bottom: 26px;
   }
-  .vcm-desc strong { color: #0e0c0a; font-weight: 500; }
+  .vcm-desc strong { color: var(--ink); font-weight: 500; }
 
   /* ticket */
   .vcm-ticket {
-    background: #fff;
+    background: var(--white);
     border: 1.5px dashed rgba(201,168,76,0.5);
     border-radius: 14px;
     padding: 20px 20px 16px;
@@ -207,7 +206,7 @@ const styles = `
     content: '';
     position: absolute;
     width: 18px; height: 18px;
-    background: #faf8f3;
+    background: var(--surface);
     border-radius: 50%;
     top: 50%; transform: translateY(-50%);
     border: 1.5px dashed rgba(201,168,76,0.5);
@@ -217,7 +216,7 @@ const styles = `
 
   .vcm-ticket-label {
     font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
-    color: #a09890; text-align: center; margin-bottom: 14px; font-weight: 500;
+    color: var(--faint); text-align: center; margin-bottom: 14px; font-weight: 500;
   }
 
   /* digits */
@@ -232,12 +231,12 @@ const styles = `
     font-size: 1.55rem; font-weight: 700;
   }
   .vcm-alpha {
-    background: #0e0c0a; color: #c9a84c;
+    background: var(--ink-surface); color: #c9a84c;
     border: 1px solid rgba(201,168,76,0.3);
     box-shadow: 0 2px 8px rgba(14,12,10,0.18);
   }
   .vcm-num {
-    background: #faf7f2; color: #0e0c0a;
+    background: var(--surface); color: var(--ink);
     border: 1.5px solid rgba(201,168,76,0.22);
   }
 
@@ -248,7 +247,7 @@ const styles = `
     border: 1px solid rgba(45,106,79,0.2);
     border-radius: 100px;
     padding: 5px 14px;
-    font-size: 12px; color: #2d6a4f; font-weight: 500;
+    font-size: 12px; color: var(--c-green); font-weight: 500;
     width: fit-content; margin: 0 auto;
   }
   .vcm-check { font-size: 13px; }
@@ -257,7 +256,7 @@ const styles = `
   .vcm-copy-btn {
     width: 100%;
     padding: 13px;
-    background: #0e0c0a; color: #fff;
+    background: var(--btn-bg); color: var(--btn-fg);
     border: none; border-radius: 10px;
     font-family: 'DM Sans', sans-serif;
     font-size: 14px; font-weight: 500;
@@ -265,19 +264,19 @@ const styles = `
     margin-bottom: 10px;
     letter-spacing: 0.02em;
   }
-  .vcm-copy-btn:hover   { background: #c9a84c; color: #0e0c0a; }
+  .vcm-copy-btn:hover   { background: #c9a84c; color: var(--on-gold); }
   .vcm-copy-btn.vcm-copied { background: #2d6a4f; }
 
   .vcm-done-btn {
     width: 100%;
     padding: 11px;
-    background: none; color: #a09890;
+    background: none; color: var(--faint);
     border: 1px solid rgba(201,168,76,0.22);
     border-radius: 10px;
     font-family: 'DM Sans', sans-serif;
     font-size: 13px; cursor: pointer; transition: all 0.2s;
   }
-  .vcm-done-btn:hover { border-color: #c9a84c; color: #7a7265; }
+  .vcm-done-btn:hover { border-color: #c9a84c; color: var(--muted); }
 
   .vcm-once-note {
     font-size: 11.5px; color: #b0a898;

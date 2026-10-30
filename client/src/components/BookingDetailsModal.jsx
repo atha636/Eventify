@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   RecaptchaVerifier,
@@ -669,14 +668,14 @@ const styles = `
   .bdm-phone-input { flex: 1; }
   .bdm-otp-send-btn {
     padding: 0 16px;
-    background: var(--ink); border: none; border-radius: 8px;
+    background: var(--btn-bg); border: none; border-radius: 8px;
     font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
-    color: var(--white); cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    color: var(--btn-fg); cursor: pointer; white-space: nowrap; flex-shrink: 0;
     transition: background 0.22s, color 0.22s; min-width: 90px;
     display: flex; align-items: center; justify-content: center;
   }
   .bdm-otp-send-btn:hover:not(.disabled):not(.loading) {
-    background: var(--gold); color: var(--ink);
+    background: var(--gold); color: var(--on-gold);
   }
   .bdm-otp-send-btn.disabled { opacity: 0.55; cursor: not-allowed; }
   .bdm-otp-send-btn.loading  { pointer-events: none; }
@@ -714,12 +713,12 @@ const styles = `
     padding: 0 20px;
     background: var(--gold); border: none; border-radius: 8px;
     font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
-    color: var(--ink); cursor: pointer; flex-shrink: 0;
+    color: var(--on-gold); cursor: pointer; flex-shrink: 0;
     transition: background 0.22s, color 0.22s, transform 0.18s; min-width: 90px;
     display: flex; align-items: center; justify-content: center; gap: 6px;
   }
   .bdm-otp-verify-btn:hover:not(:disabled) {
-    background: var(--ink); color: var(--white); transform: translateY(-1px);
+    background: var(--btn-bg); color: var(--btn-fg); transform: translateY(-1px);
   }
   .bdm-otp-verify-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .bdm-otp-verify-btn.loading  { pointer-events: none; }
@@ -758,12 +757,12 @@ const styles = `
     flex: 2; padding: 13px 16px;
     background: var(--gold); border: none; border-radius: 8px;
     font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
-    color: var(--ink); cursor: pointer;
+    color: var(--on-gold); cursor: pointer;
     transition: background 0.25s, color 0.25s, transform 0.18s, box-shadow 0.2s;
     display: flex; align-items: center; justify-content: center; gap: 8px;
   }
   .bdm-btn-confirm:hover:not(:disabled) {
-    background: var(--ink); color: var(--white);
+    background: var(--btn-bg); color: var(--btn-fg);
     transform: translateY(-1px);
     box-shadow: 0 6px 20px rgba(14,12,10,0.2);
   }

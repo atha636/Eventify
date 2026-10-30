@@ -122,7 +122,7 @@ export default function CookieConsent() {
           transition:transform .28s cubic-bezier(.22,1,.36,1), background .28s;
         }
         .cc-track.on .cc-thumb,
-        .cc-track.locked .cc-thumb { transform:translateX(18px); background:#0e0c0a; }
+        .cc-track.locked .cc-thumb { transform:translateX(18px); background:var(--btn-bg); }
 
         /* ── Buttons ── */
         .cc-btn {
@@ -158,7 +158,7 @@ export default function CookieConsent() {
         }
         .cc-btn-gold {
           background:linear-gradient(135deg,#c9a84c 0%,#a8882e 100%);
-          border:none; color:#0e0c0a; font-weight:500;
+          border:none; color:var(--on-gold); font-weight:500;
           box-shadow:0 4px 20px rgba(201,168,76,.3);
         }
         .cc-btn-gold:hover {

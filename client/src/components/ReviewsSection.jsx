@@ -299,7 +299,7 @@ const reviewStyles = `
   .rv-write-label { font-size: 12.5px; font-weight: 600; color: var(--ink); margin: 0; }
   .rv-textarea { width: 100%; resize: vertical; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--ink); background: var(--surface); box-sizing: border-box; }
   .rv-form-row { display: flex; gap: 10px; align-items: center; }
-  .rv-submit-btn { background: var(--ink); color: var(--white); border: none; border-radius: 6px; padding: 10px 20px; font-size: 13px; font-weight: 500; cursor: pointer; }
+  .rv-submit-btn { background: var(--btn-bg); color: var(--btn-fg); border: none; border-radius: 6px; padding: 10px 20px; font-size: 13px; font-weight: 500; cursor: pointer; }
   .rv-submit-btn:disabled { opacity: .6; cursor: default; }
   .rv-delete-btn { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 6px; padding: 10px 16px; font-size: 12.5px; cursor: pointer; }
   .rv-form-msg { font-size: 12px; color: var(--muted); margin: 0; }
@@ -308,7 +308,7 @@ const reviewStyles = `
   .rv-list { display: flex; flex-direction: column; gap: 16px; }
   .rv-item { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
   .rv-item-head { display: flex; align-items: center; gap: 10px; }
-  .rv-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--gold-light); color: var(--ink); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px; flex-shrink: 0; }
+  .rv-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--gold-light); color: var(--on-gold); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px; flex-shrink: 0; }
   .rv-item-name { font-size: 13px; font-weight: 600; color: var(--ink); margin: 0 0 2px; }
   .rv-item-date { margin-left: auto; font-size: 11px; color: var(--muted); }
   .rv-item-comment { font-size: 13px; color: var(--ink); line-height: 1.6; margin: 10px 0 0; }

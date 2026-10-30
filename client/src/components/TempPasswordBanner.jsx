@@ -47,7 +47,7 @@ const styles = `
     gap: 10px;
     background: #fdf6e3;
     border: 1px solid rgba(201,168,76,0.4);
-    color: #0e0c0a;
+    color: var(--ink);
     border-radius: 10px;
     padding: 10px 14px;
     box-shadow: 0 10px 30px rgba(14,12,10,0.14);
@@ -58,13 +58,13 @@ const styles = `
   .tpb-icon { color: #b8902a; font-size: 14px; flex-shrink: 0; }
   .tpb-text { line-height: 1.4; }
   .tpb-cta {
-    background: #0e0c0a; color: #fff; border: none; border-radius: 6px;
+    background: var(--btn-bg); color: var(--btn-fg); border: none; border-radius: 6px;
     padding: 6px 12px; font-size: 11.5px; font-weight: 500; cursor: pointer;
     white-space: nowrap; flex-shrink: 0;
   }
-  .tpb-cta:hover { background: #c9a84c; color: #0e0c0a; }
+  .tpb-cta:hover { background: #c9a84c; color: var(--on-gold); }
   .tpb-close {
-    background: none; border: none; color: #7a7265; cursor: pointer;
+    background: none; border: none; color: var(--muted); cursor: pointer;
     font-size: 11px; padding: 2px; flex-shrink: 0;
   }
   @media (max-width: 560px) {

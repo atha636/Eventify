@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 
 export default function VendorCodeSection() {
@@ -101,12 +100,12 @@ const sectionStyles = `
     align-items: center;
     gap: 20px;
     flex-wrap: wrap;
-    background: #ffffff;
+    background: var(--white);
     border: 1px solid rgba(201,168,76,0.25);
     border-radius: 16px;
     padding: 18px 24px;
     margin-bottom: 28px;
-    box-shadow: 0 2px 12px rgba(14,12,10,0.05), inset 0 1px 0 rgba(255,255,255,0.8);
+    box-shadow: 0 2px 12px rgba(14,12,10,0.05), inset 0 1px 0 var(--hl);
     animation: vcsSlideIn 0.45s cubic-bezier(0.22,1,0.36,1) both;
     position: relative;
     overflow: hidden;
@@ -139,12 +138,12 @@ const sectionStyles = `
   }
   .vcs-label {
     font-size: 11px; font-weight: 500; letter-spacing: 0.13em;
-    text-transform: uppercase; color: #7a7265;
+    text-transform: uppercase; color: var(--muted);
     font-family: 'DM Sans', sans-serif;
     margin-bottom: 2px;
   }
   .vcs-hint {
-    font-size: 11.5px; color: #a09890;
+    font-size: 11.5px; color: var(--faint);
     font-family: 'DM Sans', sans-serif;
   }
 
@@ -162,16 +161,16 @@ const sectionStyles = `
     transition: all 0.22s ease;
   }
   .vcs-alpha {
-    background: #0e0c0a; color: #c9a84c;
+    background: var(--ink-surface); color: #c9a84c;
     border: 1px solid rgba(201,168,76,0.3);
     box-shadow: 0 2px 8px rgba(14,12,10,0.15);
   }
   .vcs-num {
-    background: #faf7f2; color: #0e0c0a;
+    background: var(--surface); color: var(--ink);
     border: 1.5px solid rgba(201,168,76,0.25);
   }
   .vcs-hidden {
-    background: #f0ece4; color: #c8bfb2;
+    background: var(--track); color: #c8bfb2;
     border: 1px dashed rgba(201,168,76,0.2);
     font-size: 1rem;
   }
@@ -185,7 +184,7 @@ const sectionStyles = `
     border: 1px solid rgba(201,168,76,0.28);
     border-radius: 8px;
     font-family: 'DM Sans', sans-serif;
-    font-size: 12.5px; color: #7a7265;
+    font-size: 12.5px; color: var(--muted);
     cursor: pointer; transition: all 0.2s;
     white-space: nowrap;
   }
@@ -211,7 +210,7 @@ const sectionStyles = `
 
   .vcs-copy-btn {
     padding: 8px 14px;
-    background: #0e0c0a; color: #ffffff;
+    background: var(--btn-bg); color: var(--btn-fg);
     border: none; border-radius: 8px;
     font-family: 'DM Sans', sans-serif;
     font-size: 12.5px; font-weight: 500;
@@ -219,7 +218,7 @@ const sectionStyles = `
     white-space: nowrap;
   }
   .vcs-copy-btn:hover:not(:disabled) {
-    background: #c9a84c; color: #0e0c0a;
+    background: #c9a84c; color: var(--on-gold);
   }
   .vcs-copy-btn:disabled {
     opacity: 0.35; cursor: not-allowed;

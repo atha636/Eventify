@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 // ── Plan helpers ──────────────────────────────────────────────
 const PLAN_META = {
   "25": {
-    color:  "#2d6a4f",
+    color: "var(--c-green)",
     light:  "rgba(45,106,79,0.12)",
     border: "rgba(45,106,79,0.28)",
     label:  "25% Now · 50% Before Event · 25% After",
@@ -356,12 +356,12 @@ const modalStyles = `
     transition: background 0.2s, color 0.2s, transform 0.18s;
     z-index: 2;
   }
-  .pm-x:hover { background: rgba(255,255,255,0.14); color: white; transform: scale(1.1); }
+  .pm-x:hover { background: rgba(255,255,255,0.14); color: var(--on-dark); transform: scale(1.1); }
   .pm-head-icon { font-size: 2.2rem; margin-bottom: 10px; position: relative; z-index: 1; display: block; }
   .pm-head-title {
     font-family: 'Cormorant Garamond', serif;
     font-size: clamp(1.5rem, 4vw, 2rem);
-    font-weight: 300; color: white;
+    font-weight: 300; color: var(--on-dark);
     margin: 0 0 6px; position: relative; z-index: 1;
     line-height: 1.15;
   }
@@ -425,7 +425,7 @@ const modalStyles = `
     flex-shrink: 0;
     transition: all 0.2s;
   }
-  .pm-step-dot--paid   { background: var(--pm-success); border: 2px solid var(--pm-success); color: white; }
+  .pm-step-dot--paid   { background: var(--pm-success); border: 2px solid var(--pm-success); color: var(--on-dark); }
   .pm-step-dot--active { background: var(--pm-gold); border: 2px solid var(--pm-gold); color: var(--pm-ink); box-shadow: 0 0 0 4px rgba(201,168,76,0.18); }
   .pm-step-dot--pending{ background: var(--pm-white); border: 2px solid var(--pm-border); color: var(--pm-muted); opacity: 0.7; }
 
@@ -523,7 +523,7 @@ const modalStyles = `
     color: var(--pm-muted); flex: 0 0 auto; padding: 15px 22px;
   }
   .pm-btn-ghost:hover:not(:disabled) { border-color: var(--pm-muted); color: var(--pm-ink); background: var(--pm-surf); }
-  .pm-btn-pay { color: white; }
+  .pm-btn-pay { color: var(--on-dark); }
   .pm-btn-pay:hover:not(:disabled) { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(14,12,10,0.22); }
 
   .pm-spinner {

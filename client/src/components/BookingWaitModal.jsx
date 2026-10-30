@@ -176,13 +176,13 @@ const styles = `
 
   .bwm-btn {
     width:100%; padding:14px 20px;
-    background:var(--ink); border:none; border-radius:9px;
+    background:var(--btn-bg); border:none; border-radius:9px;
     font-family:'DM Sans',sans-serif; font-size:13.5px; font-weight:500;
-    color:var(--white); cursor:pointer;
+    color:var(--btn-fg); cursor:pointer;
     transition:all 0.25s;
   }
   .bwm-btn:hover {
-    background:var(--gold); color:var(--ink);
+    background:var(--gold); color:var(--on-gold);
     transform:translateY(-2px); box-shadow:0 8px 24px rgba(201,168,76,0.3);
   }
 

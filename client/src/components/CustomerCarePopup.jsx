@@ -198,7 +198,7 @@ const styles = `
     align-items: center;
     justify-content: space-between;
     padding: 16px 18px;
-    background: var(--ink);
+    background: var(--ink-surface);
     border-bottom: 1px solid rgba(201,168,76,0.12);
   }
   .ccp-header-left { display: flex; align-items: center; gap: 12px; }
@@ -211,7 +211,7 @@ const styles = `
     font-size: 14px; color: var(--gold);
     flex-shrink: 0;
   }
-  .ccp-name { font-size: 13px; font-weight: 500; color: var(--cream); margin-bottom: 3px; }
+  .ccp-name { font-size: 13px; font-weight: 500; color: var(--on-dark); margin-bottom: 3px; }
   .ccp-status {
     display: flex; align-items: center; gap: 5px;
     font-size: 11px; color: rgba(245,240,232,0.5);
@@ -229,7 +229,7 @@ const styles = `
     cursor: pointer; padding: 4px; border-radius: 4px;
     transition: color 0.2s;
   }
-  .ccp-close:hover { color: var(--cream); }
+  .ccp-close:hover { color: var(--on-dark); }
 
   /* BODY */
   .ccp-body {
@@ -245,7 +245,7 @@ const styles = `
   }
   .ccp-avatar-sm {
     width: 30px; height: 30px;
-    background: var(--ink);
+    background: var(--ink-surface);
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-size: 11px; color: var(--gold);
@@ -302,14 +302,14 @@ const styles = `
   }
   .ccp-full-btn {
     width: 100%; padding: 12px;
-    background: var(--ink); color: var(--white);
+    background: var(--btn-bg); color: var(--btn-fg);
     border: none; border-radius: 8px;
     font-family: 'DM Sans', sans-serif;
     font-size: 13px; font-weight: 500;
     cursor: pointer; transition: all 0.2s;
     margin-bottom: 10px;
   }
-  .ccp-full-btn:hover { background: var(--gold); color: var(--ink); }
+  .ccp-full-btn:hover { background: var(--gold); color: var(--on-gold); }
 
   .ccp-footer-note { font-size: 11.5px; color: var(--muted); text-align: center; }
   .ccp-email-link { color: var(--gold); text-decoration: none; font-weight: 500; }
@@ -318,7 +318,7 @@ const styles = `
   /* ── FAB BUTTON ── */
   .ccp-fab {
     width: 56px; height: 56px;
-    background: var(--ink);
+    background: var(--ink-surface);
     border: 2px solid rgba(201,168,76,0.3);
     border-radius: 50%;
     display: flex; flex-direction: column;
@@ -336,7 +336,7 @@ const styles = `
     box-shadow: 0 12px 36px rgba(201,168,76,0.35);
   }
   .ccp-fab.active {
-    background: var(--ink);
+    background: var(--ink-surface);
     border-color: var(--gold);
     transform: scale(0.95);
   }
@@ -359,8 +359,8 @@ const styles = `
     position: absolute;
     bottom: 68px; right: 4px;
 max-width: calc(100vw - 40px);
-    background: var(--ink);
-    color: var(--cream);
+    background: var(--ink-surface);
+    color: var(--on-dark);
     font-size: 12px;
     padding: 8px 14px;
     border-radius: 8px;
@@ -374,7 +374,7 @@ max-width: calc(100vw - 40px);
     position: absolute;
     bottom: -6px; right: 18px;
     width: 10px; height: 10px;
-    background: var(--ink);
+    background: var(--ink-surface);
     border-right: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
     transform: rotate(45deg);

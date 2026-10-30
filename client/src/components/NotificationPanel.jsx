@@ -6,18 +6,18 @@ import PaymentModal from "./PaymentModal";
 // ── All notification types that exist in your Notification model ──
 const TYPE_META = {
   booking_received:      { icon: "📋", color: "#c9a84c", bg: "rgba(201,168,76,0.08)"  },
-  booking_approved:      { icon: "✓",  color: "#3a8a62", bg: "rgba(58,138,98,0.08)"   },
-  booking_rejected:      { icon: "✕",  color: "#b85c5c", bg: "rgba(184,92,92,0.08)"   },
+  booking_approved:      { icon: "✓",  color: "var(--c-green2)", bg: "rgba(58,138,98,0.08)"   },
+  booking_rejected:      { icon: "✕",  color: "var(--c-red)", bg: "rgba(184,92,92,0.08)"   },
   payment_pending:       { icon: "💳", color: "#c9a84c", bg: "rgba(201,168,76,0.08)"  },
-  payment_done:          { icon: "₹",  color: "#3a8a62", bg: "rgba(58,138,98,0.08)"   },
-  service_updated:       { icon: "🔧", color: "#7a7265", bg: "rgba(122,114,101,0.08)" },
+  payment_done:          { icon: "₹",  color: "var(--c-green2)", bg: "rgba(58,138,98,0.08)"   },
+  service_updated:       { icon: "🔧", color: "var(--muted)", bg: "rgba(122,114,101,0.08)" },
   service_live_soon:     { icon: "🚀", color: "#c9a84c", bg: "rgba(201,168,76,0.08)"  },
-  profile_rejected:      { icon: "⚠",  color: "#b85c5c", bg: "rgba(184,92,92,0.08)"   },
+  profile_rejected:      { icon: "⚠",  color: "var(--c-red)", bg: "rgba(184,92,92,0.08)"   },
   date_change_requested: { icon: "📅", color: "#c9a84c", bg: "rgba(201,168,76,0.08)"  },
-  date_change_approved:  { icon: "✓",  color: "#3a8a62", bg: "rgba(58,138,98,0.08)"   },
-  date_change_rejected:  { icon: "✕",  color: "#b85c5c", bg: "rgba(184,92,92,0.08)"   },
-  vendor_verified:       { icon: "🏅", color: "#3a8a62", bg: "rgba(58,138,98,0.08)"   },
-  vendor_unverified:     { icon: "⚠",  color: "#b85c5c", bg: "rgba(184,92,92,0.08)"   },
+  date_change_approved:  { icon: "✓",  color: "var(--c-green2)", bg: "rgba(58,138,98,0.08)"   },
+  date_change_rejected:  { icon: "✕",  color: "var(--c-red)", bg: "rgba(184,92,92,0.08)"   },
+  vendor_verified:       { icon: "🏅", color: "var(--c-green2)", bg: "rgba(58,138,98,0.08)"   },
+  vendor_unverified:     { icon: "⚠",  color: "var(--c-red)", bg: "rgba(184,92,92,0.08)"   },
 };
 
 // Fallback for any future types not yet listed above
@@ -261,7 +261,7 @@ const styles = `
   .np-unread-pill {
     font-size:10px; font-weight:500; letter-spacing:0.05em;
     padding:2px 8px; border-radius:20px;
-    background:var(--gold); color:var(--ink);
+    background:var(--gold); color:var(--on-gold);
   }
   .np-close {
     width:26px; height:26px; border-radius:50%;
@@ -344,12 +344,12 @@ const styles = `
     padding:8px 14px;
     background:var(--gold); border:none; border-radius:7px;
     font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500;
-    color:var(--ink); cursor:pointer;
+    color:var(--on-gold); cursor:pointer;
     transition:all 0.22s;
     animation:npPayPulse 2.5s ease infinite;
   }
   .np-pay-btn:hover {
-    background:var(--ink); color:var(--white);
+    background:var(--btn-bg); color:var(--btn-fg);
     transform:translateY(-1px);
     box-shadow:0 6px 18px rgba(14,12,10,0.2);
     animation:none;
@@ -370,7 +370,7 @@ const styles = `
   .np-skeleton {
     height:72px; margin:4px 12px;
     border-radius:10px;
-    background:linear-gradient(90deg,#ede8e0 25%,#e5dfd4 50%,#ede8e0 75%);
+    background:linear-gradient(90deg,var(--track) 25%,var(--track) 50%,var(--track) 75%);
     background-size:200% 100%;
     animation:npShimmer 1.4s ease infinite;
   }
