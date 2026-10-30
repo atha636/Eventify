@@ -128,7 +128,7 @@ const styles = `
   }
   .ps-root { font-family: 'DM Sans', sans-serif; background: var(--cream); min-height: 100vh; color: var(--ink); }
 
-  .ps-hero { position: relative; background: var(--ink); overflow: hidden; padding: 80px 32px 64px; text-align: center; }
+  .ps-hero { position: relative; background: var(--ink-surface); overflow: hidden; padding: 80px 32px 64px; text-align: center; }
   .ps-hero-bg { position: absolute; inset: 0; pointer-events: none; }
   .ps-orb { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.15; }
   .ps-orb1 { width: 400px; height: 400px; background: var(--gold); top: -80px; right: -80px; }
@@ -138,7 +138,7 @@ const styles = `
   .ps-back:hover { background: rgba(201,168,76,0.1); }
   .ps-eyebrow { display: block; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 20px; }
   .ps-icon-wrap { font-size: 3rem; margin-bottom: 16px; display: block; }
-  .ps-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.2rem, 5vw, 3.2rem); font-weight: 300; color: var(--white); margin-bottom: 16px; }
+  .ps-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.2rem, 5vw, 3.2rem); font-weight: 300; color: var(--on-dark); margin-bottom: 16px; }
   .ps-subtitle { font-size: 15px; color: rgba(245,240,232,0.6); line-height: 1.7; margin-bottom: 20px; }
   .ps-meta { display: flex; gap: 8px; align-items: center; justify-content: center; font-size: 12px; color: var(--muted); }
   .ps-dot { color: rgba(201,168,76,0.4); }
@@ -164,8 +164,8 @@ const styles = `
   .ps-packages { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
   @media (max-width: 700px) { .ps-packages { grid-template-columns: 1fr; } }
   .ps-pkg { border: 1px solid var(--border); border-radius: 12px; padding: 28px 22px; position: relative; }
-  .ps-pkg-featured { background: var(--ink); border-color: var(--gold); }
-  .ps-pkg-tag { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--gold); color: var(--ink); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 12px; border-radius: 20px; white-space: nowrap; }
+  .ps-pkg-featured { background: var(--ink-surface); border-color: var(--gold); }
+  .ps-pkg-tag { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--gold); color: var(--on-gold); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 12px; border-radius: 20px; white-space: nowrap; }
   .ps-pkg-name { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
   .ps-pkg-featured .ps-pkg-name { color: rgba(245,240,232,0.5); }
   .ps-pkg-price { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 600; color: var(--ink); margin-bottom: 20px; }

@@ -154,7 +154,7 @@ const styles = `
   }
   .pg-root { font-family: 'DM Sans', sans-serif; background: var(--cream); min-height: 100vh; color: var(--ink); }
 
-  .pg-hero { position: relative; background: var(--ink); overflow: hidden; padding: 80px 32px 64px; text-align: center; }
+  .pg-hero { position: relative; background: var(--ink-surface); overflow: hidden; padding: 80px 32px 64px; text-align: center; }
   .pg-hero-bg { position: absolute; inset: 0; pointer-events: none; }
   .pg-orb { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.15; }
   .pg-orb1 { width: 400px; height: 400px; background: #7b5ea7; top: -100px; left: -80px; }
@@ -164,7 +164,7 @@ const styles = `
   .pg-back:hover { background: rgba(201,168,76,0.1); }
   .pg-eyebrow { display: block; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 20px; }
   .pg-icon-wrap { font-size: 3rem; margin-bottom: 16px; display: block; }
-  .pg-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.2rem, 5vw, 3.2rem); font-weight: 300; color: var(--white); margin-bottom: 16px; }
+  .pg-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.2rem, 5vw, 3.2rem); font-weight: 300; color: var(--on-dark); margin-bottom: 16px; }
   .pg-subtitle { font-size: 15px; color: rgba(245,240,232,0.6); line-height: 1.7; margin-bottom: 20px; }
   .pg-meta { display: flex; gap: 8px; align-items: center; justify-content: center; font-size: 12px; color: var(--muted); }
   .pg-dot { color: rgba(201,168,76,0.4); }
@@ -185,7 +185,7 @@ const styles = `
   .pg-card-title { font-family: 'Cormorant Garamond', serif; font-size: 1.25rem; font-weight: 600; color: var(--ink); margin-bottom: 10px; }
   .pg-card-text { font-size: 13.5px; color: var(--muted); line-height: 1.8; }
 
-  .pg-checklist { background: var(--ink); border-radius: 16px; padding: 40px 36px; }
+  .pg-checklist { background: var(--ink-surface); border-radius: 16px; padding: 40px 36px; }
   .pg-cl-label { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 24px; display: block; }
   .pg-cl-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
   @media (max-width: 600px) { .pg-cl-grid { grid-template-columns: 1fr; } }
