@@ -664,7 +664,7 @@ const styles = `
 
   .bl-modal-section-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 1rem; font-weight: 600; color: var(--cream);
+    font-size: 1rem; font-weight: 600; color: var(--on-dark);
     margin-bottom: 8px; margin-top: 4px;
     padding-left: 10px;
     border-left: 2px solid rgba(201,168,76,0.5);
@@ -713,7 +713,7 @@ const styles = `
 
   /* ── HERO ── */
   .bl-hero {
-    position: relative; background: var(--ink);
+    position: relative; background: var(--ink-surface);
     overflow: hidden; padding: 140px 20px 110px;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
@@ -787,7 +787,7 @@ const styles = `
   .bl-hero-title {
     font-family: 'Cormorant Garamond', serif;
     font-size: clamp(2.5rem, 6.5vw, 4.8rem);
-    font-weight: 300; color: var(--white);
+    font-weight: 300; color: var(--on-dark);
     line-height: 1.08; margin-bottom: 20px;
     letter-spacing: -0.015em;
   }
@@ -810,7 +810,7 @@ const styles = `
     width: 100%; padding: 14px 44px 14px 44px;
     background: rgba(255,255,255,0.07); border: 1px solid rgba(201,168,76,0.2);
     border-radius: 12px; font-family: 'DM Sans', sans-serif; font-size: 13.5px;
-    color: var(--white); outline: none;
+    color: var(--on-dark); outline: none;
     transition: border-color 0.2s, background 0.2s;
   }
   .bl-search::placeholder { color: rgba(245,240,232,0.3); }
@@ -821,7 +821,7 @@ const styles = `
     cursor: pointer; line-height: 1; padding: 4px;
     transition: color 0.2s;
   }
-  .bl-search-clear:hover { color: var(--white); }
+  .bl-search-clear:hover { color: var(--on-dark); }
 
   /* Hero stats */
   .bl-hero-stats {
@@ -871,7 +871,7 @@ const styles = `
   /* ── BUTTONS ── */
   .bl-btn-primary {
     display: inline-flex; align-items: center; gap: 8px;
-    padding: 13px 28px; background: var(--gold); color: var(--ink);
+    padding: 13px 28px; background: var(--gold); color: var(--on-gold);
     border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif;
     font-size: 13.5px; font-weight: 500; cursor: pointer;
     transition: transform 0.25s, box-shadow 0.25s;
@@ -930,7 +930,7 @@ const styles = `
     display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
     text-transform: uppercase; padding: 5px 12px; border-radius: 24px;
   }
-  .bl-tag-gold { background: var(--gold); color: var(--ink); }
+  .bl-tag-gold { background: var(--gold); color: var(--on-gold); }
   .bl-tag-outline { background: transparent; border: 1px solid var(--border); color: var(--muted); }
 
   .bl-featured-title {
@@ -1020,7 +1020,7 @@ const styles = `
     position: absolute; top: 12px; left: 12px;
     font-size: 9.5px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
     padding: 4px 10px; border-radius: 20px;
-    background: rgba(255,255,255,0.85); color: var(--muted); border: 1px solid var(--border);
+    background: var(--chip-bg); color: var(--muted); border: 1px solid var(--border);
     backdrop-filter: blur(8px);
   }
 
@@ -1123,7 +1123,7 @@ const styles = `
 
   /* Sidebar CTA */
   .bl-sidebar-cta {
-    background: var(--ink); border-radius: 16px;
+    background: var(--ink-surface); border-radius: 16px;
     padding: 28px 22px; text-align: center;
     position: relative; overflow: hidden;
     display: flex; flex-direction: column; align-items: center; gap: 10px;
@@ -1136,7 +1136,7 @@ const styles = `
   .bl-sidebar-cta-emoji { font-size: 1.8rem; z-index: 1; }
   .bl-sidebar-cta-title {
     font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; font-weight: 600;
-    color: var(--cream); z-index: 1; line-height: 1.25;
+    color: var(--on-dark); z-index: 1; line-height: 1.25;
   }
   .bl-sidebar-cta-desc { font-size: 12px; color: rgba(245,240,232,0.45); line-height: 1.65; z-index: 1; }
   .bl-sidebar-cta .bl-btn-primary { z-index: 1; margin-top: 6px; }
@@ -1144,7 +1144,7 @@ const styles = `
   /* ── NEWSLETTER ── */
   .bl-newsletter {
     position: relative; overflow: hidden;
-    background: var(--ink); padding: 100px 20px;
+    background: var(--ink-surface); padding: 100px 20px;
     text-align: center;
   }
   .bl-nl-orb1 {
@@ -1165,7 +1165,7 @@ const styles = `
   }
   .bl-nl-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(2rem, 4.8vw, 3.4rem); font-weight: 300; color: var(--white);
+    font-size: clamp(2rem, 4.8vw, 3.4rem); font-weight: 300; color: var(--on-dark);
     line-height: 1.12; margin-bottom: 16px; letter-spacing: -0.01em;
   }
   .bl-nl-title em { font-style: italic; color: var(--gold-light); }
@@ -1179,7 +1179,7 @@ const styles = `
     flex: 1; padding: 13px 18px;
     background: rgba(255,255,255,0.07); border: 1px solid rgba(201,168,76,0.22);
     border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 13px;
-    color: var(--white); outline: none;
+    color: var(--on-dark); outline: none;
     transition: border-color 0.2s, background 0.2s;
   }
   .bl-nl-input::placeholder { color: rgba(245,240,232,0.3); }

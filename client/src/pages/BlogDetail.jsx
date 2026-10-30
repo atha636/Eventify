@@ -439,7 +439,7 @@ const styles = `
 
   /* ── HERO ── */
   .bd-hero {
-    position: relative; background: var(--ink);
+    position: relative; background: var(--ink-surface);
     overflow: hidden; padding: 130px 20px 80px;
     min-height: 72svh;
     display: flex; align-items: flex-end;
@@ -510,7 +510,7 @@ const styles = `
   .bd-tag-pick {
     display: inline-block; font-size: 9.5px; font-weight: 600; letter-spacing: 0.15em;
     text-transform: uppercase; padding: 5px 12px; border-radius: 24px;
-    background: var(--gold); color: var(--ink);
+    background: var(--gold); color: var(--on-gold);
   }
 
   /* Emoji */
@@ -523,7 +523,7 @@ const styles = `
   .bd-hero-title {
     font-family: 'Cormorant Garamond', serif;
     font-size: clamp(2rem, 5vw, 3.6rem);
-    font-weight: 500; color: var(--white);
+    font-weight: 500; color: var(--on-dark);
     line-height: 1.1; margin-bottom: 18px;
     letter-spacing: -0.02em;
   }
@@ -641,7 +641,7 @@ const styles = `
     background: var(--ac-gradient, linear-gradient(135deg, #c9a84c, #e8d5a3));
     display: flex; align-items: center; justify-content: center;
     font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 600;
-    color: var(--ink);
+    color: var(--on-gold);
   }
   .bd-ac-info { display: flex; flex-direction: column; gap: 3px; }
   .bd-ac-name { font-size: 13.5px; font-weight: 600; color: var(--ink); }
@@ -686,7 +686,7 @@ const styles = `
 
   /* Sidebar CTA */
   .bd-sidebar-cta {
-    background: var(--ink); border-radius: 16px;
+    background: var(--ink-surface); border-radius: 16px;
     padding: 24px 20px; text-align: center;
     position: relative; overflow: hidden;
     display: flex; flex-direction: column; align-items: center; gap: 8px;
@@ -699,7 +699,7 @@ const styles = `
   .bd-cta-emoji { font-size: 1.7rem; z-index: 1; }
   .bd-cta-title {
     font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600;
-    color: var(--cream); z-index: 1; line-height: 1.25;
+    color: var(--on-dark); z-index: 1; line-height: 1.25;
   }
   .bd-cta-desc { font-size: 11.5px; color: rgba(245,240,232,0.4); line-height: 1.6; z-index: 1; }
   .bd-sidebar-cta .bd-btn-primary { z-index: 1; margin-top: 4px; }
@@ -720,7 +720,7 @@ const styles = `
   /* ── BUTTONS ── */
   .bd-btn-primary {
     display: inline-flex; align-items: center; gap: 8px;
-    padding: 12px 26px; background: var(--gold); color: var(--ink);
+    padding: 12px 26px; background: var(--gold); color: var(--on-gold);
     border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif;
     font-size: 13px; font-weight: 500; cursor: pointer;
     transition: transform 0.25s, box-shadow 0.25s;
@@ -788,7 +788,7 @@ const styles = `
     position: absolute; top: 10px; left: 10px;
     font-size: 9px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
     padding: 3px 9px; border-radius: 20px;
-    background: rgba(255,255,255,0.85); color: var(--muted); border: 1px solid var(--border);
+    background: var(--chip-bg); color: var(--muted); border: 1px solid var(--border);
     backdrop-filter: blur(8px);
   }
   .bd-related-body { padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; }

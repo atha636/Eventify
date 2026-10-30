@@ -465,7 +465,7 @@ export default function Home() {
           <div className="hm-how-inner">
             <div className={`hm-section-header hm-reveal ${howVisible ? "hm-revealed" : ""}`}>
               <p className="hm-eyebrow" style={{ color: "var(--gold-light)" }}>Simple process</p>
-              <h2 className="hm-section-title" style={{ color: "var(--cream)" }}>How Evencers works</h2>
+              <h2 className="hm-section-title" style={{ color: "var(--on-dark)" }}>How Evencers works</h2>
             </div>
             <div className="hm-steps">
               {[
@@ -757,7 +757,7 @@ const styles = `
   /* ── HERO ── */
   .hm-hero {
     position: relative;
-    background: var(--ink);
+    background: var(--ink-surface);
     overflow: hidden;
     padding: 100px 20px 0;
     display: flex;
@@ -833,7 +833,7 @@ const styles = `
   .hm-hero-title {
     font-family: 'Cormorant Garamond', serif;
     font-size: clamp(2.4rem, 7vw, 4.8rem);
-    font-weight: 300; color: var(--white);
+    font-weight: 300; color: var(--on-dark);
     line-height: 1.1; margin-bottom: 20px;
     animation: heroEnter 0.8s 0.15s cubic-bezier(.22,1,.36,1) both;
   }
@@ -871,9 +871,9 @@ const styles = `
     font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink);
     background: transparent;
   }
-  .hm-search-input::placeholder { color: #bbb4a8; }
+  .hm-search-input::placeholder { color: var(--faint); }
   .hm-search-btn {
-    background: var(--ink); color: var(--white); border: none; border-radius: 8px;
+    background: var(--btn-bg); color: var(--btn-fg); border: none; border-radius: 8px;
     padding: 11px 18px; font-family: 'DM Sans', sans-serif; font-size: 13px;
     font-weight: 500; cursor: pointer; transition: background 0.25s, transform 0.2s;
     white-space: nowrap; flex-shrink: 0;
@@ -881,7 +881,7 @@ const styles = `
   }
   .hm-search-btn:active { transform: scale(0.97); }
   @media (hover: hover) {
-    .hm-search-btn:hover { background: var(--gold); color: var(--ink); }
+    .hm-search-btn:hover { background: var(--gold); color: var(--on-gold); }
   }
 
   /* ── PILLS ── */
@@ -919,7 +919,7 @@ const styles = `
   .hm-fc-check {
     width: 22px; height: 22px; background: var(--gold); border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 12px; color: var(--ink); font-weight: 700; margin-bottom: 4px;
+    font-size: 12px; color: var(--on-gold); font-weight: 700; margin-bottom: 4px;
   }
   .hm-fc-label { font-size: 12px; font-weight: 500; color: rgba(245,240,232,0.9); }
   .hm-fc-sub { font-size: 11px; color: rgba(245,240,232,0.45); }
@@ -1022,7 +1022,7 @@ const styles = `
 
   /* ── HOW IT WORKS ── */
   .hm-how {
-    background: var(--ink); padding: 72px 20px; position: relative; overflow: hidden;
+    background: var(--ink-surface); padding: 72px 20px; position: relative; overflow: hidden;
   }
   .hm-how::before {
     content: ''; position: absolute; inset: 0;
@@ -1070,7 +1070,7 @@ const styles = `
   }
   .hm-step h4 {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 1.2rem; font-weight: 600; color: var(--cream); margin-bottom: 8px;
+    font-size: 1.2rem; font-weight: 600; color: var(--on-dark); margin-bottom: 8px;
   }
   .hm-step p { font-size: 13px; color: var(--muted); line-height: 1.7; }
 
@@ -1104,7 +1104,7 @@ const styles = `
   }
   .hm-t-author { display: flex; align-items: center; gap: 10px; }
   .hm-t-avatar {
-    width: 38px; height: 38px; background: var(--ink); color: var(--gold);
+    width: 38px; height: 38px; background: var(--ink-surface); color: var(--gold);
     border-radius: 50%; display: flex; align-items: center; justify-content: center;
     font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 600;
     flex-shrink: 0; border: 2px solid rgba(201,168,76,0.3);
@@ -1115,7 +1115,7 @@ const styles = `
   /* ── CTA ── */
   .hm-cta {
     position: relative; overflow: hidden; text-align: center;
-    padding: 90px 20px; background: var(--ink);
+    padding: 90px 20px; background: var(--ink-surface);
   }
   .hm-cta-orb { position: absolute; border-radius: 50%; filter: blur(100px); pointer-events: none; }
   .hm-cta-orb1 {
@@ -1131,7 +1131,7 @@ const styles = `
   .hm-cta-inner { position: relative; z-index: 1; }
   .hm-cta-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(2rem, 5vw, 3.4rem); font-weight: 300; color: var(--white);
+    font-size: clamp(2rem, 5vw, 3.4rem); font-weight: 300; color: var(--on-dark);
     margin: 10px 0 14px;
   }
   .hm-cta-sub {
@@ -1141,7 +1141,7 @@ const styles = `
   .hm-cta-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
   .hm-cta-primary {
-    padding: 15px 30px; background: var(--gold); color: var(--ink);
+    padding: 15px 30px; background: var(--gold); color: var(--on-gold);
     border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif;
     font-size: 14px; font-weight: 500; cursor: pointer; transition: transform 0.25s, box-shadow 0.25s;
     display: flex; align-items: center; gap: 8px;
@@ -1155,7 +1155,7 @@ const styles = `
   .hm-btn-arrow { display: inline-block; transition: transform 0.25s; }
 
   .hm-cta-secondary {
-    padding: 15px 30px; background: transparent; color: var(--white);
+    padding: 15px 30px; background: transparent; color: var(--on-dark);
     border: 1px solid rgba(245,240,232,0.2); border-radius: 10px;
     font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
     cursor: pointer; transition: border-color 0.2s, color 0.2s, transform 0.2s;
@@ -1413,7 +1413,7 @@ const styles = `
   }
   .pp-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 1.3rem; font-weight: 600; color: var(--cream);
+    font-size: 1.3rem; font-weight: 600; color: var(--on-dark);
     letter-spacing: 0.01em;
   }
   .pp-close {
@@ -1489,7 +1489,7 @@ const styles = `
   }
   .pp-accept-btn {
     width: 100%; padding: 13px;
-    background: var(--gold); color: var(--ink);
+    background: var(--gold); color: var(--on-gold);
     border: none; border-radius: 10px;
     font-family: 'DM Sans', sans-serif; font-size: 13.5px; font-weight: 500;
     cursor: pointer; transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;

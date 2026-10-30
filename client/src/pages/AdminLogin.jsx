@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 import Logo from "../components/Logo";
+import ThemeToggle from "../components/ThemeToggle";
 export default function AdminLogin() {
   const navigate  = useNavigate();
   const [mode, setMode]       = useState("login"); // "login" | "register"
@@ -36,6 +37,7 @@ export default function AdminLogin() {
 
   return (
     <>
+      <ThemeToggle floating />
       <style>{styles}</style>
       <div className="al-root">
         {/* Left panel */}
@@ -143,7 +145,7 @@ const styles = `
   .al-left { background: #0a0806; position: relative; overflow: hidden; display: flex; align-items: center; padding: 60px 56px; }
   .al-left-inner { position: relative; z-index: 2; }
   .al-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 600; color: var(--gold); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 56px; }
-  .al-tagline { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.8rem, 3vw, 2.4rem); font-weight: 300; color: var(--cream); margin-bottom: 14px; line-height: 1.25; }
+  .al-tagline { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.8rem, 3vw, 2.4rem); font-weight: 300; color: var(--on-dark); margin-bottom: 14px; line-height: 1.25; }
   .al-sub { font-size: 13px; color: var(--muted); line-height: 1.7; margin-bottom: 48px; max-width: 300px; }
   .al-perms { display: flex; flex-direction: column; gap: 12px; }
   .al-perm { display: flex; gap: 12px; align-items: center; font-size: 13px; color: var(--gold-light); }
@@ -171,13 +173,13 @@ const styles = `
   .al-secret { border-color: rgba(201,168,76,0.4); background: rgba(201,168,76,0.04); }
   .al-icon { font-size: 13px; color: var(--gold); opacity: 0.8; flex-shrink: 0; }
   .al-input-wrap input { border: none; background: transparent; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink); outline: none; width: 100%; }
-  .al-input-wrap input::placeholder { color: #bbb4a8; }
+  .al-input-wrap input::placeholder { color: var(--faint); }
   .al-eye { background: none; border: none; cursor: pointer; font-size: 14px; padding: 0; flex-shrink: 0; }
   .al-field-hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
   .al-error { font-size: 12.5px; color: var(--error); background: rgba(184,92,92,0.07); border: 1px solid rgba(184,92,92,0.2); border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; }
-  .al-submit { width: 100%; padding: 15px; background: var(--ink); color: var(--white); border: none; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.25s; display: flex; align-items: center; justify-content: center; min-height: 50px; margin-bottom: 16px; }
-  .al-submit:hover:not(:disabled) { background: var(--gold); color: var(--ink); box-shadow: 0 6px 24px rgba(201,168,76,0.3); }
+  .al-submit { width: 100%; padding: 15px; background: var(--btn-bg); color: var(--btn-fg); border: none; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.25s; display: flex; align-items: center; justify-content: center; min-height: 50px; margin-bottom: 16px; }
+  .al-submit:hover:not(:disabled) { background: var(--gold); color: var(--on-gold); box-shadow: 0 6px 24px rgba(201,168,76,0.3); }
   .al-submit.loading { opacity: 0.65; pointer-events: none; }
   .al-spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
   .al-back-link { text-align: center; font-size: 12px; }

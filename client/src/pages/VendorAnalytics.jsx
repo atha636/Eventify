@@ -206,7 +206,7 @@ export default function VendorAnalytics() {
   const bookingItems = (data?.series || []).map((p) => ({
     key: p.key,
     segments: [
-      { label: "Approved", value: p.approved, color: "#0e0c0a" },
+      { label: "Approved", value: p.approved, color: "var(--ink)" },
       { label: "Other", value: Math.max(0, p.bookings - p.approved), color: "#d9cfae" },
     ],
   }));
@@ -216,8 +216,8 @@ export default function VendorAnalytics() {
   const STATUS = [
     { key: "approved",  label: "Approved",  color: "#2f8f5b" },
     { key: "pending",   label: "Pending",   color: "#c9a84c" },
-    { key: "rejected",  label: "Rejected",  color: "#b85c5c" },
-    { key: "cancelled", label: "Cancelled", color: "#a09888" },
+    { key: "rejected",  label: "Rejected",  color: "var(--c-red)" },
+    { key: "cancelled", label: "Cancelled", color: "var(--faint)" },
   ];
 
   const maxPkg = Math.max(1, ...(data?.topPackages || []).map((p) => p.bookings));
@@ -305,7 +305,7 @@ export default function VendorAnalytics() {
                   <h2 className="va-card-title">Bookings</h2>
                   <p className="va-card-sub">
                     New requests {gran === "day" ? "per day" : "per month"} ·
-                    <span className="va-key"><i style={{ background: "#0e0c0a" }} />approved</span>
+                    <span className="va-key"><i style={{ background: "var(--btn-bg)" }} />approved</span>
                     <span className="va-key"><i style={{ background: "#d9cfae" }} />other</span>
                   </p>
                   <BarChart
@@ -468,44 +468,45 @@ export default function VendorAnalytics() {
 }
 
 const styles = `
-  .va-root { font-family: 'DM Sans', sans-serif; background: #f5f0e8; min-height: 100vh; color: #0e0c0a; }
+  .va-root { font-family: 'DM Sans', sans-serif; background: var(--cream); min-height: 100vh; color: var(--ink); }
   .va-shell { max-width: 1100px; margin: 0 auto; padding: 96px 20px 48px; }
 
   .va-header { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
-  .va-title { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 600; margin: 0; color: #0e0c0a !important; }
-  .va-subtitle { margin: 4px 0 0; font-size: 13px; color: #7a7265; }
+  .va-title { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 600; margin: 0; color: var(--ink) !important; }
+  .va-subtitle { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
 
-  .va-ranges { display: flex; gap: 4px; background: #fff; border: 1px solid rgba(201,168,76,0.22); border-radius: 22px; padding: 4px; flex-wrap: wrap; }
-  .va-range { border: none; background: none; padding: 7px 14px; border-radius: 18px; font-family: inherit; font-size: 12.5px; color: #7a7265; cursor: pointer; transition: background 0.15s, color 0.15s; }
-  .va-range:hover { color: #0e0c0a; }
-  .va-range.active { background: #0e0c0a; color: #f5f0e8; }
+  .va-ranges { display: flex; gap: 4px; background: var(--white); border: 1px solid rgba(201,168,76,0.22); border-radius: 22px; padding: 4px; flex-wrap: wrap; }
+  .va-range { border: none; background: none; padding: 7px 14px; border-radius: 18px; font-family: inherit; font-size: 12.5px; color: var(--muted); cursor: pointer; transition: background 0.15s, color 0.15s; }
+  .va-range:hover { color: var(--ink); }
+  .va-range.active { background: var(--btn-bg); color: var(--btn-fg); }
 
   .va-dim { opacity: 0.55; transition: opacity 0.15s; pointer-events: none; }
 
-  .va-card { background: #fff; border: 1px solid rgba(201,168,76,0.2); border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; min-width: 0; }
-  .va-card-title { font-family: 'Cormorant Garamond', serif; font-size: 1.35rem; font-weight: 700; margin: 0; color: #0e0c0a !important; opacity: 1; }
-  .va-card-sub { font-size: 12px; color: #7a7265; margin: 2px 0 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .va-card { background: var(--white); border: 1px solid rgba(201,168,76,0.2); border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; min-width: 0; }
+  .va-card-title { font-family: 'Cormorant Garamond', serif; font-size: 1.35rem; font-weight: 700; margin: 0; color: var(--ink) !important; opacity: 1; }
+  .va-card-sub { font-size: 12px; color: var(--muted); margin: 2px 0 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .va-key { display: inline-flex; align-items: center; gap: 5px; }
   .va-key i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
-  .va-state { text-align: center; color: #7a7265; font-size: 13.5px; padding: 40px 20px; }
-  .va-error { color: #b85c5c; font-size: 13px; }
-  .va-link-btn { background: none; border: none; color: #a07b28; text-decoration: underline; cursor: pointer; font-family: inherit; font-size: inherit; }
-  .va-cta { display: inline-block; margin-top: 8px; background: #0e0c0a; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 22px; font-size: 13px; font-weight: 500; }
-  .va-cta:hover { background: #c9a84c; color: #0e0c0a; }
+  .va-state { text-align: center; color: var(--muted); font-size: 13.5px; padding: 40px 20px; }
+  .va-error { color: var(--c-red); font-size: 13px; }
+  .va-link-btn { background: none; border: none; color: var(--c-goldtext); text-decoration: underline; cursor: pointer; font-family: inherit; font-size: inherit; }
+  .va-cta { display: inline-block; margin-top: 8px; background: var(--btn-bg); color: var(--btn-fg); text-decoration: none; padding: 10px 20px; border-radius: 22px; font-size: 13px; font-weight: 500; }
+  .va-cta:hover { background: #c9a84c; color: var(--on-gold); }
 
   .va-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
-  .va-kpi { background: #fff; border: 1px solid rgba(201,168,76,0.2); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-  .va-kpi-accent { background: #0e0c0a; border-color: #0e0c0a; color: #f5f0e8; }
-  .va-kpi-label { font-size: 11.5px; letter-spacing: 0.04em; text-transform: uppercase; color: #a09888; }
+  .va-kpi { background: var(--white); border: 1px solid rgba(201,168,76,0.2); border-radius: 14px; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .va-kpi-accent { background: var(--ink-surface); border-color: var(--ink-surface); color: var(--on-dark); }
+  html[data-theme="dark"] .va-kpi-accent { background: linear-gradient(180deg, rgba(201,168,76,0.13), rgba(201,168,76,0.05)); border-color: rgba(201,168,76,0.45); }
+  .va-kpi-label { font-size: 11.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--faint); }
   .va-kpi-accent .va-kpi-label { color: #c9a84c; }
   .va-kpi-value { font-family: 'Cormorant Garamond', serif; font-size: 1.9rem; font-weight: 600; line-height: 1.1; }
-  .va-kpi-sub { font-size: 11.5px; color: #7a7265; }
+  .va-kpi-sub { font-size: 11.5px; color: var(--muted); }
   .va-kpi-accent .va-kpi-sub { color: rgba(245,240,232,0.6); }
   .va-delta { font-size: 11.5px; font-weight: 600; }
   .va-delta em { font-weight: 400; font-style: normal; opacity: 0.7; }
   .va-delta.up { color: #2f8f5b; }
-  .va-delta.down { color: #b85c5c; }
-  .va-delta.flat { color: #a09888; font-weight: 400; }
+  .va-delta.down { color: var(--c-red); }
+  .va-delta.flat { color: var(--faint); font-weight: 400; }
   .va-kpi-accent .va-delta.up { color: #7fd6a6; }
   .va-kpi-accent .va-delta.down { color: #f0a0a0; }
 
@@ -513,59 +514,59 @@ const styles = `
   .va-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
 
   .va-chart-wrap { width: 100%; }
-  .va-chart-hover { min-height: 20px; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 12px; color: #0e0c0a; margin-bottom: 4px; }
+  .va-chart-hover { min-height: 20px; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 12px; color: var(--ink); margin-bottom: 4px; }
   .va-chart-hover span { display: inline-flex; align-items: center; gap: 5px; }
   .va-chart-hover i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
-  .va-chart-hint { color: #a09888; }
+  .va-chart-hint { color: var(--faint); }
   .va-svg { width: 100%; height: auto; display: block; }
   .va-grid { stroke: rgba(201,168,76,0.18); stroke-width: 1; }
-  .va-axis { font-size: 10.5px; fill: #a09888; font-family: 'DM Sans', sans-serif; }
-  .va-chart-empty { padding: 36px 10px; text-align: center; color: #a09888; font-size: 12.5px; }
+  .va-axis { font-size: 10.5px; fill: var(--faint); font-family: 'DM Sans', sans-serif; }
+  .va-chart-empty { padding: 36px 10px; text-align: center; color: var(--faint); font-size: 12.5px; }
 
-  .va-stack { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: #f0ece4; margin: 6px 0 14px; }
+  .va-stack { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--track); margin: 6px 0 14px; }
   .va-stack span { display: block; height: 100%; }
   .va-legend { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
   .va-legend li { display: flex; align-items: center; gap: 8px; font-size: 13px; }
   .va-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; flex-shrink: 0; }
-  .va-legend span { flex: 1; color: #4a443a; }
-  .va-legend em { width: 40px; text-align: right; font-style: normal; color: #a09888; font-size: 12px; }
+  .va-legend span { flex: 1; color: var(--text2); }
+  .va-legend em { width: 40px; text-align: right; font-style: normal; color: var(--faint); font-size: 12px; }
 
   .va-bars { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 14px; }
   .va-bars-tight { gap: 9px; }
   .va-bars-head { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; margin-bottom: 5px; }
   .va-bars-name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .va-bars-meta { color: #7a7265; font-size: 12px; flex-shrink: 0; }
-  .va-bars-track { height: 8px; background: #f0ece4; border-radius: 4px; overflow: hidden; flex: 1; }
+  .va-bars-meta { color: var(--muted); font-size: 12px; flex-shrink: 0; }
+  .va-bars-track { height: 8px; background: var(--track); border-radius: 4px; overflow: hidden; flex: 1; }
   .va-bars-track span { display: block; height: 100%; background: #c9a84c; border-radius: 4px; }
   .va-star-row { display: flex; align-items: center; gap: 10px; font-size: 12.5px; }
-  .va-star-label { width: 28px; color: #4a443a; }
-  .va-star-count { width: 22px; text-align: right; color: #7a7265; }
+  .va-star-label { width: 28px; color: var(--text2); }
+  .va-star-count { width: 22px; text-align: right; color: var(--muted); }
 
   .va-table-wrap { overflow-x: auto; }
   .va-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 520px; }
-  .va-table th { text-align: left; font-weight: 500; font-size: 11.5px; letter-spacing: 0.04em; text-transform: uppercase; color: #a09888; padding: 8px 10px; border-bottom: 1px solid rgba(201,168,76,0.2); }
+  .va-table th { text-align: left; font-weight: 500; font-size: 11.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--faint); padding: 8px 10px; border-bottom: 1px solid rgba(201,168,76,0.2); }
   .va-table td { padding: 11px 10px; border-bottom: 1px solid rgba(201,168,76,0.1); }
   .va-table tr:last-child td { border-bottom: none; }
   .va-table .num { text-align: right; white-space: nowrap; }
-  .va-svc-link { color: #0e0c0a; font-weight: 500; text-decoration: none; }
-  .va-svc-link:hover { color: #a07b28; }
-  .va-svc-type { display: block; font-size: 11.5px; color: #a09888; text-transform: capitalize; }
+  .va-svc-link { color: var(--ink); font-weight: 500; text-decoration: none; }
+  .va-svc-link:hover { color: var(--c-goldtext); }
+  .va-svc-type { display: block; font-size: 11.5px; color: var(--faint); text-transform: capitalize; }
 
   .va-cols { display: flex; align-items: flex-end; justify-content: space-between; gap: 6px; height: 150px; }
   .va-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; }
-  .va-col-count { font-size: 11px; color: #7a7265; height: 14px; }
-  .va-col-track { flex: 1; width: 100%; max-width: 26px; background: #f0ece4; border-radius: 5px; display: flex; align-items: flex-end; overflow: hidden; }
-  .va-col-track span { display: block; width: 100%; background: #0e0c0a; border-radius: 5px; }
-  .va-col-label { font-size: 11px; color: #a09888; }
+  .va-col-count { font-size: 11px; color: var(--muted); height: 14px; }
+  .va-col-track { flex: 1; width: 100%; max-width: 26px; background: var(--track); border-radius: 5px; display: flex; align-items: flex-end; overflow: hidden; }
+  .va-col-track span { display: block; width: 100%; background: var(--btn-bg); border-radius: 5px; }
+  .va-col-label { font-size: 11px; color: var(--faint); }
 
   .va-upcoming { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
   .va-upcoming li { display: flex; gap: 12px; align-items: center; }
-  .va-up-date { width: 42px; height: 46px; border-radius: 10px; background: #faf7f2; border: 1px solid rgba(201,168,76,0.25); display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
+  .va-up-date { width: 42px; height: 46px; border-radius: 10px; background: var(--surface); border: 1px solid rgba(201,168,76,0.25); display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
   .va-up-date b { font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; line-height: 1; }
-  .va-up-date span { font-size: 10px; text-transform: uppercase; color: #a07b28; letter-spacing: 0.04em; }
+  .va-up-date span { font-size: 10px; text-transform: uppercase; color: var(--c-goldtext); letter-spacing: 0.04em; }
   .va-up-main { display: flex; flex-direction: column; min-width: 0; }
   .va-up-name { font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .va-up-meta { font-size: 11.5px; color: #7a7265; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .va-up-meta { font-size: 11.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   @media (max-width: 900px) {
     .va-grid-3 { grid-template-columns: 1fr 1fr; }

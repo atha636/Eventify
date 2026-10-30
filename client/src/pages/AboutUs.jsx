@@ -391,7 +391,7 @@ export default function AboutUs() {
           <div className="au-timeline-wrap">
             <div className={`au-section-header au-reveal ${timelineVisible ? "au-revealed" : ""}`}>
               <p className="au-eyebrow" style={{ color: "var(--gold-light)" }}>How we got here</p>
-              <h2 id="timeline-heading" className="au-section-title" style={{ color: "var(--cream)" }}>
+              <h2 id="timeline-heading" className="au-section-title" style={{ color: "var(--on-dark)" }}>
                 Our journey
               </h2>
             </div>
@@ -450,7 +450,7 @@ export default function AboutUs() {
           <div className="au-vendor-inner">
             <div className={`au-vendor-content au-reveal ${vendorVisible ? "au-revealed" : ""}`}>
               <p className="au-eyebrow" style={{ color: "var(--gold)" }}>For Vendors</p>
-              <h2 id="vendor-heading" className="au-section-title" style={{ color: "var(--cream)" }}>
+              <h2 id="vendor-heading" className="au-section-title" style={{ color: "var(--on-dark)" }}>
                 Grow your business <em>with us</em>
               </h2>
               <p className="au-body-text" style={{ color: "rgba(245,240,232,0.58)" }}>
@@ -678,7 +678,7 @@ const styles = `
 
   .au-modal-section-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 1rem; font-weight: 600; color: var(--cream);
+    font-size: 1rem; font-weight: 600; color: var(--on-dark);
     margin-bottom: 8px; margin-top: 4px;
     padding-left: 10px;
     border-left: 2px solid rgba(201,168,76,0.5);
@@ -728,7 +728,7 @@ const styles = `
 
   /* ── HERO ── */
   .au-hero {
-    position: relative; background: var(--ink); overflow: hidden;
+    position: relative; background: var(--ink-surface); overflow: hidden;
     padding: 140px 20px 120px;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
@@ -803,7 +803,7 @@ const styles = `
   .au-hero-title {
     font-family: 'Cormorant Garamond', serif;
     font-size: clamp(2.6rem, 7vw, 5rem);
-    font-weight: 300; color: var(--white);
+    font-weight: 300; color: var(--on-dark);
     line-height: 1.08; margin-bottom: 24px;
     animation: auHeroIn 0.85s 0.1s cubic-bezier(.22,1,.36,1) both;
     letter-spacing: -0.015em;
@@ -863,7 +863,7 @@ const styles = `
   /* ── BUTTONS ── */
   .au-btn-primary {
     display: inline-flex; align-items: center; gap: 8px;
-    padding: 13px 28px; background: var(--gold); color: var(--ink);
+    padding: 13px 28px; background: var(--gold); color: var(--on-gold);
     border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif;
     font-size: 13.5px; font-weight: 500; cursor: pointer;
     transition: transform 0.25s, box-shadow 0.25s;
@@ -885,7 +885,7 @@ const styles = `
 
   .au-btn-ghost {
     display: inline-flex; align-items: center; gap: 8px;
-    padding: 13px 28px; background: transparent; color: var(--white);
+    padding: 13px 28px; background: transparent; color: var(--on-dark);
     border: 1px solid rgba(245,240,232,0.2); border-radius: 10px;
     font-family: 'DM Sans', sans-serif; font-size: 13.5px; font-weight: 500; cursor: pointer;
     transition: border-color 0.2s, color 0.2s, transform 0.2s, background 0.2s;
@@ -1038,7 +1038,7 @@ const styles = `
   .au-mv-center {
     position: relative; z-index: 2; text-align: center;
     width: 140px; height: 140px; border-radius: 50%;
-    background: var(--ink); border: 2px solid rgba(201,168,76,0.3);
+    background: var(--ink-surface); border: 2px solid rgba(201,168,76,0.3);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     box-shadow: 0 0 60px rgba(201,168,76,0.12), 0 0 0 8px rgba(201,168,76,0.04);
   }
@@ -1075,7 +1075,7 @@ const styles = `
 
   /* ── TIMELINE ── */
   .au-timeline-section {
-    background: var(--ink); padding: 84px 20px;
+    background: var(--ink-surface); padding: 84px 20px;
     position: relative; overflow: hidden;
   }
   .au-timeline-section::before {
@@ -1108,7 +1108,7 @@ const styles = `
     left: calc(var(--tl-year-w) - 18px);
     top: 2px;
     width: 36px; height: 36px; border-radius: 50%;
-    background: var(--ink); border: 2px solid rgba(201,168,76,0.4);
+    background: var(--btn-bg); border: 2px solid rgba(201,168,76,0.4);
     box-shadow: 0 0 0 4px rgba(201,168,76,0.08), 0 0 20px rgba(201,168,76,0.2);
     z-index: 2; display: flex; align-items: center; justify-content: center;
     transition: border-color 0.3s, box-shadow 0.3s;
@@ -1131,7 +1131,7 @@ const styles = `
   .au-tl-content { padding-left: 14px; padding-top: 6px; }
   .au-tl-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 1.3rem; font-weight: 600; color: var(--cream); margin-bottom: 8px;
+    font-size: 1.3rem; font-weight: 600; color: var(--on-dark); margin-bottom: 8px;
     transition: color 0.3s;
   }
   .au-timeline-item:hover .au-tl-title { color: var(--gold-light); }
@@ -1185,7 +1185,7 @@ const styles = `
 
   /* ── VENDOR SECTION ── */
   .au-vendor-section {
-    background: var(--ink); padding: 84px 20px;
+    background: var(--ink-surface); padding: 84px 20px;
     position: relative; overflow: hidden;
   }
   .au-vendor-orb1 {
@@ -1264,7 +1264,7 @@ const styles = `
   /* ── CTA ── */
   .au-cta {
     position: relative; overflow: hidden; text-align: center;
-    padding: 110px 20px; background: var(--ink);
+    padding: 110px 20px; background: var(--ink-surface);
   }
   .au-cta-orb1 {
     position: absolute; width: 480px; height: 480px;
@@ -1286,7 +1286,7 @@ const styles = `
   .au-cta-inner { position: relative; z-index: 1; max-width: 600px; margin: 0 auto; }
   .au-cta-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(2.2rem, 5.5vw, 3.8rem); font-weight: 300; color: var(--white);
+    font-size: clamp(2.2rem, 5.5vw, 3.8rem); font-weight: 300; color: var(--on-dark);
     margin: 12px 0 16px; line-height: 1.1; letter-spacing: -0.01em;
   }
   .au-cta-sub {

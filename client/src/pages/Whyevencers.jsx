@@ -459,7 +459,7 @@ export default function WhyEvencers() {
           <div className="we-section">
             <div className="we-tab-header">
               <p className="we-section-eyebrow" style={{ color: "var(--gold)" }}>Simple steps</p>
-              <h2 className="we-section-title" style={{ color: "var(--cream)" }}>From Idea to <em style={{ color: "var(--gold-light)" }}>Unforgettable</em></h2>
+              <h2 className="we-section-title" style={{ color: "var(--on-dark)" }}>From Idea to <em style={{ color: "var(--gold-light)" }}>Unforgettable</em></h2>
               <p className="we-section-sub" style={{ color: "rgba(122,114,101,0.65)" }}>Your event, your way — in four simple steps</p>
             </div>
             <div className="we-process-container">
@@ -710,7 +710,7 @@ const styles = `
   /* ── HERO ── */
   .we-hero {
     position: relative;
-    background: var(--ink);
+    background: var(--ink-surface);
     overflow: hidden;
     padding: 138px 20px 100px;
     display: flex;
@@ -796,7 +796,7 @@ const styles = `
     font-family: 'Cormorant Garamond', serif;
     font-size: clamp(2.8rem, 7.5vw, 5.4rem);
     font-weight: 300;
-    color: var(--white);
+    color: var(--on-dark);
     line-height: 1.06;
     margin-bottom: 24px;
     letter-spacing: -0.01em;
@@ -815,7 +815,7 @@ const styles = `
   }
   .we-hero-title-line2 {
     display: block;
-    background: linear-gradient(135deg, #fff 0%, var(--gold-light) 50%, #fff 100%);
+    background: linear-gradient(135deg, var(--white) 0%, var(--gold-light) 50%, var(--white) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -847,7 +847,7 @@ const styles = `
   /* Buttons */
   .we-btn-primary {
     background: linear-gradient(135deg, #d4a93c, #c9a84c, #b8943c);
-    color: var(--ink);
+    color: var(--on-gold);
     border: none;
     border-radius: 12px;
     padding: 14px 30px;
@@ -879,7 +879,7 @@ const styles = `
 
   .we-btn-ghost {
     background: rgba(255,255,255,0.05);
-    color: var(--cream);
+    color: var(--on-dark);
     border: 1px solid rgba(245,240,232,0.18);
     border-radius: 12px;
     padding: 14px 30px;
@@ -1083,7 +1083,7 @@ const styles = `
     cursor: pointer; transition: background 0.25s, color 0.25s, box-shadow 0.25s;
     -webkit-tap-highlight-color: transparent; position: relative;
   }
-  .we-tab-active { background: var(--ink); color: var(--gold-light); box-shadow: 0 4px 18px rgba(14,12,10,0.22); }
+  .we-tab-active { background: var(--ink-surface); color: var(--gold-light); box-shadow: 0 4px 18px rgba(14,12,10,0.22); }
   .we-tab:not(.we-tab-active):hover { background: rgba(201,168,76,0.09); color: var(--ink); }
   .we-tab-icon { font-size: 14px; }
   .we-tab-dot {
@@ -1122,7 +1122,7 @@ const styles = `
   .we-reason-card:hover::after { opacity: 1; }
 
   .we-reason-card-vendor { background: var(--ink2); border-color: rgba(201,168,76,0.14); }
-  .we-reason-card-vendor .we-reason-title { color: var(--cream); }
+  .we-reason-card-vendor .we-reason-title { color: var(--on-dark); }
   .we-reason-card-vendor .we-reason-desc { color: rgba(122,114,101,0.8); }
   .we-reason-card-vendor:hover { border-color: rgba(201,168,76,0.45); box-shadow: 0 20px 56px rgba(0,0,0,0.35), var(--shadow-gold); }
 
@@ -1146,7 +1146,7 @@ const styles = `
   .we-reason-cta-vendor { color: var(--gold-light); }
 
   /* ── PROCESS (Desktop interactive) ── */
-  .we-process-section { background: var(--ink); position: relative; overflow: hidden; padding: 90px 0; }
+  .we-process-section { background: var(--ink-surface); position: relative; overflow: hidden; padding: 90px 0; }
   .we-process-bg { position: absolute; inset: 0; pointer-events: none; }
   .we-process-orb1 { position: absolute; width: 600px; height: 360px; border-radius: 50%; background: var(--gold); opacity: 0.055; filter: blur(110px); top: -150px; left: -120px; }
   .we-process-orb2 { position: absolute; width: 400px; height: 400px; border-radius: 50%; background: #7b5ea7; opacity: 0.055; filter: blur(100px); bottom: -120px; right: -60px; }
@@ -1178,7 +1178,7 @@ const styles = `
   .we-ps-nav-num { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 300; color: rgba(201,168,76,0.25); line-height: 1; }
   .we-ps-nav-active .we-ps-nav-num { color: rgba(201,168,76,0.7); }
   .we-ps-nav-title { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600; color: rgba(245,240,232,0.45); }
-  .we-ps-nav-active .we-ps-nav-title { color: var(--cream); }
+  .we-ps-nav-active .we-ps-nav-title { color: var(--on-dark); }
   .we-ps-nav-progress { height: 2px; background: rgba(201,168,76,0.1); border-radius: 1px; margin-top: 8px; overflow: hidden; }
   .we-ps-nav-bar { height: 100%; width: 0; background: var(--gold); border-radius: 1px; transition: width 0.25s; }
   .we-ps-nav-bar-active { animation: progressFill 2.8s linear; }
@@ -1198,7 +1198,7 @@ const styles = `
   .we-pp-active { opacity: 1; transform: translateY(0); }
   .we-pp-icon { font-size: 2.4rem; margin-bottom: 12px; }
   .we-pp-num { font-family: 'Cormorant Garamond', serif; font-size: 5rem; font-weight: 300; color: rgba(201,168,76,0.1); line-height: 1; margin-bottom: 8px; }
-  .we-pp-title { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 300; color: var(--cream); margin-bottom: 12px; }
+  .we-pp-title { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 300; color: var(--on-dark); margin-bottom: 12px; }
   .we-pp-desc { font-size: 13.5px; color: var(--muted); line-height: 1.8; max-width: 380px; }
 
   /* Mobile process fallback */
@@ -1216,7 +1216,7 @@ const styles = `
   .we-process-step:hover { border-color: rgba(201,168,76,0.3); }
   .we-ps-num { font-family: 'Cormorant Garamond', serif; font-size: 2.8rem; font-weight: 300; color: rgba(201,168,76,0.15); line-height: 1; margin-bottom: 12px; display: block; }
   .we-ps-icon-wrap { width: 46px; height: 46px; border-radius: 12px; background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.18); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin-bottom: 14px; }
-  .we-process-step h4 { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 600; color: var(--cream); margin-bottom: 8px; }
+  .we-process-step h4 { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 600; color: var(--on-dark); margin-bottom: 8px; }
   .we-process-step p { font-size: 13px; color: var(--muted); line-height: 1.75; }
   .we-ps-connector { font-size: 20px; color: rgba(201,168,76,0.3); text-align: center; margin-top: 8px; display: block; }
 
@@ -1251,7 +1251,7 @@ const styles = `
   }
   .we-gallery-item:hover .we-gallery-overlay { opacity: 1; }
   .we-gallery-cat { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); margin-bottom: 4px; }
-  .we-gallery-label { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 400; color: var(--cream); }
+  .we-gallery-label { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 400; color: var(--on-dark); }
   .we-gallery-arrow { position: absolute; top: 16px; right: 16px; font-size: 18px; color: var(--gold); opacity: 0.8; }
   .we-gallery-note { text-align: center; font-size: 11px; color: var(--muted); margin-top: 18px; font-style: italic; }
 
@@ -1262,7 +1262,7 @@ const styles = `
     border: 1px solid var(--border); border-radius: 20px; overflow: hidden;
     box-shadow: 0 12px 48px rgba(0,0,0,0.06);
   }
-  .we-compare-header { display: grid; grid-template-columns: 2fr 1fr 1fr; background: var(--ink); }
+  .we-compare-header { display: grid; grid-template-columns: 2fr 1fr 1fr; background: var(--ink-surface); }
   .we-compare-col { padding: 16px 20px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 4px; }
   .we-compare-blank { justify-content: flex-start; }
   .we-compare-us { background: rgba(201,168,76,0.09); border-left: 1px solid rgba(201,168,76,0.2); border-right: 1px solid rgba(201,168,76,0.2); }
@@ -1306,7 +1306,7 @@ const styles = `
 
   .we-testimonial-vendor { background: var(--ink2); border-color: rgba(201,168,76,0.16); }
   .we-testimonial-vendor .we-t-text { color: rgba(245,240,232,0.78); }
-  .we-testimonial-vendor .we-t-name { color: var(--cream); }
+  .we-testimonial-vendor .we-t-name { color: var(--on-dark); }
   .we-testimonial-vendor .we-t-event { color: var(--muted); }
   .we-vendor-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); background: rgba(201,168,76,0.09); border: 1px solid rgba(201,168,76,0.24); padding: 3px 11px; border-radius: 24px; align-self: flex-start; }
   .we-t-stars { color: var(--gold); font-size: 11.5px; letter-spacing: 2px; }
@@ -1320,7 +1320,7 @@ const styles = `
   .we-cta {
     position: relative; overflow: hidden;
     text-align: center; padding: 110px 20px;
-    background: var(--ink);
+    background: var(--ink-surface);
   }
   .we-cta-orb1 { position: absolute; width: 500px; height: 500px; border-radius: 50%; background: var(--gold); opacity: 0.07; top: 50%; left: 50%; transform: translate(-50%,-50%); filter: blur(120px); animation: orbPulse 8s ease-in-out infinite alternate; }
   .we-cta-orb2 { position: absolute; width: 300px; height: 300px; border-radius: 50%; background: #7b5ea7; opacity: 0.08; top: 10%; right: 8%; filter: blur(100px); }
@@ -1336,7 +1336,7 @@ const styles = `
   @keyframes ringPulse { 0%,100%{opacity:0.5; transform:scale(1)} 50%{opacity:1; transform:scale(1.04)} }
 
   .we-cta-inner { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; }
-  .we-cta-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.4rem, 5.5vw, 4rem); font-weight: 300; color: var(--white); margin: 14px 0 18px; line-height: 1.12; }
+  .we-cta-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.4rem, 5.5vw, 4rem); font-weight: 300; color: var(--on-dark); margin: 14px 0 18px; line-height: 1.12; }
   .we-cta-title em { font-style: italic; color: var(--gold-light); }
   .we-cta-sub { font-size: 14px; color: rgba(245,240,232,0.48); max-width: 420px; line-height: 1.8; margin-bottom: 40px; }
   .we-cta-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 26px; }

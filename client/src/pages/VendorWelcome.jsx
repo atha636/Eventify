@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 import Logo from "../components/Logo";
 
+import ThemeToggle from "../components/ThemeToggle";
 const BENEFITS = [
   {
     icon: "✦",
@@ -65,6 +66,7 @@ export default function VendorWelcome() {
 
   return (
     <>
+      <ThemeToggle floating />
       <style>{styles}</style>
       <div className={`vw-root${leaving ? " vw-leaving" : ""}`}>
 
@@ -229,7 +231,7 @@ const styles = `
     display: flex; align-items: center; justify-content: space-between;
     padding: 22px 48px;
     border-bottom: 1px solid var(--gold-border);
-    background: rgba(245,240,232,0.85);
+    background: color-mix(in srgb, var(--cream) 85%, transparent);
     backdrop-filter: blur(10px);
   }
   .vw-nav-logo {
@@ -403,7 +405,7 @@ const styles = `
   .vw-cta-btn {
     display: inline-flex; align-items: center; gap: 12px;
     padding: 18px 48px;
-    background: var(--ink); color: var(--white);
+    background: var(--btn-bg); color: var(--btn-fg);
     border: none; border-radius: var(--radius-md);
     font-family: 'DM Sans', sans-serif;
     font-size: 15px; font-weight: 500;
@@ -412,7 +414,7 @@ const styles = `
     margin-bottom: 16px;
   }
   .vw-cta-btn:hover {
-    background: var(--gold); color: var(--ink);
+    background: var(--gold); color: var(--on-gold);
     transform: translateY(-2px);
     box-shadow: 0 12px 32px rgba(201,168,76,0.35);
   }

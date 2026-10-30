@@ -282,7 +282,7 @@ const styles = `
   .fv-hero {
     position: relative;
     overflow: hidden;
-    background: var(--ink);
+    background: var(--ink-surface);
     padding: 110px 32px 72px;
     text-align: center;
   }
@@ -327,7 +327,7 @@ const styles = `
   .fv-title {
     font-family: 'Cormorant Garamond', serif;
     font-size: clamp(2.6rem, 5.5vw, 3.8rem);
-    font-weight: 300; color: var(--white);
+    font-weight: 300; color: var(--on-dark);
     margin-bottom: 14px; line-height: 1.1;
   }
   .fv-title em {
@@ -409,7 +409,7 @@ const styles = `
     height: 210px;
     overflow: hidden;
     flex-shrink: 0;
-    background: #e8e2d8;
+    background: var(--track);
   }
   .fv-img {
     width: 100%; height: 100%;
@@ -421,7 +421,7 @@ const styles = `
   .fv-img-fallback {
     width: 100%; height: 100%;
     display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, #ede8e0, #e0d8cc);
+    background: linear-gradient(135deg, var(--track), var(--track));
     font-size: 2.5rem; color: var(--muted);
   }
   .fv-img-overlay {
@@ -433,7 +433,7 @@ const styles = `
   .fv-heart {
     position: absolute; top: 11px; right: 11px;
     width: 36px; height: 36px;
-    background: rgba(255,255,255,0.93); backdrop-filter: blur(8px);
+    background: var(--chip-bg); backdrop-filter: blur(8px);
     border: none; border-radius: 50%; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: all 0.22s; z-index: 3;
@@ -549,13 +549,13 @@ const styles = `
   .fv-remove-btn:disabled { opacity: 0.4; pointer-events: none; }
   .fv-book-btn {
     padding: 9px 18px;
-    background: var(--ink); color: var(--white);
+    background: var(--btn-bg); color: var(--btn-fg);
     border: none; border-radius: 8px;
     font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 500;
     cursor: pointer; transition: all 0.22s; white-space: nowrap;
     letter-spacing: 0.02em;
   }
-  .fv-book-btn:hover { background: var(--gold); color: var(--ink); transform: translateX(2px); box-shadow: 0 4px 16px rgba(201,168,76,0.3); }
+  .fv-book-btn:hover { background: var(--gold); color: var(--on-gold); transform: translateX(2px); box-shadow: 0 4px 16px rgba(201,168,76,0.3); }
 
   /* ── SKELETON ───────────────────────────────────────── */
   .fv-skeleton {
@@ -566,14 +566,14 @@ const styles = `
   }
   .fv-skeleton-img {
     height: 210px;
-    background: linear-gradient(90deg, #ede8e0 25%, #e5dfd4 50%, #ede8e0 75%);
+    background: linear-gradient(90deg, var(--track) 25%, var(--track) 50%, var(--track) 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s ease infinite;
   }
   .fv-skeleton-body { padding: 18px; display: flex; flex-direction: column; gap: 10px; }
   .fv-skeleton-line {
     border-radius: 6px; height: 12px;
-    background: linear-gradient(90deg, #ede8e0 25%, #e5dfd4 50%, #ede8e0 75%);
+    background: linear-gradient(90deg, var(--track) 25%, var(--track) 50%, var(--track) 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s ease infinite;
   }
@@ -614,12 +614,12 @@ const styles = `
   .fv-empty-cta {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 13px 28px;
-    background: var(--ink); color: var(--white);
+    background: var(--btn-bg); color: var(--btn-fg);
     border: none; border-radius: 8px; cursor: pointer;
     font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
     transition: all 0.22s; letter-spacing: 0.02em;
   }
-  .fv-empty-cta:hover { background: var(--gold); color: var(--ink); box-shadow: 0 6px 24px rgba(201,168,76,0.3); }
+  .fv-empty-cta:hover { background: var(--gold); color: var(--on-gold); box-shadow: 0 6px 24px rgba(201,168,76,0.3); }
 
   /* ── RESPONSIVE ─────────────────────────────────────── */
   @media (max-width: 580px) {

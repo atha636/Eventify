@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import API from "../services/api";
 import Logo from "../components/Logo";
 
+import ThemeToggle from "../components/ThemeToggle";
 export default function ForgotPassword() {
   const [step, setStep] = useState("email"); // "email" | "otp" | "password" | "done"
   const [email, setEmail] = useState("");
@@ -127,6 +128,7 @@ export default function ForgotPassword() {
 
   return (
     <>
+      <ThemeToggle floating />
       <style>{styles}</style>
       <div className="fp-root">
 
@@ -377,7 +379,7 @@ const styles = `
 
   /* ── LEFT ── */
   .fp-left {
-    background: var(--ink);
+    background: var(--ink-surface);
     position: relative;
     overflow: hidden;
     display: flex;
@@ -403,7 +405,7 @@ const styles = `
     font-family: 'Cormorant Garamond', serif;
     font-size: clamp(1.5rem, 2.6vw, 2rem);
     font-weight: 300; font-style: italic;
-    color: var(--cream); line-height: 1.4; margin-bottom: 14px;
+    color: var(--on-dark); line-height: 1.4; margin-bottom: 14px;
   }
   .fp-quote-author {
     font-size: 11px; letter-spacing: 0.15em;
@@ -434,7 +436,7 @@ const styles = `
     background: rgba(201,168,76,0.1);
     color: var(--gold);
   }
-  .fp-step-label { font-size: 13px; color: var(--cream); }
+  .fp-step-label { font-size: 13px; color: var(--on-dark); }
 
   .fp-orb {
     position: absolute; border-radius: 50%;
@@ -510,7 +512,7 @@ const styles = `
     font-family: 'DM Sans', sans-serif;
     font-size: 14px; color: var(--ink); outline: none; width: 100%;
   }
-  .fp-input-wrap input::placeholder { color: #bbb4a8; }
+  .fp-input-wrap input::placeholder { color: var(--faint); }
   .fp-eye {
     background: none; border: none; cursor: pointer;
     font-size: 14px; padding: 0; opacity: 0.7; flex-shrink: 0;
@@ -546,7 +548,7 @@ const styles = `
   /* Button */
   .fp-btn {
     width: 100%; padding: 15px;
-    background: var(--ink); color: var(--white);
+    background: var(--btn-bg); color: var(--btn-fg);
     border: none; border-radius: 7px;
     font-family: 'DM Sans', sans-serif;
     font-size: 14px; font-weight: 500;
@@ -557,7 +559,7 @@ const styles = `
   }
   .fp-btn.ready, .fp-btn:not([disabled]) { opacity: 1; }
   .fp-btn:hover:not(:disabled) {
-    background: var(--gold); color: var(--ink);
+    background: var(--gold); color: var(--on-gold);
     box-shadow: 0 6px 24px rgba(201,168,76,0.3);
     transform: translateY(-1px);
   }
@@ -582,13 +584,13 @@ const styles = `
     transition: all 0.2s ease; caret-color: var(--gold);
   }
   .fp-otp-box:focus {
-    border-color: var(--gold); background: #fff;
+    border-color: var(--gold); background: var(--white);
     box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
     transform: translateY(-2px);
   }
   .fp-otp-box.filled {
     border-color: rgba(201,168,76,0.5);
-    background: linear-gradient(135deg,#fff 60%,rgba(201,168,76,0.05));
+    background: linear-gradient(135deg,var(--white) 60%,rgba(201,168,76,0.05));
   }
   .fp-otp-box.shake { animation: shake 0.4s ease; }
 

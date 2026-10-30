@@ -267,7 +267,7 @@ const styles = `
   .ps-root { font-family: 'DM Sans', sans-serif; background: var(--cream); min-height: 100vh; color: var(--ink); }
 
   /* HERO */
-  .ps-hero { position: relative; overflow: hidden; background: var(--ink); padding: 120px 32px 88px; text-align: center; }
+  .ps-hero { position: relative; overflow: hidden; background: var(--ink-surface); padding: 120px 32px 88px; text-align: center; }
   .ps-orb { position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.1; pointer-events: none; }
   .ps-orb1 { width: 500px; height: 500px; background: var(--gold); top: -180px; left: -100px; }
   .ps-orb2 { width: 320px; height: 320px; background: #3a5ea7; bottom: -80px; right: -60px; }
@@ -278,8 +278,8 @@ const styles = `
     box-shadow: 0 20px 60px rgba(45,106,79,0.3), 0 0 0 12px rgba(45,106,79,0.1);
     animation: scalePop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.15s both;
   }
-  .ps-checkmark { color: var(--white); font-size: 3rem; font-weight: 600; line-height: 1; }
-  .ps-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 5vw, 3rem); font-weight: 300; color: var(--white); margin-bottom: 10px; line-height: 1.1; }
+  .ps-checkmark { color: var(--on-dark); font-size: 3rem; font-weight: 600; line-height: 1; }
+  .ps-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 5vw, 3rem); font-weight: 300; color: var(--on-dark); margin-bottom: 10px; line-height: 1.1; }
   .ps-subtitle { font-size: 13.5px; color: rgba(245,240,232,0.45); font-weight: 300; letter-spacing: 0.04em; }
 
   /* BODY */
@@ -326,7 +326,7 @@ const styles = `
   /* Actions */
   .ps-actions { display: flex; gap: 10px; margin-top: 28px; flex-wrap: wrap; }
   .ps-btn { flex: 1; min-width: 130px; padding: 13px 20px; border: none; border-radius: 9px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.25s ease; text-align: center; }
-  .ps-btn-primary { background: var(--gold); color: var(--ink); }
+  .ps-btn-primary { background: var(--gold); color: var(--on-gold); }
   .ps-btn-primary:hover { background: #b8942f; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(201,168,76,0.3); }
   .ps-btn-secondary { background: transparent; border: 1.5px solid var(--border); color: var(--muted); }
   .ps-btn-secondary:hover { border-color: var(--muted); color: var(--ink); background: var(--surface); }
