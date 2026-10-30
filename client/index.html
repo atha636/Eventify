@@ -57,13 +57,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0e0c0a">
 
+    <!-- THEME: applied before first paint so there is no light→dark flash -->
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem("evencers-theme");
+          var theme = saved === "dark" || saved === "light"
+            ? saved
+            : (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+          document.documentElement.setAttribute("data-theme", theme);
+          if (theme === "dark") {
+            document.documentElement.style.backgroundColor = "#151210";
+            var m = document.querySelector('meta[name="theme-color"]');
+            if (m) m.setAttribute("content", "#0d0b09");
+          }
+        } catch (e) {}
+      })();
+    </script>
+
     <title>Evencers | Find Event Vendors in India</title>
 
     <!-- Razorpay -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   </head>
 
-  <body style="margin:0; padding:0; overflow-x:hidden; background:#0e0c0a;">
+  <body style="margin:0; padding:0; overflow-x:hidden;">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

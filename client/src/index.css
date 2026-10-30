@@ -2,168 +2,292 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ================= ROOT DESIGN SYSTEM ================= */
+/* ═══════════════════════════════════════════════════════════════════
+   EVENCERS DESIGN TOKENS
+   Light values below are the original brand colours (unchanged).
+   Dark values live in  html[data-theme="dark"]  further down.
+   The extra "role" tokens (--on-dark, --btn-bg, --ink-surface, …) let the
+   same component CSS serve both themes without per-page dark rules.
+   ═══════════════════════════════════════════════════════════════════ */
 :root {
---text: #6b6375;
---text-h: #08060d;
---bg: #fff;
---border: #e5e4e7;
---code-bg: #f4f3ec;
+  /* original global tokens */
+  --text: #6b6375;
+  --text-h: #08060d;
+  --bg: #fff;
+  --border: #e5e4e7;
+  --code-bg: #f4f3ec;
 
-/* 🎨 BRAND COLORS */
---accent: #aa3bff;
---accent-bg: rgba(170, 59, 255, 0.1);
---accent-border: rgba(170, 59, 255, 0.5);
+  --accent: #aa3bff;
+  --accent-bg: rgba(170, 59, 255, 0.1);
+  --accent-border: rgba(170, 59, 255, 0.5);
 
-/* 🟡 MARKETPLACE COLORS */
---primary: #0e0c0a;
---secondary: #c9a84c;
+  --primary: #0e0c0a;
+  --secondary: #c9a84c;
 
-/* ❗ ACTION COLORS */
---danger: #b85c5c;
---danger-hover: #a94444;
+  --danger: #b85c5c;
+  --danger-hover: #a94444;
 
-/* 🧩 CARD SYSTEM */
---card-bg: #ffffff;
---card-border: rgba(201,168,76,0.2);
---card-hover: rgba(201,168,76,0.3);
+  --card-bg: #ffffff;
+  --card-border: rgba(201,168,76,0.2);
+  --card-hover: rgba(201,168,76,0.3);
 
-/* 🧠 UI SYSTEM */
---social-bg: rgba(244, 243, 236, 0.5);
---shadow:
-rgba(0, 0, 0, 0.1) 0 10px 15px -3px,
-rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  --social-bg: rgba(244, 243, 236, 0.5);
+  --shadow:
+    rgba(0, 0, 0, 0.1) 0 10px 15px -3px,
+    rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
---sans: system-ui, 'Segoe UI', Roboto, sans-serif;
---heading: system-ui, 'Segoe UI', Roboto, sans-serif;
---mono: ui-monospace, Consolas, monospace;
+  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
 
-font: 18px/145% var(--sans);
-letter-spacing: 0.18px;
-color-scheme: light dark;
-color: var(--text);
-background: var(--bg);
+  /* ── role tokens (light = exactly what the pages used before) ── */
+  --on-dark:     #ffffff;   /* text that sits on an always-dark surface (heroes, footers) */
+  --on-gold:     #0e0c0a;   /* text that sits on a gold fill */
+  --ink-surface: #0e0c0a;   /* always-dark surfaces: heroes, sidebars, chat headers */
+  --btn-bg:      #0e0c0a;   /* solid primary buttons / active pills */
+  --btn-fg:      #ffffff;
+  --faint:       #bbb4a8;   /* placeholders, disabled text */
+  --text2:       #5a5249;   /* secondary body text */
+  --line:        #ede8e0;   /* neutral dividers */
+  --track:       #f0ece4;   /* progress tracks, skeletons, subtle fills */
+  --chip-bg:     rgba(255,255,255,0.92);
+  --gold-tint:   #fff8e8;
+  --hl:          rgba(255,255,255,0.8);   /* inner top highlight on cards */
+
+  /* status colours used as TEXT */
+  --c-green:     #2d6a4f;
+  --c-green2:    #3a8a62;
+  --c-red:       #b85c5c;
+  --c-red2:      #a93226;
+  --c-purple:    #7b5ea7;
+  --c-goldtext:  #a07b28;
+  --c-rose:      #c0445a;
+  --c-blue:      #4a90d9;
+
+  font: 18px/145% var(--sans);
+  letter-spacing: 0.18px;
+  color-scheme: light;
+  color: var(--text);
+  background: var(--bg);
 }
 
-/* ================= DARK MODE ================= */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
+/* ═══════════════════════════════════════════════════════════════════
+   DARK THEME — warm charcoal + cream + brand gold.
+   Deliberately flat: layered surfaces and hairline gold borders for depth,
+   no blur, no glow, no gradients-on-glass.
+     page     #151210   ← the canvas
+     card     #1d1a15   ← cards, modals, navbar
+     raised   #26221b   ← inputs, hovers, nested panels
+     recessed #0d0b09   ← heroes, sidebars (always-dark in both themes)
+   ═══════════════════════════════════════════════════════════════════ */
+html[data-theme="dark"] {
+  color-scheme: dark;
 
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
+  /* global tokens */
+  --text: #a8a08f;
+  --text-h: #eee7d6;
+  --bg: #151210;
+  --border: rgba(214,182,96,0.17);
+  --code-bg: #26221b;
+  --accent: #c9a84c;
+  --accent-bg: rgba(201,168,76,0.12);
+  --accent-border: rgba(201,168,76,0.4);
+  --primary: #eee7d6;
+  --secondary: #c9a84c;
+  --danger: #ef8a80;
+  --danger-hover: #f4a097;
+  --card-bg: #1d1a15;
+  --card-border: rgba(214,182,96,0.17);
+  --card-hover: rgba(214,182,96,0.32);
+  --social-bg: rgba(38,34,27,0.6);
+  --shadow: 0 10px 24px rgba(0,0,0,0.38), 0 2px 6px rgba(0,0,0,0.28);
 
-    --primary: #f3f4f6;
-    --secondary: #c084fc;
+  /* the shared names every page already uses */
+  --ink:        #eee7d6;    /* primary text */
+  --white:      #1d1a15;    /* card / modal surface */
+  --surface:    #26221b;    /* raised: inputs, hovers, nested panels */
+  --surface2:   #2d2820;
+  --cream:      #151210;    /* page canvas */
+  --muted:      #a8a08f;
+  --muted2:     #bdb4a2;
+  --border:     rgba(214,182,96,0.17);
+  --gold-glow:  rgba(201,168,76,0.14);
 
-    --danger: #ef4444;
-    --danger-hover: #dc2626;
+  /* role tokens */
+  --on-dark:     #f4eedf;
+  --on-gold:     #0e0c0a;
+  --ink-surface: #0d0b09;
+  --btn-bg:      #ece3cf;
+  --btn-fg:      #15120e;
+  --faint:       #7c7567;
+  --text2:       #c9c0ad;
+  --line:        #2e2921;
+  --track:       #2a251e;
+  --chip-bg:     rgba(29,26,21,0.96);
+  --gold-tint:   rgba(201,168,76,0.1);
+  --hl:          rgba(255,255,255,0.03);
 
-    --card-bg: #1f2028;
-    --card-border: rgba(192,132,252,0.2);
-    --card-hover: rgba(192,132,252,0.4);
+  --c-green:     #67c99b;
+  --c-green2:    #74d3a6;
+  --c-red:       #e58f8f;
+  --c-red2:      #ef9a8f;
+  --c-purple:    #b9a0ec;
+  --c-goldtext:  #d8b862;
+  --c-rose:      #ec90a4;
+  --c-blue:      #7fb0e8;
 
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px,
-      rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+  /* semantic text colours some pages define for themselves */
+  --success:      #67c99b;
+  --green:        #67c99b;
+  --error:        #e58f8f;
+  --rose:         #ec90a4;
+  --success-bg:     rgba(103,201,155,0.1);
+  --success-border: rgba(103,201,155,0.28);
+
+  /* payment modal palette */
+  --pm-white: #1d1a15;
+  --pm-surf:  #26221b;
+  --pm-ink:   #eee7d6;
+  --pm-ink2:  #26221b;
+  --pm-cream: #151210;
+  --pm-muted: #a8a08f;
+  --pm-success: #67c99b;
+  --pm-red:   #ef8a80;
+
+  /* elevation = hairline + deeper shadow (shadows barely read on dark) */
+  --shadow-sm:   0 2px 8px rgba(0,0,0,0.32);
+  --shadow-md:   0 10px 28px rgba(0,0,0,0.4);
+  --shadow-lg:   0 24px 60px rgba(0,0,0,0.5);
+  --shadow-gold: 0 0 0 1px rgba(201,168,76,0.18);
+}
+
+/* ── Flat, not glassy: no frosted blur anywhere in dark mode ── */
+html[data-theme="dark"] *,
+html[data-theme="dark"] *::before,
+html[data-theme="dark"] *::after {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+/* soft decorative "orb" glows read as AI-gloss — drop them in dark */
+html[data-theme="dark"] [class*="orb"],
+html[data-theme="dark"] [class*="-glow-"] { display: none !important; }
+
+html[data-theme="dark"] ::selection { background: rgba(201,168,76,0.32); color: #fff; }
+html[data-theme="dark"] ::placeholder { color: #7c7567; opacity: 1; }
+html[data-theme="dark"] img { filter: brightness(0.94) contrast(1.02); }
+html[data-theme="dark"] img[src*="logo"], html[data-theme="dark"] img[alt*="logo" i] { filter: none; }
+
+/* native form controls + scrollbars */
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select { color-scheme: dark; }
+html[data-theme="dark"] { scrollbar-color: #3a3429 #151210; }
+html[data-theme="dark"] ::-webkit-scrollbar { width: 11px; height: 11px; }
+html[data-theme="dark"] ::-webkit-scrollbar-track { background: #151210; }
+html[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #3a3429; border-radius: 8px; border: 3px solid #151210; }
+html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #4b4334; }
+
+/* smooth cross-fade when the visitor flips the switch */
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition: background-color 0.32s ease, color 0.32s ease, border-color 0.32s ease,
+              fill 0.32s ease, stroke 0.32s ease, box-shadow 0.32s ease !important;
 }
 
 /* ================= GLOBAL ================= */
 body {
-margin: 0;
+  margin: 0;
+  background: #0e0c0a;   /* original brand backdrop (light theme) */
 }
+html[data-theme="dark"] body { background: #151210; }
 
 #root {
-width: 100%;
-min-height: 100vh;
-display: flex;
-flex-direction: column;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ================= TYPOGRAPHY ================= */
 h1, h2 {
-font-family: var(--heading);
-color: var(--text-h);
+  font-family: var(--heading);
+  color: var(--text-h);
 }
 
 h1 {
-font-size: 56px;
-margin: 32px 0;
+  font-size: 56px;
+  margin: 32px 0;
 }
 
 h2 {
-font-size: 24px;
-margin-bottom: 8px;
+  font-size: 24px;
+  margin-bottom: 8px;
 }
 
 p {
-margin: 0;
+  margin: 0;
 }
 
 /* ================= BUTTON SYSTEM ================= */
 .btn-primary {
-background: var(--primary);
-color: white;
-padding: 10px 20px;
-border-radius: 6px;
-border: none;
-cursor: pointer;
-transition: 0.2s;
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: 0.2s;
 }
 
 .btn-primary:hover {
-background: var(--secondary);
-color: var(--primary);
+  background: var(--secondary);
+  color: var(--on-gold);
 }
 
 /* 🔥 DELETE BUTTON */
 .btn-delete {
-width: 34px;
-height: 34px;
- z-index: 3;
-border-radius: 50%;
-border: none;
-cursor: pointer;
+  width: 34px;
+  height: 34px;
+  z-index: 3;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
 
-display: flex;
-align-items: center;
-justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-background: rgba(255,255,255,0.85);
-backdrop-filter: blur(8px);
+  background: var(--chip-bg);
+  backdrop-filter: blur(8px);
 
-color: var(--danger);
-transition: all 0.25s ease;
+  color: var(--danger);
+  transition: all 0.25s ease;
 
-box-shadow: var(--shadow);
+  box-shadow: var(--shadow);
 }
 
 .btn-delete:hover {
-background: var(--danger);
-color: white;
-transform: scale(1.12);
+  background: var(--danger);
+  color: white;
+  transform: scale(1.12);
 }
 
 /* ================= BADGE ================= */
 .badge {
-font-size: 10px;
-padding: 4px 10px;
-border-radius: 20px;
-background: rgba(0,0,0,0.6);
-color: var(--secondary);
-backdrop-filter: blur(6px);
+  font-size: 10px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(0,0,0,0.6);
+  color: var(--secondary);
+  backdrop-filter: blur(6px);
 }
 
 /* ================= CODE ================= */
 code {
-font-family: var(--mono);
-padding: 4px 8px;
-background: var(--code-bg);
-border-radius: 4px;
+  font-family: var(--mono);
+  padding: 4px 8px;
+  background: var(--code-bg);
+  border-radius: 4px;
 }
