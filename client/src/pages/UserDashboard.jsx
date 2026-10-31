@@ -3,6 +3,7 @@ import API from "../services/api";
 import Navbar from "../components/Navbar";
 import PaymentModal from "../components/PaymentModal";
 import Logo from "../components/Logo";
+import InvoiceButton from "../components/InvoiceButton";
 
 // ── SEO Head Manager ──────────────────────────────────────────
 function SEOHead({ title, description, canonical }) {
@@ -245,6 +246,9 @@ function BookingDetailDrawer({ booking, onClose, onPay, onCancel, onRequestChang
         <div className="bdd-footer">
           {b.vendorId?._id && (
             <a href={`/vendor/${b.vendorId._id}`} className="bdd-foot-btn bdd-foot-ghost" aria-label={`View ${getVendorName()} profile`}>View Vendor →</a>
+          )}
+          {(b.status === "approved" || b.totalPaid > 0) && (
+            <InvoiceButton bookingId={b._id} label="Invoice (PDF)" />
           )}
           {canRequestChange && (
             <button className="bdd-foot-btn bdd-foot-gold" onClick={() => { onRequestChange(b); handleClose(); }}>

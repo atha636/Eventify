@@ -12,6 +12,7 @@ const {
   requestChange,
   respondToChange,
 } = require("../controllers/bookingController");
+const { getInvoice } = require("../controllers/invoiceController");
 
 // ── CREATE BOOKING ───────────────────────────────────────────────
 // POST /api/bookings
@@ -37,6 +38,11 @@ router.put("/:id/status", auth, updateBookingStatus);
 // This endpoint is called AFTER the event takes place.
 // When BOTH parties confirm → final installment payment link is unlocked.
 router.post("/:id/confirm-event", auth, confirmEvent);
+
+// ── DOWNLOAD INVOICE / RECEIPT (PDF) ─────────────────────────────
+// GET /api/bookings/:id/invoice
+// Allowed for the customer who booked, the vendor who owns the service, or an admin.
+router.get("/:id/invoice", auth, getInvoice);
 
 // ── CANCEL BOOKING ───────────────────────────────────────────────
 // DELETE /api/bookings/:id

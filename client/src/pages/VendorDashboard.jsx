@@ -5,6 +5,7 @@ import ServiceCard from "../components/ServiceCard";
 import Logo from "../components/Logo";
 import VendorCodeSection from "../components/VendorCodeSection";
 import VendorCouponModal from "../components/VendorCouponModal";
+import InvoiceButton from "../components/InvoiceButton";
 
 
 // ─────────────────────────────────────────────────────────────
@@ -395,6 +396,11 @@ function BookingDetailPopup({ booking, onClose, onUpdateStatus, updating, onRequ
             <button className="bd-accept-btn" onClick={() => onUpdateStatus(b._id, "approved")} disabled={!!updating} aria-busy={updating === b._id + "approved"}>
               {updating === b._id + "approved" ? <span className="bd-spinner" aria-hidden="true" /> : "✓ Approve Booking"}
             </button>
+          </div>
+        )}
+        {(b.status === "approved" || b.totalPaid > 0) && (
+          <div className="bd-actions">
+            <InvoiceButton bookingId={b._id} label="Download invoice (PDF)" />
           </div>
         )}
         {b.status === "approved" && !hasDcr && (
