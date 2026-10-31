@@ -50,7 +50,7 @@ export default function InvoiceButton({ bookingId, label = "Invoice (PDF)", clas
 }
 
 const styles = `
-  .inv-wrap { flex: 1; min-width: 150px; display: flex; }
+  .inv-wrap { flex: 1 1 auto; min-width: 150px; display: flex; }
   .inv-btn {
     width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     padding: 12px 12px; border-radius: 8px; cursor: pointer; white-space: nowrap;

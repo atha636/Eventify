@@ -774,7 +774,7 @@ const styles = `
   .bdd-tl-pending .bdd-tl-label{color:var(--muted);opacity:0.6}
   .bdd-tl-sub{font-size:11.5px;color:var(--muted);line-height:1.4}
   .bdd-footer{flex-shrink:0;padding:16px 24px;border-top:1px solid var(--border);background:var(--surface);display:flex;gap:10px;flex-wrap:wrap;}
-  .bdd-foot-btn{flex:1;min-width:120px;padding:12px 16px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;border:none;white-space:nowrap;}
+  .bdd-foot-btn{flex:1 1 auto;min-width:120px;white-space:nowrap;padding:12px 16px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;border:none;white-space:nowrap;}
   .bdd-foot-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
   .bdd-foot-ghost:hover{border-color:var(--gold);color:var(--gold)}
   .bdd-foot-gold{background:var(--gold);color:var(--on-gold)}
