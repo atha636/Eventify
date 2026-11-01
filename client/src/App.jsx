@@ -8,6 +8,7 @@ import ForgotPassword     from "./pages/ForgotPassword";
 import VendorDetail       from "./pages/VendorDetail";
 import VendorDashboard    from "./pages/VendorDashboard";
 import VendorAnalytics    from "./pages/VendorAnalytics";
+import EventPlanner       from "./pages/EventPlanner";
 import AddService         from "./pages/AddService";
 import EditService        from "./pages/EditService";
 import ServiceGallery     from "./pages/ServiceGallery";
@@ -66,6 +67,7 @@ export default function App() {
         {/* ── User ── */}
         <Route path="/my-bookings"             element={<UserDashboard />} />
         <Route path="/favourites"              element={<Favorites />} />
+        <Route path="/event-planner"           element={<EventPlanner />} />
 
         {/* ── Chat (both users and vendors) ── */}
         <Route path="/messages"                element={<Messages />} />
