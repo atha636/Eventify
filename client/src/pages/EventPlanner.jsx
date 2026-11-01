@@ -202,6 +202,19 @@ export default function EventPlanner() {
     })();
   }, [isCustomer, loadPlan]);
 
+  // the AI assistant can create a plan while this page is open
+  useEffect(() => {
+    const onNew = async (e) => {
+      const id = e.detail?.id;
+      if (!id) return;
+      await refreshList();
+      setActiveId(id); setLoadError("");
+      loadPlan(id);
+    };
+    window.addEventListener("plans-changed", onNew);
+    return () => window.removeEventListener("plans-changed", onNew);
+  }, [refreshList, loadPlan]);
+
   const pick = (id) => {
     setActiveId(id); setConfirmDelete(false);
     try { sessionStorage.setItem("ep-active", id); } catch { /* private mode */ }

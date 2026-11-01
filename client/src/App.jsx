@@ -23,6 +23,7 @@ import AboutUs            from "./pages/AboutUs";
 import Blogs              from "./pages/Blogs";
 import BlogDetail         from "./pages/BlogDetail";
 import CookieConsent      from "./components/CookieConsent";
+import EventAssistant     from "./components/EventAssistant";
 import VendorWelcome      from "./pages/VendorWelcome";
 import Whyevencers        from "./pages/Whyevencers";
 
@@ -87,6 +88,7 @@ export default function App() {
         <Route path="/admin/login"  element={<AdminLogin />} />
         <Route path="/admin"        element={<AdminDashboard />} />
       </Routes>
+      <EventAssistant />
       <CookieConsent />
     </BrowserRouter>
   );
