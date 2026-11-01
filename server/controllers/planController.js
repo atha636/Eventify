@@ -134,7 +134,17 @@ exports.createPlan = async (req, res) => {
       totalBudget, notes: str(req.body.notes, 1000),
     });
 
-    if (req.body.template) {
+    // a plan suggested by the assistant arrives with its own items and tasks
+    if (Array.isArray(req.body.items)) {
+      req.body.items.slice(0, 20).forEach((i) => {
+        const name = str(i?.name || i?.category, 120);
+        if (name) plan.items.push({ category: str(i.category, 40) || "Other", name, estimated: num(i.estimated) });
+      });
+    }
+    if (Array.isArray(req.body.tasks)) {
+      req.body.tasks.slice(0, 30).forEach((t) => { const text = str(t, 160); if (text) plan.tasks.push({ text }); });
+    }
+    if (req.body.template && !plan.items.length) {
       TEMPLATE_SPLIT.forEach(([category, pct]) =>
         plan.items.push({ category, name: category, estimated: Math.round(totalBudget * pct / 100) }));
       TEMPLATE_TASKS.forEach((text) => plan.tasks.push({ text }));

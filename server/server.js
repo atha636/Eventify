@@ -187,6 +187,8 @@ app.use("/api/chat",          chatLimiter, require("./routes/chatRoutes"));
 app.use("/api/analytics",     require("./routes/analyticsRoutes"));
 // Customer event planner / budget tracker
 app.use("/api/plans",         require("./routes/planRoutes"));
+// AI event-planner assistant (customers only)
+app.use("/api/assistant",     require("./routes/assistantRoutes"));
 
 // ── Health check ─────────────────────────────────────────────
 app.get("/", (req, res) => res.json({ status: "ok", app: "Evencers API" }));
