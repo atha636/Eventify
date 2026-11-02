@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import LegalLink from "./LegalModal";
 
 // ─── Real browser cookie helpers (survive logout & localStorage.clear()) ──────
 const COOKIE_NAME    = "evencers_consent";
@@ -304,14 +305,9 @@ export default function CookieConsent() {
           analyse platform traffic. By clicking{" "}
           <em style={{ fontStyle:"normal", color:"rgba(201,168,76,.65)" }}>"Accept All"</em>
           {" "}you consent to our use of cookies.{" "}
-          <a href="/privacy-policy" style={{
-            color:"rgba(201,168,76,.75)",
-            textDecoration:"underline",
-            textDecorationColor:"rgba(201,168,76,.28)",
-            textUnderlineOffset:3,
-          }}>
+          <LegalLink doc="privacy" style={{ color:"rgba(201,168,76,.75)" }}>
             Privacy Policy
-          </a>
+          </LegalLink>
         </p>
 
         {/* ── Expanded preferences ── */}

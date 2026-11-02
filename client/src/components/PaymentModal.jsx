@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createOrder, verifyPayment } from "../services/paymentService";
 import { useNavigate } from "react-router-dom";
+import LegalLink from "./LegalModal";
 
 // ── Plan helpers ──────────────────────────────────────────────
 const PLAN_META = {
@@ -273,7 +274,7 @@ export default function PaymentModal({ booking, vendor, onSuccess, onClose }) {
               </button>
             </div>
 
-            <p className="pm-tos">By proceeding, you agree to Evencers' Terms & Conditions</p>
+            <p className="pm-tos">By proceeding, you agree to Evencers' <LegalLink doc="terms" style={{ color: "inherit" }}>Terms & Conditions</LegalLink> and <LegalLink doc="refund" style={{ color: "inherit" }}>Refund Policy</LegalLink></p>
           </div>
         </div>
       </div>

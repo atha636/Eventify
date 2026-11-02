@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { ALL_POSTS } from "../data/blog";
 import Logo from "../components/Logo";
+import LegalLink from "../components/LegalModal";
 
 // ── SEO ──
 function useSEO(post) {
@@ -381,9 +382,11 @@ export default function BlogDetail() {
               <p className="bd-footer-tagline">India's trusted event vendor platform</p>
               <p className="bd-footer-copy">© 2025 Evencers. Crafted with care in India.</p>
               <nav className="bd-footer-links" aria-label="Footer navigation">
-                {["Home", "Vendors", "Blog", "About", "Privacy", "Contact"].map((l) => (
-                  <a key={l} href="#" className="bd-footer-link">{l}</a>
+                {[["Home", "/"], ["Vendors", "/vendors"], ["Blog", "/blog"], ["About", "/about"]].map(([l, to]) => (
+                  <Link key={l} to={to} className="bd-footer-link">{l}</Link>
                 ))}
+                <LegalLink doc="privacy" className="bd-footer-link">Privacy</LegalLink>
+                <Link to="/customer-care" className="bd-footer-link">Contact</Link>
               </nav>
             </footer>
           </>

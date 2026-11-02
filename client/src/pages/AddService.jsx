@@ -4,6 +4,7 @@ import API from "../services/api";
 import Navbar from "../components/Navbar";
 import Logo from "../components/Logo";
 import AiDescriptionHelper from "../components/AiDescriptionHelper";
+import LegalLink from "../components/LegalModal";
 
 const SERVICE_TYPES = [
   { value: "decor",       label: "Decor",       emoji: "🎨", available: true  },
@@ -667,8 +668,8 @@ export default function AddService() {
 
                   <p className="as-terms">
                     By publishing you agree to our{" "}
-                    <a href="#" className="as-link">Vendor Terms</a> and{" "}
-                    <a href="#" className="as-link">Content Policy</a>.
+                    <LegalLink doc="vendorTerms" className="as-link">Vendor Terms</LegalLink> and{" "}
+                    <LegalLink doc="contentPolicy" className="as-link">Content Policy</LegalLink>.
                   </p>
                 </>
               )}
