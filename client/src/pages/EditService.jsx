@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
+import AiDescriptionHelper from "../components/AiDescriptionHelper";
 
 const SERVICE_TYPES = [
   { value: "decor",       label: "Decor",       emoji: "🎨", available: true  },
@@ -470,6 +471,8 @@ export default function EditService() {
                   />
                 </div>
                 <span className="es-char-count">{form.description.length} / 500</span>
+                <AiDescriptionHelper serviceType={form.serviceType} title={form.title} locations={form.locations}
+                  current={form.description} onApply={(t) => set("description", t)} />
               </div>
 
               <div className="es-field">

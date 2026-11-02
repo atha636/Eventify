@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { getConversations, getMessages, sendMessage } from "../services/chatService";
+import { aiReplies } from "../services/vendorAiService";
 
 function timeShort(dateStr) {
   const d = new Date(dateStr);
@@ -30,6 +31,8 @@ export default function Messages() {
   const [sending, setSending] = useState(false);
   const [error, setError]   = useState("");
 
+  // vendor-only: AI reply suggestions for the latest customer message
+  const [suggest, setSuggest] = useState({ busy: false, items: [], error: "" });
   const scrollRef = useRef(null);
   const listPollRef   = useRef(null);
   const threadPollRef = useRef(null);
@@ -120,6 +123,16 @@ export default function Messages() {
 
   const isMine = (m) => (m.senderId?._id || m.senderId) === me.id || (m.senderId?._id || m.senderId) === me._id;
 
+  const getSuggestions = async () => {
+    const last = messages.filter((m) => !m.pending).slice(-6);
+    setSuggest({ busy: true, items: [], error: "" });
+    try {
+      const r = await aiReplies(last.map((m) => ({ from: isMine(m) ? "me" : "customer", text: m.text })), thread?.other?.name);
+      setSuggest({ busy: false, items: r.replies, error: "" });
+    } catch (e) { setSuggest({ busy: false, items: [], error: String(e) }); }
+  };
+  const lastFromCustomer = messages.length > 0 && !isMine(messages[messages.length - 1]);
+
   return (
     <>
       <style>{styles}</style>
@@ -201,6 +214,25 @@ export default function Messages() {
                 </div>
 
                 {error && <div className="msg-error">{error}</div>}
+
+                {me.role === "vendor" && (
+                  <div className="msg-ai">
+                    {suggest.items.length === 0 ? (
+                      <button className="msg-ai-btn" onClick={getSuggestions} disabled={suggest.busy || !lastFromCustomer}
+                        title={lastFromCustomer ? "" : "Available when the customer has sent the latest message"}>
+                        {suggest.busy ? "Thinking…" : "✨ Suggest a reply"}
+                      </button>
+                    ) : (
+                      <>
+                        {suggest.items.map((t, k) => (
+                          <button key={k} className="msg-ai-chip" onClick={() => { setDraft(t); setSuggest({ busy: false, items: [], error: "" }); }}>{t}</button>
+                        ))}
+                        <button className="msg-ai-x" onClick={() => setSuggest({ busy: false, items: [], error: "" })} aria-label="Dismiss suggestions">✕</button>
+                      </>
+                    )}
+                    {suggest.error && <span className="msg-ai-err">{suggest.error}</span>}
+                  </div>
+                )}
 
                 <div className="msg-composer">
                   <input
@@ -313,6 +345,14 @@ const styles = `
   }
   .msg-send-btn:hover:not(:disabled) { background: #c9a84c; color: var(--on-gold); }
   .msg-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .msg-ai { display: flex; flex-direction: column; gap: 6px; padding: 8px 14px 0; background: var(--white); align-items: flex-start; }
+  .msg-ai-btn { font: 500 12px 'DM Sans', sans-serif; padding: 6px 14px; border-radius: 16px; cursor: pointer; background: var(--gold-tint); color: var(--c-goldtext); border: 1px solid var(--border); }
+  .msg-ai-btn:hover:not(:disabled) { border-color: #c9a84c; }
+  .msg-ai-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .msg-ai-chip { text-align: left; font: 12.5px/1.45 'DM Sans', sans-serif; padding: 8px 12px; border-radius: 12px; cursor: pointer; background: var(--gold-tint); color: var(--ink); border: 1px solid var(--border); width: 100%; }
+  .msg-ai-chip:hover { border-color: #c9a84c; }
+  .msg-ai-x { align-self: flex-end; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 12px; }
+  .msg-ai-err { font-size: 12px; color: var(--c-red); }
 
   @media (max-width: 760px) {
     .msg-shell { grid-template-columns: 1fr; padding: 84px 12px 12px; height: 100vh; }

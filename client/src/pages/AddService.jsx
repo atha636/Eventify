@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
 import Logo from "../components/Logo";
+import AiDescriptionHelper from "../components/AiDescriptionHelper";
 
 const SERVICE_TYPES = [
   { value: "decor",       label: "Decor",       emoji: "🎨", available: true  },
@@ -445,6 +446,8 @@ export default function AddService() {
                       />
                     </div>
                     <span className="as-char-count">{form.description.length} / 500</span>
+                    <AiDescriptionHelper serviceType={form.serviceType} title={form.title} locations={form.locations}
+                      current={form.description} onApply={(t) => set("description", t)} />
                   </div>
 
                   {/* LOCATION */}
