@@ -193,6 +193,8 @@ app.use("/api/assistant",     require("./routes/assistantRoutes"));
 app.use("/api/vendor-ai",     require("./routes/vendorAiRoutes"));
 // "Recommended for you" vendor ranking (customers)
 app.use("/api/recommendations", require("./routes/recommendRoutes"));
+// Quote requests / custom offers (customer <-> vendor, built on chat)
+app.use("/api/quotes",        require("./routes/quoteRoutes"));
 
 // ── Health check ─────────────────────────────────────────────
 app.get("/", (req, res) => res.json({ status: "ok", app: "Evencers API" }));

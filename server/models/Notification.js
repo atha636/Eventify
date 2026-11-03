@@ -31,6 +31,12 @@ const notificationSchema = new mongoose.Schema({
 
   // ── Chat ──
   "message_received",
+
+  // ── Quote requests ──
+  "quote_requested",
+  "quote_offered",
+  "quote_accepted",
+  "quote_declined",
 ],
   required: true,
 },
@@ -44,6 +50,9 @@ const notificationSchema = new mongoose.Schema({
   },
 
   isRead: { type: Boolean, default: false },
+
+  // Optional in-app path to open when the notification is clicked (e.g. "/messages?c=<id>")
+  link: { type: String, default: "" },
 
 }, { timestamps: true });
 
