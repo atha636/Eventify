@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
 import ServiceCard from "../components/ServiceCard";
+import RecommendedStrip from "../components/RecommendedStrip";
 import Logo from "../components/Logo";
 
 // ─── SEO HEAD MANAGER ───────────────────────────────────────────
@@ -841,6 +842,9 @@ export default function Vendors() {
             </div>
           ) : (
             <>
+              {!search.trim() && category === "all" && priceRange === "any" && !dateFilter && (
+                <RecommendedStrip city={selectedCity && !browseAll ? selectedCity : ""} />
+              )}
               <div className={`vn-grid ${layout}`} role="list" aria-label={`${filtered.length} vendors`}>
                 {visibleVendors.map((v, i) => (
                   <div key={v._id} className="vn-card-wrap" style={{ animationDelay: `${Math.min(i * 0.04, 0.5)}s` }} role="listitem">
