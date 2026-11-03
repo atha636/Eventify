@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { getConversations, getMessages, sendMessage } from "../services/chatService";
 import { aiReplies } from "../services/vendorAiService";
+import QuoteCard from "../components/QuoteCard";
 
 function timeShort(dateStr) {
   const d = new Date(dateStr);
@@ -202,7 +203,11 @@ export default function Messages() {
                   ) : messages.length === 0 ? (
                     <div className="msg-empty-state">Say hello 👋</div>
                   ) : (
-                    messages.map((m) => (
+                    messages.map((m, idx) => m.quoteId ? (
+                      <QuoteCard key={m._id} quoteId={m.quoteId} text={m.text}
+                        latest={messages.findLastIndex((x) => x.quoteId === m.quoteId) === idx}
+                        refreshKey={messages.length} onChanged={() => loadThread(activeId, { silent: true })} />
+                    ) : (
                       <div key={m._id} className={`msg-bubble-row ${isMine(m) ? "mine" : ""}`}>
                         <div className={`msg-bubble ${isMine(m) ? "mine" : ""} ${m.pending ? "pending" : ""}`}>
                           {m.text}

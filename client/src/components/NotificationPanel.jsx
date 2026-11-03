@@ -18,6 +18,10 @@ const TYPE_META = {
   date_change_rejected:  { icon: "✕",  color: "var(--c-red)", bg: "rgba(184,92,92,0.08)"   },
   vendor_verified:       { icon: "🏅", color: "var(--c-green2)", bg: "rgba(58,138,98,0.08)"   },
   vendor_unverified:     { icon: "⚠",  color: "var(--c-red)", bg: "rgba(184,92,92,0.08)"   },
+  quote_requested:       { icon: "💬", color: "#c9a84c", bg: "rgba(201,168,76,0.08)"  },
+  quote_offered:         { icon: "🏷️", color: "#c9a84c", bg: "rgba(201,168,76,0.08)"  },
+  quote_accepted:        { icon: "🎉", color: "var(--c-green2)", bg: "rgba(58,138,98,0.08)"   },
+  quote_declined:        { icon: "✕",  color: "var(--c-red)", bg: "rgba(184,92,92,0.08)"   },
 };
 
 // Fallback for any future types not yet listed above
@@ -94,6 +98,12 @@ export default function NotificationPanel({ onClose, onUnreadChange }) {
     // Payment notifications: open PaymentModal directly if booking is populated
     if (notif.type === "payment_pending" && notif.bookingId?._id) {
       handlePayNow(notif);
+      return;
+    }
+    // Notifications that carry their own destination (quotes → the chat thread)
+    if (notif.link && notif.link.startsWith("/")) {
+      onClose();
+      navigate(notif.link);
       return;
     }
     // All other types → navigate to the right dashboard

@@ -7,6 +7,7 @@ import BookingWaitModal from "../components/BookingWaitModal";
 import Logo from "../components/Logo";
 import ReviewsSection from "../components/ReviewsSection";
 import { startConversation } from "../services/chatService";
+import RequestQuoteModal from "../components/RequestQuoteModal";
 
 // ── Share Modal ───────────────────────────────────────────────────────────────
 function ShareModal({ vendor, onClose }) {
@@ -310,6 +311,7 @@ export default function VendorDetail() {
   const [showWaitModal,    setShowWaitModal]    = useState(false);
   const [showShareModal,   setShowShareModal]   = useState(false);
   const [msgLoading,       setMsgLoading]        = useState(false);
+  const [showQuoteModal,   setShowQuoteModal]    = useState(false);
 
   const user     = JSON.parse(localStorage.getItem("user") || "{}");
   const isVendor = user?.role === "vendor";
@@ -380,6 +382,12 @@ export default function VendorDetail() {
     if (isDecor && !selectedSlot)    { setDateWarning("Please select a time slot."); return; }
     setDateWarning("");
     setShowDetailsModal(true);
+  };
+
+  // ── Request a quote ─────────────────────────────────────────────
+  const handleRequestQuote = () => {
+    if (!localStorage.getItem("token")) { setShowLoginModal(true); return; }
+    setShowQuoteModal(true);
   };
 
   // ── Message Vendor ──────────────────────────────────────────────
@@ -483,6 +491,14 @@ export default function VendorDetail() {
       )}
 
       {/* Login modal */}
+      {showQuoteModal && (
+        <RequestQuoteModal
+          service={vendor}
+          onClose={() => setShowQuoteModal(false)}
+          onDone={(conversationId) => { setShowQuoteModal(false); navigate(`/messages?c=${conversationId}`); }}
+        />
+      )}
+
       {showLoginModal && (
         <div className="vd-modal-backdrop" onClick={() => setShowLoginModal(false)}>
           <div className="vd-modal" onClick={(e) => e.stopPropagation()}>
@@ -649,6 +665,14 @@ export default function VendorDetail() {
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="15" height="15"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                   Call Vendor — {vendor.vendorId.phone}
                 </a>
+              )}
+
+              {/* ── Request a quote (customers) ── */}
+              {!isOwnListing && !isVendor && (
+                <button type="button" className="vd-quote-btn" onClick={handleRequestQuote}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="15" height="15"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                  Request a custom quote
+                </button>
               )}
 
               {/* ── Message Vendor ── */}
@@ -866,6 +890,8 @@ const styles = `
   .vd-message-btn { display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;margin-top:10px;padding:11px;background:var(--btn-bg);border:1px solid var(--btn-bg);border-radius:8px;color:var(--btn-fg);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s; }
   .vd-message-btn:hover:not(:disabled) { background:var(--gold);border-color:var(--gold);color:var(--on-gold); }
   .vd-message-btn:disabled { opacity:0.65;cursor:not-allowed; }
+  .vd-quote-btn { display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;margin-top:10px;padding:11px;background:transparent;border:1px solid var(--gold);border-radius:8px;color:var(--c-goldtext);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s; }
+  .vd-quote-btn:hover { background:var(--gold);color:var(--on-gold); }
   .vd-divider { height:1px;background:var(--border);margin:24px 0; }
 
   /* ── Time Slot Selector ── */
