@@ -191,6 +191,8 @@ app.use("/api/plans",         require("./routes/planRoutes"));
 app.use("/api/assistant",     require("./routes/assistantRoutes"));
 // AI helper for vendors (descriptions, reply suggestions)
 app.use("/api/vendor-ai",     require("./routes/vendorAiRoutes"));
+// "Recommended for you" vendor ranking (customers)
+app.use("/api/recommendations", require("./routes/recommendRoutes"));
 
 // ── Health check ─────────────────────────────────────────────
 app.get("/", (req, res) => res.json({ status: "ok", app: "Evencers API" }));
