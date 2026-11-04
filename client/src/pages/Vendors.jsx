@@ -5,6 +5,8 @@ import Navbar from "../components/Navbar";
 import ServiceCard from "../components/ServiceCard";
 import RecommendedStrip from "../components/RecommendedStrip";
 import Logo from "../components/Logo";
+import CompareBar from "../components/CompareBar";
+import { useCompare } from "../utils/compare";
 
 // ─── SEO HEAD MANAGER ───────────────────────────────────────────
 function SEOHead({ category, search, dateFilter, count }) {
@@ -533,6 +535,15 @@ export default function Vendors() {
     try { return localStorage.getItem("evencers_browse_all") === "true"; } catch { return false; }
   });
 
+  const compare = useCompare();
+  const [compareNote, setCompareNote] = useState("");
+  const toggleCompare = (id) => {
+    if (!compare.toggle(id)) {
+      setCompareNote("You can compare up to 3 vendors. Remove one first.");
+      setTimeout(() => setCompareNote(""), 3500);
+    }
+  };
+
   const isNavigatingRef  = useRef(false);
   const searchRef        = useRef(null);
   const howItWorksRef    = useRef(null);
@@ -849,6 +860,12 @@ export default function Vendors() {
                 {visibleVendors.map((v, i) => (
                   <div key={v._id} className="vn-card-wrap" style={{ animationDelay: `${Math.min(i * 0.04, 0.5)}s` }} role="listitem">
                     <ServiceCard vendor={v} />
+                    {!isVendor && (
+                      <label className={`vn-compare ${compare.ids.includes(v._id) ? "on" : ""}`} onClick={(e) => e.stopPropagation()}>
+                        <input type="checkbox" checked={compare.ids.includes(v._id)} onChange={() => toggleCompare(v._id)} aria-label={`Compare ${v.title}`} />
+                        <span>{compare.ids.includes(v._id) ? "Added to compare" : "Compare"}</span>
+                      </label>
+                    )}
                   </div>
                 ))}
               </div>
@@ -866,6 +883,11 @@ export default function Vendors() {
             </>
           )}
         </main>
+
+        {!isVendor && (
+          <CompareBar names={Object.fromEntries(vendors.map((v) => [v._id, v.title]))} />
+        )}
+        {compareNote && <div className="vn-compare-toast" role="alert">{compareNote}</div>}
 
         {!loading && !search && category === "all" && !dateFilter && (
           <section className="vn-why-section" aria-labelledby="why-heading">
@@ -1351,7 +1373,13 @@ const styles = `
   .vn-content { max-width: 1160px; margin: 0 auto; padding: 28px 32px 72px; }
   .vn-grid.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
   .vn-grid.list { display: flex; flex-direction: column; gap: 12px; }
-  .vn-card-wrap { animation: fadeUp 0.42s cubic-bezier(0.4,0,0.2,1) both; }
+  .vn-card-wrap { display: flex; flex-direction: column; animation: fadeUp 0.42s cubic-bezier(0.4,0,0.2,1) both; }
+  .vn-card-wrap > .sc-card { flex: 1 1 auto; height: auto; }
+  .vn-compare { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; box-sizing: border-box; margin-top: 8px; padding: 8px 12px; border-radius: 10px; cursor: pointer; font: 500 12.5px 'DM Sans', sans-serif; background: var(--white); color: var(--text2); border: 1px solid var(--border); transition: background .15s, border-color .15s; user-select: none; }
+  .vn-compare:hover { border-color: #c9a84c; color: var(--ink); }
+  .vn-compare.on { background: var(--gold-tint); border-color: #c9a84c; color: var(--c-goldtext); }
+  .vn-compare input { width: 15px; height: 15px; margin: 0; accent-color: #c9a84c; cursor: pointer; }
+  .vn-compare-toast { position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%); z-index: 7100; background: var(--ink-surface); color: var(--on-dark); border: 1px solid rgba(184,92,92,.55); border-radius: 10px; padding: 10px 16px; font: 12.5px 'DM Sans', sans-serif; }
   .vn-skeleton { height: 278px; border-radius: 14px; background: linear-gradient(90deg, var(--track) 25%, #e5ddd3 50%, var(--track) 75%); background-size: 200% 100%; animation: shimmer 1.5s ease infinite; }
   .vn-skeleton-list { height: 100px; }
 

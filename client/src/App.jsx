@@ -9,6 +9,7 @@ import VendorDetail       from "./pages/VendorDetail";
 import VendorDashboard    from "./pages/VendorDashboard";
 import VendorAnalytics    from "./pages/VendorAnalytics";
 import EventPlanner       from "./pages/EventPlanner";
+import ComparePage        from "./pages/ComparePage";
 import AddService         from "./pages/AddService";
 import EditService        from "./pages/EditService";
 import ServiceGallery     from "./pages/ServiceGallery";
@@ -51,6 +52,7 @@ export default function App() {
         <Route path="/vendor/:id"              element={<VendorDetail />} />
         <Route path="/vendor/:id/gallery"      element={<ServiceGallery />} />
         <Route path="/vendors"                 element={<Vendors />} />
+        <Route path="/compare"                 element={<ComparePage />} />
         <Route path="/about"                   element={<AboutUs />} />
         <Route path="/blog"                    element={<Blogs />} />
         <Route path="/blog/:slug"              element={<BlogDetail />} />
