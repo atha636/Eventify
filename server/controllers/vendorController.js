@@ -1,5 +1,6 @@
 const Vendor = require("../models/Vendor");
 const User   = require("../models/User");
+const Booking = require("../models/Booking");
 const {
   sendEmail,
   sendVendorVerificationRequest,
@@ -348,6 +349,16 @@ exports.getAvailableOnDate = async (req, res) => {
     }).select("_id");
 
     const unavailableIds = unavailableServiceIds.map((v) => v._id.toString());
+
+    // services that close a date once a booking is approved
+    const dayEnd = new Date(target.getTime() + 86400000);
+    const autoClose = await Vendor.find({ isApproved: true, vendorId: { $in: ids }, autoBlockBooked: true }).select("_id");
+    if (autoClose.length) {
+      const taken = await Booking.distinct("vendorId", {
+        vendorId: { $in: autoClose.map((v) => v._id) }, status: "approved", date: { $gte: target, $lt: dayEnd },
+      });
+      taken.forEach((id) => unavailableIds.push(String(id)));
+    }
 
     const vendors = await Vendor
       .find({

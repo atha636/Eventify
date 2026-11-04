@@ -1,3 +1,4 @@
+const { hasApprovedBooking } = require("../utils/availability");
 const Booking      = require("../models/Booking");
 const Vendor       = require("../models/Vendor");
 const User         = require("../models/User");
@@ -127,6 +128,9 @@ exports.createBooking = async (req, res) => {
     );
     if (blocked) {
       return res.status(409).json({ error: "This vendor isn't available on the selected date." });
+    }
+    if (vendor.autoBlockBooked && await hasApprovedBooking(vendor._id, parsedDate)) {
+      return res.status(409).json({ error: "This vendor is already booked on the selected date." });
     }
 
     // ── Prevent duplicate pending bookings ───────────────────────

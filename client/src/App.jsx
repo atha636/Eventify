@@ -8,6 +8,7 @@ import ForgotPassword     from "./pages/ForgotPassword";
 import VendorDetail       from "./pages/VendorDetail";
 import VendorDashboard    from "./pages/VendorDashboard";
 import VendorAnalytics    from "./pages/VendorAnalytics";
+import VendorCalendar from "./pages/VendorCalendar";
 import EventPlanner       from "./pages/EventPlanner";
 import ComparePage        from "./pages/ComparePage";
 import AddService         from "./pages/AddService";
@@ -61,6 +62,7 @@ export default function App() {
         {/* ── Vendor ── */}
         <Route path="/vendor-dashboard"        element={<VendorDashboard />} />
         <Route path="/vendor-analytics"        element={<VendorAnalytics />} />
+        <Route path="/vendor-calendar"         element={<VendorCalendar />} />
         <Route path="/vendor/welcome"          element={<VendorWelcome />} />
         <Route path="/add-service"             element={<AddService />} />
         <Route path="/edit-service/:id"        element={<EditService />} />

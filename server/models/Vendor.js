@@ -44,6 +44,8 @@ const serviceSchema = new mongoose.Schema(
     price:     { type: Number },
 
     availability: [availabilitySchema],
+    // when true, a date closes automatically once one booking on it is approved
+    autoBlockBooked: { type: Boolean, default: false },
 
     isApproved: {
       type: Boolean,

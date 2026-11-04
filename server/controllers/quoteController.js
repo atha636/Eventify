@@ -180,11 +180,13 @@ exports.acceptQuote = async (req, res) => {
     if (!["25", "75", "100"].includes(plan)) return res.status(400).json({ error: "Choose a payment plan." });
     if (q.request.date < midnight(new Date())) return res.status(400).json({ error: "The event date has already passed." });
 
-    const service = await Vendor.findById(q.serviceId).select("availability title isApproved");
+    const service = await Vendor.findById(q.serviceId).select("availability title isApproved autoBlockBooked");
     if (!service || !service.isApproved) return res.status(400).json({ error: "This service is no longer available." });
     const day = midnight(q.request.date), next = new Date(day.getTime() + 86400000);
     if ((service.availability || []).some((a) => !a.available && a.date >= day && a.date < next))
       return res.status(409).json({ error: "The vendor is no longer available on that date." });
+    if (service.autoBlockBooked && await require("../utils/availability").hasApprovedBooking(service._id, q.request.date))
+      return res.status(409).json({ error: "The vendor is already booked on that date." });
     const clash = await Booking.findOne({ userId: q.userId, vendorId: q.serviceId, date: q.request.date, status: { $in: ["pending", "approved"] } });
     if (clash) return res.status(409).json({ error: "You already have a booking with this vendor on that date." });
 
