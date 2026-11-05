@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import AddToBoard from "../components/AddToBoard";
 import RequestQuoteModal from "../components/RequestQuoteModal";
 import API from "../services/api";
 import { useCompare } from "../utils/compare";
@@ -208,6 +209,7 @@ export default function ComparePage() {
                   <div key={v._id} className="cp-cell cp-cta">
                     <Link to={`/vendor/${v._id}`} className="cp-btn solid">View &amp; book</Link>
                     {isCustomer && <button className="cp-btn ghost" onClick={() => setQuoteFor(v)}>Request quote</button>}
+                    {isCustomer && <AddToBoard serviceId={v._id} label="Save to board" compact />}
                   </div>
                 ))}
               </Row>

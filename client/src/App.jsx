@@ -9,6 +9,9 @@ import VendorDetail       from "./pages/VendorDetail";
 import VendorDashboard    from "./pages/VendorDashboard";
 import VendorAnalytics    from "./pages/VendorAnalytics";
 import VendorCalendar from "./pages/VendorCalendar";
+import Boards from "./pages/Boards";
+import BoardDetail from "./pages/BoardDetail";
+import SharedBoard from "./pages/SharedBoard";
 import EventPlanner       from "./pages/EventPlanner";
 import ComparePage        from "./pages/ComparePage";
 import AddService         from "./pages/AddService";
@@ -72,6 +75,9 @@ export default function App() {
         {/* ── User ── */}
         <Route path="/my-bookings"             element={<UserDashboard />} />
         <Route path="/favourites"              element={<Favorites />} />
+        <Route path="/boards"                  element={<Boards />} />
+        <Route path="/boards/:id"              element={<BoardDetail />} />
+        <Route path="/s/:token"                element={<SharedBoard />} />
         <Route path="/event-planner"           element={<EventPlanner />} />
 
         {/* ── Chat (both users and vendors) ── */}

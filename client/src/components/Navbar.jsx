@@ -241,7 +241,15 @@ export default function Navbar() {
                       {isActive("/favourites") ? "♥" : "♡"}
                     </Link>
                     <Link to="/my-bookings" className="nb-ghost-btn">My Bookings</Link>
-                    <Link to="/event-planner" className="nb-ghost-btn">Planner</Link>
+                    <NavMenu
+                      variant="ghost"
+                      label="Plan"
+                      active={isActive("/event-planner") || location.pathname.startsWith("/boards")}
+                      items={[
+                        { to: "/event-planner", label: "Event Planner", icon: "▤", active: isActive("/event-planner") },
+                        { to: "/boards", label: "My Boards", icon: "❖", active: location.pathname.startsWith("/boards") },
+                      ]}
+                    />
                     <ChatButton />
                     <BellButton onClick={() => { setNotifOpen(o => !o); setProfileOpen(false); }} />
                   </>
@@ -314,6 +322,7 @@ export default function Navbar() {
                     <Link to="/favourites"  className="nb-mobile-link">♡ My Favourites</Link>
                     <Link to="/my-bookings" className="nb-mobile-link">My Bookings</Link>
                     <Link to="/event-planner" className="nb-mobile-link">🗓 Event Planner</Link>
+                    <Link to="/boards" className="nb-mobile-link">🔖 My Boards</Link>
                     <Link to="/messages" className="nb-mobile-link" onClick={() => setMenuOpen(false)}>
                       💬 Messages {unreadChatCount > 0 && `(${unreadChatCount})`}
                     </Link>

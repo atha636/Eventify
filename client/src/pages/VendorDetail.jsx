@@ -8,6 +8,7 @@ import Logo from "../components/Logo";
 import ReviewsSection from "../components/ReviewsSection";
 import { startConversation } from "../services/chatService";
 import RequestQuoteModal from "../components/RequestQuoteModal";
+import AddToBoard from "../components/AddToBoard";
 
 // ── Share Modal ───────────────────────────────────────────────────────────────
 function ShareModal({ vendor, onClose }) {
@@ -675,6 +676,9 @@ export default function VendorDetail() {
                 </button>
               )}
 
+              {/* ── Save to a board (customers) ── */}
+              {!isOwnListing && !isVendor && <AddToBoard serviceId={vendor._id} className="vd-board-btn" />}
+
               {/* ── Message Vendor ── */}
               {!isOwnListing && (
                 <button
@@ -890,6 +894,7 @@ const styles = `
   .vd-message-btn { display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;margin-top:10px;padding:11px;background:var(--btn-bg);border:1px solid var(--btn-bg);border-radius:8px;color:var(--btn-fg);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s; }
   .vd-message-btn:hover:not(:disabled) { background:var(--gold);border-color:var(--gold);color:var(--on-gold); }
   .vd-message-btn:disabled { opacity:0.65;cursor:not-allowed; }
+  .vd-board-btn { width:100%; margin-top:10px; }
   .vd-quote-btn { display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;margin-top:10px;padding:11px;background:transparent;border:1px solid var(--gold);border-radius:8px;color:var(--c-goldtext);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s; }
   .vd-quote-btn:hover { background:var(--gold);color:var(--on-gold); }
   .vd-divider { height:1px;background:var(--border);margin:24px 0; }

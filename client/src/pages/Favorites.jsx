@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
+import AddToBoard from "../components/AddToBoard";
 
 export default function Favorites() {
   const [favorites, setFavorites] = useState([]);
@@ -130,6 +131,7 @@ export default function Favorites() {
                 <p className="fv-topbar-count">
                   <strong>{favorites.length}</strong> saved vendor{favorites.length !== 1 ? "s" : ""}
                 </p>
+                <button className="fv-boards-link" onClick={() => navigate("/boards")}>Organise into boards →</button>
               </div>
 
               <div className="fv-grid">
@@ -221,6 +223,7 @@ export default function Favorites() {
                             </span>
                           </div>
                           <div className="fv-footer-actions">
+                            <AddToBoard serviceId={v._id} label="Board" compact />
                             <button
                               className="fv-remove-btn"
                               onClick={e => { e.stopPropagation(); handleRemove(v._id); }}
@@ -535,6 +538,8 @@ const styles = `
     font-size: 1.2rem; font-weight: 600; color: var(--ink);
     white-space: nowrap;
   }
+  .fv-boards-link { background:none; border:none; color:var(--c-goldtext); font:500 13px 'DM Sans',sans-serif; cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
+  .fv-topbar { gap:16px; }
   .fv-footer-actions {
     display: flex; align-items: center; gap: 6px; flex-shrink: 0;
   }
