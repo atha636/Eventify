@@ -8,6 +8,41 @@ import { getUnreadChatCount } from "../services/chatService";
 import ThemeToggle from "./ThemeToggle";
 import logo from "../assets/logo.png";
 
+// ── Small dropdown used to keep the top bar uncluttered ──────────────────────
+function NavMenu({ label, items, variant = "link", active }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    const away = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const esc = (e) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", away);
+    document.addEventListener("keydown", esc);
+    return () => { document.removeEventListener("mousedown", away); document.removeEventListener("keydown", esc); };
+  }, [open]);
+  return (
+    <div className="nb-menu" ref={ref}>
+      <button
+        type="button"
+        className={`${variant === "link" ? "nb-link" : "nb-ghost-btn"} nb-menu-btn ${active ? (variant === "link" ? "nb-link-active" : "nb-menu-active") : ""} ${open ? "open" : ""}`}
+        aria-haspopup="true" aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+      >
+        {label}<span className="nb-caret" aria-hidden="true" />
+      </button>
+      {open && (
+        <div className="nb-menu-panel" role="menu">
+          {items.map((it) => (
+            <Link key={it.to} to={it.to} role="menuitem" className={`nb-menu-item ${it.active ? "on" : ""}`} onClick={() => setOpen(false)}>
+              <span className="nb-menu-ico" aria-hidden="true">{it.icon}</span>{it.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Navbar() {
   const location  = useLocation();
   const navigate  = useNavigate();
@@ -161,9 +196,15 @@ export default function Navbar() {
             <Link to="/"               className={`nb-link ${isActive("/") ? "nb-link-active" : ""}`}>Home</Link>
             <Link to="/category/decor" className={`nb-link ${location.pathname.startsWith("/category") ? "nb-link-active" : ""}`}>Services</Link>
             <Link to="/vendors"        className={`nb-link ${isActive("/vendors") ? "nb-link-active" : ""}`}>Vendors</Link>
-            <Link to="/blog"           className={`nb-link ${isActive("/blog") ? "nb-link-active" : ""}`}>Blog</Link>
-            <Link to="/about"          className={`nb-link ${isActive("/about") ? "nb-link-active" : ""}`}>About Us</Link>
-            <Link to="/why-evencers"   className={`nb-link ${isActive("/why-evencers") ? "nb-link-active" : ""}`}>Why Us</Link>
+            <NavMenu
+              label="More"
+              active={isActive("/blog") || isActive("/about") || isActive("/why-evencers")}
+              items={[
+                { to: "/blog", label: "Blog", icon: "✎", active: isActive("/blog") },
+                { to: "/about", label: "About Us", icon: "◈", active: isActive("/about") },
+                { to: "/why-evencers", label: "Why Us", icon: "★", active: isActive("/why-evencers") },
+              ]}
+            />
           </div>
 
           {/* ACTIONS */}
@@ -174,9 +215,16 @@ export default function Navbar() {
                 {/* ── VENDOR ACTIONS ── */}
                 {isVendor && (
                   <>
-                    <Link to="/vendor-dashboard" className="nb-ghost-btn">Dashboard</Link>
-                    <Link to="/vendor-calendar" className="nb-ghost-btn">Calendar</Link>
-                    <Link to="/vendor-analytics" className="nb-ghost-btn">Analytics</Link>
+                    <NavMenu
+                      variant="ghost"
+                      label="Manage"
+                      active={isActive("/vendor-dashboard") || isActive("/vendor-calendar") || isActive("/vendor-analytics")}
+                      items={[
+                        { to: "/vendor-dashboard", label: "Dashboard", icon: "▦", active: isActive("/vendor-dashboard") },
+                        { to: "/vendor-calendar", label: "Calendar", icon: "▤", active: isActive("/vendor-calendar") },
+                        { to: "/vendor-analytics", label: "Analytics", icon: "↗", active: isActive("/vendor-analytics") },
+                      ]}
+                    />
                     <ChatButton />
                     <BellButton onClick={() => { setNotifOpen(o => !o); setProfileOpen(false); }} />
                   </>
@@ -484,6 +532,24 @@ const styles = `
   .nb-mobile-divider { height:1px; background:var(--border); margin:4px 24px; }
   .nb-mobile-cta { display:block; margin:8px 24px 16px; padding:13px 20px; background:var(--btn-bg); color:var(--btn-fg); text-decoration:none; text-align:center; border-radius:7px; font-size:13px; font-weight:500; letter-spacing:0.04em; font-family:'DM Sans',sans-serif; transition:background 0.2s,color 0.2s; }
   .nb-mobile-cta:hover { background:var(--gold); color:var(--on-gold); }
+
+  /* ── dropdown menus (More / Manage) ── */
+  .nb-menu { position:relative; display:inline-flex; }
+  .nb-menu-btn { background:none; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; display:inline-flex; align-items:center; gap:6px; }
+  .nb-link.nb-menu-btn { padding-bottom:3px; }
+  .nb-caret { width:6px; height:6px; border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor; transform:translateY(-2px) rotate(45deg); transition:transform .2s; opacity:.8; }
+  .nb-menu-btn.open .nb-caret { transform:translateY(1px) rotate(225deg); }
+  .nb-menu-active { color:var(--gold)!important; }
+  .nb-menu-panel { position:absolute; top:calc(100% + 12px); left:50%; transform:translateX(-50%); min-width:176px; background:var(--ink-surface); border:1px solid rgba(201,168,76,.35); border-radius:12px; padding:6px; box-shadow:0 18px 40px rgba(0,0,0,.35); z-index:50; animation:nbMenuIn .16s ease both; }
+  .nb-actions .nb-menu-panel { left:auto; right:0; transform:none; }
+  .nb-menu-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; color:var(--on-dark)!important; text-decoration:none; font:400 13.5px 'DM Sans',sans-serif; letter-spacing:.02em; text-transform:none; white-space:nowrap; transition:background .15s,color .15s; }
+  .nb-menu-item:hover, .nb-menu-item:focus-visible { background:rgba(201,168,76,.16); color:var(--gold)!important; outline:none; }
+  .nb-menu-item.on { color:var(--gold)!important; }
+  .nb-menu-ico { width:16px; text-align:center; color:var(--gold); font-size:13px; }
+  .nb-menu-btn:focus-visible { outline:2px solid var(--gold); outline-offset:2px; }
+  @keyframes nbMenuIn { from { opacity:0; transform:translate(-50%,-4px); } to { opacity:1; transform:translate(-50%,0); } }
+  .nb-actions .nb-menu-panel { animation-name:nbMenuIn2; }
+  @keyframes nbMenuIn2 { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
 
   @media(max-width:768px){
     .nb-links{display:none}.nb-actions{display:none}

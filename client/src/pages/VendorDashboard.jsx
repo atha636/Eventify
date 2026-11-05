@@ -152,152 +152,6 @@ function Toast({ message, type = "info", onDismiss }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// AVAILABILITY CALENDAR MODAL
-// ─────────────────────────────────────────────────────────────
-function AvailabilityCalendar({ services, onClose }) {
-  const [selectedServiceId, setSelectedServiceId] = useState(services.length > 0 ? services[0]._id : null);
-  const [availability, setAvailability] = useState({});
-  const [viewYear,  setViewYear]  = useState(new Date().getFullYear());
-  const [viewMonth, setViewMonth] = useState(new Date().getMonth());
-  const [saving,    setSaving]    = useState(false);
-  const [loading,   setLoading]   = useState(false);
-  const [saved,     setSaved]     = useState(false);
-  const firstFocusRef = useRef(null);
-
-  useEffect(() => {
-    firstFocusRef.current?.focus();
-    const handleKey = (e) => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, [onClose]);
-
-  useEffect(() => {
-    if (!selectedServiceId) return;
-    setLoading(true);
-    API.get(`/vendors/${selectedServiceId}/availability`)
-      .then((res) => {
-        const map = {};
-        (res.data || []).forEach((entry) => { const key = toKey(new Date(entry.date)); map[key] = entry.available; });
-        setAvailability(map);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [selectedServiceId]);
-
-  const toKey = (date) => {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const d = String(date.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
-  };
-
-  const today = toKey(new Date());
-
-  const toggleDate = (key) => {
-    if (key < today) return;
-    setAvailability((prev) => {
-      const current = prev[key];
-      if (current === false) { const next = { ...prev }; delete next[key]; return next; }
-      return { ...prev, [key]: false };
-    });
-    setSaved(false);
-  };
-
-  const handleSave = async () => {
-    if (!selectedServiceId) return;
-    setSaving(true);
-    try {
-      const dates = Object.entries(availability).map(([date, available]) => ({ date, available }));
-      await API.put(`/vendors/${selectedServiceId}/availability`, { dates });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-    } catch {} finally { setSaving(false); }
-  };
-
-  const daysInMonth    = new Date(viewYear, viewMonth + 1, 0).getDate();
-  const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
-  const monthName      = new Date(viewYear, viewMonth, 1).toLocaleString("en-IN", { month: "long" });
-  const prevMonth = () => { if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1); } else setViewMonth((m) => m - 1); };
-  const nextMonth = () => { if (viewMonth === 11) { setViewMonth(0); setViewYear((y) => y + 1); } else setViewMonth((m) => m + 1); };
-  const unavailableThisMonth = Object.entries(availability).filter(([key, val]) => val === false && key.startsWith(`${viewYear}-${String(viewMonth + 1).padStart(2, "0")}`)).length;
-  const handleBackdrop = (e) => { if (e.target === e.currentTarget) onClose(); };
-
-  return (
-    <div className="ac-overlay" onClick={handleBackdrop} role="dialog" aria-modal="true" aria-label="Availability Calendar">
-      <div className="ac-modal">
-        <button className="ac-close" onClick={onClose} ref={firstFocusRef} aria-label="Close calendar">✕</button>
-        <div className="ac-header">
-          <div className="ac-header-icon" aria-hidden="true">📅</div>
-          <div>
-            <h2 className="ac-title">Availability Calendar</h2>
-            <p className="ac-subtitle">Tell clients when you're available to work</p>
-          </div>
-        </div>
-        {services.length > 1 && (
-          <div className="ac-service-select-wrap">
-            <label className="ac-label" htmlFor="ac-service-select">Manage availability for</label>
-            <select id="ac-service-select" className="ac-service-select" value={selectedServiceId} onChange={(e) => setSelectedServiceId(e.target.value)}>
-              {services.map((s) => (<option key={s._id} value={s._id}>{s.title}</option>))}
-            </select>
-          </div>
-        )}
-        <div className="ac-legend" role="list" aria-label="Calendar legend">
-          {[
-            { cls: "ac-dot-available",   label: "Available",   sub: "(default)" },
-            { cls: "ac-dot-unavailable", label: "Unavailable", sub: null },
-            { cls: "ac-dot-past",        label: "Past date",   sub: null },
-          ].map(({ cls, label, sub }) => (
-            <div key={label} className="ac-legend-item" role="listitem">
-              <span className={`ac-legend-dot ${cls}`} aria-hidden="true" />
-              <span>{label}{sub && <span className="ac-legend-sub"> {sub}</span>}</span>
-            </div>
-          ))}
-        </div>
-        <p className="ac-instruction">Click any <strong>future date</strong> to toggle between available and unavailable.</p>
-        {loading ? (
-          <div className="ac-loading" aria-label="Loading calendar…" role="status">
-            {[...Array(35)].map((_, i) => (<div key={i} className="ac-skeleton-day" style={{ animationDelay: `${i * 0.01}s` }} />))}
-          </div>
-        ) : (
-          <>
-            <div className="ac-month-nav" role="navigation" aria-label="Month navigation">
-              <button className="ac-nav-btn" onClick={prevMonth} aria-label="Previous month">‹</button>
-              <span className="ac-month-label" aria-live="polite">{monthName} {viewYear}</span>
-              <button className="ac-nav-btn" onClick={nextMonth} aria-label="Next month">›</button>
-            </div>
-            <div className="ac-grid" role="grid" aria-label={`${monthName} ${viewYear} availability calendar`}>
-              {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d) => (<div key={d} className="ac-day-header" role="columnheader">{d}</div>))}
-              {[...Array(firstDayOfWeek)].map((_, i) => (<div key={`empty-${i}`} className="ac-day-cell ac-empty" role="gridcell" aria-hidden="true" />))}
-              {[...Array(daysInMonth)].map((_, i) => {
-                const day = i + 1;
-                const key = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-                const isPast = key < today; const isToday = key === today; const isUnavailable = availability[key] === false;
-                let cls = "ac-day-cell";
-                if (isPast) cls += " ac-past"; else if (isUnavailable) cls += " ac-unavailable"; else cls += " ac-available";
-                if (isToday) cls += " ac-today";
-                return (
-                  <button key={key} className={cls} role="gridcell" onClick={() => toggleDate(key)} disabled={isPast} aria-label={`${day} ${monthName}`} aria-pressed={isUnavailable}>
-                    <span className="ac-day-num">{day}</span>
-                    {isUnavailable && <span className="ac-unavail-dot" aria-hidden="true" />}
-                  </button>
-                );
-              })}
-            </div>
-            {unavailableThisMonth > 0 && <p className="ac-month-stat" aria-live="polite">{unavailableThisMonth} day{unavailableThisMonth !== 1 ? "s" : ""} marked unavailable this month</p>}
-          </>
-        )}
-        <div className="ac-footer">
-          <button className="ac-cancel-btn" onClick={onClose}>Cancel</button>
-          <button className={`ac-save-btn ${saved ? "ac-saved" : ""}`} onClick={handleSave} disabled={saving || loading} aria-busy={saving}>
-            {saving ? <span className="ac-spinner" aria-hidden="true" /> : saved ? "✓ Saved!" : "Save Availability"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
 // CONFIRM UNDO POPUP
 // ─────────────────────────────────────────────────────────────
 function ConfirmUndoPopup({ bookingName, onConfirm, onCancel, confirming }) {
@@ -501,7 +355,7 @@ const LEGAL_CONTENT = {
     title: "Help & Support", icon: "💬",
     sections: [
       { heading: "Managing Bookings", body: "Review incoming bookings under the Bookings section. Click any card to open full details. Use the Accept / Reject buttons to respond." },
-      { heading: "Availability Calendar", body: "Click 'Manage Calendar' in the dashboard header to block out dates you're unavailable." },
+      { heading: "Availability Calendar", body: "Click 'Manage Calendar' in the dashboard header to see all your bookings on a calendar and block out dates you're unavailable." },
       { heading: "Adding Services", body: "Click '+ Add New Service' to create a new listing. Fill in your title, description, packages, and photos." },
       { heading: "Date Change Requests", body: "When a client requests a date or address change, a banner will appear at the top of your bookings." },
       { heading: "Payment Issues", body: "If a payment shows as 'Failed', ask the client to retry from their booking page. For disputes, contact admineventify2005@gmail.com." },
@@ -561,7 +415,6 @@ export default function VendorDashboard() {
   const [detailBooking, setDetailBooking] = useState(null);
   const [undoTarget,    setUndoTarget]    = useState(null);
   const [confirming,    setConfirming]    = useState(false);
-  const [showAvailCal,  setShowAvailCal]  = useState(false);
   const [toast,         setToast]         = useState(null);
   const [vendorName,    setVendorName]    = useState("");
   const [legalModal,    setLegalModal]    = useState(null);
@@ -581,10 +434,10 @@ export default function VendorDashboard() {
   useEffect(() => { setBkgVisibleCount(pageSize); }, [filter, searchQuery, pageSize]);
 
   useEffect(() => {
-    const isOpen = popupBooking || detailBooking || undoTarget || showAvailCal || legalModal;
+    const isOpen = popupBooking || detailBooking || undoTarget || legalModal;
     document.body.style.overflow = isOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
-  }, [popupBooking, detailBooking, undoTarget, showAvailCal]);
+  }, [popupBooking, detailBooking, undoTarget]);
 
   const fetchBookings = async () => {
     const token = localStorage.getItem("token");
@@ -735,7 +588,6 @@ export default function VendorDashboard() {
         {popupBooking && (<DateChangePopup booking={popupBooking} onAccept={handleAcceptChange} onReject={handleRejectChange} responding={responding} />)}
         {detailBooking && (<BookingDetailPopup booking={detailBooking} onClose={() => setDetailBooking(null)} onUpdateStatus={updateStatus} updating={updating} onRequestUndo={handleRequestUndo} />)}
         {undoTarget && (<ConfirmUndoPopup bookingName={undoTarget.userId?.name} onConfirm={handleConfirmUndo} onCancel={handleCancelUndo} confirming={confirming} />)}
-        {showAvailCal && services.length > 0 && (<AvailabilityCalendar services={services} onClose={() => setShowAvailCal(false)} />)}
         {legalModal && <LegalModal type={legalModal} onClose={() => setLegalModal(null)} />}
           <VendorCouponModal />
 
@@ -764,7 +616,7 @@ export default function VendorDashboard() {
                   onClick={() => {
                     if (loadingS) return;
                     if (services.length === 0) { showToast("Add at least one service before setting availability.", "warning"); return; }
-                    setShowAvailCal(true);
+                    window.location.assign("/vendor-calendar");
                   }}
                   disabled={loadingS}
                   aria-label="Open availability calendar"
@@ -1039,58 +891,6 @@ const styles = `
   .toast-close { background: none; border: none; cursor: pointer; font-size: 11px; color: var(--muted); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s, color 0.2s; }
   .toast-close:hover { background: rgba(14,12,10,0.08); color: var(--ink); }
   @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-12px) scale(0.95); } to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }
-
-  /* ── AVAILABILITY CALENDAR ── */
-  .ac-overlay { position: fixed; inset: 0; background: rgba(14,12,10,0.7); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 1400; padding: 16px; animation: fadeIn 0.2s ease both; }
-  .ac-modal { position: relative; background: var(--white); border: 1px solid rgba(201,168,76,0.22); border-radius: 24px; padding: 36px 32px 28px; width: min(600px, 98vw); max-height: 96vh; overflow-y: auto; box-shadow: var(--shadow-lg); animation: popupUp 0.32s cubic-bezier(0.34,1.15,0.64,1) both; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
-  .ac-modal::-webkit-scrollbar { width: 4px; }
-  .ac-modal::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-  .ac-close { position: absolute; top: 14px; right: 14px; width: 30px; height: 30px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); font-size: 12px; color: var(--muted); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
-  .ac-close:hover { background: var(--btn-bg); color: var(--btn-fg); border-color: var(--btn-bg); }
-  .ac-header { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
-  .ac-header-icon { width: 48px; height: 48px; flex-shrink: 0; border-radius: 12px; background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.25); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
-  .ac-title { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 600; color: var(--ink); margin-bottom: 3px; }
-  .ac-subtitle { font-size: 12.5px; color: var(--muted); }
-  .ac-service-select-wrap { margin-bottom: 18px; }
-  .ac-label { display: block; font-size: 10.5px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
-  .ac-service-select { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--ink); outline: none; cursor: pointer; transition: border-color 0.2s; }
-  .ac-service-select:focus { border-color: var(--gold); }
-  .ac-legend { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 12px; }
-  .ac-legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
-  .ac-legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
-  .ac-dot-available   { background: rgba(45,106,79,0.15);   border: 1.5px solid rgba(45,106,79,0.4); }
-  .ac-dot-unavailable { background: rgba(184,92,92,0.15);   border: 1.5px solid rgba(184,92,92,0.4); }
-  .ac-dot-past        { background: rgba(122,114,101,0.12); border: 1.5px solid rgba(122,114,101,0.25); }
-  .ac-legend-sub { font-size: 10.5px; opacity: 0.7; }
-  .ac-instruction { font-size: 12.5px; color: var(--muted); line-height: 1.6; margin-bottom: 18px; padding: 10px 14px; background: rgba(201,168,76,0.05); border: 1px solid rgba(201,168,76,0.18); border-radius: 8px; }
-  .ac-instruction strong { color: var(--ink); }
-  .ac-month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-  .ac-nav-btn { width: 34px; height: 34px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); font-size: 18px; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; line-height: 1; }
-  .ac-nav-btn:hover { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.06); }
-  .ac-month-label { font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; font-weight: 600; color: var(--ink); }
-  .ac-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 14px; }
-  .ac-day-header { text-align: center; font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 6px 0; }
-  .ac-day-cell { position: relative; aspect-ratio: 1; border-radius: 8px; border: 1.5px solid transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.18s; font-family: 'DM Sans', sans-serif; background: none; min-height: 36px; }
-  .ac-day-cell.ac-empty { background: none; border: none; cursor: default; }
-  .ac-day-cell.ac-available { background: rgba(45,106,79,0.07); border-color: rgba(45,106,79,0.2); }
-  .ac-day-cell.ac-available:hover { background: rgba(184,92,92,0.1); border-color: rgba(184,92,92,0.35); transform: scale(1.06); }
-  .ac-day-cell.ac-unavailable { background: rgba(184,92,92,0.1); border-color: rgba(184,92,92,0.35); }
-  .ac-day-cell.ac-unavailable:hover { background: rgba(45,106,79,0.1); border-color: rgba(45,106,79,0.3); transform: scale(1.06); }
-  .ac-day-cell.ac-past { background: rgba(122,114,101,0.06); border-color: transparent; cursor: not-allowed; opacity: 0.45; }
-  .ac-day-cell.ac-today .ac-day-num { background: var(--gold); color: var(--on-dark); width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 11px; }
-  .ac-day-num { font-size: 12px; color: var(--ink); line-height: 1; }
-  .ac-unavail-dot { width: 4px; height: 4px; border-radius: 50%; background: #b85c5c; margin-top: 2px; }
-  .ac-month-stat { font-size: 11.5px; color: var(--muted); text-align: center; margin-bottom: 8px; padding: 6px 12px; background: rgba(184,92,92,0.06); border: 1px solid rgba(184,92,92,0.18); border-radius: 20px; display: inline-block; margin-left: 50%; transform: translateX(-50%); }
-  .ac-loading { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; margin-bottom: 14px; }
-  .ac-skeleton-day { aspect-ratio: 1; border-radius: 8px; background: linear-gradient(90deg, var(--track) 25%, var(--track) 50%, var(--track) 75%); background-size: 200% 100%; animation: shimmer 1.4s ease infinite; }
-  .ac-footer { display: flex; gap: 10px; padding-top: 18px; border-top: 1px solid var(--border); margin-top: 8px; }
-  .ac-cancel-btn { flex: 1; padding: 12px 16px; background: none; color: var(--muted); border: 1px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.2s; }
-  .ac-cancel-btn:hover { border-color: var(--gold); color: var(--ink); }
-  .ac-save-btn { flex: 2; padding: 12px 16px; background: var(--btn-bg); color: var(--btn-fg); border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.22s; display: flex; align-items: center; justify-content: center; gap: 6px; }
-  .ac-save-btn:hover:not(:disabled) { background: #2a2420; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(14,12,10,0.2); }
-  .ac-save-btn:disabled { opacity: 0.55; cursor: not-allowed; }
-  .ac-save-btn.ac-saved { background: #2d6a4f; }
-  .ac-spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
 
   /* ── CONFIRM UNDO ── */
   .cu-overlay { position: fixed; inset: 0; background: rgba(14,12,10,0.65); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1300; padding: 20px; animation: fadeIn 0.18s ease both; }
