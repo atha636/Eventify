@@ -196,6 +196,8 @@ app.use("/api/recommendations", require("./routes/recommendRoutes"));
 // Quote requests / custom offers (customer <-> vendor, built on chat)
 app.use("/api/quotes",        require("./routes/quoteRoutes"));
 app.use("/api/calendar",      require("./routes/calendarRoutes"));
+app.use("/api/boards",        require("./routes/boardRoutes").owner);
+app.use("/api/shared",        require("./routes/boardRoutes").pub);
 
 // ── Health check ─────────────────────────────────────────────
 app.get("/", (req, res) => res.json({ status: "ok", app: "Evencers API" }));
