@@ -1,4 +1,5 @@
 const { hasApprovedBooking } = require("../utils/availability");
+const { checkPromo } = require("../utils/promo");
 const Booking      = require("../models/Booking");
 const Vendor       = require("../models/Vendor");
 const User         = require("../models/User");
@@ -21,28 +22,25 @@ const { sendEmail } = require("../utils/sendEmail");
  *
  * Plan "100" → installment 1: 95% now  (5 % discount applied — user pays 95%)
  */
-function buildInstallments(plan, packagePrice) {
+function buildInstallments(plan, packagePrice, promoPercent = 0) {
   const price = Number(packagePrice);
+  const pct   = Number(promoPercent) || 0;
+  // A vendor code takes an extra `pct`% of the PRICE off in total (so full-pay + code = a true 10%).
+  // That saving is spread across the instalments in proportion to their size.
+  const make = (shares) => {
+    const total = shares.reduce((t, x) => t + x.share, 0);          // 1 for 25/75 plans, 0.95 for full pay
+    return shares.map((x, i) => ({
+      installmentNumber: i + 1,
+      percentage: x.pct,
+      amount: Math.round(price * (x.share - (x.share / total) * pct / 100)),
+      status: "pending",
+    }));
+  };
 
-  if (plan === "25") {
-    return [
-      { installmentNumber: 1, percentage: 25, amount: Math.round(price * 0.25), status: "pending" },
-      { installmentNumber: 2, percentage: 50, amount: Math.round(price * 0.50), status: "pending" },
-      { installmentNumber: 3, percentage: 25, amount: Math.round(price * 0.25), status: "pending" },
-    ];
-  }
-
-  if (plan === "75") {
-    return [
-      { installmentNumber: 1, percentage: 75, amount: Math.round(price * 0.75), status: "pending" },
-      { installmentNumber: 2, percentage: 25, amount: Math.round(price * 0.25), status: "pending" },
-    ];
-  }
-
+  if (plan === "25") return make([{ share: 0.25, pct: 25 }, { share: 0.50, pct: 50 }, { share: 0.25, pct: 25 }]);
+  if (plan === "75") return make([{ share: 0.75, pct: 75 }, { share: 0.25, pct: 25 }]);
   // plan === "100"  → 5 % discount: user pays 95 %
-  return [
-    { installmentNumber: 1, percentage: 95, amount: Math.round(price * 0.95), status: "pending" },
-  ];
+  return make([{ share: 0.95, pct: 95 }]);
 }
 
 /**
@@ -71,6 +69,7 @@ exports.createBooking = async (req, res) => {
       packageName,
       userDetails,
       paymentPlan = "100",   // default to full payment
+      promoCode,
     } = req.body;
 
     // ── Validate plan value ──────────────────────────────────────
@@ -145,7 +144,20 @@ exports.createBooking = async (req, res) => {
     }
 
     // ── Build installments (server-resolved price only) ──────────
-    const installments = buildInstallments(paymentPlan, resolvedPrice);
+    // ── Optional vendor code → extra 5% off ──────────────────────
+    let promo = null;
+    if (promoCode !== undefined && String(promoCode).trim() !== "") {
+      const chk = await checkPromo({ code: promoCode, service: vendor, userId: req.user.id });
+      if (!chk.ok) return res.status(400).json({ error: chk.error, promoError: true });
+      const sum = (arr) => arr.reduce((t, i) => t + i.amount, 0);
+      const discountAmount = sum(buildInstallments(paymentPlan, resolvedPrice)) - sum(buildInstallments(paymentPlan, resolvedPrice, chk.percent));
+      const firstUseForVendor = !(await Booking.exists({
+        "promo.ownerId": chk.ownerId, status: { $in: ["pending", "approved"] },
+      }));
+      promo = { code: chk.code, percent: chk.percent, discountAmount, ownerId: chk.ownerId, firstUseForVendor, appliedAt: new Date() };
+    }
+
+    const installments = buildInstallments(paymentPlan, resolvedPrice, promo?.percent || 0);
 
     // ── Create booking ───────────────────────────────────────────
     const booking = await Booking.create({
@@ -162,6 +174,7 @@ exports.createBooking = async (req, res) => {
       },
       paymentPlan,
       installments,
+      ...(promo ? { promo } : {}),
       totalPaid:       0,
       paymentComplete: false,
       paymentStatus:   "pending",

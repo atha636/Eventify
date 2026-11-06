@@ -198,6 +198,7 @@ app.use("/api/quotes",        require("./routes/quoteRoutes"));
 app.use("/api/calendar",      require("./routes/calendarRoutes"));
 app.use("/api/boards",        require("./routes/boardRoutes").owner);
 app.use("/api/shared",        require("./routes/boardRoutes").pub);
+app.use("/api/promo",         require("./routes/promoRoutes"));
 
 // ── Health check ─────────────────────────────────────────────
 app.get("/", (req, res) => res.json({ status: "ok", app: "Evencers API" }));

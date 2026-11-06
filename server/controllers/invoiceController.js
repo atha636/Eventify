@@ -240,7 +240,8 @@ function buildPdf(inv) {
       const rows = [
         { d: inv.packageName, sub: inv.vendor.service, a: inv.packagePrice },
       ];
-      if (inv.discount > 0) rows.push({ d: "Full-payment discount (5%)", sub: "Applied because you chose to pay in full", a: -inv.discount, green: true });
+      if (inv.planDiscount > 0) rows.push({ d: "Full-payment discount (5%)", sub: "Applied because you chose to pay in full", a: -inv.planDiscount, green: true });
+      if (inv.promoDiscount > 0) rows.push({ d: `Vendor code ${inv.promoCode} (${inv.promoPercent}% extra off)`, sub: "Applied because you used the vendor's code", a: -inv.promoDiscount, green: true });
 
       rows.forEach((r) => {
         const h = Math.max(34, heightOf(r.d, ws[0], 10, true) + (r.sub ? 16 : 0) + 14);
@@ -407,6 +408,8 @@ exports.getInvoice = async (req, res) => {
     const scheduleTotal = installments.reduce((t, i) => t + (Number(i.amount) || 0), 0);
     const totalPayable  = installments.length ? scheduleTotal : packagePrice;
     const discount      = Math.max(0, packagePrice - totalPayable);
+    const promoDiscount = Math.min(discount, Number(booking.promo?.discountAmount) || 0);
+    const planDiscount  = discount - promoDiscount;
     const paid          = Math.min(Number(booking.totalPaid) || 0, totalPayable || Infinity);
     const balance       = Math.max(0, totalPayable - paid);
 
@@ -436,6 +439,7 @@ exports.getInvoice = async (req, res) => {
       eventDate: booking.date,
       packageName: booking.packageName || "Custom package",
       packagePrice,
+      promoDiscount, planDiscount, promoCode: booking.promo?.code || null, promoPercent: booking.promo?.percent || 0,
       discount,
       totalPayable,
       paid,

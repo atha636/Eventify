@@ -35,6 +35,18 @@ const bookingSchema = new mongoose.Schema({
   // "75"  → 75% now · 25% after event confirmation
   // "100" → 95% now (5% discount applied)
   paymentPlan:     { type: String, enum: ["25", "75", "100"], default: "100" },
+
+  // ── Vendor code (extra 5% off) ──────────────────────────────────────────────
+  // Set when the customer applied the vendor's code while booking. The discount is already
+  // baked into `installments`; discountAmount is the total ₹ saved, kept for invoices/analytics.
+  promo: {
+    code:             { type: String, default: null },
+    percent:          { type: Number, default: 0 },
+    discountAmount:   { type: Number, default: 0 },
+    ownerId:          { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },   // vendor who owns the code
+    firstUseForVendor:{ type: Boolean, default: false },   // vendor's "free brokerage on first client" use
+    appliedAt:        { type: Date, default: null },
+  },
   installments:    [installmentSchema],
   totalPaid:       { type: Number,  default: 0     },
   paymentComplete: { type: Boolean, default: false  },
