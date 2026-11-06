@@ -565,6 +565,7 @@ export default function UserDashboard() {
                         <div className="ud-date-chip"><span className="ud-date-icon">🗓</span><time dateTime={new Date(b.date).toISOString().split("T")[0]}>{fmt(b.date)}</time></div>
                         {b.packageName  && <div className="ud-date-chip"><span className="ud-date-icon">📦</span><span>{b.packageName}</span></div>}
                         {b.packagePrice && <div className="ud-date-chip"><span className="ud-date-icon">₹</span><span>{b.packagePrice.toLocaleString()}</span></div>}
+                        {b.promo?.code && <div className="ud-date-chip"><span className="ud-date-icon">🎟</span><span>Code {b.promo.code} · −₹{Math.round(b.promo.discountAmount || 0).toLocaleString("en-IN")}</span></div>}
                       </div>
 
                       {/* ── Pay Now Banner — UPDATED: "Pay →" only ── */}

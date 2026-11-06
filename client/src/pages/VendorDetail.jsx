@@ -9,6 +9,7 @@ import ReviewsSection from "../components/ReviewsSection";
 import { startConversation } from "../services/chatService";
 import RequestQuoteModal from "../components/RequestQuoteModal";
 import AddToBoard from "../components/AddToBoard";
+import PromoCodeBox from "../components/PromoCodeBox";
 
 // ── Share Modal ───────────────────────────────────────────────────────────────
 function ShareModal({ vendor, onClose }) {
@@ -191,36 +192,38 @@ function CustomDatePicker({ value, onChange, hasError }) {
 }
 
 // ── Payment Plan Selector ─────────────────────────────────────────────────────
-function PaymentPlanSelector({ price, selectedPlan, onChange }) {
+function PaymentPlanSelector({ price, selectedPlan, onChange, promoPercent = 0 }) {
+  // vendor code: takes an extra promoPercent% of the price off in total, spread over the instalments
+  const amt = (share, total = 1) => Math.round(price * (share - (share / total) * promoPercent / 100));
   const plans = [
     {
       id: "25", label: "Book Date", badge: "25% Now",
       color: "var(--c-green)", bgColor: "rgba(45,106,79,0.07)", borderColor: "rgba(45,106,79,0.3)",
-      amountNow: Math.round(price * 0.25),
+      amountNow: amt(0.25),
       description: "Pay 25% to lock your date",
       steps: [
-        { label: "Now",           detail: `₹${Math.round(price * 0.25).toLocaleString("en-IN")} (25%)` },
-        { label: "3 days before", detail: `₹${Math.round(price * 0.50).toLocaleString("en-IN")} (50%) — reminder sent daily` },
-        { label: "After event",   detail: `₹${Math.round(price * 0.25).toLocaleString("en-IN")} (25%)` },
+        { label: "Now",           detail: `₹${amt(0.25).toLocaleString("en-IN")} (25%)` },
+        { label: "3 days before", detail: `₹${amt(0.50).toLocaleString("en-IN")} (50%) — reminder sent daily` },
+        { label: "After event",   detail: `₹${amt(0.25).toLocaleString("en-IN")} (25%)` },
       ],
     },
     {
       id: "75", label: "Partial Pay", badge: "75% Now",
       color: "#b87333", bgColor: "rgba(184,115,51,0.07)", borderColor: "rgba(184,115,51,0.3)",
-      amountNow: Math.round(price * 0.75),
+      amountNow: amt(0.75),
       description: "Pay 75% now, rest after event",
       steps: [
-        { label: "Now",         detail: `₹${Math.round(price * 0.75).toLocaleString("en-IN")} (75%)` },
-        { label: "After event", detail: `₹${Math.round(price * 0.25).toLocaleString("en-IN")} (25%)` },
+        { label: "Now",         detail: `₹${amt(0.75).toLocaleString("en-IN")} (75%)` },
+        { label: "After event", detail: `₹${amt(0.25).toLocaleString("en-IN")} (25%)` },
       ],
     },
     {
-      id: "100", label: "Full Pay", badge: "5% Off",
+      id: "100", label: "Full Pay", badge: promoPercent ? `${5 + promoPercent}% Off` : "5% Off",
       color: "#c9a84c", bgColor: "rgba(201,168,76,0.07)", borderColor: "rgba(201,168,76,0.3)",
-      amountNow: Math.round(price * 0.95),
-      description: "Pay full amount, get 5% discount",
+      amountNow: amt(0.95, 0.95),
+      description: promoPercent ? "Full payment 5% + vendor code 5% off" : "Pay full amount, get 5% discount",
       steps: [
-        { label: "Now", detail: `₹${Math.round(price * 0.95).toLocaleString("en-IN")} (save ₹${Math.round(price * 0.05).toLocaleString("en-IN")})` },
+        { label: "Now", detail: `₹${amt(0.95, 0.95).toLocaleString("en-IN")} (save ₹${(Math.round(price) - amt(0.95, 0.95)).toLocaleString("en-IN")})` },
       ],
     },
   ];
@@ -303,6 +306,7 @@ export default function VendorDetail() {
   const [selectedPackage, setSelectedPackage] = useState(0);
   const [selectedSlot,    setSelectedSlot]    = useState("");   // decor
   const [selectedPlan,    setSelectedPlan]    = useState("100");
+  const [promo,           setPromo]           = useState(null);   // { code, percent } once a vendor code is applied
   const [loading,         setLoading]         = useState(false);
   const [dateWarning,     setDateWarning]     = useState("");
 
@@ -360,15 +364,16 @@ export default function VendorDetail() {
 
   const getButtonAmount = () => {
     if (!currentPrice) return 0;
-    if (selectedPlan === "25")  return Math.round(currentPrice * 0.25);
-    if (selectedPlan === "75")  return Math.round(currentPrice * 0.75);
-    return Math.round(currentPrice * 0.95);
+    const pp = (promo?.percent || 0) / 100;       // code = extra pp of the price off in total
+    if (selectedPlan === "25")  return Math.round(currentPrice * (0.25 - 0.25 * pp));
+    if (selectedPlan === "75")  return Math.round(currentPrice * (0.75 - 0.75 * pp));
+    return Math.round(currentPrice * (0.95 - pp));
   };
 
   const getPlanNote = () => {
     if (selectedPlan === "25")  return "Secure your date · Pay remaining 75% in installments";
     if (selectedPlan === "75")  return "75% now · 25% after event confirmation";
-    return "Best value · 5% discount applied · One-time payment";
+    return promo ? `Best value · ${5 + promo.percent}% off with your vendor code · One-time payment` : "Best value · 5% discount applied · One-time payment";
   };
 
   // ── Reserve click handler ─────────────────────────────────────────────────
@@ -431,13 +436,14 @@ export default function VendorDetail() {
     // from the vendor's own stored packages, so it can't be tampered with.
     await API.post(
       "/bookings",
-      { vendorId: vendor._id, date: selectedDate, packageName, userDetails, paymentPlan: selectedPlan },
+      { vendorId: vendor._id, date: selectedDate, packageName, userDetails, paymentPlan: selectedPlan, ...(promo ? { promoCode: promo.code } : {}) },
       { headers: { Authorization: `Bearer ${token}` } }
     );
     setShowDetailsModal(false);
     setShowWaitModal(true);
   } catch (err) {
     console.error(err);
+    if (err.response?.data?.promoError) setPromo(null);      // code stopped working — let them re-enter or continue without it
     setDateWarning(err.response?.data?.error || "Failed to create booking");
     setShowDetailsModal(false);
   } finally {
@@ -712,7 +718,21 @@ export default function VendorDetail() {
                 price={currentPrice}
                 selectedPlan={selectedPlan}
                 onChange={setSelectedPlan}
+                promoPercent={promo?.percent || 0}
               />
+
+              {/* ── Vendor code (extra 5% off) — customers only ── */}
+              {!isVendor && (
+                <PromoCodeBox
+                  serviceId={vendor._id}
+                  packageName={isDecor ? undefined : vendor.packages?.[selectedPackage]?.name}
+                  price={currentPrice}
+                  applied={promo}
+                  onApply={setPromo}
+                  loggedIn={!!localStorage.getItem("token")}
+                  onNeedLogin={() => setShowLoginModal(true)}
+                />
+              )}
 
               <div className="vd-divider" />
 
@@ -743,7 +763,7 @@ export default function VendorDetail() {
                   <>
                     {selectedPlan === "25"  && `Book Date — Pay ₹${getButtonAmount().toLocaleString("en-IN")} Now`}
                     {selectedPlan === "75"  && `Pay 75% — ₹${getButtonAmount().toLocaleString("en-IN")} Now`}
-                    {selectedPlan === "100" && `Pay Full — ₹${getButtonAmount().toLocaleString("en-IN")} (5% off)`}
+                    {selectedPlan === "100" && `Pay Full — ₹${getButtonAmount().toLocaleString("en-IN")} (${5 + (promo?.percent || 0)}% off)`}
                   </>
                 )}
               </button>

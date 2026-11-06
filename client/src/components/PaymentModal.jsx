@@ -68,7 +68,11 @@ export default function PaymentModal({ booking, vendor, onSuccess, onClose }) {
   const installmentNum = nextInstallment?.installmentNumber || 1;
   const planMeta      = PLAN_META[paymentPlan] || PLAN_META["100"];
   const totalPaid     = booking.totalPaid || 0;
-  const remaining     = (booking.packagePrice || 0) - totalPaid - amount;
+  // what is still to pay after this instalment (from the schedule, so discounts are respected)
+  const remaining     = installments.length
+    ? installments.filter((i) => i.status !== "paid" && i.installmentNumber !== installmentNum).reduce((t, i) => t + (i.amount || 0), 0)
+    : (booking.packagePrice || 0) - totalPaid - amount;
+  const promo         = booking.promo?.code ? booking.promo : null;
   const isMultiStep   = installments.length > 1;
   const eventDate     = new Date(booking.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
@@ -228,6 +232,12 @@ export default function PaymentModal({ booking, vendor, onSuccess, onClose }) {
                   ₹{amount.toLocaleString("en-IN")}
                 </span>
               </div>
+
+              {promo && (
+                <div className="pm-discount">
+                  🎟 Vendor code {promo.code} — extra {promo.percent}% off, you save ₹{Math.round(promo.discountAmount || 0).toLocaleString("en-IN")}
+                </div>
+              )}
 
               {/* 5% discount note */}
               {paymentPlan === "100" && (

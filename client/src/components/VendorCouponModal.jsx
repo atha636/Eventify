@@ -72,8 +72,8 @@ if (code && neverSeen) {
           <h2 className="vcm-title">Share &amp; Save Brokerage</h2>
           <p className="vcm-desc">
             Welcome, <strong>{name}</strong>! Share this code with clients —
-            when they apply it, You get <strong>zero brokerage</strong> on their
-            first transaction, and you build trust faster.
+            when they apply it at checkout they get an <strong>extra 5% off</strong>, and
+            you get <strong>zero brokerage</strong> on their first transaction.
           </p>
 
           {/* coupon ticket */}

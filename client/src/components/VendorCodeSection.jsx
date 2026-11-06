@@ -1,10 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getMyCodeStats } from "../services/promoService";
 
 export default function VendorCodeSection() {
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const code = user?.vendorCode;
   const [copied, setCopied] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const [stats, setStats] = useState(null);
+
+  useEffect(() => {
+    if (!code) return;
+    let alive = true;
+    getMyCodeStats().then((r) => alive && setStats(r));
+    return () => { alive = false; };
+  }, [code]);
 
   if (!code) return null;
 
@@ -17,7 +26,7 @@ export default function VendorCodeSection() {
   };
 
   const handleShare = async () => {
-    const shareText = `Use my vendor code ${code} on Evencers to get FREE brokerage on your first booking! 🎉`;
+    const shareText = `Book me on Evencers and use my code ${code} at checkout for an extra 5% off! 🎉`;
     if (navigator.share) {
       try {
         await navigator.share({ title: "My Evencers Vendor Code", text: shareText });
@@ -43,7 +52,7 @@ export default function VendorCodeSection() {
           <div className="vcs-icon" aria-hidden="true">🎟</div>
           <div>
             <p className="vcs-label">My Coupon Code</p>
-            <p className="vcs-hint">Share with clients → You get free brokerage on first booking</p>
+            <p className="vcs-hint">Clients get an extra 5% off with your code · You get free brokerage on first booking{stats ? ` · Used by ${stats.uses} client${stats.uses === 1 ? "" : "s"}` : ""}</p>
           </div>
         </div>
 
