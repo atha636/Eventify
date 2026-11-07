@@ -16,10 +16,13 @@ async function syncVendorRating(vendorId) {
   const avg   = stats.length ? Math.round(stats[0].avg * 10) / 10 : undefined;
   const count = stats.length ? stats[0].count : 0;
 
-  await Vendor.findByIdAndUpdate(vendorId, {
-    rating: avg,
-    reviewCount: count,
-  });
+  // With no reviews left, clear the rating (undefined would leave the stale value)
+  await Vendor.findByIdAndUpdate(
+    vendorId,
+    avg === undefined
+      ? { $set: { reviewCount: 0 }, $unset: { rating: 1 } }
+      : { $set: { rating: avg, reviewCount: count } }
+  );
 }
 
 // ── GET /api/reviews/vendor/:vendorId ──────────────────────────────────────
@@ -76,7 +79,8 @@ exports.getMyReviewStatus = async (req, res) => {
       Booking.findOne({
         vendorId,
         userId,
-        status: { $in: ["approved"] },
+        status: "approved",
+        totalPaid: { $gt: 0 },
       }).sort({ createdAt: -1 }),
     ]);
 
@@ -116,7 +120,8 @@ exports.createOrUpdateReview = async (req, res) => {
     const qualifyingBooking = await Booking.findOne({
       vendorId,
       userId,
-      status: { $in: ["approved"] },
+      status: "approved",
+        totalPaid: { $gt: 0 },
     }).sort({ createdAt: -1 });
 
     if (!qualifyingBooking) {
