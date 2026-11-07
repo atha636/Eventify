@@ -2,6 +2,8 @@ const User         = require("../models/User");
 const Vendor       = require("../models/Vendor");
 const Booking      = require("../models/Booking");
 const Notification = require("../models/Notification");
+const Review       = require("../models/Review");
+const Quote        = require("../models/Quote");
 const bcrypt       = require("bcryptjs");
 const jwt          = require("jsonwebtoken");
 const crypto       = require("crypto");
@@ -17,7 +19,14 @@ const { generateVendorCode } = require("./authController");
 // ─────────────────────────────────────────
 exports.adminRegister = async (req, res) => {
   const { name, email, password, adminSecret } = req.body;
-  if (adminSecret !== process.env.ADMIN_SECRET) {
+  // If ADMIN_SECRET isn't configured, `undefined !== undefined` is false and
+  // anyone could create an admin — so refuse outright when it's missing.
+  const secret = process.env.ADMIN_SECRET;
+  const okSecret =
+    !!secret && typeof adminSecret === "string" &&
+    adminSecret.length === secret.length &&
+    crypto.timingSafeEqual(Buffer.from(adminSecret), Buffer.from(secret));
+  if (!okSecret) {
     return res.status(403).json({ msg: "Invalid admin secret key" });
   }
   try {
@@ -106,9 +115,13 @@ exports.deleteUser = async (req, res) => {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ msg: "User not found" });
     if (user.role === "admin") return res.status(403).json({ msg: "Cannot delete admin" });
+    // Remove everything hanging off this account (and off their services)
+    const serviceIds = (await Vendor.find({ vendorId: req.params.id }).select("_id")).map((v) => v._id);
     await User.findByIdAndDelete(req.params.id);
     await Vendor.deleteMany({ vendorId: req.params.id });
-    await Booking.deleteMany({ userId: req.params.id });
+    await Booking.deleteMany({ $or: [{ userId: req.params.id }, { vendorId: { $in: serviceIds } }] });
+    await Review.deleteMany({ $or: [{ userId: req.params.id }, { vendorId: { $in: serviceIds } }] });
+    await Quote.deleteMany({ $or: [{ userId: req.params.id }, { vendorUserId: req.params.id }] });
     res.json({ msg: "User deleted" });
   } catch (err) {
     res.status(500).json({ msg: "Server error" });
@@ -150,6 +163,8 @@ exports.deleteService = async (req, res) => {
     const service = await Vendor.findByIdAndDelete(req.params.id);
     if (!service) return res.status(404).json({ msg: "Service not found" });
     await Booking.deleteMany({ vendorId: req.params.id });
+    await Review.deleteMany({ vendorId: req.params.id });
+    await Quote.deleteMany({ serviceId: req.params.id });
     res.json({ msg: "Service deleted" });
   } catch (err) {
     res.status(500).json({ msg: "Server error" });
