@@ -342,6 +342,12 @@ exports.updateBookingStatus = async (req, res) => {
     });
     if (!vendor) return res.status(403).json({ error: "Unauthorized" });
 
+    // Only a pending request can be approved/rejected (no reviving cancelled
+    // bookings or rejecting ones the customer already paid for)
+    if (booking.status !== "pending") {
+      return res.status(400).json({ error: `Booking is already ${booking.status}.` });
+    }
+
     booking.status = status;
     await booking.save();
 
@@ -543,7 +549,11 @@ exports.cancelBooking = async (req, res) => {
       return res.status(403).json({ error: "Unauthorized" });
     }
 
-    if (["approved"].includes(booking.status) && booking.totalPaid > 0) {
+    if (["cancelled", "rejected"].includes(booking.status)) {
+      return res.status(400).json({ error: `Booking is already ${booking.status}.` });
+    }
+
+    if (booking.totalPaid > 0) {
       return res.status(400).json({
         error: "Cannot cancel a paid booking. Please request a refund instead.",
       });
