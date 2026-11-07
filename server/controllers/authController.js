@@ -64,7 +64,7 @@ exports.register = async (req, res) => {
 
   try {
     const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = require("crypto").randomInt(100000, 1000000).toString();
 
     if (existingUser) {
       if (existingUser.isVerified) return res.status(400).json({ msg: "User already exists" });
@@ -233,7 +233,7 @@ exports.forgotPassword = async (req, res) => {
     if (!user || !user.isVerified) return res.json({ msg: "If this email exists, an OTP has been sent." });
     if (!user.password) return res.status(400).json({ msg: "This account uses Google login. No password to reset." });
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = require("crypto").randomInt(100000, 1000000).toString();
     user.resetOtp = otp;
     user.resetOtpExpires = Date.now() + 10 * 60 * 1000;
     await user.save();
