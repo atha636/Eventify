@@ -89,6 +89,11 @@ exports.createOrder = async (req, res) => {
 
     const inst = booking.installments[targetIdx];
 
+    // Installments must be paid in order
+    if (booking.installments.slice(0, targetIdx).some((i) => i.status !== "paid")) {
+      return res.status(400).json({ error: "Please pay the earlier installment first." });
+    }
+
     if (inst.status === "paid") {
       return res.status(400).json({ error: "This installment has already been paid" });
     }
@@ -99,7 +104,7 @@ exports.createOrder = async (req, res) => {
       targetIdx === booking.installments.length - 1 &&
       booking.installments.length > 1;
 
-    if (isFinalInstallment && !booking.eventConfirmedByVendor && !booking.eventConfirmedByUser) {
+    if (isFinalInstallment && (!booking.eventConfirmedByVendor || !booking.eventConfirmedByUser)) {
       return res.status(400).json({
         error: "Final payment can only be made after the event is confirmed by both parties.",
       });
@@ -184,7 +189,9 @@ exports.verifyPayment = async (req, res) => {
     hmac.update(`${razorpayOrderId}|${razorpayPaymentId}`);
     const generatedSig = hmac.digest("hex");
 
-    if (generatedSig !== razorpaySignature) {
+    const a = Buffer.from(generatedSig);
+    const b = Buffer.from(String(razorpaySignature));
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
       console.warn("SIGNATURE MISMATCH — possible fraud");
       return res.status(400).json({ error: "Payment verification failed" });
     }
@@ -199,14 +206,25 @@ exports.verifyPayment = async (req, res) => {
     if (payment.userId.toString() !== req.user.id) {
       return res.status(403).json({ error: "Unauthorized" });
     }
+    // The signed order must be the order this Payment record was created for
+    if (payment.orderId !== razorpayOrderId) {
+      return res.status(400).json({ error: "Payment does not match this order" });
+    }
     if (payment.status === "paid") {
       return res.status(400).json({ error: "This payment has already been verified." });
     }
 
-    payment.paymentId         = razorpayPaymentId;
-    payment.razorpaySignature = razorpaySignature;
-    payment.status            = "paid";
-    await payment.save();
+    // Atomic transition so a double-submit cannot be counted twice
+    const claimed = await Payment.findOneAndUpdate(
+      { _id: payment._id, status: { $ne: "paid" } },
+      { $set: { paymentId: razorpayPaymentId, razorpaySignature, status: "paid" } },
+      { new: true }
+    );
+    if (!claimed) {
+      return res.status(400).json({ error: "This payment has already been verified." });
+    }
+    payment.paymentId = razorpayPaymentId;
+    payment.status    = "paid";
 
     // ── Update the matching installment on the Booking ────────────
     const booking = await Booking.findById(payment.bookingId);
@@ -491,6 +509,11 @@ exports.processRefund = async (req, res) => {
     const vendor = await Vendor.findById(payment.vendorId);
     if (!vendor || vendor.vendorId.toString() !== req.user.id) {
       return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    // Only a pending request on a paid payment can be processed (blocks double refunds)
+    if (payment.status !== "paid" || payment.refund?.refundStatus !== "pending") {
+      return res.status(400).json({ error: "No pending refund request for this payment" });
     }
 
     if (action === "approve") {
