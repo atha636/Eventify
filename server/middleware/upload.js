@@ -12,7 +12,7 @@ const storage = new CloudinaryStorage({
   },
 });
 
-const uploadServiceImages = multer({ storage, limits: { files: 15 } });
+const uploadServiceImages = multer({ storage, limits: { files: 15, fileSize: 8 * 1024 * 1024 } });
 
 // ── Separate storage for user/vendor profile photos ────────────────
 // (kept in its own Cloudinary folder so avatars don't mix with
