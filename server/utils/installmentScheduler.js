@@ -54,6 +54,7 @@ async function sendMidInstallmentReminders() {
     const bookings = await Booking.find({
       paymentPlan: "25",
       status:      "approved",
+      "installments.0.status": "paid",   // don't nag for #2 before #1 is paid
       "installments.1.status": { $in: ["pending", "link_sent"] },
     }).populate("userId", "name email");
 
