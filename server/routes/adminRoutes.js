@@ -70,6 +70,7 @@ router.post("/login",    adminAuthLimiter, adminLogin);
 
 // ── Dashboard stats ──────────────────────────────────────────────
 router.get("/stats", adminAuth, getStats);
+router.get("/insights", adminAuth, require("../controllers/adminInsightsController").getInsights);
 
 // ── Users ────────────────────────────────────────────────────────
 router.get   ("/users",          adminAuth, getUsers);
