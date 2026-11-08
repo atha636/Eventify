@@ -25,6 +25,98 @@ function useAdminGuard() {
   }, [navigate]);
 }
 
+
+function InsightsTab({ onToast, onDeleteReview }) {
+  const [data, setData] = useState(null);
+  const [err, setErr]   = useState("");
+  useEffect(() => {
+    let live = true;
+    API.get("/admin/insights")
+      .then((r) => { if (live) setData(r.data); })
+      .catch((e) => { if (live) { setErr(e?.response?.data?.msg || "Could not load insights."); onToast?.("Could not load insights.", "error"); } });
+    return () => { live = false; };
+  }, [onToast]);
+
+  if (err) return <div className="ad-content"><div className="ad-ins-empty">{err}</div></div>;
+  if (!data) return <Spinner />;
+
+  const inr = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
+  const max = Math.max(1, ...data.months.map((m) => m.total));
+  const totalBookings = Object.values(data.status).reduce((a, b) => a + b, 0) || 1;
+  const days = (d) => Math.max(0, Math.floor((Date.now() - new Date(d).getTime()) / 86400000));
+
+  return (
+    <div className="ad-content">
+      <div className="ad-ins-grid">
+        <section className="ad-ins-card ad-ins-wide">
+          <h2 className="ad-section-title">Money collected · last 6 months</h2>
+          <div className="ad-ins-bars">
+            {data.months.map((m) => (
+              <div key={m.label} className="ad-ins-col" title={`${m.label}: ${inr(m.total)} · ${m.count} payments`}>
+                <div className="ad-ins-val">{m.total ? inr(m.total) : "—"}</div>
+                <div className="ad-ins-bar"><span style={{ height: `${(m.total / max) * 100}%` }} /></div>
+                <div className="ad-ins-lbl">{m.label}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="ad-ins-card">
+          <h2 className="ad-section-title">Bookings by status</h2>
+          {Object.entries(data.status).map(([k, v]) => (
+            <div key={k} className="ad-ins-row">
+              <span className="ad-ins-key">{k}</span>
+              <div className="ad-ins-track"><span className={`ad-ins-fill f-${k}`} style={{ width: `${(v / totalBookings) * 100}%` }} /></div>
+              <span className="ad-ins-num">{v}</span>
+            </div>
+          ))}
+        </section>
+
+        <section className="ad-ins-card">
+          <h2 className="ad-section-title">Top services by revenue</h2>
+          {data.topServices.length === 0 && <div className="ad-ins-empty">No paid bookings yet.</div>}
+          {data.topServices.map((t, i) => (
+            <div key={t._id} className="ad-ins-top">
+              <span className="ad-ins-rank">{i + 1}</span>
+              <span className="ad-ins-name">{t.title || "Deleted service"}<small>{t.bookings} booking{t.bookings !== 1 ? "s" : ""}</small></span>
+              <strong>{inr(t.revenue)}</strong>
+            </div>
+          ))}
+        </section>
+
+        <section className="ad-ins-card">
+          <h2 className="ad-section-title">Refund queue <small className="ad-ins-sub">{data.pendingRefunds.length} waiting · {inr(data.refundedTotal)} refunded so far</small></h2>
+          {data.pendingRefunds.length === 0 && <div className="ad-ins-empty">No refund requests waiting. 🎉</div>}
+          {data.pendingRefunds.map((r) => (
+            <div key={r._id} className="ad-ins-refund">
+              <div><strong>{inr(r.amount)}</strong> · {r.customer || "Customer"} <small>→ {r.service || "service"}</small></div>
+              <div className="ad-ins-reason">{r.reason || "No reason given"}</div>
+              <div className={`ad-ins-age ${days(r.requestedAt) >= 3 ? "late" : ""}`}>
+                Waiting {days(r.requestedAt)} day{days(r.requestedAt) !== 1 ? "s" : ""} for the vendor
+              </div>
+            </div>
+          ))}
+        </section>
+
+        <section className="ad-ins-card ad-ins-wide">
+          <h2 className="ad-section-title">Latest reviews</h2>
+          {data.reviews.length === 0 && <div className="ad-ins-empty">No reviews yet.</div>}
+          {data.reviews.map((r) => (
+            <div key={r._id} className={`ad-ins-review ${r.rating <= 2 ? "low" : ""}`}>
+              <div className="ad-ins-stars">{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</div>
+              <div className="ad-ins-rtext">
+                <strong>{r.userName}</strong> on {r.service || "a service"}
+                <p>{r.comment || <em>No comment</em>}</p>
+              </div>
+              <button className="ad-ins-del" onClick={() => onDeleteReview(r, () => setData((d) => ({ ...d, reviews: d.reviews.filter((x) => x._id !== r._id) })))}>Remove</button>
+            </div>
+          ))}
+        </section>
+      </div>
+    </div>
+  );
+}
+
 function Spinner() { return <div className="ad-spinner-overlay"><div className="ad-spinner" /></div>; }
 
 function StatCard({ icon, label, value, badge }) {
@@ -793,6 +885,16 @@ export default function AdminDashboard() {
     fetchStats();
   };
 
+  const removeReview = (review, done) => setConfirm({
+    msg: `Remove the ${review.rating}★ review by ${review.userName}? The vendor's rating will be recalculated.`,
+    onConfirm: async () => {
+      setLoadingAction(true);
+      try { await API.delete(`/reviews/${review._id}`); done(); showToast("Review removed.", "success"); }
+      catch (err) { showToast(err?.response?.data?.error || "Could not remove review.", "error"); }
+      finally { setLoadingAction(false); setConfirm(null); }
+    },
+  });
+
   const logout = () => { localStorage.removeItem("token"); localStorage.removeItem("user"); navigate("/admin/login"); };
 
   const NAV_ITEMS = [
@@ -801,6 +903,7 @@ export default function AdminDashboard() {
     { key: "users",    icon: "👥", label: "Users"     },
     { key: "services", icon: "🏷️", label: "Services"  },
     { key: "bookings", icon: "📋", label: "Bookings"  },
+    { key: "insights", icon: "📈", label: "Insights"  },
   ];
 
   const switchTab = (key) => { setTab(key); setSidebarOpen(false); };
@@ -840,9 +943,12 @@ export default function AdminDashboard() {
               {tab === "users"    && "Users"}
               {tab === "services" && "Services"}
               {tab === "bookings" && "Bookings"}
+              {tab === "insights" && "Insights"}
             </h1>
             <button className="ad-mobile-logout" onClick={logout} title="Log out">↩</button>
           </div>
+
+          {tab === "insights" && <InsightsTab onToast={showToast} onDeleteReview={removeReview} />}
 
           {/* ══ OVERVIEW ══ */}
           {tab === "overview" && (
@@ -1490,4 +1596,42 @@ const styles = `
     .ad-content { padding: 14px 14px 20px; }
     .ad-toast { bottom: calc(var(--bottomnav-h) + 10px); right: 12px; left: 12px; max-width: none; font-size: 12px; }
   }
+
+  .ad-ins-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .ad-ins-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 18px; min-width: 0; }
+  .ad-ins-wide { grid-column: 1 / -1; }
+  .ad-ins-card .ad-section-title { margin-bottom: 12px; }
+  .ad-ins-sub { display: block; font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 400; color: var(--muted); margin-top: 2px; }
+  .ad-ins-empty { color: var(--muted); font-size: 13px; padding: 14px 0; }
+  .ad-ins-bars { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; align-items: end; }
+  .ad-ins-col { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
+  .ad-ins-bar { width: 100%; max-width: 54px; height: 130px; background: var(--cream); border-radius: 8px; display: flex; align-items: flex-end; overflow: hidden; }
+  .ad-ins-bar span { display: block; width: 100%; background: #c9a84c; border-radius: 8px 8px 0 0; min-height: 2px; }
+  .ad-ins-val { font-size: 11px; color: var(--ink); font-weight: 600; white-space: nowrap; }
+  .ad-ins-lbl { font-size: 11px; color: var(--muted); }
+  .ad-ins-row { display: flex; align-items: center; gap: 10px; margin: 9px 0; font-size: 13px; }
+  .ad-ins-key { width: 74px; text-transform: capitalize; color: var(--muted); }
+  .ad-ins-track { flex: 1; height: 8px; background: var(--cream); border-radius: 8px; overflow: hidden; }
+  .ad-ins-fill { display: block; height: 100%; border-radius: 8px; background: #c9a84c; }
+  .ad-ins-fill.f-approved { background: #3f9d6b; } .ad-ins-fill.f-rejected, .ad-ins-fill.f-cancelled { background: #c4574f; }
+  .ad-ins-num { width: 28px; text-align: right; font-weight: 600; color: var(--ink); }
+  .ad-ins-top { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--ink); }
+  .ad-ins-top:last-child { border-bottom: 0; }
+  .ad-ins-rank { width: 22px; height: 22px; border-radius: 50%; background: var(--cream); display: grid; place-items: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+  .ad-ins-name { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; text-overflow: ellipsis; }
+  .ad-ins-name small { color: var(--muted); font-size: 11px; }
+  .ad-ins-refund { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--ink); }
+  .ad-ins-refund:last-child { border-bottom: 0; }
+  .ad-ins-refund small { color: var(--muted); }
+  .ad-ins-reason { color: var(--muted); font-size: 12px; margin: 3px 0; }
+  .ad-ins-age { font-size: 11px; color: var(--muted); } .ad-ins-age.late { color: #c4574f; font-weight: 600; }
+  .ad-ins-review { display: flex; gap: 14px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .ad-ins-review:last-child { border-bottom: 0; }
+  .ad-ins-review.low { background: rgba(196,87,79,.06); margin: 0 -10px; padding: 12px 10px; border-radius: 8px; }
+  .ad-ins-stars { color: #c9a84c; letter-spacing: 1px; font-size: 13px; white-space: nowrap; }
+  .ad-ins-rtext { flex: 1; min-width: 0; font-size: 13px; color: var(--ink); }
+  .ad-ins-rtext p { color: var(--muted); margin: 3px 0 0; overflow-wrap: anywhere; }
+  .ad-ins-del { border: 1px solid var(--border); background: transparent; color: #c4574f; border-radius: 8px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
+  .ad-ins-del:hover { background: rgba(196,87,79,.1); }
+  @media (max-width: 760px) { .ad-ins-grid { grid-template-columns: 1fr; } .ad-ins-val { font-size: 9px; } .ad-ins-review { flex-wrap: wrap; } }
 `;
