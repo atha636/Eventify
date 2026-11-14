@@ -24,6 +24,12 @@ const bookingSchema = new mongoose.Schema({
     default: "pending",
   },
 
+  // ── Concurrency lock keys (see utils/bookingLock.js) ───────────────────────
+  // Only present while they apply, and covered by UNIQUE partial indexes below,
+  // so MongoDB itself rejects a second conflicting booking. Hidden from API output.
+  dupKey:  { type: String, select: false },   // user:service:day  (pending/approved only)
+  slotKey: { type: String, select: false },   // service:day       (approved + autoBlockBooked only)
+
   userDetails: {
     name:    { type: String, default: "" },
     phone:   { type: String, default: "" },
@@ -89,5 +95,10 @@ const bookingSchema = new mongoose.Schema({
   },
 
 }, { timestamps: true });
+
+// Partial indexes: bookings without the key (cancelled, rejected, or created
+// before this change) are simply not indexed, so existing data never conflicts.
+bookingSchema.index({ dupKey: 1 },  { unique: true, partialFilterExpression: { dupKey:  { $type: "string" } } });
+bookingSchema.index({ slotKey: 1 }, { unique: true, partialFilterExpression: { slotKey: { $type: "string" } } });
 
 module.exports = mongoose.model("Booking", bookingSchema);
