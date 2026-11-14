@@ -1,4 +1,5 @@
-const { hasApprovedBooking } = require("../utils/availability");
+const { hasApprovedBooking, isBlocked } = require("../utils/availability");
+const { dupKeyFor, slotKeyFor, isDuplicateKeyError } = require("../utils/bookingLock");
 const { checkPromo } = require("../utils/promo");
 const Booking      = require("../models/Booking");
 const Vendor       = require("../models/Vendor");
@@ -160,9 +161,15 @@ exports.createBooking = async (req, res) => {
     const installments = buildInstallments(paymentPlan, resolvedPrice, promo?.percent || 0);
 
     // ── Create booking ───────────────────────────────────────────
-    const booking = await Booking.create({
+    // The findOne() above is only a friendly early exit — two simultaneous requests
+    // can both pass it. dupKey (unique index) is what actually guarantees one active
+    // booking per user / service / day, so a double-click can't create two.
+    let booking;
+    try {
+    booking = await Booking.create({
       userId:       req.user.id,
       vendorId,
+      dupKey:       dupKeyFor(req.user.id, vendorId, parsedDate),
       packageName:  resolvedPackageName,
       packagePrice: resolvedPrice,
       date:         parsedDate,
@@ -179,6 +186,12 @@ exports.createBooking = async (req, res) => {
       paymentComplete: false,
       paymentStatus:   "pending",
     });
+    } catch (err) {
+      if (isDuplicateKeyError(err)) {
+        return res.status(409).json({ error: "You already have an active booking for this vendor on that date." });
+      }
+      throw err;
+    }
 
     // ── Respond immediately ──────────────────────────────────────
     res.status(201).json(booking);
@@ -348,8 +361,37 @@ exports.updateBookingStatus = async (req, res) => {
       return res.status(400).json({ error: `Booking is already ${booking.status}.` });
     }
 
-    booking.status = status;
-    await booking.save();
+    // ── Atomic pending → approved/rejected ───────────────────────
+    // The status filter makes this a compare-and-set: a double-click or two
+    // browser tabs can only win once. Approving also takes the day's slotKey
+    // for services that block a date once booked, so the unique index rejects
+    // a second approval for the same day even if both land at the same moment.
+    const $set = { status };
+    const $unset = {};
+    if (status === "approved" && vendor.autoBlockBooked) {
+      $set.slotKey = slotKeyFor(vendor._id, booking.date);
+    }
+    if (status === "rejected") $unset.dupKey = 1;   // frees the customer's slot
+
+    let updated;
+    try {
+      updated = await Booking.findOneAndUpdate(
+        { _id: booking._id, status: "pending" },
+        { $set, ...(Object.keys($unset).length ? { $unset } : {}) },
+        { new: true }
+      );
+    } catch (err) {
+      if (isDuplicateKeyError(err)) {
+        return res.status(409).json({
+          error: "You already have an approved booking on this date. Reject this request or ask the customer to pick another date.",
+        });
+      }
+      throw err;
+    }
+    if (!updated) {
+      return res.status(409).json({ error: "This booking was just updated by someone else. Please refresh." });
+    }
+    booking.status = status;   // in-memory only, so the response + notifications below see the new status
 
     // ── Respond immediately ──────────────────────────────────────
     res.json(booking);
@@ -559,8 +601,25 @@ exports.cancelBooking = async (req, res) => {
       });
     }
 
+    // Atomic: only cancel while nothing has been paid. A payment being verified at
+    // the same instant either lands first (then totalPaid > 0 and this matches
+    // nothing) or loses (payment verification sees status "cancelled").
+    const cancelled = await Booking.findOneAndUpdate(
+      {
+        _id: booking._id,
+        userId: req.user.id,
+        status: { $in: ["pending", "approved"] },
+        totalPaid: { $not: { $gt: 0 } },
+      },
+      { $set: { status: "cancelled" }, $unset: { dupKey: 1, slotKey: 1 } },
+      { new: true }
+    );
+    if (!cancelled) {
+      return res.status(409).json({
+        error: "This booking just changed (it may have been paid). Please refresh and check before cancelling.",
+      });
+    }
     booking.status = "cancelled";
-    await booking.save();
 
     // ── Notify vendor that booking was cancelled ─────────────────
     setImmediate(async () => {
@@ -600,6 +659,17 @@ exports.requestChange = async (req, res) => {
 
     if (booking.userId.toString() !== req.user.id) {
       return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    if (!["pending", "approved"].includes(booking.status)) {
+      return res.status(400).json({ error: `A ${booking.status} booking can't be changed.` });
+    }
+    if (requestedDate) {
+      const d = new Date(requestedDate);
+      const todayMidnight = new Date(); todayMidnight.setHours(0, 0, 0, 0);
+      if (isNaN(d.getTime()) || d < todayMidnight) {
+        return res.status(400).json({ error: "Please choose a valid future date." });
+      }
     }
 
     booking.dateChangeRequest = {
@@ -650,7 +720,7 @@ exports.respondToChange = async (req, res) => {
       return res.status(400).json({ error: "action must be 'approved' or 'rejected'" });
     }
 
-    const booking = await Booking.findById(req.params.id)
+    let booking = await Booking.findById(req.params.id)
       .populate("vendorId")
       .populate("userId", "name email");
 
@@ -662,17 +732,59 @@ exports.respondToChange = async (req, res) => {
     });
     if (!vendor) return res.status(403).json({ error: "Unauthorized" });
 
-    booking.dateChangeRequest.status      = action;
-    booking.dateChangeRequest.respondedAt = new Date();
-
-    if (action === "approved") {
-      if (booking.dateChangeRequest.requestedDate)
-        booking.date = booking.dateChangeRequest.requestedDate;
-      if (booking.dateChangeRequest.requestedAddress)
-        booking.userDetails.address = booking.dateChangeRequest.requestedAddress;
+    const dcr = booking.dateChangeRequest || {};
+    if (dcr.status !== "pending") {
+      return res.status(400).json({ error: "There is no pending change request to respond to." });
     }
 
-    await booking.save();
+    const $set = {
+      "dateChangeRequest.status":      action,
+      "dateChangeRequest.respondedAt": new Date(),
+    };
+
+    if (action === "approved") {
+      if (dcr.requestedAddress) $set["userDetails.address"] = dcr.requestedAddress;
+
+      if (dcr.requestedDate) {
+        // The new date has to be as bookable as a brand-new request would be.
+        if (isBlocked(vendor, dcr.requestedDate)) {
+          return res.status(409).json({ error: "You've marked the requested date as unavailable." });
+        }
+        $set.date = dcr.requestedDate;
+        // Move the lock keys with the booking. Unique indexes reject the move if the
+        // new day is already taken (another approved booking, or the customer's own).
+        if (["pending", "approved"].includes(booking.status)) {
+          $set.dupKey = dupKeyFor(booking.userId._id, vendor._id, dcr.requestedDate);
+          if (booking.status === "approved" && vendor.autoBlockBooked) {
+            $set.slotKey = slotKeyFor(vendor._id, dcr.requestedDate);
+          }
+        }
+      }
+    }
+
+    // Compare-and-set on the request status (and booking status) so the same request
+    // can't be applied twice and a booking cancelled meanwhile isn't resurrected.
+    let updated;
+    try {
+      updated = await Booking.findOneAndUpdate(
+        { _id: booking._id, "dateChangeRequest.status": "pending", status: booking.status },
+        { $set },
+        { new: true }
+      );
+    } catch (err) {
+      if (isDuplicateKeyError(err)) {
+        return res.status(409).json({ error: "That date is already taken by another booking, so the change can't be accepted." });
+      }
+      throw err;
+    }
+    if (!updated) {
+      return res.status(409).json({ error: "This request was just updated. Please refresh." });
+    }
+
+    // Re-read with the same populates the rest of this handler (and the client) expects.
+    booking = await Booking.findById(updated._id)
+      .populate("vendorId")
+      .populate("userId", "name email");
 
     // ── Notify client about vendor's response ────────────────────
     setImmediate(async () => {

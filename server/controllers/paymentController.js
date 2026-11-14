@@ -5,6 +5,7 @@ const Booking  = require("../models/Booking");
 const Vendor   = require("../models/Vendor");
 const User     = require("../models/User");
 const { sendEmail } = require("../utils/sendEmail");
+const { withTransaction } = require("../utils/bookingLock");
 
 // ── Initialize Razorpay ──────────────────────────────────────────
 const razorpay = new Razorpay({
@@ -112,6 +113,31 @@ exports.createOrder = async (req, res) => {
 
     const amount = inst.amount;
 
+    // ── Reuse a recent unpaid order for this installment ──────────
+    // A double-click (or a retry after the checkout popup was closed) would otherwise
+    // create a second order for the same installment. verifyPayment also guards against
+    // double-counting, but not creating the extra order is cleaner and avoids a refund.
+    const openOrder = await Payment.findOne({
+      bookingId,
+      installmentNumber: inst.installmentNumber,
+      status:    "created",
+      amount,
+      createdAt: { $gt: new Date(Date.now() - 20 * 60 * 1000) },
+    }).sort({ createdAt: -1 });
+
+    if (openOrder) {
+      return res.json({
+        orderId:               openOrder.orderId,
+        amount:                Math.round(openOrder.amount * 100),
+        currency:              openOrder.currency || "INR",
+        keyId:                 process.env.RAZORPAY_KEY_ID,
+        paymentId:             openOrder._id,
+        installmentNumber:     inst.installmentNumber,
+        installmentPercentage: inst.percentage,
+        paymentPlan:           booking.paymentPlan,
+      });
+    }
+
     // ── Create Razorpay order ─────────────────────────────────────
     const razorpayOrder = await razorpay.orders.create({
       amount:   Math.round(amount * 100),
@@ -214,54 +240,98 @@ exports.verifyPayment = async (req, res) => {
       return res.status(400).json({ error: "This payment has already been verified." });
     }
 
-    // Atomic transition so a double-submit cannot be counted twice
-    const claimed = await Payment.findOneAndUpdate(
-      { _id: payment._id, status: { $ne: "paid" } },
-      { $set: { paymentId: razorpayPaymentId, razorpaySignature, status: "paid" } },
-      { new: true }
-    );
-    if (!claimed) {
+    // ── Claim the payment AND credit the booking, all-or-nothing ──
+    // Before, these were separate steps: the payment was marked "paid", then the booking
+    // was loaded, edited in memory and saved. A crash in between left money taken but the
+    // booking unpaid; two payments verified together could overwrite each other's totals;
+    // and two orders for the SAME installment (a double-click on "Pay") were both counted.
+    // Now it runs in one transaction (when the server supports it), and the booking update is
+    // a single atomic operation that only matches while that installment is still unpaid.
+    const instNo = payment.installmentNumber;
+    const outcome = await withTransaction(async (session) => {
+      // 1) Atomic transition so a double-submit cannot be counted twice
+      const claimed = await Payment.findOneAndUpdate(
+        { _id: payment._id, status: { $ne: "paid" } },
+        { $set: { paymentId: razorpayPaymentId, razorpaySignature, status: "paid" } },
+        { new: true, session }
+      );
+      if (!claimed) return { code: "ALREADY_VERIFIED" };
+
+      // 2) Mark this installment paid + add to the total, only if it is still unpaid
+      //    and the booking is still live (not cancelled while the customer was paying).
+      const now = new Date();
+      const updated = await Booking.findOneAndUpdate(
+        {
+          _id: payment.bookingId,
+          status: "approved",
+          installments: { $elemMatch: { installmentNumber: instNo, status: { $ne: "paid" } } },
+        },
+        {
+          $set: {
+            "installments.$[inst].status":    "paid",
+            "installments.$[inst].paymentId": payment._id,
+            "installments.$[inst].paidAt":    now,
+            paymentId: payment._id,   // legacy fields kept for backward compat
+            paidAt:    now,
+          },
+          $inc: { totalPaid: payment.amount },
+        },
+        { new: true, session, arrayFilters: [{ "inst.installmentNumber": instNo }] }
+      );
+
+      if (!updated) {
+        // The money is real (the signature checked out) but it can't be applied: that
+        // installment was already paid through another order, or the booking was cancelled.
+        // Keep the payment as "paid" and raise a refund request so it can't be silently lost.
+        const b = await Booking.findById(payment.bookingId, "status", { session });
+        const reason = !b
+          ? "Booking no longer exists"
+          : b.status !== "approved"
+            ? `Booking was ${b.status} before this payment was confirmed`
+            : `Duplicate payment — installment ${instNo} was already paid`;
+        await Payment.updateOne(
+          { _id: payment._id },
+          { $set: {
+              "refund.refundStatus":      "pending",
+              "refund.refundReason":      `Auto-flagged: ${reason}`,
+              "refund.refundRequestedAt": now,
+          } },
+          { session }
+        );
+        return { code: "UNAPPLIED", reason };
+      }
+
+      // 3) Derive paymentComplete / paymentStatus from the CURRENT installments in the
+      //    database (not from a stale in-memory copy), so concurrent payments for different
+      //    installments always settle on the right final state.
+      const allPaid = { $allElementsTrue: [{ $map: {
+        input: "$installments", as: "i", in: { $eq: ["$$i.status", "paid"] },
+      } }] };
+      await Booking.updateOne(
+        { _id: updated._id },
+        [{ $set: { paymentComplete: allPaid, paymentStatus: { $cond: [allPaid, "paid", "partial"] } } }],
+        { session, updatePipeline: true }   // Mongoose 9 requires this flag for pipeline-style updates
+      );
+
+      const finalBooking = await Booking.findById(updated._id, null, { session });
+      return { code: "OK", booking: finalBooking };
+    });
+
+    if (outcome.code === "ALREADY_VERIFIED") {
       return res.status(400).json({ error: "This payment has already been verified." });
     }
+    if (outcome.code === "UNAPPLIED") {
+      console.error(`PAYMENT NOT APPLIED (refund flagged) payment=${payment._id} order=${razorpayOrderId}: ${outcome.reason}`);
+      return res.status(409).json({
+        error: "Your payment was received, but it could not be applied to this booking "
+             + `(${outcome.reason}). We've flagged it for a refund — you will not be charged twice.`,
+        refundRequested: true,
+      });
+    }
+
+    const booking = outcome.booking;
     payment.paymentId = razorpayPaymentId;
     payment.status    = "paid";
-
-    // ── Update the matching installment on the Booking ────────────
-    const booking = await Booking.findById(payment.bookingId);
-    if (!booking) return res.status(404).json({ error: "Booking not found" });
-
-    const instIdx = booking.installments.findIndex(
-      (i) => i.installmentNumber === payment.installmentNumber
-    );
-
-    if (instIdx !== -1) {
-      booking.installments[instIdx].status    = "paid";
-      booking.installments[instIdx].paymentId = payment._id;
-      booking.installments[instIdx].paidAt    = new Date();
-    }
-
-    // ── Update totals ─────────────────────────────────────────────
-    booking.totalPaid = (booking.totalPaid || 0) + payment.amount;
-
-    // ── Legacy fields for backward compat ─────────────────────────
-    booking.paymentId = payment._id;
-    booking.paidAt    = new Date();
-
-    // ── Check if all installments are paid ────────────────────────
-    const allPaid = booking.installments.every((i) => i.status === "paid");
-    if (allPaid) {
-      booking.paymentComplete = true;
-      booking.paymentStatus   = "paid";
-    } else {
-      booking.paymentStatus = "partial";
-    }
-
-    // ── On first payment (installment 1) → mark booking approved ──
-    if (payment.installmentNumber === 1) {
-      booking.status = "approved";
-    }
-
-    await booking.save();
 
     // ── Respond to client ─────────────────────────────────────────
     res.json({
